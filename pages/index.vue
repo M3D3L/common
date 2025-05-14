@@ -35,8 +35,22 @@ const computedSeoData = computed(() => {
 const pbUtils = usePocketBaseCore();
 const posts = ref([]);
 
+const fetchPosts = async () => {
+  try {
+    const result = await pbUtils.fetchCollection('posts', 1, 5, '', '-created', '', ['content']);
+    return result;
+  } catch (error) {
+    console.error('Error fetching posts:', error);
+    return [];
+  }
+};
+
+const loadPosts = async () => {
+  posts.value = await fetchPosts();
+};
+
 onMounted(async () => {
-  posts.value = await pbUtils.fetchCollection('posts', 1, 5, '', '-created', '', ['content']);
+  await loadPosts();
 });
 
 </script>

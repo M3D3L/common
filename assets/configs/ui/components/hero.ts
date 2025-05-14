@@ -1,6 +1,3 @@
-// @/config/highlightsData.ts
-import video from '~/assets/videos/beach.mp4'
-
 export interface Card {
     title: string
     description: string
@@ -54,5 +51,4 @@ export const heroData: Hero = {
             link: '#portfolio'
         }
     ],
-    video
 }

@@ -202,7 +202,6 @@ onMounted(async () => {
     post.value = fetchedPost
   } catch (error) {
     console.error('Error fetching post:', error)
-    // Handle error (e.g., show error page)
   }
 });
 
