@@ -1,3 +1,4 @@
+import typography from "@tailwindcss/typography"
 import animate from "tailwindcss-animate"
 
 /** @type {import('tailwindcss').Config} */
@@ -13,7 +14,18 @@ export const theme = {
     },
   },
   extend: {
+    fontFamily: {
+      // Default UI/Body text
+      sans: ['Inter', 'Nunito', 'sans-serif'],
+      // Headings
+      heading: ['Poppins', 'Rubik', 'sans-serif'],
+      // Logo/Accent text
+      logo: ['Orbitron', 'sans-serif'],
+      // Alternative body text
+      body: ['Sora', 'Inter', 'sans-serif'],
+    },
     colors: {
+      ocean: "#2589BD",
       border: "hsl(var(--border))",
       input: "hsl(var(--input))",
       ring: "hsl(var(--ring))",
@@ -65,10 +77,10 @@ export const theme = {
       },
       "collapsible-down": {
         from: { height: 0 },
-        to: { height: 'var(--radix-collapsible-content-height)' },
+        to: { height: "var(--radix-collapsible-content-height)" },
       },
       "collapsible-up": {
-        from: { height: 'var(--radix-collapsible-content-height)' },
+        from: { height: "var(--radix-collapsible-content-height)" },
         to: { height: 0 },
       },
     },
@@ -78,6 +90,72 @@ export const theme = {
       "collapsible-down": "collapsible-down 0.2s ease-in-out",
       "collapsible-up": "collapsible-up 0.2s ease-in-out",
     },
+    typography: (theme) => ({
+      DEFAULT: {
+        css: {
+          color: theme('colors.foreground'),
+          a: { color: theme('colors.primary.DEFAULT') },
+          strong: { color: theme('colors.foreground') },
+          'ul > li::before': { backgroundColor: theme('colors.muted.foreground') },
+          hr: { borderColor: theme('colors.border') },
+          blockquote: {
+            color: theme('colors.muted.foreground'),
+            borderLeftColor: theme('colors.border'),
+          },
+          h1: { color: theme('colors.foreground') },
+          h2: { color: theme('colors.foreground') },
+          h3: { color: theme('colors.foreground') },
+          h4: { color: theme('colors.foreground') },
+          code: { color: theme('colors.accent.foreground') },
+          'pre code': { backgroundColor: theme('colors.muted.DEFAULT') },
+          pre: {
+            color: theme('colors.foreground'),
+            backgroundColor: theme('colors.border'),
+          },
+          thead: {
+            color: theme('colors.foreground'),
+            borderBottomColor: theme('colors.border'),
+          },
+          tbody: {
+            tr: {
+              borderBottomColor: theme('colors.border'),
+            },
+          },
+        },
+      },
+      dark: {
+        css: {
+          color: theme('colors.foreground'),
+          a: { color: theme('colors.primary.DEFAULT') },
+          strong: { color: theme('colors.foreground') },
+          'ul > li::before': { backgroundColor: theme('colors.muted.foreground') },
+          hr: { borderColor: theme('colors.border') },
+          blockquote: {
+            color: theme('colors.muted.foreground'),
+            borderLeftColor: theme('colors.border'),
+          },
+          h1: { color: theme('colors.foreground') },
+          h2: { color: theme('colors.foreground') },
+          h3: { color: theme('colors.foreground') },
+          h4: { color: theme('colors.foreground') },
+          code: { color: theme('colors.accent.foreground') },
+          'pre code': { backgroundColor: theme('colors.muted.DEFAULT') },
+          pre: {
+            color: theme('colors.foreground'),
+            backgroundColor: theme('colors.muted.DEFAULT'),
+          },
+          thead: {
+            color: theme('colors.foreground'),
+            borderBottomColor: theme('colors.border'),
+          },
+          tbody: {
+            tr: {
+              borderBottomColor: theme('colors.border'),
+            },
+          },
+        },
+      },
+    }),
   },
 }
-export const plugins = [animate]
+export const plugins = [animate, typography]

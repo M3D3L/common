@@ -1,78 +1,168 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400&family=Nunito:wght@400&family=Orbitron:wght@400&family=Poppins:wght@700&family=Rubik:wght@500&family=Sora:wght@300&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
- 
+
 @layer base {
-  :root {
-    --background: 0 0% 100%;
-    --foreground: 224 71.4% 4.1%;
- 
-    --muted: 220 14.3% 95.9%;
-    --muted-foreground: 220 8.9% 46.1%;
- 
-    --popover: 0 0% 100%;
-    --popover-foreground: 224 71.4% 4.1%;
- 
-    --card: 0 0% 100%;
-    --card-foreground: 224 71.4% 4.1%;
- 
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
- 
-    --primary: 220.9 39.3% 11%;
-    --primary-foreground: 210 20% 98%;
- 
-    --secondary: 220 14.3% 95.9%;
-    --secondary-foreground: 220.9 39.3% 11%;
- 
-    --accent: 220 14.3% 95.9%;
-    --accent-foreground: 220.9 39.3% 11%;
- 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 20% 98%;
- 
-    --ring: 224 71.4% 4.1%;
- 
-    --radius: 0.5rem;
+  /* Typography base styles */
+  html {
+    @apply font-sans;
   }
- 
-  .dark {
-    --background: 224 71.4% 4.1%;
-    --foreground: 210 20% 98%;
- 
-    --muted: 215 27.9% 16.9%;
-    --muted-foreground: 217.9 10.6% 64.9%;
- 
-    --popover: 224 71.4% 4.1%;
-    --popover-foreground: 210 20% 98%;
- 
-    --card: 224 71.4% 4.1%;
-    --card-foreground: 210 20% 98%;
- 
-    --border: 215 27.9% 16.9%;
-    --input: 215 27.9% 16.9%;
- 
-    --primary: 210 20% 98%;
-    --primary-foreground: 220.9 39.3% 11%;
- 
-    --secondary: 215 27.9% 16.9%;
-    --secondary-foreground: 210 20% 98%;
- 
-    --accent: 215 27.9% 16.9%;
-    --accent-foreground: 210 20% 98%;
- 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 20% 98%;
- 
-    --ring: 216 12.2% 83.9%;
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-heading;
   }
-}
- 
-@layer base {
+
+  h1 {
+    @apply text-4xl font-bold;
+  }
+
+  h2 {
+    @apply text-3xl font-bold;
+  }
+
+  h3 {
+    @apply text-2xl font-medium;
+  }
+
+  h4 {
+    @apply text-xl font-medium;
+  }
+
+  body {
+    @apply text-base font-light font-body;
+  }
+
+  .logo-text {
+    @apply font-logo;
+  }
+
+  .ui-text {
+    @apply font-sans;
+  }
+
   * {
     @apply border-border;
   }
+
   body {
     @apply bg-background text-foreground;
+  }
+
+  .glassmorphism {
+    @apply bg-background/80 backdrop-blur-sm rounded-xl border-border/20;
+  }
+
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 224 71.4% 4.1%;
+    --muted: 220 14.3% 95.9%;
+    --muted-foreground: 220 8.9% 46.1%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 224 71.4% 4.1%;
+    --card: 0 0% 100%;
+    --card-foreground: 224 71.4% 4.1%;
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --primary: 220.9 39.3% 11%;
+    --primary-foreground: 210 20% 98%;
+    --secondary: 220 14.3% 95.9%;
+    --secondary-foreground: 220.9 39.3% 11%;
+    --accent: 220 14.3% 95.9%;
+    --accent-foreground: 220.9 39.3% 11%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 20% 98%;
+    --ring: 224 71.4% 4.1%;
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 224 71.4% 4.1%;
+    --foreground: 210 20% 98%;
+    --muted: 215 27.9% 16.9%;
+    --muted-foreground: 217.9 10.6% 64.9%;
+    --popover: 224 71.4% 4.1%;
+    --popover-foreground: 210 20% 98%;
+    --card: 224 71.4% 4.1%;
+    --card-foreground: 210 20% 98%;
+    --border: 215 27.9% 16.9%;
+    --input: 215 27.9% 16.9%;
+    --primary: 210 20% 98%;
+    --primary-foreground: 220.9 39.3% 11%;
+    --secondary: 215 27.9% 16.9%;
+    --secondary-foreground: 210 20% 98%;
+    --accent: 215 27.9% 16.9%;
+    --accent-foreground: 210 20% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 20% 98%;
+    --ring: 216 12.2% 83.9%;
+  }
+
+  /* Blog content styling */
+  article {
+    @apply prose prose-neutral max-w-none;
+  }
+
+  article h1, article h2, article h3, article h4 {
+    @apply font-heading text-foreground;
+  }
+
+  article p {
+    @apply mb-4 leading-relaxed;
+  }
+
+  article a {
+    @apply underline text-primary hover:text-primary-foreground;
+  }
+
+  article blockquote {
+    @apply pl-4 my-4 italic border-l-4 border-muted text-muted-foreground;
+  }
+
+  article ul,
+  article li {
+    @apply pl-6 mb-4;
+  }
+
+  article ul li::marker {
+    @apply text-primary;
+  }
+
+  article ol li::marker {
+    @apply text-primary;
+  }
+
+  article code {
+    @apply bg-muted text-sm px-1 py-0.5 rounded font-mono;
+  }
+
+  pre {
+    @apply !bg-foreground/50 !text-foreground;
+  }
+
+  code {
+    @apply !bg-background !text-foreground;
+  }
+
+  article img {
+    @apply my-4 rounded-md;
+  }
+
+  article hr {
+    @apply my-6 border-t border-muted;
+  }
+
+  article table {
+    @apply w-full my-4 text-left border-collapse;
+  }
+
+  article th,
+  article td {
+    @apply px-3 py-2 border;
+  }
+
+  article th {
+    @apply bg-muted text-muted-foreground;
   }
 }

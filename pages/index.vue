@@ -1,45 +1,48 @@
 <template>
-    <div class="index h-[calc(100vh-8.3rem)] flex flex-col justify-center items-center border dark:border-gray-500">
-        <h1 class="mt-2">Installed items: </h1>
-        <p class="mt-2">
-            <strong>Nuxt 3</strong>, 
-            <strong>Pinia</strong>,
-            <strong>Tailwind CSS</strong>, 
-            <strong>VueUse</strong>, 
-            <strong>NuxtImage</strong>,
-            <strong>shadcn-vue</strong>,
-            <strong>@radix-icons/vue</strong>
-        </p>
+    <div class="w-full">
+        <Seo :seoData="computedSeoData" />
+        <!-- Hero Section -->
+        <SectionsHero v-if="layoutConfig?.heroData" video="https://videos.pexels.com/video-files/2541964/2541964-hd_1920_1080_24fps.mp4" :buttons="layoutConfig.heroData.buttons"
+          :cards="layoutConfig.heroData?.cards" :title="layoutConfig.heroData?.title"
+          :description="layoutConfig.heroData?.description" :image="layoutConfig.heroData?.image" />
         
+        <!-- Projects Section -->
+        <SectionsProjects />
 
-        <ClientOnly>
-            <HoverCard>
-                <HoverCardTrigger>
-                    <Button class="mt-4 rounded-full h-8 w-8 p-0">
-                        <InfoCircledIcon class="rounded-full h-8 w-8"></InfoCircledIcon>
-                    </Button>
-                </HoverCardTrigger>
-                <HoverCardContent class="text-center">
-                    This is a combination of shadcn-vue's <strong>HoverCard</strong> & <strong>Button</strong> components.
-                </HoverCardContent>
-            </HoverCard>
-        </ClientOnly>
+        
+        <SectionsSkills :content="layoutConfig.skillsData" />
+        
+        <!-- <SectionsBlogs :content="posts" /> -->
 
+        <SectionsBlogsCols :content="posts" />
+        
+        <SectionsContact />
     </div>
 </template>
 
 <script setup>
-import { InfoCircledIcon } from '@radix-icons/vue';
-import {
-  HoverCard,
-  HoverCardContent,
-  HoverCardTrigger,
-} from '@/components/ui/hover-card';
+import { layoutConfig } from '~/assets/configs/ui/layout'
+import { createSeoObject } from '@/composables/createSeoObject';
+import usePocketBaseCore from '@/composables/usePocketBaseCore';
+
+const computedSeoData = computed(() => {
+  return createSeoObject({
+    title: layoutConfig?.heroData?.title || 'Home',
+    summary: layoutConfig?.heroData?.description || 'Welcome to our website',
+  })
+});
+
+const pbUtils = usePocketBaseCore();
+const posts = ref([]);
+
+onMounted(async () => {
+  posts.value = await pbUtils.fetchCollection('posts', 1, 5, '', '-created', '', ['content']);
+});
 
 </script>
 
 <style lang="postcss" scoped>
-.active{
+.active {
     @apply bg-black text-white rounded-full dark:bg-white dark:text-black;
 }
 </style>

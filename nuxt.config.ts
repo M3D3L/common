@@ -7,7 +7,8 @@ export default defineNuxtConfig({
     '@pinia/nuxt',
     '@vueuse/nuxt',
     '@nuxtjs/tailwindcss',
-    'shadcn-nuxt'
+    'shadcn-nuxt',
+    'motion-v/nuxt',
   ],
   shadcn: {
     /**
@@ -19,5 +20,14 @@ export default defineNuxtConfig({
      * @default "./components/ui"
      */
     componentDir: './components/ui'
+  },
+  build: {
+    // Needed for Framer Motion
+    transpile: ['vueuc']
+  },
+  runtimeConfig: {
+    public: {
+      pocketbaseUrl: process.env.POCKETBASE_URL || 'http://127.0.0.1:8090'
+    }
   }
 })

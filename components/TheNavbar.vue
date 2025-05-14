@@ -1,25 +1,146 @@
 <template>
-    <nav class="text-center py-4 border dark:border-gray-500 flex items-center justify-center">
-        The Navbar
+  <header class="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-md">
+    <div class="container flex items-center justify-between h-16 px-4">
+      <!-- Logo on left -->
+      <NuxtLink to="/" class="flex items-center">
+        <span class="flex flex-col logo-text">
+          <span class="text-xl font-bold">GuillermoMedel</span>
+        </span>
+      </NuxtLink>
 
-        <client-only>
-            <button class="flex px-2 py-1 rounded-md" @click="toggleDark()">
-                <svg v-if="isDark"  class="h-8 w-8 mr-2 p-1" :class="isDark == 'light' ? 'active':''" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-                </svg>
-                <svg v-else class="h-8 w-8 p-1" :class="isDark ? 'active':''" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-                </svg>
-            </button>
-        </client-only>
-    </nav>
+      <!-- Navigation links aligned to right -->
+      <div class="flex items-center gap-6">
+        <nav class="items-center hidden gap-6 text-sm font-medium md:flex">
+          <!-- Always visible links -->
+          <NuxtLink 
+            v-for="link in mainLinks" 
+            :key="link.href" 
+            :to="link.href"
+            class="transition-colors text-foreground/60 hover:text-foreground/80"
+            active-class="font-medium text-foreground">
+            {{ link.label }}
+          </NuxtLink>
+          
+          <!-- Conditional auth links -->
+          <template v-if="!isAuthenticated">
+            <NuxtLink 
+              v-for="link in guestLinks" 
+              :key="link.href" 
+              :to="link.href"
+              class="transition-colors text-foreground/60 hover:text-foreground/80"
+              active-class="font-medium text-foreground">
+              {{ link.label }}
+            </NuxtLink>
+          </template>
+          
+          <template v-else>
+            <NuxtLink 
+              v-for="link in authLinks" 
+              :key="link.href" 
+              :to="link.href"
+              class="transition-colors text-foreground/60 hover:text-foreground/80"
+              active-class="font-medium text-foreground">
+              {{ link.label }}
+            </NuxtLink>
+          </template>
+        </nav>
+
+        <!-- Theme toggler and mobile menu button remain the same -->
+        <ClientOnly>
+          <button @click="toggleDark()" class="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800">
+            <svg v-if="isDark" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+            </svg>
+            <svg v-else class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+            </svg>
+          </button>
+        </ClientOnly>
+
+        <button @click="isMobileMenuOpen = !isMobileMenuOpen"
+          class="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 md:hidden">
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              :d="isMobileMenuOpen ? 'M6 18L18 6M6 6l12 12' : 'M4 6h16M4 12h16M4 18h16'" />
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Mobile menu dropdown -->
+    <Transition enter-active-class="transition duration-200 ease-out" enter-from-class="transform scale-95 opacity-0"
+      enter-to-class="transform scale-100 opacity-100" leave-active-class="transition duration-150 ease-in"
+      leave-from-class="transform scale-100 opacity-100" leave-to-class="transform scale-95 opacity-0">
+      <div v-if="isMobileMenuOpen" class="absolute w-full border-b shadow-md bg-background md:hidden">
+        <div class="container flex flex-col gap-1 px-4 py-3">
+          <!-- Always visible links -->
+          <NuxtLink 
+            v-for="link in mainLinks" 
+            :key="link.href" 
+            :to="link.href"
+            class="px-3 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800"
+            active-class="font-medium text-primary" 
+            @click="isMobileMenuOpen = false">
+            {{ link.label }}
+          </NuxtLink>
+          
+          <!-- Conditional auth links -->
+          <template v-if="!isAuthenticated">
+            <NuxtLink 
+              v-for="link in guestLinks" 
+              :key="link.href" 
+              :to="link.href"
+              class="px-3 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800"
+              active-class="font-medium text-primary" 
+              @click="isMobileMenuOpen = false">
+              {{ link.label }}
+            </NuxtLink>
+          </template>
+          
+          <template v-else>
+            <NuxtLink 
+              v-for="link in authLinks" 
+              :key="link.href" 
+              :to="link.href"
+              class="px-3 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800"
+              active-class="font-medium text-primary" 
+              @click="isMobileMenuOpen = false">
+              {{ link.label }}
+            </NuxtLink>
+          </template>
+        </div>
+      </div>
+    </Transition>
+  </header>
 </template>
 
 <script setup>
-const isDark = useDark();
-const toggleDark = useToggle(isDark);
+const isDark = useDark()
+const toggleDark = useToggle(isDark)
+const isMobileMenuOpen = ref(false)
+const auth = useAuth()
+
+const isAuthenticated = computed(() => auth.isAuthenticated)
+
+// Links that always show
+const mainLinks = [
+  { label: 'Portfolio', href: '#portfolio' },
+  { label: 'Skills', href: '#skills' },
+  { label: 'Blog', href: '#blogs' },
+  { label: 'Contact', href: '#contact' }
+]
+
+// Links for logged out users
+const guestLinks = [
+  { label: 'Sign In', href: '/login' },
+  { label: 'Sign Up', href: '/register' }
+]
+
+// Links for logged in users
+const authLinks = [
+  { label: 'Dashboard', href: '/dashboard' },
+  { label: 'Logout', href: '/logout' }
+]
 </script>
-
-<style lang="postcss" scoped>
-
-</style>
