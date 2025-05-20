@@ -2,7 +2,7 @@
   <containers-video
     id="contact"
     :img-src="BlockMe4"
-    video="https://videos.pexels.com/video-files/7872729/7872729-hd_720_1280_25fps.mp4"
+    video="https://videos.pexels.com/video-files/32106032/13687146_2560_1440_30fps.mp4"
     :title
     :description
   >

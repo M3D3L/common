@@ -1,226 +1,142 @@
-import usePocketBase from './usePocketbase';
-import { useToast } from 'vue-toastification';
+import usePocketBase from './usePocketbase'
+import { useRouter, useRoute } from '#app'
+import { onMounted } from 'vue'
 
 interface LoginCredentials {
-  email: string;
-  password: string;
+  email: string
+  password: string
 }
 
 interface RegisterCredentials {
-  email: string;
-  password: string;
-  passwordConfirm: string;
-  username?: string;
-  [key: string]: any; // Allow additional fields
+  email: string
+  password: string
+  passwordConfirm: string
+  username?: string
+  [key: string]: any
 }
 
 interface AuthUser {
-  id: string;
-  email: string;
-  username?: string;
-  [key: string]: any; // Flexible for additional user fields
+  id: string
+  email: string
+  username?: string
+  [key: string]: any
 }
 
 export default function useAuth() {
-  const pb = usePocketBase();
-  const router = useRouter();
-  const toast = useToast();
+  const pb = usePocketBase()
+  const router = useRouter()
+  const route = useRoute()
 
-  // Reactive state for the current user with generic type
-  const user = useState<AuthUser | null>('user', () => {
-    const model = pb.authStore.model;
-    return model ? {
+  // Initialize state with stored user if available
+  const user = useState<AuthUser | null>('auth:user', () => {
+    return pb.authStore.model ? getUserFromModel() : null
+  })
+  
+  const isAuthenticated = useState<boolean>('auth:isAuthenticated', () => {
+    return pb.authStore.isValid
+  })
+
+  // Load auth state from cookie when composable is initialized
+  onMounted(() => {
+    if (process.client) {
+      pb.authStore.loadFromCookie(document?.cookie || '')
+    }
+  })
+
+  function getUserFromModel(): AuthUser | null {
+    const model = pb.authStore.model
+    if (!model) return null
+
+    return {
       id: model.id,
       email: model.email,
       username: model.username,
       ...model
-    } : null;
-  });
+    }
+  }
 
-  /**
-   * Register a new user
-   */
+  // Set up auth store change listener
+  pb.authStore.onChange((token, model) => {
+    user.value = getUserFromModel()
+    isAuthenticated.value = pb.authStore.isValid
+    
+    // Update cookie when auth state changes
+    if (process.client) {
+      document.cookie = pb.authStore.exportToCookie({
+        httpOnly: false, // Set to true in production if using HTTPS
+        secure: process.env.NODE_ENV === 'production', // Secure in production
+        sameSite: 'lax',
+        path: '/'
+      })
+    }
+  }, true) // Trigger immediately
+
   async function register(credentials: RegisterCredentials): Promise<boolean> {
     try {
-      // Create the user record
-      await pb.collection('users').create(credentials);
-      
-      // Automatically log in after registration
-      await login({
-        email: credentials.email,
-        password: credentials.password
-      });
-      
-      toast.success('Registration successful!');
-      return true;
-    } catch (error: any) {
-      console.error('Registration error:', error);
-      toast.error(error.message || 'Registration failed');
-      return false;
+      await pb.collection('users').create(credentials)
+      return await login({ email: credentials.email, password: credentials.password })
+    } catch (error) {
+      console.error('Registration error:', error)
+      return false
     }
   }
 
-  /**
-   * Log in a user
-   */
   async function login(credentials: LoginCredentials): Promise<boolean> {
     try {
-      const { record } = await pb.collection('users').authWithPassword(
+      await pb.collection('users').authWithPassword(
         credentials.email,
         credentials.password
-      );
+      )
       
-      user.value = {
-        id: record.id,
-        email: record.email,
-        username: record.username,
-        ...record
-      };
-      toast.success('Login successful!');
-      return true;
-    } catch (error: any) {
-      console.error('Login error:', error);
-      toast.error(error.message || 'Login failed');
-      return false;
+      if (!pb.authStore.isValid) {
+        throw new Error('Authentication failed')
+      }
+      
+      return true
+    } catch (error) {
+      console.error('Login error:', error)
+      return false
     }
   }
 
-  /**
-   * Log in with OAuth provider
-   */
-  async function loginWithOAuth(provider: 'google' | 'github' | 'facebook' | 'discord') {
+  async function loginWithOAuth(provider: 'google' | 'github' | 'facebook' | 'discord'): Promise<boolean> {
     try {
-      const authData = await pb.collection('users').authWithOAuth2({ provider });
-      user.value = {
-        id: authData.record.id,
-        email: authData.record.email,
-        username: authData.record.username,
-        ...authData.record
-      };
-      toast.success(`Logged in with ${provider}`);
-      return true;
-    } catch (error: any) {
-      console.error('OAuth error:', error);
-      toast.error(`Failed to login with ${provider}`);
-      return false;
+      const authData = await pb.collection('users').authWithOAuth2({ provider })
+      
+      if (!pb.authStore.isValid) {
+        throw new Error('OAuth authentication failed')
+      }
+      
+      return true
+    } catch (error) {
+      console.error('OAuth login error:', error)
+      return false
     }
   }
 
-  /**
-   * Log out the current user
-   */
-  function logout(): void {
-    pb.authStore.clear();
-    user.value = null;
-    toast.success('Logged out successfully');
-    router.push('/login');
-  }
-
-  /**
-   * Send password reset email
-   */
-  async function requestPasswordReset(email: string): Promise<boolean> {
+  async function logout(): Promise<boolean> {
     try {
-      await pb.collection('users').requestPasswordReset(email);
-      toast.success('Password reset email sent');
-      return true;
-    } catch (error: any) {
-      console.error('Password reset error:', error);
-      toast.error(error.message || 'Failed to send reset email');
-      return false;
+      pb.authStore.clear()
+      if (process.client) {
+        // Clear the auth cookie
+        document.cookie = pb.authStore.exportToCookie({
+          expires: new Date(0), // Expire immediately
+          path: '/'
+        })
+      }
+      return true
+    } catch (error) {
+      console.error('Logout error:', error)
+      return false
     }
   }
-
-  /**
-   * Confirm password reset
-   */
-  async function confirmPasswordReset(
-    token: string,
-    newPassword: string,
-    confirmPassword: string
-  ): Promise<boolean> {
-    try {
-      await pb.collection('users').confirmPasswordReset(
-        token,
-        newPassword,
-        confirmPassword
-      );
-      toast.success('Password reset successful');
-      return true;
-    } catch (error: any) {
-      console.error('Password reset confirmation error:', error);
-      toast.error(error.message || 'Failed to reset password');
-      return false;
-    }
-  }
-
-  /**
-   * Verify user email
-   */
-  async function verifyEmail(token: string): Promise<boolean> {
-    try {
-      await pb.collection('users').confirmVerification(token);
-      toast.success('Email verified successfully');
-      return true;
-    } catch (error: any) {
-      console.error('Email verification error:', error);
-      toast.error(error.message || 'Failed to verify email');
-      return false;
-    }
-  }
-
-  /**
-   * Request email verification
-   */
-  async function requestEmailVerification(email: string): Promise<boolean> {
-    try {
-      await pb.collection('users').requestVerification(email);
-      toast.success('Verification email sent');
-      return true;
-    } catch (error: any) {
-      console.error('Verification request error:', error);
-      toast.error(error.message || 'Failed to send verification email');
-      return false;
-    }
-  }
-
-  /**
-   * Check if user is authenticated
-   */
-  const isAuthenticated = computed(() => pb.authStore.isValid);
-
-  /**
-   * Refresh auth state (useful when returning to the app)
-   */
-  function refreshAuthState(): void {
-    const model = pb.authStore.model;
-    user.value = model ? {
-      id: model.id,
-      email: model.email,
-      username: model.username,
-      ...model
-    } : null;
-  }
-
-  // Listen to auth store changes
-  pb.authStore.onChange(() => {
-    refreshAuthState();
-  }, true);
 
   return {
-    // State
     user,
     isAuthenticated,
-
-    // Actions
     register,
     login,
     loginWithOAuth,
-    logout,
-    requestPasswordReset,
-    confirmPasswordReset,
-    verifyEmail,
-    requestEmailVerification,
-    refreshAuthState,
-  };
+    logout
+  }
 }

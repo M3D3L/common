@@ -1,5 +1,5 @@
 <template>
-  <containers-video id="skills" video="https://videos.pexels.com/video-files/2235282/2235282-hd_1278_720_30fps.mp4" :img-src="BlockMe2" :title="content.title" class="min-h-[90vh] md:min-h-screen">
+  <containers-video id="skills" video="https://videos.pexels.com/video-files/32104595/13686289_2560_1440_30fps.mp4" :img-src="BlockMe2" :title="content.title" class="min-h-[90vh] md:min-h-screen">
     <template #video-container-content>
 
 

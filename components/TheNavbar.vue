@@ -1,51 +1,77 @@
+<script setup>
+import { Button } from '@/components/ui/button'
+const isDark = useDark()
+const toggleDark = useToggle(isDark)
+const isMobileMenuOpen = ref(false)
+const auth = useAuth()
+const route = useRoute()
+
+const getLoginHref = () => {
+  // Only add source if we're not on the home page
+  return route.path === '/' ? '/login' : `/login?source=${encodeURIComponent(route.path)}`
+}
+
+const getRegisterHref = () => {
+  // Only add source if we're not on the home page
+  return route.path === '/' ? '/register' : `/register?source=${encodeURIComponent(route.path)}`
+}
+
+// Links that always show
+const mainLinks = computed(() => {
+  const mainLinksArray = [
+    { label: 'Portfolio', href: '/#portfolio' },
+  ]
+
+  // check if on the home '/' page
+  if (route.path === '/') {
+    mainLinksArray.push(
+      { label: 'Skills', href: '#skills' },
+      { label: 'Blog', href: '#blogs' },
+      { label: 'Contact', href: '#contact' },
+    )
+  }
+
+  if (!auth.isAuthenticated.value) {
+    mainLinksArray.push(
+      { label: 'Join Now', href: getRegisterHref() },
+      { label: 'Sign in', href: getLoginHref() },
+    )
+  } else {
+    mainLinksArray.push(
+      { label: 'Dashboard', href: '/dashboard' },
+    )
+  }
+  return mainLinksArray
+})
+
+// watch for route changes to update the mobile menu state
+watch(route, () => {
+  isMobileMenuOpen.value = false
+})
+</script>
+
 <template>
   <header class="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-md">
     <div class="container flex items-center justify-between h-16 px-4">
-      <!-- Logo on left -->
       <NuxtLink to="/" class="flex items-center">
         <span class="flex flex-col logo-text">
           <span class="text-xl font-bold">GuillermoMedel</span>
         </span>
       </NuxtLink>
 
-      <!-- Navigation links aligned to right -->
       <div class="flex items-center gap-6">
         <nav class="items-center hidden gap-6 text-sm font-medium md:flex">
-          <!-- Always visible links -->
-          <NuxtLink 
-            v-for="link in mainLinks" 
-            :key="link.href" 
-            :to="link.href"
+          <NuxtLink v-for="link in mainLinks" :key="link.href" :to="link.href"
             class="transition-colors text-foreground/60 hover:text-foreground/80"
             active-class="font-medium text-foreground">
             {{ link.label }}
           </NuxtLink>
-          
-          <!-- Conditional auth links -->
-          <template v-if="!isAuthenticated">
-            <NuxtLink 
-              v-for="link in guestLinks" 
-              :key="link.href" 
-              :to="link.href"
-              class="transition-colors text-foreground/60 hover:text-foreground/80"
-              active-class="font-medium text-foreground">
-              {{ link.label }}
-            </NuxtLink>
-          </template>
-          
-          <template v-else>
-            <NuxtLink 
-              v-for="link in authLinks" 
-              :key="link.href" 
-              :to="link.href"
-              class="transition-colors text-foreground/60 hover:text-foreground/80"
-              active-class="font-medium text-foreground">
-              {{ link.label }}
-            </NuxtLink>
-          </template>
+
+          <Button v-if="auth.isAuthenticated.value" @click="auth.logout()" variant="default">
+            Logout
+          </Button>
         </nav>
 
-        <!-- Theme toggler and mobile menu button remain the same -->
         <ClientOnly>
           <button @click="toggleDark()" class="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800">
             <svg v-if="isDark" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -69,78 +95,18 @@
       </div>
     </div>
 
-    <!-- Mobile menu dropdown -->
     <Transition enter-active-class="transition duration-200 ease-out" enter-from-class="transform scale-95 opacity-0"
       enter-to-class="transform scale-100 opacity-100" leave-active-class="transition duration-150 ease-in"
       leave-from-class="transform scale-100 opacity-100" leave-to-class="transform scale-95 opacity-0">
       <div v-if="isMobileMenuOpen" class="absolute w-full border-b shadow-md bg-background md:hidden">
         <div class="container flex flex-col gap-1 px-4 py-3">
-          <!-- Always visible links -->
-          <NuxtLink 
-            v-for="link in mainLinks" 
-            :key="link.href" 
-            :to="link.href"
+          <NuxtLink v-for="link in mainLinks" :key="link.href" :to="link.href"
             class="px-3 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800"
-            active-class="font-medium text-primary" 
-            @click="isMobileMenuOpen = false">
+            active-class="font-medium text-primary" @click="isMobileMenuOpen = false">
             {{ link.label }}
           </NuxtLink>
-          
-          <!-- Conditional auth links -->
-          <template v-if="!isAuthenticated">
-            <NuxtLink 
-              v-for="link in guestLinks" 
-              :key="link.href" 
-              :to="link.href"
-              class="px-3 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800"
-              active-class="font-medium text-primary" 
-              @click="isMobileMenuOpen = false">
-              {{ link.label }}
-            </NuxtLink>
-          </template>
-          
-          <template v-else>
-            <NuxtLink 
-              v-for="link in authLinks" 
-              :key="link.href" 
-              :to="link.href"
-              class="px-3 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800"
-              active-class="font-medium text-primary" 
-              @click="isMobileMenuOpen = false">
-              {{ link.label }}
-            </NuxtLink>
-          </template>
         </div>
       </div>
     </Transition>
   </header>
 </template>
-
-<script setup>
-const isDark = useDark()
-const toggleDark = useToggle(isDark)
-const isMobileMenuOpen = ref(false)
-const auth = useAuth()
-
-const isAuthenticated = computed(() => auth.isAuthenticated)
-
-// Links that always show
-const mainLinks = [
-  { label: 'Portfolio', href: '#portfolio' },
-  { label: 'Skills', href: '#skills' },
-  { label: 'Blog', href: '#blogs' },
-  { label: 'Contact', href: '#contact' }
-]
-
-// Links for logged out users
-const guestLinks = [
-  { label: 'Sign In', href: '/login' },
-  { label: 'Sign Up', href: '/register' }
-]
-
-// Links for logged in users
-const authLinks = [
-  { label: 'Dashboard', href: '/dashboard' },
-  { label: 'Logout', href: '/logout' }
-]
-</script>

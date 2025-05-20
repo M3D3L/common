@@ -84,12 +84,6 @@
     }
   }
 
-  const auth = useAuth()
-
-  const isAuthenticated = async () => {
-    return await auth.isAuthenticated()
-  }
-
   
   </script>
   

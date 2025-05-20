@@ -93,7 +93,7 @@
                     </div>
                   </div>
 
-                  <div v-if="!isRegister" class="flex items-center justify-between">
+                  <!-- <div v-if="!isRegister" class="flex items-center justify-between">
                     <div class="flex items-center space-x-2">
                       <Checkbox id="remember" v-model="form.remember" />
                       <Label for="remember">Remember me</Label>
@@ -102,9 +102,9 @@
                       @click="handleForgotPassword">
                       Forgot password?
                     </button>
-                  </div>
+                  </div> -->
 
-                  <Button type="submit" class="w-full" :disabled="isSubmitting">
+                  <Button type="submit" class="w-full">
                     <span v-if="isSubmitting" class="flex items-center">
                       <Loader2 class="w-4 h-4 mr-2 animate-spin" />
                       Processing...
@@ -146,6 +146,12 @@ const showSuccess = ref(false)
 
 const route = useRoute()
 const router = useRouter()
+
+// Extract the source URL from the query parameters
+const sourceUrl = computed(() => {
+  const source = route.query.source
+  return source ? String(source) : '/'
+})
 
 const activeTab = computed(() => isRegister.value ? 'register' : 'login')
 
@@ -294,7 +300,9 @@ const handleSubmit = async () => {
       })
 
       if (success) {
-        await router.push('/')
+        sourceUrl.value === '/' ? await router.push('/') : await router.push(sourceUrl.value);
+      } else {
+        errors.email = 'Invalid email or password'
       }
     }
   } catch (error: any) {
@@ -338,4 +346,5 @@ const handleForgotPassword = async () => {
     isSubmitting.value = false
   }
 }
+
 </script>

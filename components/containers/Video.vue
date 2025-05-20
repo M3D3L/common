@@ -9,14 +9,14 @@
       backgroundImage: isVideoActive ? 'none' : 'url(' + video + ')',
       backgroundSize: 'cover',
       backgroundPosition: 'center'
-    }" :aria-hidden="!isVideoActive" :aria-live="isVideoActive ? 'polite' : 'off'" :aria-atomic="true">
+    }" :aria-live="isVideoActive ? 'polite' : 'off'">
 
     <client-only>
       <!-- Scroll Video Container -->
       <div class="absolute inset-0 z-0 overflow-hidden">
         <motion.div class="w-full h-full will-change-transform" :initial="{ y: 200, opacity: 0 }"
           :animate="videoControls" :viewport="{ amount: 0.4, once: false }">
-          <video ref="videoRef" loading="lazy" muted loop playsinline aria-hidden="true" role="presentation"
+          <video ref="videoRef" loading="lazy" muted loop playsinline role="presentation"
             class="object-cover w-full h-full transition-opacity duration-500" :src="video"
             :class="{ 'opacity-0': !isVideoActive }" />
           <div class="absolute inset-0 transition-opacity duration-500 bg-black/40"
@@ -31,8 +31,7 @@
     </span>
     <!-- Hero Content -->
 
-    <motion.div class="z-10 w-full px-4 mx-auto lg:container rounded-2xl" initial="hidden" whileInView="visible"
-      viewport={{ once: true, amount: 0.2 }} :variants="{
+    <motion.div class="z-10 w-full px-4 mx-auto lg:container rounded-2xl" initial="hidden" whileInView="visible" :variants="{
         hidden: { opacity: 0 },
         visible: {
           opacity: 1,

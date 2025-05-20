@@ -63,7 +63,7 @@ export default function usePosts() {
 
     try {
       const post = await pb.collection('posts').getFirstListItem(`slug = "${slug}"`, {
-        expand: 'author,comments(post).author'
+        expand: 'author,comments_via_post.author'
       })
       set(cacheKey, post)
       return post

@@ -56,9 +56,6 @@
                                         <span class="relative z-10">
                                             {{ button.title }}
                                         </span>
-                                        <!-- <span
-                                            class="absolute inset-0 transition-opacity duration-300 opacity-0 bg-gradient-to-r from-primary to-primary/50 group-hover:opacity-100"
-                                            aria-hidden="true" /> -->
                                     </Button>
                                 </motion.div>
                             </CardContent>
@@ -134,33 +131,6 @@ const props = defineProps({
         default: () => [
             { title: 'Get Started', link: '/docs' },
             { title: 'Components', link: '/components' }
-        ]
-    },
-    cards: {
-        type: Array,
-        default: () => [
-            {
-                title: 'Components',
-                description: 'Beautifully designed components built with Radix Vue and Tailwind CSS.',
-                footer: true,
-                button: 'Explore'
-            },
-            {
-                title: 'Customizable',
-                description: 'Easily customize colors, spacing, shadows, and more with Tailwind.',
-                footer: true,
-                button: 'Learn'
-            },
-            {
-                title: 'Accessible',
-                description: 'All components are built with accessibility in mind.',
-                footer: false
-            },
-            {
-                title: 'Dark Mode',
-                description: 'Automatic dark mode support with a beautiful design system.',
-                footer: false
-            }
         ]
     },
 })
