@@ -10,7 +10,6 @@
       <motion.div
         initial="hidden"
         whileInView="visible"
-        viewport="{ once: true, amount: 0.2 }"
         :variants="containerVariants"
         class="w-full mx-auto space-y-4 md:space-y-8"
       >

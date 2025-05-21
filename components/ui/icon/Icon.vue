@@ -4,7 +4,6 @@ import { icons } from "lucide-vue-next";
 const props = defineProps({
   name: {
     type: String,
-    required: true,
     validator: (value: string) => {
       return Object.keys(icons).includes(value);
     },

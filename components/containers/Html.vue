@@ -11,11 +11,9 @@
 const props = defineProps({
   content: {
     type: String,
-    required: true,
   },
   useProse: {
     type: Boolean,
-    default: true,
   }
 });
 

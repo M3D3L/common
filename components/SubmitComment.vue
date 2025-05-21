@@ -174,12 +174,10 @@ interface Comment {
 const props = defineProps({
   post: {
     type: Array as () => Comment[],
-    required: true,
     default: () => [],
   },
   id: {
     type: String,
-    required: true,
   },
 });
 

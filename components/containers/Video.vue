@@ -87,7 +87,6 @@ import { motion } from 'motion-v'
 const props = defineProps({
   video: {
     type: String,
-    required: true,
   },
   title: {
     type: String,

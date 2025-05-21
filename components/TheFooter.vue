@@ -55,8 +55,7 @@ import usePocketBaseCore from '@/composables/usePocketBaseCore';
 
 const props = defineProps({
   footerData: {
-    type: Object,
-    required: true,
+    type: Object
   },
 })
 
