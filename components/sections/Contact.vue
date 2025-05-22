@@ -81,7 +81,7 @@
                 <div class="pt-4">
                   <h3 class="text-lg font-bold">Follow Me</h3>
                   <div class="flex gap-4 mt-3">
-                    <Button variant="outline" size="icon">
+                    <Button @click="()=>{}" variant="outline" size="icon">
                       <nuxt-link
                         to="https://www.linkedin.com/in/guillermo-medel-9a4465151/"
                         target="_blank"
@@ -89,12 +89,17 @@
                         <Linkedin class="w-4 h-4" />
                       </nuxt-link>
                     </Button>
-                    <Button variant="outline" size="icon">
-                      <Github class="w-4 h-4" />
+                    <Button @click="()=>{}" variant="outline" size="icon">
+                      <nuxt-link
+                        to="https://github.com/M3D3L"
+                        target="_blank"
+                      >
+                        <Github class="w-4 h-4" />
+                      </nuxt-link>
                     </Button>
-                    <Button variant="outline" size="icon">
+                    <!-- <Button variant="outline" size="icon">
                       <Instagram class="w-4 h-4" />
-                    </Button>
+                    </Button> -->
                   </div>
                 </div>
               </div>

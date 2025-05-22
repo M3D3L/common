@@ -5,10 +5,13 @@
       <ClientOnly>
         <div class="flex items-center justify-center w-full h-full p-4 mx-auto md:max-w-3xl">
           <div class="w-full">
-            <Card class="-mt-32 transition-all duration-300 shadow-lg bg-background/90 backdrop-blur-sm border-border/50">
+            <Card
+              class="-mt-32 transition-all duration-300 shadow-lg bg-background/90 backdrop-blur-sm border-border/50">
               <CardContent class="p-6">
                 <div class="flex justify-center mb-6">
-                  Logo
+                  <span class="flex flex-col logo-text">
+                    <span class="text-xl font-bold">GuillermoMedel</span>
+                  </span>
                 </div>
 
                 <div class="flex justify-center mb-6">

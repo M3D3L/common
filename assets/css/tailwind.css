@@ -138,7 +138,7 @@
   }
 
   pre {
-    @apply !bg-foreground/50 !text-foreground;
+    @apply !bg-foreground/30 !text-foreground;
   }
 
   code {

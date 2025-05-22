@@ -18,10 +18,8 @@ interface FooterData {
 
 export const footerData: FooterData = {
   socialLinks: [
-    { icon: TwitterLogoIcon, label: 'Twitter', href: '#' },
-    { icon: GithubLogoIcon, label: 'GitHub', href: '#' },
-    { icon: LinkedinLogoIcon, label: 'LinkedIn', href: '#' },
-    { icon: DiscordLogoIcon, label: 'Discord', href: '#' },
+    { icon: LinkedinLogoIcon, label: 'LinkedIn', href: 'https://www.linkedin.com/in/guillermo-medel-9a4465151/' },
+    { icon: GithubLogoIcon, label: 'GitHub', href: 'https://github.com/M3D3L' },
   ],
   footerColumns: [
     {

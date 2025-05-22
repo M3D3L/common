@@ -6,9 +6,6 @@
       <div class="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-4">
         <!-- Brand Column -->
         <div class="flex flex-col items-center gap-4 lg:items-start">
-          <div class="flex items-center gap-2">
-            <MiscLogo />
-          </div>
           <p class="text-sm text-muted-foreground">
             Building the future with innovative solutions.
           </p>
