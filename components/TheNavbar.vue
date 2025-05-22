@@ -68,7 +68,7 @@ watch(route, () => {
           </NuxtLink>
         </nav>
 
-        <Button v-if="auth.isAuthenticated.value" class="text-xs md:text-base" @click="auth.logout()" variant="default">
+        <Button v-if="auth.isAuthenticated.value" class="text-xs md:text-sm" @click="auth.logout()" variant="default">
           Logout
         </Button>
 

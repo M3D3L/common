@@ -1,9 +1,11 @@
 import PocketBase from 'pocketbase';
 
 export default function usePocketBase() {
-    // Use environment variable for the PocketBase URL
+    // Get runtime configuration
     const config = useRuntimeConfig();
-    const pb = new PocketBase('http://127.0.0.1:8090');
+    
+    // Create PocketBase instance using the URL from runtime config
+    const pb = new PocketBase(config.public.pocketbaseUrl);
 
     // Optional: Add auto-refresh for expired auth tokens
     // pb.autoCancellation(false);

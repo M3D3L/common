@@ -30,7 +30,7 @@
                                 <div
                                     class="relative w-full h-full p-0 overflow-hidden border-b rounded-t-lg border-muted md:rounded-lg aspect-video md:w-1/3">
                                     <NuxtLink :to="getPostLink(post)" class="w-full h-full bg-blue-500">
-                                        <img :src="`http://127.0.0.1:8090/api/files/${props.content.items?.[index].collectionId}/${props.content.items?.[index].id}/${props.content.items?.[index].cover_image}?token=`"
+                                        <img :src="`${config.public.pocketbaseUrl}api/files/${props.content.items?.[index].collectionId}/${props.content.items?.[index].id}/${props.content.items?.[index].cover_image}?token=`"
                                             :alt="post.title" width="600" loading="lazy"
                                             class="object-cover w-full h-full transition-transform duration-500" />
                                     </NuxtLink>
@@ -81,6 +81,8 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { formatDate } from '@/composables/blogHelpers'
 import BlockMe5 from '/images/block-me-5.png'
+
+const config = useRuntimeConfig()
 
 const placeholderImage = 'https://images.pexels.com/photos/3184287/pexels-photo-3184287.jpeg?auto=compress&cs=tinysrgb&w=1280'
 

@@ -81,7 +81,7 @@
                      class="prose prose-lg dark:prose-invert max-w-none prose-headings:font-bold prose-headings:scroll-mt-24 prose-a:text-primary hover:prose-a:text-primary/80 prose-img:rounded-lg prose-img:border prose-img:border-muted prose-blockquote:border-l-primary prose-blockquote:text-muted-foreground prose-pre:bg-muted prose-pre:rounded-lg">
                      <h1 class="text-3xl font-bold md:text-4xl lg:text-5xl">{{ post.title }}</h1>
                      <img v-if="post.cover_image"
-                        :src="`http://127.0.0.1:8090/api/files/${post.collectionId}/${post.id}/${post.cover_image}?token=`"
+                        :src="`${config.public.pocketbaseUrl}/api/files/${post.collectionId}/${post.id}/${post.cover_image}?token=`"
                         :alt="post.title" width="600" height="338" loading="lazy"
                         class="object-cover w-full h-full transition-transform duration-500 rounded-lg" />
                      <p v-html="post.description" class="text-xl text-muted-foreground"></p>
@@ -179,6 +179,8 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { formatDate } from '@/composables/blogHelpers'
 import type { RecordModel } from 'pocketbase'
+
+const config = useRuntimeConfig()
 
 const { fetchPostBySlug, fetchPosts } = usePosts();
 const route = useRoute()

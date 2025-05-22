@@ -14,7 +14,7 @@
               <Avatar>
                 <AvatarImage
                   v-if="comment.expand?.author?.avatar"
-                  :src="`http://127.0.0.1:8090/api/files/${comment.expand?.author?.collectionId}/${comment.expand?.author?.id}/${comment.expand?.author?.avatar}?token=`"
+                  :src="`${config.public.pocketbaseUrl}api/files/${comment.expand?.author?.collectionId}/${comment.expand?.author?.id}/${comment.expand?.author?.avatar}?token=`"
                   :alt="comment.expand?.author?.username || 'Anonymous'"
                   :width="comment.parentCommentId ? 30 : 40"
                   :height="comment.parentCommentId ? 30 : 40"
@@ -147,6 +147,8 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
+
+const config = useRuntimeConfig()
 
 interface Author {
   id: string;
