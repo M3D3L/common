@@ -66,11 +66,11 @@ watch(route, () => {
             active-class="font-medium text-foreground">
             {{ link.label }}
           </NuxtLink>
-
-          <Button v-if="auth.isAuthenticated.value" @click="auth.logout()" variant="default">
-            Logout
-          </Button>
         </nav>
+
+        <Button v-if="auth.isAuthenticated.value" class="text-xs md:text-base" @click="auth.logout()" variant="default">
+          Logout
+        </Button>
 
         <!-- Dark/Light Mode toggle. Disabling until I work on light mode styles -->
         <!-- <ClientOnly>
@@ -85,10 +85,6 @@ watch(route, () => {
             </svg>
           </button>
         </ClientOnly> -->
-
-        <Button v-if="auth.isAuthenticated.value" @click="auth.logout()" variant="default" class="px-3 text-xs md:hidden">
-            Logout
-        </Button>
 
         <button @click="isMobileMenuOpen = !isMobileMenuOpen"
           class="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 md:hidden">
