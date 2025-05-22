@@ -72,7 +72,8 @@ watch(route, () => {
           </Button>
         </nav>
 
-        <ClientOnly>
+        <!-- Dark/Light Mode toggle. Disabling until I work on light mode styles -->
+        <!-- <ClientOnly>
           <button @click="toggleDark()" class="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800">
             <svg v-if="isDark" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -83,7 +84,11 @@ watch(route, () => {
                 d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
             </svg>
           </button>
-        </ClientOnly>
+        </ClientOnly> -->
+
+        <Button v-if="auth.isAuthenticated.value" @click="auth.logout()" variant="default" class="px-3 text-xs md:hidden">
+            Logout
+        </Button>
 
         <button @click="isMobileMenuOpen = !isMobileMenuOpen"
           class="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 md:hidden">
