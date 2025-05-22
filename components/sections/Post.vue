@@ -81,7 +81,7 @@
                      class="prose prose-lg dark:prose-invert max-w-none prose-headings:font-bold prose-headings:scroll-mt-24 prose-a:text-primary hover:prose-a:text-primary/80 prose-img:rounded-lg prose-img:border prose-img:border-muted prose-blockquote:border-l-primary prose-blockquote:text-muted-foreground prose-pre:bg-muted prose-pre:rounded-lg">
                      <h1 class="text-3xl font-bold md:text-4xl lg:text-5xl">{{ post.title }}</h1>
                      <img v-if="post.cover_image"
-                        :src="`${config.public.pocketbaseUrl}/api/files/${post.collectionId}/${post.id}/${post.cover_image}?token=`"
+                        :src="`${config.public.pocketbaseUrl}api/files/${post.collectionId}/${post.id}/${post.cover_image}?token=`"
                         :alt="post.title" width="600" height="338" loading="lazy"
                         class="object-cover w-full h-full transition-transform duration-500 rounded-lg" />
                      <p v-html="post.description" class="text-xl text-muted-foreground"></p>
@@ -105,7 +105,7 @@
                      <div class="flex items-center gap-4">
                         <Avatar class="border border-muted">
                            <AvatarImage v-if="post.expand.author.avatar"
-                              :src="`/api/files/${post.expand.author.collectionId}/${post.expand.author.id}/${post.expand.author.avatar}`"
+                              :src="`${config.public.pocketbaseUrl}aapi/files/${post.expand.author.collectionId}/${post.expand.author.id}/${post.expand.author.avatar}`"
                               :alt="post.expand.author.username" width="64" height="64" />
                            <AvatarFallback>{{ getInitials(post.expand.author.username) }}</AvatarFallback>
                         </Avatar>

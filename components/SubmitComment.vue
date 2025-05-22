@@ -135,8 +135,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, defineProps, defineEmits, computed } from 'vue';
-import { formatDate } from '@/composables/blogHelpers';
+// import { formatDate } from '@/composables/blogHelpers';
 import useComments from '@/composables/useComments';
 import useAuth from '@/composables/useAuth';
 import { Pencil, Trash2 } from 'lucide-vue-next';

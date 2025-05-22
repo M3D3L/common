@@ -17,7 +17,7 @@
                                         </span>
                                     </div>
                                     <h3 class="text-lg font-bold">
-                                        <NuxtLink :to="getPostLink(post)" class="transition-colors hover:text-primary">
+                                        <NuxtLink :to="`/blog${post.slug}`" class="transition-colors hover:text-primary">
                                             {{ post.title }}
                                         </NuxtLink>
                                     </h3>
@@ -26,10 +26,9 @@
                                     </p>
                                 </div>
 
-
                                 <div
                                     class="relative w-full h-full p-0 overflow-hidden border-b rounded-t-lg border-muted md:rounded-lg aspect-video md:w-1/3">
-                                    <NuxtLink :to="getPostLink(post)" class="w-full h-full bg-blue-500">
+                                    <NuxtLink :to="`/blog${post.slug}`" class="w-full h-full bg-blue-500">
                                         <img :src="`${config.public.pocketbaseUrl}api/files/${props.content.items?.[index].collectionId}/${props.content.items?.[index].id}/${props.content.items?.[index].cover_image}?token=`"
                                             :alt="post.title" width="600" loading="lazy"
                                             class="object-cover w-full h-full transition-transform duration-500" />
