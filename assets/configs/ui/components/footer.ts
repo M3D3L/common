@@ -42,8 +42,8 @@ export const footerData: FooterData = {
     // },
   ],
   bottomLinks: [
-    { label: 'Privacy Policy', href: '#' },
-    { label: 'Terms of Service', href: '#' },
-    { label: 'Cookies', href: '#' },
+    // { label: 'Privacy Policy', href: '#' },
+    // { label: 'Terms of Service', href: '#' },
+    // { label: 'Cookies', href: '#' },
   ],
 }

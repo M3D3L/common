@@ -4,15 +4,14 @@
 
 
       <div class="flex flex-col w-full gap-8 md:flex-row">
-        <!-- Visual Skill Indicators -->
         <motion.div class="w-full" :variants="{
           hidden: { opacity: 0 },
           visible: {
             opacity: 1,
             transition: {
-              duration: 0.8,
+              duration: 0.4,
               ease: [0.16, 1, 0.3, 1],
-              delay: 0.5
+              delay: 0.2
             }
           }
         }">
@@ -27,8 +26,8 @@
                 <motion.div v-for="(skill, index) in content.skills" :key="'visual-' + index"
                   class="flex flex-row items-center gap-4 transition-all rounded-lg md:p-4 group"
                   :initial="{ opacity: 0, x: 0 }" :whileInView="{ opacity: 1, x: 0 }" :transition="{
-                    duration: 0.6,
-                    delay: 0.1 * index,
+                    duration: 0.3,
+                    delay: 0.05 * index,
                     ease: 'easeOut'
                   }">
                   <div>
@@ -41,15 +40,15 @@
                     </div>
                     <motion.div class="h-2 overflow-hidden rounded-full bg-muted" :initial="{ width: 0 }"
                       :whileInView="{ width: '100%' }" :viewport="{ once: true }" :transition="{
-                        duration: 0.5,
-                        delay: 0.2 + (index * 0.1),
+                        duration: 0.25,
+                        delay: 0.1 + (index * 0.05),
                         ease: 'easeInOut'
                       }">
                       <motion.div class="h-full bg-gradient-to-r from-primary to-primary/60" :initial="{ width: 0 }"
                         :whileInView="{ width: getProficiencyWidth(skill.proficiency) }" :viewport="{ once: true }"
                         :transition="{
-                          duration: 0.5,
-                          delay: 0.3 + (index * 0.1),
+                          duration: 0.25,
+                          delay: 0.15 + (index * 0.05),
                           ease: 'easeInOut'
                         }" />
                     </motion.div>
