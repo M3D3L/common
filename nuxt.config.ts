@@ -3,14 +3,6 @@ export default defineNuxtConfig({
   compatibilityDate: '2024-04-03',
   app: {
     baseURL: process.env.NUXT_APP_BASE_URL,
-    head: {
-      meta: [
-        {
-          name: 'Content-Security-Policy',
-          content: "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self'; font-src 'self' https://m3del.github.io https://guillermomedel.com data:; connect-src 'self' ${process.env.POCKETBASE_URL ? process.env.POCKETBASE_URL : ''}; frame-src 'self';"
-        }
-      ]
-    }
   },
   devtools: { enabled: true },
   modules: [
@@ -43,7 +35,4 @@ export default defineNuxtConfig({
   },
   // Target static for GitHub Pages
   ssr: false,
-  nitro: {
-    preset: 'github-pages'
-  }
 })
