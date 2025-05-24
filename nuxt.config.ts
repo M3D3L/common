@@ -7,7 +7,7 @@ export default defineNuxtConfig({
       meta: [
         {
           name: 'Content-Security-Policy',
-          content: "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self'; font-src 'self' https://m3del.github.io; connect-src 'self' ${process.env.POCKETBASE_URL ? process.env.POCKETBASE_URL : ''}; frame-src 'self';"
+          content: "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self'; font-src 'self' https://m3del.github.io https://guillermomedel.com data:; connect-src 'self' ${process.env.POCKETBASE_URL ? process.env.POCKETBASE_URL : ''}; frame-src 'self';"
         }
       ]
     }
