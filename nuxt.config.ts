@@ -35,8 +35,4 @@ export default defineNuxtConfig({
   },
   // Target static for GitHub Pages
   ssr: false,
-<<<<<<< HEAD
 })
-=======
-})
->>>>>>> 040b803 (set updated yaml)
