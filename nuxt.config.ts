@@ -1,6 +1,9 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   compatibilityDate: '2024-04-03',
+  app: {
+    baseURL: process.env.NUXT_APP_BASE_URL || '/portfolio2025/',
+  },
   devtools: { enabled: true },
   modules: [
     '@nuxt/image',
@@ -27,7 +30,12 @@ export default defineNuxtConfig({
   },
   runtimeConfig: {
     public: {
-      pocketbaseUrl: process.env.POCKETBASE_URL || 'http://64.23.150.184/'
+      pocketbaseUrl: process.env.POCKETBASE_URL
     }
+  },
+  // Target static for GitHub Pages
+  ssr: false,
+  nitro: {
+    preset: 'github-pages'
   }
 })
