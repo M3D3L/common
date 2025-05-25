@@ -12,7 +12,8 @@ export default defineNuxtConfig({
     buildAssetsDir: '/_nuxt/'
   },
 
-  ssr: false, // ✅ Required for full static output
+  // ✅ Required for full static output
+  ssr: false,
 
   devtools: { enabled: true },
 
