@@ -26,7 +26,6 @@ jobs:
         NUXT_APP_BASE_URL: ${{ secrets.BASE_URL }}
         POCKETBASE_URL: ${{ secrets.POCKETBASE_URL }}
       run: |
-        echo "Using base URL: $BASE_URL"
         npm ci
         npm run generate
 
