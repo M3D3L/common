@@ -8,7 +8,7 @@ export default defineNuxtConfig({
 
   // ✅ Correct base URL for GitHub Pages or subdirectory hosting
   app: {
-    baseURL: process.env.NODE_ENV === 'production' ? process.env.NUXT_APP_BASE_URL : '/',
+    baseURL: process.env.NUXT_APP_BASE_URL || '/',
     buildAssetsDir: '/_nuxt/'
   },
 

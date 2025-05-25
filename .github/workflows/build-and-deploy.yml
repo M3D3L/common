@@ -24,7 +24,6 @@ jobs:
       env:
         # Using variables (non-sensitive) and secrets (sensitive)
         NUXT_APP_BASE_URL: ${{ vars.BASE_URL || '/portfolio2025/' }}
-        NODE_ENV: ${{ vars.NODE_ENV || 'production' }}
         POCKETBASE_URL: ${{ secrets.POCKETBASE_URL }}
       run: |
         echo "Using base URL: $NUXT_APP_BASE_URL"
