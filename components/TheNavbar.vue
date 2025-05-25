@@ -36,10 +36,6 @@ const mainLinks = computed(() => {
       { label: 'Join Now', href: getRegisterHref() },
       { label: 'Sign in', href: getLoginHref() },
     )
-  } else {
-    mainLinksArray.push(
-      { label: 'Dashboard', href: '/dashboard' },
-    )
   }
   return mainLinksArray
 })
