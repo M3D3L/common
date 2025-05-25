@@ -1,10 +1,21 @@
-// https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   compatibilityDate: '2024-04-03',
-  app: {
-    baseURL: process.env.NUXT_APP_BASE_URL || '/portfolio2025/',
+
+  // ✅ Tells Nitro to use static output (generates /dist/public)
+  nitro: {
+    preset: 'static',
   },
+
+  // ✅ Correct base URL for GitHub Pages or subdirectory hosting
+  app: {
+    baseURL: process.env.NODE_ENV === 'production' ? process.env.NUXT_APP_BASE_URL : '/',
+    buildAssetsDir: '/_nuxt/'
+  },
+
+  ssr: false, // ✅ Required for full static output
+
   devtools: { enabled: true },
+
   modules: [
     '@nuxt/image',
     '@pinia/nuxt',
@@ -13,26 +24,19 @@ export default defineNuxtConfig({
     'shadcn-nuxt',
     'motion-v/nuxt',
   ],
+
   shadcn: {
-    /**
-     * Prefix for all the imported component
-     */
     prefix: '',
-    /**
-     * Directory that the component lives in.
-     * @default "./components/ui"
-     */
-    componentDir: './components/ui'
+    componentDir: './components/ui',
   },
+
   build: {
-    // Needed for Framer Motion
-    transpile: ['vueuc']
+    transpile: ['vueuc'], // ✅ Needed for Framer Motion
   },
+
   runtimeConfig: {
     public: {
-      pocketbaseUrl: process.env.POCKETBASE_URL
-    }
+      pocketbaseUrl: process.env.POCKETBASE_URL,
+    },
   },
-  // Target static for GitHub Pages
-  ssr: false,
-})
+});

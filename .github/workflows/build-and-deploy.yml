@@ -1,5 +1,5 @@
 name: Build and Deploy
-on: 
+on:
   push:
     branches:
       - main
@@ -9,26 +9,36 @@ jobs:
   build-and-deploy:
     concurrency: ci-${{ github.ref }}
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        node-version: [18]
+    environment: production  # Optional but recommended for secrets protection
     steps:
     - name: Checkout 🛎️
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4  # Updated to v4
 
-    - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v3
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
       with:
-        node-version: ${{ matrix.node-version }}
+        node-version: 20  # Recommended LTS version
+        cache: 'npm'
 
     - name: Install & Generate 🔧
+      env:
+        # Using variables (non-sensitive) and secrets (sensitive)
+        NUXT_APP_BASE_URL: ${{ vars.BASE_URL || '/portfolio2025/' }}
+        NODE_ENV: ${{ vars.NODE_ENV || 'production' }}
+        POCKETBASE_URL: ${{ secrets.POCKETBASE_URL }}
       run: |
+        echo "Using base URL: $NUXT_APP_BASE_URL"
         npm ci
         npm run generate
-      env:
-        NUXT_APP_BASE_URL: ${{ vars.NUXT_APP_BASE_URL  }}
+
+    - name: Verify Build Output
+      run: |
+        [ -d .output/public ] || { echo "ERROR: Build output missing"; exit 1; }
+        touch .output/public/.nojekyll  # Create required file for GitHub Pages
 
     - name: Deploy 🚀
       uses: JamesIves/github-pages-deploy-action@v4
       with:
-        folder: dist
+        folder: .output/public  # Correct Nuxt 3 output directory
+        branch: gh-pages
+        clean: true

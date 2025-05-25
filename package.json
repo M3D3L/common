@@ -6,7 +6,8 @@
     "build": "nuxt build",
     "dev": "nuxt dev",
     "generate": "nuxt generate",
-    "preview": "nuxt preview",
+    "preview": "nuxt generate && vite preview --outDir .output/public",
+    "preview:prod": "NODE_ENV=production nuxt generate && vite preview --outDir .output/public --base /portfolio2025/",
     "postinstall": "nuxt prepare"
   },
   "dependencies": {
