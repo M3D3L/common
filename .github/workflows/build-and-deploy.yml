@@ -9,7 +9,6 @@ jobs:
   build-and-deploy:
     concurrency: ci-${{ github.ref }}
     runs-on: ubuntu-latest
-    environment: production  # Optional but recommended for secrets protection
     steps:
     - name: Checkout 🛎️
       uses: actions/checkout@v4  # Updated to v4
