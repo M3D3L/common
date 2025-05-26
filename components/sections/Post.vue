@@ -1,5 +1,6 @@
 <template>
    <article class="min-h-[90vh] md:min-h-screen relative z-10 flex items-center w-full h-full pb-24">
+      <Seo :seoData="computedSeoData" />
       <motion.div class="w-full max-w-4xl mx-auto" initial="hidden" whileInView="visible"
          viewport="{ once: true, amount: 0.2 }" :variants="{
             hidden: { opacity: 0 },
@@ -179,6 +180,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { formatDate } from '@/composables/blogHelpers'
 import type { RecordModel } from 'pocketbase'
+import { createSeoObject } from '@/composables/createSeoObject';
 
 const config = useRuntimeConfig()
 
@@ -274,4 +276,11 @@ const refresh = async () => {
       console.error('Error fetching post:', error)
    }
 }
+
+const computedSeoData = computed(() => {
+  return createSeoObject({
+    title: post.title || 'Blog Post',
+    summary: post.description || 'A detailed blog post',
+  })
+});
 </script>
