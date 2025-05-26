@@ -278,9 +278,16 @@ const refresh = async () => {
 }
 
 const computedSeoData = computed(() => {
+   if(!post.value) {
+      return createSeoObject({
+         title: 'Blog Post',
+         summary: 'A detailed blog post',
+      })
+   }
+
   return createSeoObject({
-    title: post.title || 'Blog Post',
-    summary: post.description || 'A detailed blog post',
+    title: post.value?.title,
+    summary: post.value?.description
   })
 });
 </script>
