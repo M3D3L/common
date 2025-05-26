@@ -32,12 +32,12 @@ export default defineNuxtConfig({
   },
 
   build: {
-    transpile: ['vueuc'], // ✅ Needed for Framer Motion
+    transpile: ['vueuc'],
   },
 
   runtimeConfig: {
     public: {
-      pocketbaseUrl: process.env.POCKETBASE_URL,
+      pocketbaseUrl: process.env.POCKETBASE_URL || 'http://64.23.150.184/',
     },
   },
 });
