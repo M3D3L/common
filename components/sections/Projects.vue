@@ -40,9 +40,9 @@
                 <CardContent class="p-6 lg:p-8">
                   <div class="flex flex-col h-full">
                     <div>
-                      <h3 class="text-xl font-bold">{{ project.title }}</h3>
+                      <h3 class="text-xl font-bold h-14">{{ project.title }}</h3>
                       <p class="mt-2 text-sm text-muted-foreground">{{ project.client }}</p>
-                      <p class="mt-3 text-sm">{{ project.description }}</p>
+                      <p class="h-20 mt-3 text-sm">{{ project.description }}</p>
                     </div>
                     <div class="mt-6">
                       <div v-if="project?.tech" class="flex flex-wrap gap-2 mt-auto">
