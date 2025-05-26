@@ -74,7 +74,7 @@ onMounted(async () => {
       title: 'Recent Posts',
       links: firstThree.map((post) => ({
         label: post.title,
-        href: `/blog/${post.slug}`,
+        href: `/blog${post.slug}`,
       })),
     });
 
@@ -84,7 +84,7 @@ onMounted(async () => {
         title: 'More',
         links: lastTwo.map((post) => ({
           label: post.title,
-          href: `/blog/${post.slug}`,
+          href: `/blog${post.slug}`,
         })),
       });
     }
