@@ -1,7 +1,7 @@
 <template>
     <div>
         <Seo :seoData="computedSeoData" />
-        <SectionsBlogsCols :content="posts" />
+        <SectionsBlogsCols :content="posts" :showMore="false" :showPagination="true" />
     </div>
 </template>
 
@@ -31,7 +31,7 @@ const loadPosts = async () => {
 const computedSeoData = computed(() => {
   return createSeoObject({
     title: 'Blog Page',
-    summary: 'Blog Page Summary',
+    summary: 'Explore my latest articles and insights on web development, design, and technology. Learn from practical tutorials and stay updated with industry trends.',
   })
 });
 

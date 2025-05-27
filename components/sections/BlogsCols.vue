@@ -39,31 +39,11 @@
                         </Card>
                     </template>
                     <!-- View All Card-->
-                    <!-- <Card class="relative h-full overflow-hidden group">
-                        <CardHeader class="p-0 border-b border-muted">
-                            <NuxtLink to="/blog">
-                                <div class="absolute w-full h-full overflow-hidden aspect-video">
-                                    <img :src="placeholderImage" alt="View All Blogs" width="600" height="338"
-                                        loading="lazy"
-                                        class="object-cover w-full h-full transition-transform duration-500" />
-                                    <div class="absolute inset-0 flex items-center justify-center bg-black/40">
-                                        <h2 class="text-xl font-semibold text-white md:text-2xl">Explore All Blogs</h2>
-                                    </div>
-                                </div>
-                            </NuxtLink>
-                        </CardHeader>
-
-                        <CardContent class="flex flex-col justify-end h-full p-6">
-                            <NuxtLink to="/blog"
-                                class="inline-flex items-center self-start px-4 py-2 mt-4 text-sm font-medium text-white transition md:rounded-lg bg-primary hover:bg-primary-600">
-                                View All Posts
-                                <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" stroke-width="2"
-                                    viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
-                                </svg>
-                            </NuxtLink>
-                        </CardContent>
-                    </Card> -->
+                    <div v-if="showMore" class="flex flex-row justify-end">
+                      <nuxt-link to="/blog" class="text-gray-500 transition-all duration-150 dark:text-gray-400 hover:text-black dark:hover:text-white">
+                        View All Posts
+                      </nuxt-link>
+                    </div>
                 </motion.div>
 
                 <div class="w-full mt-12 overflow-hidden lg:w-1/3">
@@ -98,7 +78,11 @@ const props = defineProps({
     content: {
         type: Object as () => ({}),
         default: () => []
-    }
+    },
+    showMore: {
+        type: Boolean,
+        default: true
+    },
 })
 
 // Utility to slugify title
