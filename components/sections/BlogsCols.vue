@@ -17,7 +17,8 @@
                                         </span>
                                     </div>
                                     <h3 class="text-lg font-bold">
-                                        <NuxtLink :to="`/blog${post.slug}`" class="transition-colors hover:text-primary">
+                                        <NuxtLink :to="`/blog${post.slug}`"
+                                            class="transition-colors hover:text-primary">
                                             {{ post.title }}
                                         </NuxtLink>
                                     </h3>
@@ -37,20 +38,24 @@
 
                             </CardContent>
                         </Card>
+
                     </template>
+
                     <!-- View All Card-->
                     <div v-if="showMore" class="flex flex-row justify-end">
-                      <nuxt-link to="/blog" class="text-gray-500 transition-all duration-150 dark:text-gray-400 hover:text-black dark:hover:text-white">
-                        View All Posts
-                      </nuxt-link>
+                        <nuxt-link to="/blog"
+                            class="text-gray-500 transition-all duration-150 dark:text-gray-400 hover:text-black dark:hover:text-white">
+                            View All Posts
+                        </nuxt-link>
                     </div>
                 </motion.div>
+            </div>
 
-                <div class="w-full mt-12 overflow-hidden lg:w-1/3">
-                    <SectionsSubscribe />
-                </div>
+            <div class="flex justify-center w-full mr-auto lg:w-2/3">
+                <Pagination showPagination :total-pages="Math.ceil(content?.totalItems / content?.perPage)" />
             </div>
         </template>
+
     </containers-video>
 </template>
 
