@@ -4,8 +4,9 @@
         :description="description" class="min-h-[90vh] md:min-h-screen">
         <template #video-container-content>
 
-            <div class="relative flex flex-col w-full gap-8 lg:flex-row">
-                <motion.div :variants="fadeUp" class="grid w-full grid-cols-1 gap-6 mt-12 mb-8 lg:w-3/4">
+
+            <motion.div :variants="fadeUp" class="flex flex-col w-full gap-8 lg:flex-row">
+                <div class="flex flex-col w-full gap-4 lg:w-2/3">
                     <template v-for="(post, index) in props.content.items" :key="post.id">
                         <Card :class="index <= 2 ? 'flex' : 'hidden md:flex'"
                             class="flex flex-col h-full overflow-hidden md:flex-row-reverse group">
@@ -28,7 +29,7 @@
                                 </div>
 
                                 <div
-                                    class="relative w-full h-full p-0 overflow-hidden border-b rounded-t-lg border-muted md:rounded-lg aspect-video md:w-1/3">
+                                    class="relative w-full h-full p-0 overflow-hidden border-b rounded-t-lg border-muted md:rounded-lg aspect-video lg:w-1/3">
                                     <NuxtLink :to="`/blog${post.slug}`" class="w-full h-full bg-blue-500">
                                         <img :src="`${config.public.pocketbaseUrl}api/files/${props.content.items?.[index].collectionId}/${props.content.items?.[index].id}/${props.content.items?.[index].cover_image}?token=`"
                                             :alt="post.title" width="600" loading="lazy"
@@ -40,18 +41,23 @@
                         </Card>
 
                     </template>
+                </div>
 
-                    <!-- View All Card-->
-                    <div v-if="showMore" class="flex flex-row justify-end">
-                        <nuxt-link to="/blog"
-                            class="text-gray-500 transition-all duration-150 dark:text-gray-400 hover:text-black dark:hover:text-white">
+                <SectionsSubscribe class="flex w-full lg:w-1/3" />
+
+            </motion.div>
+
+
+            <div class="flex justify-center w-full mr-auto lg:w-2/3">
+                <!-- View All Card-->
+                <div v-if="showMore" class="flex flex-row justify-end w-full">
+                    <div class="mt-4 ml-auto">
+                        <nuxt-link to="/blog">
                             View All Posts
                         </nuxt-link>
                     </div>
-                </motion.div>
-            </div>
+                </div>
 
-            <div class="flex justify-center w-full mr-auto lg:w-2/3">
                 <Pagination showPagination :total-pages="Math.ceil(content?.totalItems / content?.perPage)" />
             </div>
         </template>

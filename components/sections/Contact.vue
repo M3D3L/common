@@ -14,13 +14,13 @@
         class="w-full mx-auto space-y-4 md:space-y-8"
       >
         <motion.div :variants="fadeUp">
-          <Card>
-            <CardContent class="grid px-0 md:gap-8 md:py-0 md:grid-cols-2">
+          <Card class="w-full overflow-x-hidden">
+            <CardContent class="grid py-8 md:grid-cols-2">
               <!-- Contact Form -->
               <form
                 action="https://formsubmit.co/7cbfcf8a8143c9f8708006416b2a0aae"
                 method="POST"
-                class="p-8 space-y-6 border-r rounded-b-none rounded-t-x md:rounded-xl rounded-x-none border-muted"
+                class="space-y-6 rounded-b-none md:pr-6 md:border-r rounded-t-x rounded-x-none border-muted"
               >
                 <div class="space-y-2">
                   <Label for="email">Email</Label>
@@ -48,7 +48,7 @@
               </form>
 
               <!-- Contact Info -->
-              <div class="p-8 space-y-6">
+              <div class="mt-8 space-y-6 md:px-8 md:mt-0">
                 <div>
                   <h3 class="text-lg font-bold">Contact Information</h3>
                   <p class="mt-2 text-sm text-muted-foreground">
@@ -62,7 +62,7 @@
                     </div>
                     <div>
                       <p class="text-sm font-medium">Email</p>
-                      <p class="text-sm text-muted-foreground">
+                      <p class="text-xs md:text-sm text-muted-foreground">
                         guillermoantoniomedel@gmail.com
                       </p>
                     </div>
