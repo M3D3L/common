@@ -28,7 +28,7 @@ export const footerData: FooterData = {
         { label: 'Home', href: '/' },
         { label: 'Portfolio', href: '/#portfilio' },
         { label: 'Skills', href: '/#skills' },
-        { label: 'Blog', href: '/#contact' },
+        { label: 'Blog', href: '/blog' },
       ],
     },
     // {
