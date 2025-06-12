@@ -1,14 +1,15 @@
 <template>
-  <containers-video id="portfolio" video="https://videos.pexels.com/video-files/32104886/13686423_2560_1440_30fps.mp4" :img-src="BlockMe3" :title description class="min-h-[90vh] md:min-h-screen">
+  <containers-video id="portfolio" video="https://videos.pexels.com/video-files/32104886/13686423_2560_1440_30fps.mp4"
+    :img-src="BlockMe3" :title description class="min-h-[90vh] md:min-h-screen">
     <template #video-container-content>
       <main class="relative z-10 flex items-center w-full h-full px-0">
         <motion.div class="w-full mx-auto" initial="hidden" whileInView="visible" :variants="{
-            hidden: { opacity: 0 },
-            visible: {
-              opacity: 1,
-              transition: { staggerChildren: 0.15 }
-            }
-          }">
+          hidden: { opacity: 0 },
+          visible: {
+            opacity: 1,
+            transition: { staggerChildren: 0.15 }
+          }
+        }">
           <!-- Portfolio Grid -->
           <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3" :variants="{
             hidden: { opacity: 0 },
@@ -20,27 +21,32 @@
               }
             }
           }">
-            <div :class="{ 'md:block hidden' : index > 2 }" v-for="(project, index) in content.projects">
+            <div :class="{ 'md:block hidden': index > 2 }" v-for="(project, index) in content.projects">
               <Card
                 class="h-full overflow-hidden transition-all duration-300 border border-muted hover:border-primary/30 hover:shadow-lg">
                 <CardHeader class="p-0 border-b border-muted">
-                  <div class="relative overflow-hidden aspect-video">
-                    <img :src="project.image" :alt="project.title"
-                      class="object-cover w-full h-full transition-all duration-500 aspect-video hover:scale-105 " />
-                    <div
-                      class="absolute inset-0 flex items-end p-4 transition-opacity duration-300 opacity-0 bg-gradient-to-t from-black/70 to-transparent group-hover:opacity-100">
-                      <div class="flex flex-wrap gap-2">
-                        <Badge v-for="tag in project.tags" :key="tag" variant="secondary" class="text-xs font-medium">
-                          {{ tag }}
-                        </Badge>
+                  <nuxt-link v-if="project?.link && project?.image" :to="project.link" class="w-full">
+                    <div class="relative overflow-hidden aspect-video">
+                      <img :src="project.image" :alt="project.title"
+                        class="object-cover w-full h-full transition-all duration-500 aspect-video hover:scale-105 " />
+                      <div
+                        class="absolute inset-0 flex items-end p-4 transition-opacity duration-300 opacity-0 bg-gradient-to-t from-black/70 to-transparent group-hover:opacity-100">
+                        <div class="flex flex-wrap gap-2">
+                          <Badge v-for="tag in project.tags" :key="tag" variant="secondary" class="text-xs font-medium">
+                            {{ tag }}
+                          </Badge>
+                        </div>
                       </div>
                     </div>
-                  </div>
+                  </nuxt-link>
                 </CardHeader>
                 <CardContent class="p-6 lg:p-8">
                   <div class="flex flex-col h-full">
                     <div>
-                      <h3 class="text-xl font-bold h-14">{{ project.title }}</h3>
+                      <nuxt-link v-if="project.link" :external="true" :to="project.link" class="w-full">
+                        <h3 class="text-xl font-bold h-14">{{ project.title }}</h3>
+                      </nuxt-link>
+                      
                       <p class="mt-2 text-sm text-muted-foreground">{{ project.client }}</p>
                       <p class="h-20 mt-3 text-sm">{{ project.description }}</p>
                     </div>
@@ -54,12 +60,12 @@
                         </Badge>
                       </div>
                     </div>
-                    <div class="flex gap-3 mt-6">
-                      <Button class="w-full">
-                        <a :href="project.link" target="_blank" rel="noopener noreferrer">
+                    <div class="flex w-full gap-3 mt-6">
+                      <nuxt-link v-if="project.link" :external="true" :to="project.link" class="w-full">
+                        <Button class="w-full">
                           Visit Site
-                        </a>
-                      </Button>
+                        </Button>
+                      </nuxt-link>
                     </div>
                   </div>
                 </CardContent>
