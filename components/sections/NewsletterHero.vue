@@ -18,8 +18,8 @@
                         <input id="newsletter-consent" v-model="form.consent" type="checkbox" required
                             class="w-4 h-4 rounded text-primary-600 bg-white/10 border-white/20 focus:ring-primary-500">
                         <label for="newsletter-consent" class="ml-2 text-sm text-gray-300">
-                            <!-- I agree to receive emails and accept the <NuxtLink to="/privacy"
-                                class="text-primary-400 hover:underline">privacy policy</NuxtLink> -->
+                            I agree to receive emails and accept the <NuxtLink to="/privacy"
+                                class="text-primary-400 hover:underline">privacy policy</NuxtLink>
                         </label>
                     </div>
                     <Button size="lg" class="w-full" :disabled="isSubmitting">

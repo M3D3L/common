@@ -19,20 +19,25 @@ export default function usePocketBaseCore() {
     expand = '',
     excludeFields: string[] = []
   ): Promise<ListResult<RecordModel>> {
-    const cacheKey = getCacheKey('fetchCollection', {
+    let cacheKey = getCacheKey('fetchCollection', {
       collection,
       page,
       perPage,
       filter,
       sort,
-      expand,
       excludeFields: excludeFields.join(','),
     })
 
-    const cached = get<ListResult<RecordModel>>(cacheKey)
-    if (cached) return cached
+    // Remove the created
 
     try {
+      const cached = get<ListResult<RecordModel>>(cacheKey)
+
+      if (cached) {
+        console.log(`Returning cached data for ${collection} collection`)
+        return cached
+      }
+
       const response = await pb.collection(collection).getList(page, perPage, {
         filter,
         sort,

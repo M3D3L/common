@@ -15,9 +15,16 @@ const DEFAULT_NAMESPACE = 'app-cache'
 export const useCacheUtils = ({
   ttl = DEFAULT_TTL,
   namespace = DEFAULT_NAMESPACE,
-  debug = false,
+  debug = false, // This will be overridden to true in cacheSingleton.ts for debugging
 }: CacheOptions = {}) => {
+  // This Map will now be created ONLY ONCE when cacheSingleton.ts is imported
   const cache = new Map<string, CacheEntry<any>>()
+
+  // For debugging, confirm a new Map instance is created
+  if (debug) {
+    console.log('[cacheUtils] New cache Map instance created:', cache);
+  }
+
   const prefix = `${namespace}|`
 
   const log = (...args: unknown[]) => {
@@ -25,17 +32,20 @@ export const useCacheUtils = ({
   }
 
   const getCacheKey = (operation: string, params: Record<string, unknown> = {}) => {
+    log('Generating cache key for operation:', operation, 'with params:', params); // Now uses the internal log
     const paramString = Object.entries(params)
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([key, val]) => `${key}:${JSON.stringify(val)}`)
       .join('|')
+    log('Cache key params string:', paramString) // Now uses the internal log
     return `${prefix}${operation}|${paramString}`
   }
 
   const set = <T>(key: string, value: T, ttlOverride?: number): void => {
     const expiry = Date.now() + (ttlOverride ?? ttl)
     cache.set(key, { value, expiry })
-    log('SET', key, value)
+    // Removed external console.log, relying on internal log for consistency
+    log('SET', key, `expiry: ${new Date(expiry).toISOString()}`, 'value:', value)
   }
 
   const get = <T>(key: string): T | null => {

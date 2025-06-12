@@ -37,7 +37,7 @@ const posts = ref([]);
 
 const fetchPosts = async () => {
   try {
-    const result = await pbUtils.fetchCollection('posts', 1, 5, '', '-created', '', ['content']);
+    const result = await pbUtils.fetchCollection('posts', 1, 6, '', '-created', '', ['content']);
     return result;
   } catch (error) {
     console.error('Error fetching posts:', error);

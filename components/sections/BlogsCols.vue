@@ -100,38 +100,11 @@ const props = defineProps({
     }
 })
 
-// Utility to slugify title
-const slugify = (text: string) => {
-    return text
-        .toLowerCase()
-        .normalize('NFD') // handle special characters like é, ñ, ü
-        .replace(/[\u0300-\u036f]/g, '') // remove diacritics
-        .replace(/[^\w\s-]/g, '') // remove non-word characters
-        .replace(/\s+/g, '-') // replace spaces with -
-        .replace(/--+/g, '-') // remove multiple dashes
-        .replace(/^-+|-+$/g, ''); // trim dashes from start/end
-}
-
 // Calculate reading time
 const calculateReadingTime = (text: string) => {
     const wordsPerMinute = 200
     const wordCount = text?.split(/\s+/)?.length || 0
     return Math.ceil(wordCount / wordsPerMinute) || 1
-}
-
-// Generate post link dynamically from created date + title slug
-const getPostLink = (post: any) => {
-    if (!post) return '/blog';
-    const datePath = formatDate(post.created)?.[1];
-    const slug = slugify(post.title || 'untitled-post');
-    return `/blog/${datePath}/${slug}`;
-}
-
-// Method to generate blog URL (same idea)
-const getBlogUrl = (created: string, title: string) => {
-    const datePath = formatDate(created)?.[1];
-    const slug = slugify(title || 'untitled-post');
-    return `/blog/${datePath}/${slug}`;
 }
 
 const fadeUp = {

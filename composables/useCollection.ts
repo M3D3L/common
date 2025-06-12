@@ -21,6 +21,8 @@ export default function useCollection() {
     expand = '',
     excludeFields: string[] = []
   ): Promise<ListResult<RecordModel>> {
+    console.log(`Fetching ${collection} collection...`)
+
     const cacheKey = getCacheKey('fetchCollection', {
       collection,
       page,
@@ -32,7 +34,12 @@ export default function useCollection() {
     })
 
     const cached = get<ListResult<RecordModel>>(cacheKey)
-    if (cached) return cached
+    // If cached data console.log(`Using cached data for ${collection} collection`)
+    if (cached) {
+      console.log(`Using cached data for ${collection} collection`)
+      console.log(`Cached data:`, cached)
+      return cached
+    }
 
     try {
       const response = await pb.collection(collection).getList(page, perPage, {
@@ -52,6 +59,8 @@ export default function useCollection() {
       }
 
       set(cacheKey, response)
+
+      console.log(`Fetched ${collection} collection:`, response)
       return response
     } catch (error) {
       console.error(`Error fetching ${collection}:`, error)
