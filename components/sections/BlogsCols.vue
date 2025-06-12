@@ -58,7 +58,7 @@
                     </div>
                 </div>
 
-                <Pagination showPagination :total-pages="Math.ceil(content?.totalItems / content?.perPage)" />
+                <Pagination v-if="showPagination" :total-pages="Math.ceil(content?.totalItems / content?.perPage)" />
             </div>
         </template>
 
@@ -94,6 +94,10 @@ const props = defineProps({
         type: Boolean,
         default: true
     },
+    showPagination: {
+        type: Boolean,
+        default: true
+    }
 })
 
 // Utility to slugify title

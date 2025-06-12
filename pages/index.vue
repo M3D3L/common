@@ -14,7 +14,7 @@
         
         <!-- <SectionsBlogs :content="posts" /> -->
 
-        <SectionsBlogsCols :content="posts" />
+        <SectionsBlogsCols :showPagination="false" :content="posts" />
         
         <SectionsContact />
     </div>
