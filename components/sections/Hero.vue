@@ -80,7 +80,6 @@
                             :src="BlockMe" 
                             alt="BlockMe" 
                             class="w-full max-w-sm mx-auto lg:max-w-md 3xl:max-w-xl" 
-                            loading="lazy"
                             :initial="{ y: 0 }"
                             :animate="{ 
                                 y: [-5, 5, -5],
