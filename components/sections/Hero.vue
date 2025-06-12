@@ -63,7 +63,7 @@
                     </motion.div>
 
                     <!-- Right Column - Cards -->
-                    <motion.div class="w-full" :variants="{
+                    <motion.div class="w-full min-h-[384px]" :variants="{
                         hidden: { opacity: 0, y: 20 },
                         visible: {
                             opacity: 1,
