@@ -18,7 +18,7 @@
                         }
                     }">
                         <Card
-                            class="pt-8 transition-all duration-300 lg:pb-4 hover:border-primary/30 hover:shadow-lg"
+                            class="pt-5 transition-all duration-300 md:pt-8 lg:pb-4 hover:border-primary/30 hover:shadow-lg"
                             role="article">
                             <CardContent class="grid gap-4">
                                 <motion.p
@@ -34,7 +34,7 @@
                                                 delay: 0.4
                                             }
                                         }
-                                    }">asdafsd
+                                    }">
                                     {{ description }}
                                 </motion.p>
 

@@ -11,25 +11,66 @@ export type CacheOptions = {
 
 const DEFAULT_TTL = 3600 * 1000 // 1 hour
 const DEFAULT_NAMESPACE = 'app-cache'
+const DB_NAME = 'cache-db'
+const STORE_NAME = 'cache-store'
 
 export const useCacheUtils = ({
   ttl = DEFAULT_TTL,
   namespace = DEFAULT_NAMESPACE,
-  debug = false, // This will be overridden to true in cacheSingleton.ts for debugging
+  debug = false,
 }: CacheOptions = {}) => {
-  // This Map will now be created ONLY ONCE when cacheSingleton.ts is imported
-  const cache = new Map<string, CacheEntry<any>>()
-
-  // For debugging, confirm a new Map instance is created
-  if (debug) {
-    console.log('[cacheUtils] New cache Map instance created:', cache);
-  }
-
+  // In-memory cache for synchronous access
+  const memoryCache = new Map<string, CacheEntry<any>>()
+  let dbInitialized = false
   const prefix = `${namespace}|`
 
-  const log = (...args: unknown[]) => {
-    if (debug) console.log('[cache]', ...args)
+  // Initialize IndexedDB in the background
+  const initDB = async () => {
+    if (typeof window === 'undefined' || dbInitialized) return
+    
+    try {
+      const request = indexedDB.open(DB_NAME, 1)
+      
+      request.onupgradeneeded = (event) => {
+        const db = request.result
+        if (!db.objectStoreNames.contains(STORE_NAME)) {
+          db.createObjectStore(STORE_NAME, { keyPath: 'key' })
+        }
+      }
+      
+      const db = await new Promise<IDBDatabase>((resolve, reject) => {
+        request.onsuccess = () => resolve(request.result)
+        request.onerror = () => reject(request.error)
+      })
+      
+      // Load all entries into memory
+      const transaction = db.transaction(STORE_NAME, 'readonly')
+      const store = transaction.objectStore(STORE_NAME)
+      const requestAll = store.getAll()
+      
+      await new Promise<void>((resolve) => {
+        requestAll.onsuccess = () => {
+          const entries = requestAll.result as Array<{key: string, value: any, expiry: number}>
+          const now = Date.now()
+          
+          entries.forEach(entry => {
+            if (entry.expiry > now) {
+              memoryCache.set(entry.key, { value: entry.value, expiry: entry.expiry })
+            }
+          })
+          resolve()
+        }
+        requestAll.onerror = () => resolve()
+      })
+      
+      dbInitialized = true
+    } catch (error) {
+      debug && console.error('IndexedDB initialization failed', error)
+    }
   }
+
+  // Start initialization (don't wait for it)
+  initDB().catch(() => {})
 
   const getCacheKey = (operation: string, params: Record<string, unknown> = {}) => {
     const paramString = Object.entries(params)
@@ -41,44 +82,79 @@ export const useCacheUtils = ({
 
   const set = <T>(key: string, value: T, ttlOverride?: number): void => {
     const expiry = Date.now() + (ttlOverride ?? ttl)
-    cache.set(key, { value, expiry })
-    // Removed external console.log, relying on internal log for consistency
-    console.log('SET', key, 'value:', value, 'expiry:', new Date(expiry).toISOString())
-  }
-
-  const get = <T>(key: string): T | null => {
-    const entry = cache.get(key)
-    if (!entry) {
-      console.log('MISS', key)
-      return null
-    }
-    if (entry.expiry < Date.now()) {
-      console.log('EXPIRED', key)
-      cache.delete(key)
-      return null
-    }
-    console.log('HIT', key, 'value:', entry.value)
-    return entry.value
-  }
-
-  const del = (key: string): void => {
-    log('DELETE', key)
-    cache.delete(key)
-  }
-
-  const clearExpired = (): void => {
-    const now = Date.now()
-    for (const [key, { expiry }] of cache.entries()) {
-      if (expiry <= now) {
-        log('CLEANUP', key)
-        cache.delete(key)
+    const entry: CacheEntry<T> = { value, expiry }
+    
+    // Update memory cache
+    memoryCache.set(key, entry)
+    
+    // Update IndexedDB in background
+    if (typeof window !== 'undefined') {
+      indexedDB.open(DB_NAME).onsuccess = (event) => {
+        const db = (event.target as IDBOpenDBRequest).result
+        const transaction = db.transaction(STORE_NAME, 'readwrite')
+        const store = transaction.objectStore(STORE_NAME)
+        store.put({ key, ...entry }).onerror = () => {
+          debug && console.error('Failed to persist cache entry')
+        }
       }
     }
   }
 
+  const get = <T>(key: string): T | null => {
+    const entry = memoryCache.get(key)
+    if (!entry) return null
+    
+    if (entry.expiry < Date.now()) {
+      memoryCache.delete(key)
+      // Delete from IndexedDB in background
+      if (typeof window !== 'undefined') {
+        indexedDB.open(DB_NAME).onsuccess = (event) => {
+          const db = (event.target as IDBOpenDBRequest).result
+          const transaction = db.transaction(STORE_NAME, 'readwrite')
+          const store = transaction.objectStore(STORE_NAME)
+          store.delete(key)
+        }
+      }
+      return null
+    }
+    
+    return entry.value
+  }
+
+  const del = (key: string): void => {
+    memoryCache.delete(key)
+    // Delete from IndexedDB in background
+    if (typeof window !== 'undefined') {
+      indexedDB.open(DB_NAME).onsuccess = (event) => {
+        const db = (event.target as IDBOpenDBRequest).result
+        const transaction = db.transaction(STORE_NAME, 'readwrite')
+        const store = transaction.objectStore(STORE_NAME)
+        store.delete(key)
+      }
+    }
+  }
+
+  const clearExpired = (): void => {
+    const now = Date.now()
+    memoryCache.forEach((entry, key) => {
+      if (entry.expiry <= now) {
+        memoryCache.delete(key)
+      }
+    })
+    // IndexedDB will be cleaned up on next access
+  }
+
   const clearAll = (): void => {
-    log('CLEAR ALL')
-    cache.clear()
+    memoryCache.clear()
+    // Clear IndexedDB in background
+    if (typeof window !== 'undefined') {
+      indexedDB.open(DB_NAME).onsuccess = (event) => {
+        const db = (event.target as IDBOpenDBRequest).result
+        const transaction = db.transaction(STORE_NAME, 'readwrite')
+        const store = transaction.objectStore(STORE_NAME)
+        store.clear()
+      }
+    }
   }
 
   return {

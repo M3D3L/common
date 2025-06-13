@@ -27,9 +27,10 @@ export default function usePocketBaseCore() {
       const cached = getCache<ListResult<RecordModel>>(cacheKey)
 
       if (cached) {
-        console.log(`Returning cached data for ${collection} collection`)
         return cached
       }
+
+      console.log(cached)
 
       const response = await pb.collection(collection).getList(page, perPage, {
         filter,
@@ -47,7 +48,7 @@ export default function usePocketBaseCore() {
         })
       }
 
-      setCache(cacheKey, response) // Use setCache
+      setCache(cacheKey, response)
       return response
     } catch (error) {
       console.error(`Error fetching ${collection}:`, error)
