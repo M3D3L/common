@@ -1,14 +1,10 @@
+// usePocketBaseCore.ts
 import usePocketBase from './usePocketbase'
-import { useCacheUtils } from './cacheUtils'
+import { getCache, setCache, getCacheKey } from './cacheSingleton'
 import type { ListResult, RecordModel } from 'pocketbase'
 
 export default function usePocketBaseCore() {
   const pb = usePocketBase()
-
-  const { get, set, del, getCacheKey } = useCacheUtils({
-    ttl: 60 * 60 * 1000, // 1 hour
-    namespace: 'pb',
-  })
 
   async function fetchCollection(
     collection: string,
@@ -25,13 +21,10 @@ export default function usePocketBaseCore() {
       perPage,
       filter,
       sort,
-      excludeFields: excludeFields.join(','),
     })
 
-    // Remove the created
-
     try {
-      const cached = get<ListResult<RecordModel>>(cacheKey)
+      const cached = getCache<ListResult<RecordModel>>(cacheKey)
 
       if (cached) {
         console.log(`Returning cached data for ${collection} collection`)
@@ -54,7 +47,7 @@ export default function usePocketBaseCore() {
         })
       }
 
-      set(cacheKey, response)
+      setCache(cacheKey, response) // Use setCache
       return response
     } catch (error) {
       console.error(`Error fetching ${collection}:`, error)
@@ -69,12 +62,12 @@ export default function usePocketBaseCore() {
     const stringId = id.toString()
     const cacheKey = getCacheKey('fetchRecord', { collection, id: stringId })
 
-    const cached = get<RecordModel>(cacheKey)
+    const cached = getCache<RecordModel>(cacheKey) // Use getCache
     if (cached) return cached
 
     try {
       const record = await pb.collection(collection).getOne(stringId)
-      set(cacheKey, record)
+      setCache(cacheKey, record) // Use setCache
       return record
     } catch (error) {
       console.error(`Error fetching ${collection} record ${stringId}:`, error)

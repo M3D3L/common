@@ -32,12 +32,10 @@ export const useCacheUtils = ({
   }
 
   const getCacheKey = (operation: string, params: Record<string, unknown> = {}) => {
-    log('Generating cache key for operation:', operation, 'with params:', params); // Now uses the internal log
     const paramString = Object.entries(params)
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([key, val]) => `${key}:${JSON.stringify(val)}`)
       .join('|')
-    log('Cache key params string:', paramString) // Now uses the internal log
     return `${prefix}${operation}|${paramString}`
   }
 
@@ -45,21 +43,21 @@ export const useCacheUtils = ({
     const expiry = Date.now() + (ttlOverride ?? ttl)
     cache.set(key, { value, expiry })
     // Removed external console.log, relying on internal log for consistency
-    log('SET', key, `expiry: ${new Date(expiry).toISOString()}`, 'value:', value)
+    console.log('SET', key, 'value:', value, 'expiry:', new Date(expiry).toISOString())
   }
 
   const get = <T>(key: string): T | null => {
     const entry = cache.get(key)
     if (!entry) {
-      log('MISS', key)
+      console.log('MISS', key)
       return null
     }
     if (entry.expiry < Date.now()) {
-      log('EXPIRED', key)
+      console.log('EXPIRED', key)
       cache.delete(key)
       return null
     }
-    log('HIT', key)
+    console.log('HIT', key, 'value:', entry.value)
     return entry.value
   }
 
