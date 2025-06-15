@@ -104,7 +104,7 @@ const props = defineProps({
           "title": "Law.com Redesign",
           "client": "Law.com",
           "description": "Complete redesign of the leading legal news platform with improved UX and performance.",
-          "image": "/images/law.jpg",
+          "image": "/images/law.webp",
           "link": "https://www.law.com",
           "caseStudy": "/case-studies/law-com",
           "tags": ["Redesign", "UX", "CMS"],

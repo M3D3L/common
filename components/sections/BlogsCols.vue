@@ -1,5 +1,6 @@
 <template>
 
+<div id="blogs" class="flex flex-col pb-16 lg:pb-24">
     <motion.div class="w-full mb-8 md:mb-12 pt-16 container xl:px-[10.25rem] lg:pt-24" :variants="{
         hidden: { opacity: 0, y: 20 },
         visible: {
@@ -34,8 +35,7 @@
             {{ description }}
         </p>
     </motion.div>
-    <div
-        class="relative lg:pb-24 pb-16 flex flex-col w-full min-h-screen gap-8 lg:flex-row container xl:px-[10.25rem]">
+    <div class="relative lg:pb-24 pb-16 flex flex-col w-full min-h-screen gap-8 lg:flex-row container xl:px-[10.25rem]">
 
 
         <motion.div :variants="fadeUp" class="flex flex-col gap*:-8 w-full lg:w-2/3 lg:flex-row">
@@ -81,19 +81,20 @@
         <div class="w-full lg:w-1/3">
             <SectionsSubscribe class="z-10 sticky-position top-24" />
         </div>
-
-        <!-- <div class="flex justify-center w-full mr-auto lg:w-2/3">
-                <div v-if="showMore" class="flex flex-row justify-end w-full">
-                    <div class="mt-4 ml-auto">
-                        <nuxt-link to="/blog">
-                            View All Posts
-                        </nuxt-link>
-                    </div>
-                </div>
-
-                <Pagination v-if="showPagination" :total-pages="Math.ceil(content?.totalItems / content?.perPage)" />
-            </div> -->
     </div>
+
+    <div class="container flex justify-start w-full mr-auto -mt-20">
+        <nuxt-link v-if="showMore" to="/blog/" class="z-50 flex flex-row justify-end w-full cursor-pointer lg:pr-16 lg:w-2/3">
+            <div class="mt-4 ml-auto">
+                <nuxt-link to="/blog">
+                    View All Posts
+                </nuxt-link>
+            </div>
+        </nuxt-link>
+
+        <Pagination v-if="showPagination" :total-pages="Math.ceil(content?.totalPages > 1)" />
+    </div>
+</div>
 
 </template>
 

@@ -5,7 +5,7 @@
         <h2 class="text-2xl font-bold tracking-tight md:text-3xl lg:text-4xl">
           <span class="text-transparent transition-colors bg-clip-text bg-gradient-to-r from-primary to-primary/70 hover:from-primary/80 hover:to-primary/50"
           >
-            Subscribe to our Newsletter
+            Subscribe to My Newsletter
           </span>
         </h2>
         <p class="mt-3 text-base text-muted-foreground line-clamp-3">
@@ -14,7 +14,7 @@
         </p>
   
         <!-- Social proof -->
-        <div class="inline-flex items-center mt-4 space-x-4 text-gray-400">
+        <!-- <div class="inline-flex items-center mt-4 space-x-4 text-gray-400">
           <div class="flex -space-x-2">
             <img
               v-for="(avatar, index) in avatars"
@@ -27,7 +27,7 @@
           <span class="text-sm">
             Join <span class="font-semibold text-white">10,000+</span> subscribers
           </span>
-        </div>
+        </div> -->
       </div>
   
       <!-- Sticky newsletter hero container -->
