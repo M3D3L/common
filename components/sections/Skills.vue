@@ -70,7 +70,7 @@ import {
   Card,
   CardContent,
 } from '@/components/ui/card'
-import BlockMe2 from '/images/block-me-2.png'
+import BlockMe2 from '/images/block-me-2.webp'
 
 // Props
 const props = defineProps({

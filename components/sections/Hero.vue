@@ -109,7 +109,7 @@ import {
     CardTitle,
 } from '@/components/ui/card'
 
-import BlockMe from '/images/block-me.png'
+import BlockMe from '/images/block-me.webp'
 
 // Props
 const props = defineProps({
