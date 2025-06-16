@@ -39,20 +39,7 @@
         }
       }">
 
-      <!-- Title Section -->
-      <motion.div class="w-full mb-8 md:mb-12" :variants="{
-        hidden: { opacity: 0, y: 20 },
-        visible: {
-          opacity: 1,
-          y: 0,
-          transition: {
-            duration: 0.8,
-            ease: [0.16, 1, 0.3, 1],
-            delay: 0.1
-          }
-        }
-      }">
-        <div class="flex items-center gap-8">
+        <div class="flex items-center w-full gap-8 mb-8 md:mb-12">
           <h1 v-if="h1" class="text-4xl font-black leading-tight tracking-tighter md:text-6xl lg:text-7xl">
             <span class="text-transparent bg-clip-text bg-gradient-to-r from-white to-primary/60">{{
               title }}</span>
@@ -73,7 +60,7 @@
         <p v-if="description" class="max-w-3xl mt-6 text-lg text-foreground/70">
           {{ description }}
         </p>
-      </motion.div>
+
       <slot name="video-container-content" />
     </motion.div>
 
