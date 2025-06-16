@@ -23,7 +23,7 @@
                 </h2>
 
 
-                <img :src="BlockMe5" :alt="`${title} image`" class="w-20 border-white -border-4 md:w-28" />
+                <img :src="BlockMe5" :alt="`${title} image`" lazy class="w-20 border-white -border-4 md:w-28" />
             </div>
 
 

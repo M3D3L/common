@@ -52,7 +52,7 @@
             </h2>
           </template>
 
-          <img v-if="imgSrc" :src="imgSrc" :alt="`${title} image`" class="w-20 border-white -border-4 md:w-28" />
+          <img v-if="imgSrc" :src="imgSrc" lazy :alt="`${title} image`" class="w-[84px] border-white -border-4 md:w-28" />
         </div>
 
 

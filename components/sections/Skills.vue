@@ -31,7 +31,7 @@
                     ease: 'easeOut'
                   }">
                   <div>
-                    <img :src="skill.icon" :alt="skill.title" class="w-8 h-8" />
+                    <img :src="skill.icon" lazy :alt="skill.title" class="w-8 h-8" />
                   </div>
                   <div class="w-full">
                     <div class="flex items-center justify-between mb-2">
