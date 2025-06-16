@@ -1,10 +1,9 @@
 <template>
   <section
-    class="relative flex items-center justify-center w-full min-h-screen py-16 overflow-hidden lg:py-24 bg-background text-foreground xl:px-48"
+    class="relative flex items-center justify-center w-full min-h-screen py-16 overflow-hidden lg:py-24 text-foreground xl:px-48"
     ref="heroRef" :aria-label="'section for video background of a ' + title + ' and hero content'"
     :aria-labelledby="title" :aria-describedby="description" :role="'region'" :tabindex="0" :class="{
       'bg-cover bg-center': isVideoActive,
-      'bg-gray-200 dark:bg-gray-800': !isVideoActive
     }" :style="{
       backgroundImage: isVideoActive ? 'none' : 'url(' + video + ')',
       backgroundSize: 'cover',

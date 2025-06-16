@@ -47,7 +47,7 @@
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply text-black rounded-full bg-gradient-to-r from-white to-gray-200 dark:text-white dark:from-black dark:to-gray-800;
   }
 
   .glassmorphism {
