@@ -87,7 +87,7 @@ import {
 } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import BlockMe3 from '/images/block-me-3.png'
+import BlockMe3 from '/images/block-me-3.webp'
 
 // Props
 const props = defineProps({

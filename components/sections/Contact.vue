@@ -119,7 +119,7 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Mail, Phone, MapPin, Twitter, Linkedin, Github, Instagram } from 'lucide-vue-next'
-import BlockMe4 from '/images/block-me-4.png'
+import BlockMe4 from '/images/block-me-4.webp'
 
 // Props
 const props = defineProps({

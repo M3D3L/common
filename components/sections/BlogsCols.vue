@@ -102,7 +102,7 @@ import { motion } from 'motion-v'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { formatDate } from '@/composables/blogHelpers'
-import BlockMe5 from '/images/block-me-5.png'
+import BlockMe5 from '/images/block-me-5.webp'
 
 const config = useRuntimeConfig()
 
