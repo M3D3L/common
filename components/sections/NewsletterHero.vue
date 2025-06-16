@@ -6,7 +6,8 @@
                 <form @submit.prevent="handleSubmit" class="space-y-4">
                     <div class="space-y-2">
                         <Label for="newsletter-email" class="text-white">Email Address</Label>
-                        <Input id="newsletter-email" v-model="form.email" type="email" placeholder="your@email.com" required
+                        <Input id="newsletter-email" v-model="form.email" type="email" placeholder="your@email.com"
+                            required
                             class="text-white placeholder-gray-400 bg-white/10 border-white/20 focus:ring-2 focus:ring-primary-500" />
                     </div>
                     <div class="space-y-2">
@@ -14,12 +15,17 @@
                         <Input id="newsletter-name" v-model="form.name" type="text" placeholder="Your name"
                             class="text-white placeholder-gray-400 bg-white/10 border-white/20 focus:ring-2 focus:ring-primary-500" />
                     </div>
+
                     <div class="flex items-center">
                         <input id="newsletter-consent" v-model="form.consent" type="checkbox" required
                             class="w-4 h-4 rounded text-primary-600 bg-white/10 border-white/20 focus:ring-primary-500">
                         <label for="newsletter-consent" class="ml-2 text-sm text-gray-300">
-                            I agree to receive emails and accept the <NuxtLink to="/privacy"
-                                class="text-primary-400 hover:underline">privacy policy</NuxtLink>
+                            I agree to receive emails and accept the 
+                            <modal title="Privacy Policy" description='`This Privacy Policy describes how Guillermo Medel ("I," "me," or "my") collects, uses, and discloses information when you visit my website, subscribe to my newsletter, or interact with my blog.`' :htmlContent="privacyConfig">
+                                <template #button>
+                                    <span class="cursor-pointer text-primary-500 hover:underline">privacy policy</span>
+                                </template>
+                            </modal>
                         </label>
                     </div>
                     <Button size="lg" class="w-full" :disabled="isSubmitting">
@@ -64,6 +70,8 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { ShieldCheck, Lock } from 'lucide-vue-next'
 import usePocketBaseCore from '~/composables/usePocketBaseCore'
+import Modal from '~/components/ui/modal/Modal.vue';
+import { privacyConfig } from '~/assets/configs/privacy.js'
 
 // Animation variants
 const fadeUp = {
@@ -142,7 +150,7 @@ const handleSubmit = async () => {
         }
     } catch (error) {
         console.error('Subscription error:', error)
-        
+
         // Check if this is a duplicate email error
         if (error?.response?.data?.email?.code === 'validation_not_unique') {
             message.value = {
