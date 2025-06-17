@@ -3,9 +3,11 @@ import { useCacheUtils } from './cacheUtils'
 
 // Create and export a single instance of the cache utilities
 export const cache = useCacheUtils({
-  ttl: 60 * 60 * 1000, // 1 hour
+  // 1 hour
+  ttl: 60 * 60 * 1000,
   namespace: 'pb',
-  debug: false, // Set to true if you want to see cache debug logs
+  // Set to true if you want to see cache debug logs
+  debug: false,
 })
 
 // You can also export individual methods if you prefer

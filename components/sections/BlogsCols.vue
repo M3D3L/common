@@ -23,7 +23,7 @@
                 </h2>
 
 
-                <img :src="BlockMe5" :alt="`${title} image`" lazy class="w-20 border-white -border-4 md:w-28" />
+                <img :src="BlockMe5" :alt="`${title} image`" class="w-20 border-white -border-4 md:w-28" />
             </div>
 
 
@@ -81,7 +81,7 @@
             </div>
         </div>
 
-        <div class="container flex justify-start w-full mr-auto -mt-20">
+        <div class="container flex justify-start w-full mr-auto -mt-12 lg:-mt-20">
             <nuxt-link v-if="showMore" to="/blog/"
                 class="z-50 flex flex-row justify-end w-full cursor-pointer lg:pr-16 lg:w-2/3">
                 <div class="mt-4 ml-auto">

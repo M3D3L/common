@@ -18,7 +18,7 @@
           <Card class="h-full px-0 py-8 lg:py-16">
             <CardContent>
 
-              <p class="mx-auto md:max-w-4xl md:mb-4 md:text-center text-muted-foreground">
+              <p class="mx-auto md:max-w-4xl md:mb-4 md:text-left text-muted-foreground">
                 {{ content.description }}
                 <br />
               </p>

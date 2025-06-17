@@ -2,7 +2,7 @@
   <containers-video id="contact" :img-src="BlockMe4"
     video="https://videos.pexels.com/video-files/32106032/13687146_2560_1440_30fps.mp4" :title :description>
     <template #video-container-content>
-      <Card class="w-full mt-16 overflow-x-hidden">
+      <Card class="w-full py-1 mt-16 overflow-x-hidden">
         <CardContent class="grid py-8 md:grid-cols-2">
           <!-- Contact Form -->
           <form action="https://formsubmit.co/7cbfcf8a8143c9f8708006416b2a0aae" method="POST"

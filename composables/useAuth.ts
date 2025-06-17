@@ -63,13 +63,15 @@ export default function useAuth() {
     // Update cookie when auth state changes
     if (process.client) {
       document.cookie = pb.authStore.exportToCookie({
-        httpOnly: false, // Set to true in production if using HTTPS
-        secure: process.env.NODE_ENV === 'production', // Secure in production
+        // Set to true in production if using HTTPS
+        httpOnly: false,
+        // Secure in production
         sameSite: 'lax',
+        secure: process.env.NODE_ENV === 'production',
         path: '/'
       })
     }
-  }, true) // Trigger immediately
+  }, true)
 
   async function register(credentials: RegisterCredentials): Promise<boolean> {
     try {
