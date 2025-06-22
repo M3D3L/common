@@ -63,7 +63,7 @@
                     </motion.div>
 
                     <!-- Right Column - Cards -->
-                    <motion.div class="w-full min-h-[384px]" :variants="{
+                    <motion.div class="w-full min-h-[384px] flex md:justify-right" :variants="{
                         hidden: { opacity: 0, y: 20 },
                         visible: {
                             opacity: 1,
@@ -110,6 +110,7 @@ import {
 } from '@/components/ui/card'
 
 import BlockMe from '/images/block-me.webp'
+import SanCarlos from '/images/san-carlos.png'
 
 // Props
 const props = defineProps({

@@ -2,7 +2,7 @@
 
     <div id="blogs" class="relative z-10 flex flex-col pb-16 lg:pb-24">
 
-        <motion.div class="w-full mb-8 md:mb-12 pt-16 container xl:px-[10.25rem] lg:pt-24" :variants="{
+        <motion.div class="container w-full pt-16 mb-8 md:mb-12 xl:px-48 lg:pt-24" :variants="{
             hidden: { opacity: 0, y: 20 },
             visible: {
                 opacity: 1,
@@ -14,23 +14,9 @@
                 }
             }
         }">
-            <div class="flex items-center gap-8">
-
-                <h2 class="text-4xl font-bold leading-tight tracking-tighter md:text-5xl lg:text-5xl">
-                    <span class="text-transparent bg-clip-text bg-gradient-to-r from-primary to-primary/60">
-                        {{ title }}
-                    </span>
-                </h2>
-
-
-                <img :src="BlockMe5" :alt="`${title} image`" class="w-20 border-white -border-4 md:w-28" />
-            </div>
-
-
-            <p v-if="description" class="max-w-3xl mt-6 text-lg text-foreground/70">
-                {{ description }}
-            </p>
+            <TextSectionTitle :title :description :imgSrc="BlockMe5" :h1="false" />
         </motion.div>
+
         <div
             class="relative lg:pb-24 pb-16 flex flex-col w-full min-h-screen gap-8 lg:flex-row container xl:px-[10.25rem]">
 
@@ -129,7 +115,7 @@ const props = defineProps({
     showPagination: {
         type: Boolean,
         default: true
-    }
+    },
 })
 
 // Calculate reading time
