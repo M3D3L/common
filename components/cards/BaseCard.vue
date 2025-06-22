@@ -2,9 +2,9 @@
   <Card v-if="content"
     class="h-full overflow-hidden transition-all duration-300 border group border-muted hover:border-primary/30 hover:shadow-lg">
     <CardHeader class="p-0 border-b border-muted">
-      <nuxt-link v-if="content?.link && content?.image" :to="content.link" class="w-full">
+      <nuxt-link v-if="content?.slug && content?.cover_image" :to="content.slug" class="w-full">
         <div class="relative overflow-hidden aspect-video">
-          <img :src="content.image" :alt="content.title"
+          <img :src="content.cover_image" :alt="content.title"
             class="object-cover w-full h-full transition-all duration-500 aspect-video hover:scale-105" />
           <div
             class="absolute inset-0 flex items-end p-4 transition-opacity duration-300 opacity-0 bg-gradient-to-t from-black/70 to-transparent group-hover:opacity-100">
@@ -20,10 +20,10 @@
     <CardContent :class="!removeSpacing ? 'lg:p-8' : 'lg:p-6'" class="p-6">
       <div class="flex flex-col h-full">
         <div :class="{ 'h-40': !removeSpacing }">
-          <nuxt-link v-if="content?.link" :external="true" :to="content.link" class="w-full">
+          <nuxt-link v-if="content?.slug" :external="true" :to="content.slug" class="w-full">
             <h3 class="text-xl font-bold">{{ content.title }}</h3>
           </nuxt-link>
-          <p v-if="content?.client" class="mt-2 text-sm text-muted-foreground">{{ content.client }}</p>
+          <p v-if="content?.sub_title" class="mt-2 text-sm text-muted-foreground">{{ content.sub_title }}</p>
           <p  :class="{ 'h-20': !removeSpacing }" class="mt-3 text-sm">{{ content.description }}</p>
         </div>
 
@@ -37,7 +37,7 @@
         </div>
 
         <div :class="!removeSpacing ? 'mt-8' : 'mt-6'" class="flex w-full gap-3">
-          <nuxt-link v-if="content?.link" :external="true" :to="content.link" class="w-full">
+          <nuxt-link v-if="content?.slug" :external="true" :to="content.slug" class="w-full">
             <Button class="w-full">{{ buttonText || 'Visit Site' }}</Button>
           </nuxt-link>
         </div>
@@ -51,10 +51,10 @@ defineProps<{
   content: {
     id: number;
     title: string;
-    client: string;
+    sub_title: string;
     description: string;
-    image?: string;
-    link?: string;
+    cover_image?: string;
+    slug?: string;
     caseStudy?: string;
     tags?: string[];
     tech?: string[];
