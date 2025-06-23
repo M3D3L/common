@@ -1,8 +1,8 @@
 <template>
 
-    <div id="blogs" class="relative z-10 flex flex-col pb-16 lg:pb-24">
+    <div id="blogs" class="relative z-10 flex flex-col px-8 pb-16 xl:px-56 lg:pb-24">
 
-        <motion.div class="container w-full pt-16 mb-8 md:mb-12 xl:px-48 lg:pt-24" :variants="{
+        <motion.div class="w-full pt-16 mb-8 md:mb-12 lg:pt-24" :variants="{
             hidden: { opacity: 0, y: 20 },
             visible: {
                 opacity: 1,
@@ -18,23 +18,23 @@
         </motion.div>
 
         <div
-            class="relative lg:pb-24 pb-16 flex flex-col w-full min-h-screen gap-8 lg:flex-row container xl:px-[10.25rem]">
+            class="relative flex flex-col w-full min-h-screen gap-8 pb-16 lg:pb-24 lg:flex-row">
 
 
             <motion.div :variants="fadeUp" class="flex flex-col gap*:-8 w-full lg:w-2/3 lg:flex-row">
-                <div class="flex flex-col w-full gap-4 lg:w-full">
+                <div class="grid w-full grid-cols-1 gap-4 lg:grid-cols-1 md:grid-cols-2 lg:w-full">
                     <template v-for="(post, index) in props.content.items" :key="post.id">
                         <Card :class="index <= 2 ? 'flex' : 'hidden md:flex'"
                             class="flex flex-col h-full overflow-hidden md:flex-row-reverse group">
-                            <CardContent class="flex flex-col-reverse items-start w-full h-full p-6 md:flex-row">
-                                <div class="w-full mt-6 md:mt-0 md:pr-8 md:w-3/4">
+                            <CardContent class="flex flex-col-reverse items-start w-full h-full p-6 lg:flex-row">
+                                <div class="w-full mt-6 lg:mt-0 md:pr-8 md:w-3/4">
                                     <div class="flex items-center gap-2 mb-2">
                                         <span class="text-xs text-muted-foreground">
                                             {{ formatDate(post.created)?.[0] }}
                                         </span>
                                     </div>
                                     <h3 class="text-lg font-bold">
-                                        <NuxtLink :to="`/blog${post.slug}`"
+                                        <NuxtLink :to="`${baseUrl}/blog${post.slug}`"
                                             class="transition-colors hover:text-primary">
                                             {{ post.title }}
                                         </NuxtLink>
@@ -116,6 +116,10 @@ const props = defineProps({
         type: Boolean,
         default: true
     },
+    baseUrl: {
+        type: String,
+        default: ''
+    }
 })
 
 // Calculate reading time

@@ -1,5 +1,5 @@
 <template>
-    <containers-video video="https://videos.pexels.com/video-files/4665104/4665104-uhd_2560_1440_30fps.mp4" :hideDescription="true" :h1="true" class="min-h-[90vh] md:min-h-screen" :title>
+    <containers-video video="https://videos.pexels.com/video-files/3099522/3099522-hd_1920_1080_25fps.mp4" :hideDescription="true" :h1="true" class="min-h-[90vh] md:min-h-screen" :title>
         <template #video-container-content>
             <main class="relative z-10 flex items-center w-full h-full">
 
@@ -77,7 +77,7 @@
                     }">
 
                         <motion.img 
-                            :src="BlockMe" 
+                            :src="image" 
                             alt="BlockMe" 
                             class="w-full max-w-sm mx-auto lg:max-w-md 3xl:max-w-xl" 
                             :initial="{ y: 0 }"
@@ -109,9 +109,6 @@ import {
     CardTitle,
 } from '@/components/ui/card'
 
-import BlockMe from '/images/block-me.webp'
-import SanCarlos from '/images/san-carlos.png'
-
 // Props
 const props = defineProps({
     video: {
@@ -133,6 +130,9 @@ const props = defineProps({
             { title: 'Components', link: '/components' }
         ]
     },
+    image: {
+        type: String
+    }
 })
 
 // Methods

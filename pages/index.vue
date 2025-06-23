@@ -4,7 +4,8 @@
         <!-- Hero Section -->
         <SectionsHero v-if="layoutConfig?.heroData" video="https://videos.pexels.com/video-files/2541964/2541964-hd_1920_1080_24fps.mp4" :buttons="layoutConfig.heroData.buttons"
           :cards="layoutConfig.heroData?.cards" :title="layoutConfig.heroData?.title"
-          :description="layoutConfig.heroData?.description" :image="layoutConfig.heroData?.image" />
+          :image="BlockMe"
+          :description="layoutConfig.heroData?.description" />
         
         <!-- Projects Section -->
         <SectionsProjects />
@@ -24,6 +25,7 @@
 import { layoutConfig } from '~/assets/configs/ui/layout'
 import { createSeoObject } from '@/composables/createSeoObject';
 import usePocketBaseCore from '@/composables/usePocketBaseCore';
+import BlockMe from '/images/block-me.webp';
 
 const computedSeoData = computed(() => {
   return createSeoObject({

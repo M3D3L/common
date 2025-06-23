@@ -2,7 +2,7 @@
   <Card v-if="content"
     class="h-full overflow-hidden transition-all duration-300 border group border-muted hover:border-primary/30 hover:shadow-lg">
     <CardHeader class="p-0 border-b border-muted">
-      <nuxt-link v-if="content?.slug && content?.cover_image" :to="content.slug" class="w-full">
+      <nuxt-link v-if="content?.slug && content?.cover_image" :to="`${baseUrl + content.slug}`" class="w-full">
         <div class="relative overflow-hidden aspect-video">
           <img :src="content.cover_image" :alt="content.title"
             class="object-cover w-full h-full transition-all duration-500 aspect-video hover:scale-105" />
@@ -61,6 +61,7 @@ defineProps<{
   } | null;
   removeSpacing?: boolean;
   buttonText?: string;
+  baseUrl?: string;
 }>()
 
 </script>
