@@ -1,6 +1,6 @@
 <template>
   <SectionsHero v-if="layoutConfig?.heroData"
-    video="https://videos.pexels.com/video-files/2541964/2541964-hd_1920_1080_24fps.mp4"
+    video="https://videos.pexels.com/video-files/28100367/12301150_2560_1440_30fps.mp4"
     :image="SanCarlos"
     :buttons="layoutConfig.heroData.buttons" :cards="layoutConfig.heroData?.cards" :title="layoutConfig.heroData?.title"
     :description="layoutConfig.heroData?.description" />
@@ -35,6 +35,7 @@
   </div>
 
   <SectionsBlogsCols :showPagination="false" :content="posts" />
+  <SectionsContact/>
 </template>
 
 <script lang="ts" setup>
