@@ -1,5 +1,5 @@
 <template>
-    <containers-video :video :hideDescription="true" :h1="true" class="min-h-[90vh] md:min-h-screen" :title>
+    <containers-video :video="video" :hideDescription="true" :h1="true" class="min-h-[90vh] md:min-h-screen" :title>
         <template #video-container-content>
             <main class="relative z-10 flex items-center w-full h-full">
 

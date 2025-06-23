@@ -42,7 +42,6 @@ export interface Hero {
   description: string
   image: string
   link: string
-  cards: Card[],
   buttons: Button[],
   video: string
 }
@@ -69,7 +68,7 @@ export const defaultDescription = 'Discover what makes our solution stand out'
 
 // Data
 export const heroData: Hero = {
-  title: 'San Carlos Lot Sales',
+  title: 'San Carlos Lot Sales | Real Estate Opportunities',
   description: "Explore prime real estate opportunities in San Carlos, Sonora. Whether you're looking for a vacation home, investment property, or a place to build your dream home, we have the perfect lot for you.",
   image: 'https://images.pexels.com/photos/31317409/pexels-photo-31317409/free-photo-of-serene-white-sands-in-new-mexico-s-desert.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2',
   link: '#',
@@ -79,9 +78,9 @@ export const heroData: Hero = {
       link: '#contact'
     },
     {
-      title: 'See My Projects',
-      link: '#portfolio'
-    }
+      title: 'View Listings',
+      link: '/properties'
+    },
   ],
 }
 
