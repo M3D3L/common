@@ -39,7 +39,7 @@
 </template>
 
 <script lang="ts" setup>
-import { layoutConfig } from '~/assets/configs/ui/layout'
+import { layoutConfig } from '~/assets/configs/ui/layoutRealEstate'
 import usePocketBaseCore from '@/composables/usePocketBaseCore'
 
 import Subscribe from '~/components/sections/Subscribe.vue'
