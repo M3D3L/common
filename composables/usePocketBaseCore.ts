@@ -63,12 +63,12 @@ export default function usePocketBaseCore() {
     const stringId = id.toString()
     const cacheKey = getCacheKey('fetchRecord', { collection, id: stringId })
 
-    const cached = getCache<RecordModel>(cacheKey) // Use getCache
+    const cached = getCache<RecordModel>(cacheKey)
     if (cached) return cached
 
     try {
       const record = await pb.collection(collection).getOne(stringId)
-      setCache(cacheKey, record) // Use setCache
+      setCache(cacheKey, record)
       return record
     } catch (error) {
       console.error(`Error fetching ${collection} record ${stringId}:`, error)

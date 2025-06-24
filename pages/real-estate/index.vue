@@ -10,6 +10,10 @@
       <TextSectionTitle class="container py-12" :title="category.name" :description="category.description"
         :h1="false" />
 
+        <pre>
+          {{ dataArray[index] }}
+        </pre>
+
       <div :class="index % 2 ? 'lg:flex-row-reverse' : 'lg:flex-row'" class="container flex flex-col gap-8 pb-12">
         <div class="grid w-full gap-8 md:grid-cols-2 lg:w-2/3">
           <!-- Display properties for each category -->

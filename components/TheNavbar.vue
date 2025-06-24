@@ -51,7 +51,7 @@ watch(route, () => {
     <div class="container flex items-center justify-between h-16 px-4">
       <NuxtLink to="/" class="flex items-center">
         <span class="flex flex-col logo-text">
-          <span class="text-xl font-bold">GuillermoMedel</span>
+          <span class="text-xl font-bold">{{ !route.path.includes('real-estate') ? 'GuillermoMedel' : 'SCLotSales' }}</span>
         </span>
       </NuxtLink>
 
