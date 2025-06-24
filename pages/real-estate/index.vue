@@ -1,45 +1,34 @@
 <template>
   <SectionsHero v-if="layoutConfig?.heroData"
-    video="https://videos.pexels.com/video-files/28100367/12301150_2560_1440_30fps.mp4"
-    :image="SanCarlos"
+    video="https://videos.pexels.com/video-files/28100367/12301150_2560_1440_30fps.mp4" :image="SanCarlos"
     :buttons="layoutConfig.heroData.buttons" :cards="layoutConfig.heroData?.cards" :title="layoutConfig.heroData?.title"
     :description="layoutConfig.heroData?.description" />
-  
+
   <div class="pt-16 xl:px-48 lg:pt-24">
     <template v-for="(category, index) in categories" :key="category.name">
       <TextSectionTitle class="container py-12" :title="category.name" :description="category.description"
         :h1="false" />
 
-        <pre>
-          {{ dataArray[index] }}
-        </pre>
-
       <div :class="index % 2 ? 'lg:flex-row-reverse' : 'lg:flex-row'" class="container flex flex-col gap-8 pb-12">
         <div class="grid w-full gap-8 md:grid-cols-2 lg:w-2/3">
           <!-- Display properties for each category -->
-           <template v-for="(item, itemIndex) in dataArray[index]" :key="itemIndex">
-            <CardsBaseCard 
-            v-if="item"
-            :key="itemIndex" 
-            baseUrl="/property" 
-            :removeSpacing="true"
-            :content="item" 
-            :buttonText="`View ${category.name}`" 
-          />
+          <template v-for="(item, itemIndex) in dataArray[index]" :key="itemIndex">
+            <CardsBaseCard v-if="item" :key="itemIndex" baseUrl="/property" :removeSpacing="true" :content="item"
+              :buttonText="`View ${category.name}`" />
 
-           </template>
-          
+          </template>
+
         </div>
         <div class="w-full lg:w-1/3">
           <component :is="category.subscribeComponent" class="z-10 sticky-position top-28" :mode="category.mode" />
         </div>
       </div>
-      
+
     </template>
   </div>
 
   <SectionsBlogsCols :showPagination="false" :content="posts" />
-  <SectionsContact/>
+  <SectionsContact />
 </template>
 
 <script lang="ts" setup>
