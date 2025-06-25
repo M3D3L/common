@@ -1,5 +1,5 @@
 <template>
-  <div class="flex flex-col w-full">
+  <div class="z-20 flex flex-col w-full">
     <div class="flex items-center w-full gap-8 mb-8">
       <h1 v-if="h1" class="text-4xl font-black leading-tight tracking-tighter md:text-6xl lg:text-7xl">
         <span class="text-transparent bg-clip-text bg-gradient-to-r from-white to-primary/60">{{

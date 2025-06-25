@@ -13,7 +13,6 @@
 
         <CardContent
           class="relative grid gap-10 py-8 lg:grid-cols-2"
-          v-motion
           :initial="'hidden'"
           :animate="'visible'"
           :variants="containerVariants"
@@ -158,7 +157,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { motion } from 'motion-v'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'

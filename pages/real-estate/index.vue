@@ -6,7 +6,7 @@
 
   <div class="pt-16 xl:px-48 lg:pt-24">
     <template v-for="(category, index) in categories" :key="category.name">
-      <TextSectionTitle class="container py-12" :title="category.sectionTitle" :description="category.sectionSubTitle"
+      <TextSectionTitle class="container pt-12 pb-16" :title="category.sectionTitle" :description="category.sectionSubTitle"
         :h1="false" />
 
       <div :class="index % 2 ? 'lg:flex-row-reverse' : 'lg:flex-row'" class="container flex flex-col gap-8 pb-12">

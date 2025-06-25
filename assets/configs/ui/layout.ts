@@ -254,7 +254,6 @@ export const footerData: FooterData = {
     {
       title: 'General',
       links: [
-        { label: 'Home', href: '/' },
         { label: 'Rentals', href: '/rentals' },
         { label: 'Properties', href: '/properties' },
         { label: 'Lots', href: '/lots' },
