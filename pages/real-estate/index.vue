@@ -6,7 +6,7 @@
 
   <div class="pt-16 xl:px-48 lg:pt-24">
     <template v-for="(category, index) in categories" :key="category.name">
-      <TextSectionTitle class="container py-12" :title="category.name" :description="category.description"
+      <TextSectionTitle class="container py-12" :title="category.sectionTitle" :description="category.sectionSubTitle"
         :h1="false" />
 
       <div :class="index % 2 ? 'lg:flex-row-reverse' : 'lg:flex-row'" class="container flex flex-col gap-8 pb-12">
@@ -15,12 +15,13 @@
           <template v-for="(item, itemIndex) in dataArray[index]" :key="itemIndex">
             <CardsBaseCard v-if="item" :key="itemIndex" baseUrl="/property" :removeSpacing="true" :content="item"
               :buttonText="`View ${category.name}`" />
-
           </template>
 
         </div>
         <div class="w-full lg:w-1/3">
-          <component :is="category.subscribeComponent" class="z-10 sticky-position top-28" :mode="category.mode" />
+          <CardsInfoCard :is="category.subscribeComponent" :title="category.name" :footerText="category.footerText"
+            :subtitle="category.description" :benefits="category.benifits" class="z-10 sticky-position top-28"
+            :mode="category.mode" />
         </div>
       </div>
 
@@ -34,10 +35,7 @@
 <script lang="ts" setup>
 import { layoutConfig } from '~/assets/configs/ui/layoutRealEstate'
 import usePocketBaseCore from '@/composables/usePocketBaseCore'
-
-import Subscribe from '~/components/sections/Subscribe.vue'
-import Subscribe2 from '~/components/sections/Subscribe2.vue'
-import Subscribe3 from '~/components/sections/Subscribe3.vue'
+import { categories } from '~/assets/configs/cards/real-estate'
 
 import SanCarlos from '/images/san-carlos.png'
 
@@ -51,30 +49,6 @@ const posts = ref([])
 const dataArray = computed(() => {
   return [[...properties.value], [...rentals.value], [...lots.value]]
 })
-
-const categories = [
-  {
-    name: 'Homes',
-    description: 'Discover beautiful homes in San Carlos, Sonora...',
-    subscribeComponent: Subscribe,
-    mode: 'properties',
-    cta: 'Get exclusive home listings in San Carlos'
-  },
-  {
-    name: 'Rentals',
-    description: 'Explore short-term and long-term rental properties...',
-    subscribeComponent: Subscribe2,
-    mode: 'rentals',
-    cta: 'Receive rental opportunities first'
-  },
-  {
-    name: 'Lots',
-    description: 'Prime land available in San Carlos...',
-    subscribeComponent: Subscribe3,
-    mode: 'lots',
-    cta: 'Be notified about new land listings'
-  }
-]
 
 const fetchPropertiesByType = async (type: string, targetRef: Ref<any[]>) => {
   try {
