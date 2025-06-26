@@ -14,7 +14,6 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, onBeforeUnmount, watch } from 'vue'
 import { motion } from 'motion-v'
 
 const props = defineProps({
@@ -28,7 +27,7 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['video-active']) // Define the custom event
+const emit = defineEmits(['video-active'])
 
 const videoRef = ref<HTMLVideoElement | null>(null)
 const isVideoActive = ref(false)
@@ -52,7 +51,7 @@ const handleIntersection = (entries: IntersectionObserverEntry[]) => {
       videoControls.opacity = 0
       videoRef.value?.pause()
     }
-    emit('video-active', isVideoActive.value) // Emit the event whenever isVideoActive changes
+    emit('video-active', isVideoActive.value)
   })
 }
 
