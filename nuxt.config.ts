@@ -25,6 +25,7 @@ export default defineNuxtConfig({
     'shadcn-nuxt',
     'motion-v/nuxt',
     '@nuxtjs/google-fonts',
+    'nuxt-swiper',
   ],
 
   googleFonts: {
