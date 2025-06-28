@@ -1,6 +1,6 @@
 <template>
   <SectionsHero v-if="layoutConfig?.heroData"
-    video="https://videos.pexels.com/video-files/28100367/12301150_2560_1440_30fps.mp4" :image="SanCarlos"
+    :video="layoutConfig?.heroData?.video" :image="layoutConfig?.heroData?.image"
     :buttons="layoutConfig.heroData.buttons" :cards="layoutConfig.heroData?.cards" :title="layoutConfig.heroData?.title"
     :description="layoutConfig.heroData?.description" />
 
@@ -37,8 +37,6 @@ import { layoutConfig } from '~/assets/configs/ui/layoutRealEstate'
 import usePocketBaseCore from '@/composables/usePocketBaseCore'
 import { categories } from '~/assets/configs/cards/real-estate'
 
-import SanCarlos from '/images/san-carlos.png'
-
 const { fetchCollection } = usePocketBaseCore()
 
 const properties = ref([])
@@ -47,14 +45,12 @@ const lots = ref([])
 const posts = ref([])
 
 const dataArray = computed(() => {
-  return [[...properties.value], [...rentals.value], [...lots.value]]
+  return [properties.value, rentals.value, lots.value]
 })
 
-const fetchPropertiesByType = async (type: string, targetRef: Ref<any[]>) => {
+const fetchPropertiesByType = async (type: string) => {
   try {
-    const res = await fetchCollection('properties', 1, 6, `type="${type}"`, '-created', '', ['content'])
-    targetRef.value = res.items
-    return targetRef.value
+    return await fetchCollection('properties', 1, 6, `type="${type}"`, '-created', '', ['content'])
   } catch (error) {
     console.error(`Error fetching ${type}:`, error)
   }
@@ -72,12 +68,20 @@ const fetchPosts = async () => {
 
 
 onMounted(async () => {
-  await Promise.all([
-    fetchPropertiesByType('property', properties),
-    fetchPropertiesByType('rental', rentals),
-    fetchPropertiesByType('lot', lots),
-    posts.value = await fetchPosts()
-  ])
+  try {
+    const [property, rents, lts] = await Promise.all([
+      fetchPropertiesByType('property'),
+      fetchPropertiesByType('rental'),
+      fetchPropertiesByType('lot'),
+    ]);
+    
+    properties.value = property?.items || [];
+    rentals.value = rents?.items || [];
+    lots.value = lts?.items || [];
+    posts.value = await fetchPosts();
+  } catch (error) {
+    console.error('Error fetching data:', error);
+  }
 })
 </script>
 

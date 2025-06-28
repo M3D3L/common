@@ -39,6 +39,7 @@ export interface Button {
 
 export interface Hero {
   title: string
+  subtitle: string
   description: string
   image: string
   link: string
@@ -69,8 +70,10 @@ export const defaultDescription = 'Discover what makes our solution stand out'
 // Data
 export const heroData: Hero = {
   title: 'San Carlos Lot Sales | Real Estate Opportunities',
+  subtitle: 'Your Gateway to Coastal Living',
   description: "Explore prime real estate opportunities in San Carlos, Sonora. Whether you're looking for a vacation home, investment property, or a place to build your dream home, we have the perfect lot for you.",
-  image: 'https://images.pexels.com/photos/31317409/pexels-photo-31317409/free-photo-of-serene-white-sands-in-new-mexico-s-desert.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2',
+  video: 'https://videos.pexels.com/video-files/4665104/4665104-uhd_2560_1440_30fps.mp4',
+  image: '/images/san-carlos.png',
   link: '#',
   buttons: [
     {

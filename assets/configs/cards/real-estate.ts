@@ -88,7 +88,7 @@ export const categories = [
     sectionSubTitle: whyBuyRealEstateConfig.sectionSubTitle,
     name: whyBuyRealEstateConfig.title,
     description: whyBuyRealEstateConfig.subtitle,
-    mode: 'properties',
+    mode: 'property',
     cta: 'Get exclusive home listings in San Carlos',
     benifits: whyBuyRealEstateConfig.benefits,
     footerText: whyBuyRealEstateConfig.footerText
@@ -98,7 +98,7 @@ export const categories = [
     sectionSubTitle: whyRentConfig.sectionSubTitle,
     name: whyRentConfig.title,
     description: whyRentConfig.subtitle,
-    mode: 'rentals',
+    mode: 'rental',
     cta: 'Receive rental opportunities first',
     benifits: whyRentConfig.benefits,
     footerText: whyRentConfig.footerText
@@ -108,7 +108,7 @@ export const categories = [
     sectionSubTitle: whyBuyLotsConfig.sectionSubTitle,
     name: whyBuyLotsConfig.title,
     description: whyBuyLotsConfig.subtitle,
-    mode: 'lots',
+    mode: 'lot',
     cta: 'Be notified about new land listings',
     benifits: whyBuyLotsConfig.benefits,
     footerText: whyBuyLotsConfig.footerText

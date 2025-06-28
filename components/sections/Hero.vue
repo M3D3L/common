@@ -1,6 +1,6 @@
 <template>
   <containers-video
-    :video="video"
+    :video
     :hideDescription="true"
     :h1="true"
     class="min-h-[90vh] md:min-h-screen"
@@ -93,7 +93,7 @@
           >
             <motion.img
               :src="image"
-              alt="BlockMe"
+              alt="Hero Image"
               class="w-full max-w-xs mx-auto sm:max-w-sm md:max-w-md lg:max-w-lg 3xl:max-w-xl"
               :initial="{ y: 0 }"
               :animate="{

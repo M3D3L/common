@@ -3,8 +3,8 @@
         <Seo :seoData="computedSeoData" />
         <!-- Hero Section -->
         <SectionsHero v-if="layoutConfig?.heroData" :buttons="layoutConfig.heroData.buttons"
-          :cards="layoutConfig.heroData?.cards" :title="layoutConfig.heroData?.title"
-          :image="BlockMe" video="https://videos.pexels.com/video-files/4665104/4665104-uhd_2560_1440_30fps.mp4"
+          :cards="layoutConfig.heroData?.cards" :title="layoutConfig.heroData?.title" :sub-title="layoutConfig.heroData?.subtitle"
+          :image="layoutConfig.heroData?.image" video="https://videos.pexels.com/video-files/4665104/4665104-uhd_2560_1440_30fps.mp4"
           :description="layoutConfig.heroData?.description" />
         
         <!-- Projects Section -->
@@ -25,7 +25,6 @@
 import { layoutConfig } from '~/assets/configs/ui/layout'
 import { createSeoObject } from '@/composables/createSeoObject';
 import usePocketBaseCore from '@/composables/usePocketBaseCore';
-import BlockMe from '/images/block-me.webp';
 
 const computedSeoData = computed(() => {
   return createSeoObject({

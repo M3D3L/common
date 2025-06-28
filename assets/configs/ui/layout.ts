@@ -39,6 +39,7 @@ export interface Button {
 
 export interface Hero {
   title: string
+  subtitle: string
   description: string
   image: string
   link: string
@@ -70,8 +71,9 @@ export const defaultDescription = 'Discover what makes our solution stand out'
 // Data
 export const heroData: Hero = {
   title: 'Guillermo Medel | Full Stack Developer | Digital Experiences',
+  subtitle: 'Crafting Seamless Web Solutions',
   description: "Hey, I'm a full-stack developer based in San Carlos, Sonora, crafting complete web experiences—from sleek frontends to robust backends. I've contributed to platforms like Law.com, and when I'm not coding, I'm offering drone photography to help local businesses elevate their online presence.",
-  image: 'https://images.pexels.com/photos/31317409/pexels-photo-31317409/free-photo-of-serene-white-sands-in-new-mexico-s-desert.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2',
+  image: '/images/block-me.webp',
   link: '#',
   buttons: [
     {

@@ -8,9 +8,9 @@
             Subscribe to My Newsletter
           </span>
         </h2>
-        <p class="mt-3 text-base text-muted-foreground line-clamp-3">
+        <p class="mt-3 text-white text-muted-foreground line-clamp-3">
           Stay updated with the latest articles and insights on web development, design, and technology.
-          Subscribe to our newsletter for exclusive content and tutorials.
+          Subscribe to My Newsletter
         </p>
   
         <!-- Social proof -->

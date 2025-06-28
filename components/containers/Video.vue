@@ -12,9 +12,6 @@
 
     <VideoBackground :video="video" :observe-element="heroRef" @video-active="handleVideoComponentActive" />
 
-    <span class="sr-only">
-      {{ description }}
-    </span>
     <motion.div class="z-10 w-full px-4 mx-auto lg:container rounded-2xl" initial="hidden" whileInView="visible"
       :variants="{
         hidden: { opacity: 0 },
@@ -70,6 +67,3 @@ const handleVideoComponentActive = (isActive: boolean) => {
   isVideoComponentActive.value = isActive
 }
 </script>
-
-<style scoped>
-</style>
