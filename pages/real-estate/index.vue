@@ -4,12 +4,12 @@
     :buttons="layoutConfig.heroData.buttons" :cards="layoutConfig.heroData?.cards" :title="layoutConfig.heroData?.title"
     :description="layoutConfig.heroData?.description" />
 
-  <div class="pt-16 xl:px-48 lg:pt-24">
-    <template v-for="(category, index) in categories" :key="category.name">
+  <ul class="pt-16 pb-32 space-y-32 lg:pt-24">
+    <li v-for="(category, index) in categories" :key="category.name">
       <TextSectionTitle class="container pt-12 pb-16" :title="category.sectionTitle" :description="category.sectionSubTitle"
         :h1="false" />
 
-      <div :class="index % 2 ? 'lg:flex-row-reverse' : 'lg:flex-row'" class="container flex flex-col gap-8 pb-12">
+      <div :class="index % 2 ? 'lg:flex-row-reverse' : 'lg:flex-row'" class="container flex flex-col gap-8">
         <div class="grid w-full gap-8 md:grid-cols-2 lg:w-2/3">
           <!-- Display properties for each category -->
           <template v-for="(item, itemIndex) in dataArray[index]" :key="itemIndex">
@@ -25,8 +25,8 @@
         </div>
       </div>
 
-    </template>
-  </div>
+    </li>
+  </ul>
 
   <SectionsBlogsCols :showPagination="false" :content="posts" />
   <SectionsContact />

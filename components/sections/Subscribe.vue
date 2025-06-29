@@ -1,7 +1,7 @@
 <template>
     <div class="flex flex-col w-full md:flex-row lg:flex-col">
       <!-- Left text/CTA block -->
-      <div class="grid content-center w-full px-2 mb-8 md:w-1/2 lg:w-full md:pr-16 md:mb-4 md:px-0">
+      <div class="grid content-center w-full px-2 mb-8 md:w-1/2 lg:w-full md:pr-16 lg:pr-0 md:mb-4 md:px-0">
         <h2 class="text-2xl font-bold tracking-tight md:text-3xl lg:text-4xl">
           <span class="text-transparent transition-colors bg-clip-text bg-gradient-to-r from-primary to-primary/70 hover:from-primary/80 hover:to-primary/50"
           >
@@ -31,7 +31,7 @@
       </div>
   
       <!-- Sticky newsletter hero container -->
-      <SectionsNewsletterHero class="w-full md:w-1/2 lg:w-full" />
+      <SectionsNewsletterHero class="w-full md:w-1/2 md:pl-2 lg:pl-0 lg:w-full" />
     </div>
   </template>
   

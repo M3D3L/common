@@ -7,12 +7,12 @@
     :description="description"
   >
     <template #video-container-content>
-      <Card class="relative w-full py-1 mt-16 overflow-x-hidden">
+      <Card class="relative w-full py-1 mt-16 overflow-hidden">
         <!-- Decorative Background Blob -->
         <div class="absolute top-[-4rem] right-[-4rem] w-64 h-64 bg-primary/10 rounded-full blur-3xl opacity-20 pointer-events-none z-0" />
 
         <CardContent
-          class="relative grid gap-10 py-8 lg:grid-cols-2"
+          class="relative grid gap-10 pt-2 pb-12 lg:grid-cols-2"
           :initial="'hidden'"
           :animate="'visible'"
           :variants="containerVariants"
@@ -101,7 +101,7 @@
 
           <!-- Contact Info Panel -->
           <motion.div :variants="fadeUp" class="space-y-6 md:px-8">
-            <div>
+            <div class="pt-8">
               <h3 class="text-lg font-bold">Contact Information</h3>
               <p class="mt-2 text-sm text-muted-foreground">
                 Fill out the form or reach out directly through these channels

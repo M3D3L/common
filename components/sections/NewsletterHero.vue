@@ -1,6 +1,6 @@
 <template>
     <!-- Newsletter form -->
-    <motion.div :variants="fadeUp" class="md:pl-2">
+    <motion.div :variants="fadeUp">
         <Card>
             <CardContent class="p-6 space-y-6">
                 <form @submit.prevent="handleSubmit" class="space-y-4">
