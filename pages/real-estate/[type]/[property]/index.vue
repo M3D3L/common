@@ -12,9 +12,9 @@
       <Card class="w-full p-8 mb-4 rounded-lg shadow-md md:w-1/2">
         <h2 class="pb-6 mb-6 text-3xl font-semibold border-b">Property Specifics</h2>
 
-        <div class="grid grid-cols-1 text-gray-700 sm:grid-cols-2 gap-y-3 gap-x-6">
+        <div class="grid grid-cols-1 text-foreground sm:grid-cols-2 gap-y-3 gap-x-6">
           <div v-if="property?.price">
-            <p class="text-sm text-gray-500 uppercase">Price</p>
+            <p class="text-sm uppercase text-foreground">Price</p>
             <p class="text-lg font-bold">${{ property.price.toLocaleString() }}</p>
           </div>
           <div v-if="property?.address">
@@ -56,41 +56,67 @@
           </p>
         </div>
       </Card>
-      <Card class="w-full min-h-[400px] mb-4 rounded-lg shadow-md md:w-1/2">
-
-        <iframe class="object-cover w-full h-full"
-          src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3277.679763099767!2d-117.16370938476018!3d34.0535768806067!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x80c32b6e037d3a51%3A0x6b1a1d9a7f0d9a1b!2sCalifornia%20State%20University%2C%20San%20Bernardino!5e0!3m2!1sen!2sus!4v1622568466628!5m2!1sen!2sus"
-          style="border:0;" allowfullscreen="true" loading="lazy">
-        </iframe>
-
+      <Card class="relative w-full min-h-[400px] mb-4 rounded-lg shadow-md md:w-1/2">
+        <iframe class="absolute inset-0 w-full h-full" :src="mapSrc" style="border:0;" allowfullscreen loading="lazy"
+          referrerpolicy="no-referrer-when-downgrade"></iframe>
       </Card>
     </div>
-
-    <ContainersCarousel :slides @selected-event="openModalWithImage" />
+    <pre>
+      {{ property.gallery }}
+    </pre>
+    <ContainersCarousel :slides="property.gallery" @selected-event="openModalWithImage" />
 
     <Modal ref="modal">
       <Card class="relative flex flex-row items-center justify-between p-4">
-        <button @click="moveSlider('back')" class="text-gray-500 hover:text-gray-700 w-12 bottom-0 absolute left-0 top-0 min-h-[80vh]">
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <button @click="moveSlider('back')"
+          class="text-gray-500 hover:text-gray-700 w-12 bottom-0 bg-foreground/5 absolute left-0 top-0 min-h-[80vh]">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 mx-auto" fill="none" viewBox="0 0 24 24"
+            stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
           </svg>
         </button>
         <div class="w-full min-h-[80vh] lg:aspect-video">
-          <img :src="selectedImage" class="object-contain w-full h-full" />
+          <img :src="selectedImage" class="object-cover w-full h-full" />
         </div>
-        <button @click="moveSlider('back')" class="text-gray-500 hover:text-gray-700 w-12 bottom-0 absolute right-0 top-0 min-h-[80vh]">
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 mx-auto transform rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <button @click="moveSlider('back')"
+          class="text-gray-500 hover:text-gray-700 w-12 bottom-0 absolute right-0 top-0 min-h-[80vh]">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 mx-auto transform rotate-180" fill="none"
+            viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
           </svg>
         </button>
       </Card>
     </Modal>
+
+
+    <TextSectionTitle class="container pt-20 pb-16 pl-0 capitalize"
+      :title="`Explore More ${formattedPropertyType[0]} Listings`"
+      :description="`Browse the latest real estate listings, prices, and availability for ${formattedPropertyType[0]} in ${route.path.split('/')?.[2].replace('-', ' ')}`"
+      :h1="false" />
+    <div class="relative flex flex-col gap-8 mb-16 lg:flex-row">
+      <div class="grid w-full gap-8 md:grid-cols-2 lg:w-2/3">
+        <!-- Display properties for each category -->
+        <template v-for="(item, itemIndex) in fetchedProperties?.items" :key="itemIndex">
+          <CardsBaseCard v-if="item" :key="itemIndex" baseUrl="/property" :removeSpacing="true" :content="item"
+            :buttonText="`View`" />
+        </template>
+      </div>
+
+      <div class="w-full lg:w-1/3">
+        <CardsInfoCard :title="infocard?.sectionTitle" :footerText="'footerText'" :subtitle="infocard?.sectionTitle"
+          :benefits="infocard?.benifits" :dataArray class="sticky z-10 top-28" :mode="'rental'" />
+      </div>
+
+
+    </div>
+
   </section>
 </template>
 
 <script lang="ts" setup>
 import usePocketBaseCore from '@/composables/usePocketBaseCore'
 import Modal from '~/components/sections/Modal.vue';
+import { categories } from '~/assets/configs/cards/real-estate'
 
 const { fetchCollection } = usePocketBaseCore()
 interface Property {
@@ -114,85 +140,30 @@ interface Property {
   sub_title?: string;
   tags?: string[] | null;
   updated?: string;
-  video?: string;
   gallery?: any[] | null;
+  lat: string;
+  lng: string;
 }
 
 const fetchedProperty = ref<Property[]>([]);
+const fetchedProperties = ref<Property[]>([]);
 const heroRef = ref<HTMLElement | null>(null)
 const isVideoComponentActive = ref(false)
-const video = 'https://picsum.photos/200/300'
+const video = 'https://videos.pexels.com/video-files/3410663/3410663-uhd_2562_1440_30fps.mp4'
+const dataArray = ref<Property[][]>([]);
 
-const slides = ref<Property[]>([
-  {
-    id: '1',
-    title: 'Beautiful Family Home',
-    type: 'home',
-    address: '123 Main St, Springfield, USA',
-    amenities: ['Pool', 'Garage', 'Garden'],
-    area: 2500,
-    bathrooms: 3,
-    bedrooms: 4,
-    lotSize: 0.5,
-    price: 350000,
-    cover_image: 'https://picsum.photos/200/300',
-    slug: 'beautiful-family-home'
-  },
-  {
-    id: '2',
-    title: 'Modern Rental Apartment',
-    type: 'rental',
-    address: '456 Elm St, Springfield, USA',
-    amenities: ['Gym', 'Balcony'],
-    area: 1200,
-    bathrooms: 2,
-    bedrooms: 2,
-    price: 1500,
-    cover_image: 'https://picsum.photos/200/300',
-    slug: 'modern-rental-apartment'
-  },
-  {
-    id: '3',
-    title: 'Spacious Lot for Sale',
-    type: 'lot',
-    address: '789 Oak St, Springfield, USA',
-    lotSize: 1.5,
-    price: 80000,
-    cover_image: 'https://picsum.photos/200/301',
-    slug: 'spacious-lot-for-sale'
-  },
-  {
-    id: '4',
-    title: 'Luxury Villa with Ocean View',
-    type: 'home',
-    address: '101 Beach Ave, Springfield, USA',
-    amenities: ['Pool', 'Spa', 'Ocean View'],
-    area: 4000,
-    bathrooms: 5,
-    bedrooms: 6,
-    lotSize: 1.0,
-    price: 1200000,
-    cover_image: 'https://picsum.photos/200/302',
-    slug: 'luxury-villa-with-ocean-view'
-  },
-  {
-    id: '5',
-    title: 'Cozy Cottage in the Woods',
-    type: 'home',
-    address: '202 Pine St, Springfield, USA',
-    amenities: ['Fireplace', 'Garden'],
-    area: 1500,
-    bathrooms: 2,
-    bedrooms: 3,
-    lotSize: 0.75,
-    price: 250000,
-    cover_image: 'https://picsum.photos/200/303',
-    slug: 'cozy-cottage-in-the-woods'
-  },
-]);
+const baseUrl = '/property';
+
+const lat = 27.9513
+const lng = -111.025
+const zoom = 14
+
+const mapSrc = `https://maps.google.com/maps?q=${lat},${lng}&z=${zoom}&output=embed`
 
 
-
+const infocard = computed(() => {
+  return categories.filter(x => x.mode === formattedPropertyType.value?.[0])?.[0] || {};
+});
 
 // Utils
 const route = useRoute();
@@ -230,13 +201,26 @@ const handleVideoComponentActive = (isActive: boolean) => {
 const fetchPropertiesBySlug = async (slug: string) => {
   try {
     console.log(`Fetching property with slug: ${slug}`);
-    const res = await fetchCollection('properties', 1, 6, `slug="${slug}"`, '-created', '', ['content'])
+    const res = await fetchCollection('properties', 1, 1, `slug="${slug}"`, '-created', '', ['content'])
     console.log('Fetched property:', res);
     return res || null;
   } catch (error) {
     console.error(`Error fetching ${slug}:`, error)
   }
 }
+
+const fetchPropertiesByType = async (type: string) => {
+  try {
+    console.log(`Fetching properties of type: ${type}`);
+    const res = await fetchCollection('properties', 1, 6, `type="${type}"`, '-created', '', ['content'])
+    console.log('Fetched properties:', res);
+    return res || null;
+  } catch (error) {
+    console.error(`Error fetching ${type}:`, error)
+  }
+}
+
+
 
 const modal = ref();
 const selectedImage = ref('');
@@ -262,6 +246,7 @@ const moveSlider = (direction: 'back' | 'forward') => {
 
 onMounted(async () => {
   fetchedProperty.value = await fetchPropertiesBySlug(formattedPropertyType.value?.[2]);
+  fetchedProperties.value = await fetchPropertiesByType(formattedPropertyType.value?.[0]);
 });
 
 </script>

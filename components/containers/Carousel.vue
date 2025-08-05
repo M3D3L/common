@@ -58,8 +58,7 @@ onMounted(() => {
       >
         <Card class="flex items-center justify-center w-full h-full aspect-square">
           <img
-            v-if="slide.cover_image"
-            :src="slide.cover_image"
+            :src="slide"
             alt="Slide image"
             class="object-cover w-full h-full rounded-lg"
           />

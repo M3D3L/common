@@ -72,7 +72,7 @@ export const heroData: Hero = {
   title: 'San Carlos Lot Sales | Real Estate Opportunities',
   subtitle: 'Your Gateway to Coastal Living',
   description: "Explore prime real estate opportunities in San Carlos, Sonora. Whether you're looking for a vacation home, investment property, or a place to build your dream home, we have the perfect lot for you.",
-  video: 'https://videos.pexels.com/video-files/4665104/4665104-uhd_2560_1440_30fps.mp4',
+  video: 'https://videos.pexels.com/video-files/3410663/3410663-uhd_2562_1440_30fps.mp4',
   image: '/images/san-carlos.png',
   link: '#',
   buttons: [
@@ -211,6 +211,17 @@ export const skillsData: SkillSection = {
   ],
   video: 'https://videos.pexels.com/video-files/1456685/1456685-hd_1920_1080_30fps.mp4',
 };
+
+export const blogsLayoutConfig = {
+  title: 'Latest Articles',
+  description: 'Stay updated with the latest trends, tips, and insights in web development, technology, and more.',
+  newsletter: {
+    title: 'Subscribe to Our Newsletter',
+    description: 'Get the latest articles, tips, and updates delivered straight to your inbox.',
+    buttonText: 'Subscribe Now',
+    buttonLink: '/subscribe',
+  },
+}
 
 export const highlightsData: HighlightSkill[] = [
   {

@@ -19,8 +19,8 @@
 
         </div>
         <div class="w-full lg:w-1/3">
-          <CardsInfoCard :is="category.subscribeComponent" :title="category.name" :footerText="category.footerText"
-            :subtitle="category.description" :benefits="category.benifits" class="z-10 sticky-position top-28"
+          <CardsInfoCard :title="category.name" :footerText="category.footerText"
+            :subtitle="category.description" :benefits="category.benifits" :categories :dataArray class="z-10 sticky-position top-28"
             :mode="category.mode" />
         </div>
       </div>
@@ -84,10 +84,3 @@ onMounted(async () => {
   }
 })
 </script>
-
-<style scoped>
-.sticky-position {
-  position: sticky !important;
-  z-index: 32;
-}
-</style>

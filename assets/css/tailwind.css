@@ -3,12 +3,18 @@
 @tailwind utilities;
 
 @layer base {
+
   /* Typography base styles */
   html {
     @apply font-sans;
   }
 
-  h1, h2, h3, h4, h5, h6 {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     @apply font-heading;
   }
 
@@ -102,7 +108,10 @@
     @apply prose prose-neutral max-w-none;
   }
 
-  article h1, article h2, article h3, article h4 {
+  article h1,
+  article h2,
+  article h3,
+  article h4 {
     @apply font-heading text-foreground;
   }
 
@@ -162,5 +171,10 @@
 
   article th {
     @apply bg-muted text-muted-foreground;
+  }
+
+  .sticky-position {
+    position: sticky !important;
+    z-index: 32;
   }
 }

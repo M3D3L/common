@@ -1,6 +1,7 @@
 <template>
     <div class="w-full">
         <Seo :seoData="computedSeoData" />
+
         <!-- Hero Section -->
         <SectionsHero v-if="layoutConfig?.heroData" :buttons="layoutConfig.heroData.buttons"
           :cards="layoutConfig.heroData?.cards" :title="layoutConfig.heroData?.title" :sub-title="layoutConfig.heroData?.subtitle"

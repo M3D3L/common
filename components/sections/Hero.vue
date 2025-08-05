@@ -30,7 +30,7 @@
               }"
             >
               <Card
-                class="pt-6 transition-all duration-300 md:pt-10 hover:border-primary/30 hover:shadow-lg"
+                class="pt-6 transition-all duration-300 md:pt-6 hover:border-primary/30 hover:shadow-lg"
                 role="article"
               >
                 <CardContent class="grid gap-6">
