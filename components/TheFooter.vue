@@ -9,12 +9,7 @@
           <p class="text-sm text-muted-foreground">
             Building the future with innovative solutions.
           </p>
-          <div class="flex gap-4">
-            <a v-for="(item, index) in footerData.socialLinks" :key="index" :href="item.href"
-              class="transition-colors text-muted-foreground hover:text-foreground" :aria-label="item.label">
-              <component :is="item.icon" class="w-5 h-5" />
-            </a>
-          </div>
+          <ContainersSocials :socialLinks="socialLinks" />
         </div>
 
         <!-- Loop over footerColumns -->
@@ -49,11 +44,30 @@
 
 <script setup lang="ts">
 import usePocketBaseCore from '@/composables/usePocketBaseCore';
+import {
+  Mail,
+  Phone,
+  Linkedin,
+  Github,
+} from 'lucide-vue-next'
 
 const props = defineProps({
   footerData: {
     type: Object
   },
+  socialLinks: {
+    type: Array,
+    default: () => [
+      {
+        icon: Linkedin,
+        href: 'https://www.linkedin.com/in/guillermo-medel-9a4465151/'
+      },
+      {
+        icon: Github,
+        href: 'https://github.com/M3D3L'
+      }
+    ]
+  }
 })
 
 const pbUtils = usePocketBaseCore();

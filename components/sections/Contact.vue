@@ -134,20 +134,7 @@
 
             <div class="pt-4">
               <h3 class="text-lg font-bold">Follow Me</h3>
-              <div class="flex gap-4 mt-3">
-                <Button
-                  v-for="social in socialLinks"
-                  :key="social.href"
-                  variant="outline"
-                  size="icon"
-                  as="a"
-                  :href="social.href"
-                  target="_blank"
-                  class="transition-all duration-200 hover:scale-105 hover:shadow-md"
-                >
-                  <component :is="social.icon" class="w-4 h-4 text-muted-foreground hover:text-primary" />
-                </Button>
-              </div>
+              <ContainersSocials :socialLinks="socialLinks" />
             </div>
           </motion.div>
         </CardContent>
