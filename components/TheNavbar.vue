@@ -1,10 +1,97 @@
+<template>
+  <header class="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-md">
+    <div class="container flex items-center justify-between h-16 px-4">
+      <NuxtLink to="/" class="flex items-center">
+        <span class="flex flex-col logo-text">
+          <span class="text-xl font-bold">{{ !route.path.includes('real-estate') ? 'GuillermoMedel' : 'SCLotSales' }}</span>
+        </span>
+      </NuxtLink>
+
+      <div class="flex items-center gap-6">
+        <nav class="items-center hidden gap-6 text-sm font-medium md:flex">
+          <NuxtLink v-for="link in mainLinks" :key="link.href" :to="link.href"
+            class="transition-colors text-foreground/60 hover:text-foreground/80"
+            active-class="font-medium text-foreground">
+            {{ link.label }}
+          </NuxtLink>
+        </nav>
+
+        <Button v-if="auth.isAuthenticated.value" class="text-xs md:text-sm" @click="auth.logout()" variant="default">
+          Logout
+        </Button>
+
+        <!-- Dark/Light Mode toggle. -->
+        <ClientOnly>
+          <button @click="toggleDark()" class="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800">
+            <svg v-if="isDark" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+            </svg>
+            <svg v-else class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+            </svg>
+          </button>
+
+          <CheckoutView v-if="checkoutToggled" class="absolute top-0 right-0" />
+        </ClientOnly>
+
+        <button @click="isMobileMenuOpen = !isMobileMenuOpen"
+          class="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 md:hidden">
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              :d="isMobileMenuOpen ? 'M6 18L18 6M6 6l12 12' : 'M4 6h16M4 12h16M4 18h16'" />
+          </svg>
+        </button>
+
+        <button @click="checkoutToggled = !checkoutToggled" aria-label="Toggle checkout" class="flex p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800">
+          <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 0 0-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 0 0-16.536-1.84M7.5 14.25 5.106 5.272M6 20.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Zm12.75 0a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z" />
+          </svg>
+
+
+          <span v-if="checkoutStore?.itemCount > 0" class="grid items-center w-5 h-5 text-xs font-bold text-center align-middle transform scale-[90%] rounded-full text-background bg-primary">
+            {{ checkoutStore?.itemCount > 0 ? checkoutStore?.itemCount : '' }}
+          </span>
+        </button>
+      </div>
+    </div>
+
+    <Transition enter-active-class="transition duration-200 ease-out" enter-from-class="transform scale-95 opacity-0"
+      enter-to-class="transform scale-100 opacity-100" leave-active-class="transition duration-150 ease-in"
+      leave-from-class="transform scale-100 opacity-100" leave-to-class="transform scale-95 opacity-0">
+      <div v-if="isMobileMenuOpen" class="absolute w-full border-b shadow-md bg-background md:hidden">
+        <div class="container flex flex-col gap-1 px-4 py-3">
+          <NuxtLink v-for="link in mainLinks" :key="link.href" :to="link.href"
+            class="px-3 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800"
+            active-class="font-medium text-primary" @click="isMobileMenuOpen = false">
+            {{ link.label }}
+          </NuxtLink>
+        </div>
+      </div>
+    </Transition>
+  </header>
+</template>
+
 <script setup>
+import { useCheckoutStore } from "@/store/checkoutStore";
 import { Button } from '@/components/ui/button'
+
+const checkoutStore = useCheckoutStore();
+
+const totalCount = checkoutStore.total
+
 const isDark = useDark()
 const toggleDark = useToggle(isDark)
 const isMobileMenuOpen = ref(false)
 const auth = useAuth()
 const route = useRoute()
+
+const checkoutToggled = ref(false)
+
+const toggleCheckout = () => {
+  checkoutToggled.value = !checkoutToggled.value
+}
 
 const getLoginHref = () => {
   // Only add source if we're not on the home page
@@ -45,65 +132,3 @@ watch(route, () => {
   isMobileMenuOpen.value = false
 })
 </script>
-
-<template>
-  <header class="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-md">
-    <div class="container flex items-center justify-between h-16 px-4">
-      <NuxtLink to="/" class="flex items-center">
-        <span class="flex flex-col logo-text">
-          <span class="text-xl font-bold">{{ !route.path.includes('real-estate') ? 'GuillermoMedel' : 'SCLotSales' }}</span>
-        </span>
-      </NuxtLink>
-
-      <div class="flex items-center gap-6">
-        <nav class="items-center hidden gap-6 text-sm font-medium md:flex">
-          <NuxtLink v-for="link in mainLinks" :key="link.href" :to="link.href"
-            class="transition-colors text-foreground/60 hover:text-foreground/80"
-            active-class="font-medium text-foreground">
-            {{ link.label }}
-          </NuxtLink>
-        </nav>
-
-        <Button v-if="auth.isAuthenticated.value" class="text-xs md:text-sm" @click="auth.logout()" variant="default">
-          Logout
-        </Button>
-
-        <!-- Dark/Light Mode toggle. -->
-        <ClientOnly>
-          <button @click="toggleDark()" class="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800">
-            <svg v-if="isDark" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-            </svg>
-            <svg v-else class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-            </svg>
-          </button>
-        </ClientOnly>
-
-        <button @click="isMobileMenuOpen = !isMobileMenuOpen"
-          class="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 md:hidden">
-          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              :d="isMobileMenuOpen ? 'M6 18L18 6M6 6l12 12' : 'M4 6h16M4 12h16M4 18h16'" />
-          </svg>
-        </button>
-      </div>
-    </div>
-
-    <Transition enter-active-class="transition duration-200 ease-out" enter-from-class="transform scale-95 opacity-0"
-      enter-to-class="transform scale-100 opacity-100" leave-active-class="transition duration-150 ease-in"
-      leave-from-class="transform scale-100 opacity-100" leave-to-class="transform scale-95 opacity-0">
-      <div v-if="isMobileMenuOpen" class="absolute w-full border-b shadow-md bg-background md:hidden">
-        <div class="container flex flex-col gap-1 px-4 py-3">
-          <NuxtLink v-for="link in mainLinks" :key="link.href" :to="link.href"
-            class="px-3 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800"
-            active-class="font-medium text-primary" @click="isMobileMenuOpen = false">
-            {{ link.label }}
-          </NuxtLink>
-        </div>
-      </div>
-    </Transition>
-  </header>
-</template>

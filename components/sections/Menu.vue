@@ -1,5 +1,5 @@
 <template>
-  <div class="relative w-full p-6 mx-auto lg:max-w-6xl font-body bg-background text-foreground md:p-10">
+  <div class="relative w-full p-6 mx-auto lg:max-w-5xl font-body bg-background text-foreground md:p-10">
     <!-- Shared Navigation -->
     <SectionsNavigator
       :title='isSpanish ? "Menú de El Tamalón" : "El Tamalón Menu"'
@@ -25,9 +25,9 @@
         </h2>
 
         <ul class="grid grid-cols-1 gap-6 sm:grid-cols-2">
-          <li v-for="(item, itemIndex) in category.items" :key="item.nameEn">
-            <Card class="flex flex-col p-4 sm:flex-row sm:p-5">
-              <img
+          <li v-for="(item, itemIndex) in category.items" :key="itemIndex">
+            <Card class="relative flex flex-col h-full p-4 sm:flex-row sm:p-5">
+              <img v-if="isPremiumUser"
                 :src="item.image"
                 :alt="isSpanish ? item.nameEs : item.nameEn"
                 class="object-cover w-full h-40 mb-4 rounded-lg sm:w-32 sm:h-32 sm:mr-4 sm:mb-0"
@@ -41,8 +41,9 @@
                     {{ item.price ? `$${item.price.toFixed(2)}` : "" }}
                   </span>
                 </div>
-                <CardDescription class="text-sm leading-relaxed">
+                <CardDescription class="h-full text-sm leading-relaxed">
                   {{ isSpanish ? item.descriptionEs : item.descriptionEn }}
+                  <Checkout class="float-right" :item="item" :key="itemIndex" :index="itemIndex"/>
                 </CardDescription>
               </div>
             </Card>
@@ -54,10 +55,16 @@
 </template>
 
 <script setup>
-import { Button } from "@/components/ui/button";
 import { Card, CardTitle, CardDescription } from "@/components/ui/card";
 import { menuCategories } from "@/assets/configs/mock";
 
 const isSpanish = ref(false);
 const navRef = ref(null);
+
+const props = defineProps({
+  isPremiumUser: {
+    type: Boolean,
+    default: true
+  }
+});
 </script>

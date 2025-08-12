@@ -8,7 +8,8 @@
       :sections="[
         { id: 'video', title: 'Video' },
         { id: 'details', title: 'Details' },
-        { id: 'gallery', title: 'Gallery' }
+        { id: 'gallery', title: 'Gallery' },
+        { id: 'realtor', title: 'Realtor' }
       ]"
       ref="navRef"
     >
@@ -127,6 +128,55 @@
           :propertyId="fetchedProperty?.items?.[0]?.id"
         />
       </section>
+
+      <!-- Realtor Section -->
+        <section id="realtor" class="py-12 scroll-mt-40" ref="setSectionRef">
+          <h2 class="mb-8 text-3xl font-bold sm:text-4xl font-heading text-primary">
+            Realtor
+          </h2>
+
+          <Card class="flex flex-col gap-6 p-6 md:flex-row md:gap-8">
+            <!-- Realtor Photo -->
+            <div class="flex-shrink-0 w-full md:w-1/3">
+              <img
+                :src="realtor.photo"
+                :alt="realtor.name"
+                class="object-cover w-full h-64 rounded-lg shadow-md md:h-full"
+              />
+            </div>
+
+            <!-- Realtor Info -->
+            <div class="flex flex-col justify-between w-full space-y-6 md:w-2/3">
+              <div>
+                <h3 class="text-2xl font-bold text-primary">{{ realtor.name }}</h3>
+                <p class="text-lg text-muted-foreground">{{ realtor.title }}</p>
+                <p class="mt-3 leading-relaxed">{{ realtor.bio }}</p>
+              </div>
+
+              <!-- Contact Info -->
+              <div class="flex flex-col gap-2 text-sm">
+                <a
+                  :href="`mailto:${realtor.email}`"
+                  class="flex items-center gap-2 hover:underline"
+                >
+                  <Mail class="w-4 h-4" /> {{ realtor.email }}
+                </a>
+                <a
+                  :href="`tel:${realtor.phone}`"
+                  class="flex items-center gap-2 hover:underline"
+                >
+                  <Phone class="w-4 h-4" /> {{ realtor.phone }}
+                </a>
+              </div>
+
+              <!-- Social Links -->
+              <ContainersSocials
+                :socialLinks="realtor.socialLinks"
+                :columnOnMobile="false"
+              />
+            </div>
+          </Card>
+        </section>
     </SectionsNavigator>
   </div>
 </template>
@@ -134,6 +184,7 @@
 <script lang="ts" setup>
 import usePocketBaseCore from '@/composables/usePocketBaseCore'
 import ModalCarousel from '~/components/ui/modal/ModalCarousel.vue'
+import { Mail, Phone, Linkedin, Github } from 'lucide-vue-next'
 
 const config = useRuntimeConfig()
 const { fetchCollection } = usePocketBaseCore()
@@ -154,6 +205,19 @@ interface Property {
   lat: string
   lng: string
 }
+
+const realtor = ref({
+  name: "Sofia Ramirez",
+  title: "Real Estate Agent",
+  photo: "https://images.pexels.com/photos/8292809/pexels-photo-8292809.jpeg",
+  bio: "With over 10 years of experience in the San Carlos area, Sofia specializes in helping clients find their dream homes and investment properties by the sea.",
+  email: "sofia.ramirez@example.com",
+  phone: "+52 622 123 4567",
+  socialLinks: [
+    { icon: Linkedin, href: "https://linkedin.com/in/example" },
+    { icon: Github, href: "https://github.com/example" }
+  ]
+});
 
 const fetchedProperty = ref<any>(null)
 const fetchedProperties = ref<any>(null)

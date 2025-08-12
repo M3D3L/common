@@ -2,7 +2,7 @@
   <div class="w-full">
     <div class="flex flex-row items-center w-full gap-6 mb-6 align-center">
       <h1
-        class="w-full text-5xl text-center sm:text-7xl font-heading text-primary drop-shadow-md sm:text-left"
+        class="w-full text-5xl text-center lg:text-7xl font-heading text-primary drop-shadow-md sm:text-left"
       >
         {{ title }}
       </h1>
