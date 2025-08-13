@@ -123,7 +123,6 @@
         </h2>
         <ModalCarousel class="mt-10"
           :slides="slides"
-          :pocketbaseUrl="config.public.pocketbaseUrl"
           :collectionId="fetchedProperty?.items?.[0]?.collectionId"
           :propertyId="fetchedProperty?.items?.[0]?.id"
         />

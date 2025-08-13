@@ -1,5 +1,5 @@
 <template>
-    <div :class="{ 'flex-col lg:flex-row' :columnOnMobile }" class="flex gap-4 mt-3" v-if="socialLinks">
+    <div :class="{ 'flex-col lg:flex-row' :columnOnMobile }" class="flex gap-2 mt-3" v-if="socialLinks">
       <Button v-for="social in socialLinks"
         :key="social.href"
         variant="outline"

@@ -3,7 +3,7 @@ export default defineNuxtConfig({
 
   // ✅ Tells Nitro to use static output (generates /dist/public)
   nitro: {
-    preset: 'static',
+    preset: 'ssr',
   },
 
   // ✅ Correct base URL for GitHub Pages or subdirectory hosting
@@ -13,7 +13,7 @@ export default defineNuxtConfig({
   },
 
   // ✅ Required for full static output
-  ssr: false,
+  ssr: true,
 
   devtools: { enabled: true },
 
@@ -70,6 +70,7 @@ export default defineNuxtConfig({
   runtimeConfig: {
     public: {
       pocketbaseUrl: process.env.POCKETBASE_URL || 'http://64.23.150.184/',
+      whatsappNumber: process.env.WHATSAPP_NUMBER || '6444444444',
     },
   },
 });
