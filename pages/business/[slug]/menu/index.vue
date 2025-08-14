@@ -34,7 +34,7 @@
                 </div>
                 <CardDescription class="h-full text-sm leading-relaxed">
                   {{ isSpanish ? item.descriptionEs : item.descriptionEn }}
-                  <Checkout class="float-right" :phone="menuItems?.expand?.business?.contact?.phone" :item="item" :key="itemIndex" :index="itemIndex"/>
+                  <Checkout class="float-right mt-1" :phone="menuItems?.expand?.business?.contact?.phone" :item="item" :key="itemIndex" :index="itemIndex"/>
                 </CardDescription>
               </div>
             </Card>
