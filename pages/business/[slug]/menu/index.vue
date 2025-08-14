@@ -1,27 +1,18 @@
 <template>
   <div class="relative w-full p-6 mx-auto lg:max-w-5xl font-body bg-background text-foreground md:p-10">
-    <!-- Shared Navigation -->
     <SectionsNavigator
-      :title='isSpanish ? "Menú de El Tamalón" : "El Tamalón Menu"'
-      :description="isSpanish ? 'Un menú delicioso de El Tamalón' : 'A delicious menu from El Tamalón'"
-      :sections="menuCategories.map(c => ({ id: c.titleKey, title: isSpanish ? c.titleEs : c.titleEn }))"
+      :title='menuItems.expand?.business?.name || "Menu"'
+      :description="isSpanish ? menuItems.descriptionEs : menuItems.descriptionEn"
+      :sections="menuItems.items.map(c => ({ id: c.nameEn, title: isSpanish ? c.nameEs : c.nameEn }))"
       ref="navRef"
     >
-      <!-- <template #button>
-        <Button @click="isSpanish = !isSpanish" variant="secondary" size="lg" class="gap-2">
-          <span v-if="isSpanish">🇲🇽 Cambiar a Inglés</span>
-          <span v-else>🇺🇸 Switch to Spanish</span>
-        </Button>
-      </template> -->
-
-      <!-- Sections (no ref needed; SectionNavigator auto-discovers them) -->
       <section
-        v-for="(category, index) in menuCategories"
-        :id="category.titleKey"
+        v-for="(category, index) in menuItems.items"
+        :id="category.nameEn"
         class="pb-8 scroll-mt-40"
       >
         <h2 class="mb-6 text-3xl font-bold sm:text-4xl font-heading text-primary">
-          {{ isSpanish ? category.titleEs : category.titleEn }}
+          {{ isSpanish ? category.nameEs : category.nameEn }}
         </h2>
 
         <ul class="grid grid-cols-1 gap-6 sm:grid-cols-2">
@@ -43,7 +34,7 @@
                 </div>
                 <CardDescription class="h-full text-sm leading-relaxed">
                   {{ isSpanish ? item.descriptionEs : item.descriptionEn }}
-                  <Checkout class="float-right" :item="item" :key="itemIndex" :index="itemIndex"/>
+                  <Checkout class="float-right" :phone="menuItems?.expand?.business?.contact?.phone" :item="item" :key="itemIndex" :index="itemIndex"/>
                 </CardDescription>
               </div>
             </Card>
@@ -53,13 +44,10 @@
     </SectionsNavigator>
   </div>
 </template>
-
 <script setup>
 import { Card, CardTitle, CardDescription } from "@/components/ui/card";
-import { menuCategories } from "@/assets/configs/mock";
-
-const isSpanish = ref(false);
-const navRef = ref(null);
+import usePocketBaseCore from '@/composables/usePocketBaseCore';
+import { useCheckoutStore } from "@/store/checkoutStore";
 
 const props = defineProps({
   isPremiumUser: {
@@ -67,4 +55,34 @@ const props = defineProps({
     default: true
   }
 });
+
+// Composables
+const { fetchCollection } = usePocketBaseCore()
+const checkoutStore = useCheckoutStore()
+
+// Routes
+const route = useRoute()
+const isSpanish = ref(false)
+const menuItems = ref(null)
+
+// fetch the menu with a title
+const filter = `slug = "${route.params.slug}"`
+const menu = await fetchCollection(
+    'menus',
+    1,
+    1,
+    filter,
+    '-created',
+    'business'
+)
+
+// The fetchCollection returns an object, so we need to access the first item in the items array.
+if (menu.items && menu.items.length > 0) {
+  menuItems.value = menu.items[0];
+  checkoutStore.phone = menuItems.value.expand?.business?.contact?.phone;
+} else {
+  // Handle the case where no menu is found, maybe set a default or show an error
+  menuItems.value = null;
+  checkoutStore.phone = null;
+}
 </script>

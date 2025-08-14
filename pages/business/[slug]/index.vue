@@ -69,7 +69,7 @@
               <div v-if="business.contact">
                 <p v-if="business.contact.phone">
                   {{ phoneLabel }}
-                  <a :href="`tel:${business.contact.phone}`" class="text-blue-600 hover:underline">
+                  <a id="phone" :href="`tel:${business.contact.phone}`" class="text-blue-600 hover:underline">
                     {{ business.contact.phone }}
                   </a>
                   <!-- WhatsApp link -->
@@ -174,7 +174,7 @@
                   ? "Explora deliciosos platillos preparados con ingredientes frescos."
                   : "Explore delicious dishes made with fresh ingredients." }}
               </p>
-              <NuxtLink to="/menu"
+              <NuxtLink :to="`${route.path}/menu`"
                 class="px-5 py-2 mt-2 font-semibold transition-colors rounded-lg shadow text-primary bg-background hover:bg-background/90">
                 {{ isSpanish.value ? "Ver Menú" : "View Menu" }}
               </NuxtLink>
@@ -208,6 +208,7 @@ const loading = ref(true);
 const error = ref<Error | null>(null);
 const isSpanish = ref(false);
 
+const routeId = computed(() => route.params.slug);
 
 const businessDescription = computed(() =>
   isSpanish.value ? business.value?.description_Sp : business.value?.description_En
@@ -291,9 +292,7 @@ const emailLabel = computed(() => isSpanish.value ? 'Correo:' : 'Email:');
 const websiteLabel = computed(() => isSpanish.value ? 'Sitio Web:' : 'Website:');
 const locationUnavailableText = computed(() => isSpanish.value ? 'Ubicación no disponible' : 'Location not available');
 const servicesTitle = computed(() => isSpanish.value ? 'Servicios' : 'Services');
-const noServicesText = computed(() => isSpanish.value ? 'No hay servicios disponibles.' : 'No services available.');
 const galleryTitle = computed(() => isSpanish.value ? 'Galería' : 'Gallery');
-const noGalleryText = computed(() => isSpanish.value ? 'No hay imágenes en la galería.' : 'No images in the gallery.');
 
 function placeholderUrl(text: string) {
   return `https://placehold.co/400x300/F0F0F0/000000?text=${encodeURIComponent(text)}`;

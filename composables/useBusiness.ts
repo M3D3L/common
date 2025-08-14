@@ -35,7 +35,7 @@ export default function useBusinesses() {
       perPage: 10,
       filter: '',
       sort: '-created',
-      expand: 'category', // Changed default expand to 'category'
+      expand: 'category',
     };
 
     const { page, perPage, filter, sort, expand } = { ...defaults, ...options };

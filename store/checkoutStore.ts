@@ -5,6 +5,7 @@ function getItemKey(item) {
 export const useCheckoutStore = defineStore('checkout', {
   state: () => ({
     items: [],
+    phone: null
   }),
 
   getters: {

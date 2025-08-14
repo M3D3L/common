@@ -21,7 +21,6 @@
 
 <script setup>
 import { useCheckoutStore } from "@/store/checkoutStore";
-import { computed } from "vue";
 
 const props = defineProps({
   item: { type: Object, required: true },

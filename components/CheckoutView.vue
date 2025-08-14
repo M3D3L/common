@@ -52,8 +52,7 @@
           <Button @click="locate">
             Send Location
           </Button>
-
-          <Button :disabled="items.length === 0 || !whatsappNumber || isSending"
+          <Button :disabled="items.length === 0 || !checkoutStore?.phone || isSending"
             class="w-full mx-auto text-lg font-bold bg-green-500 md:w-auto" size="lg" @click="sendOrderToWhatsapp"
             :aria-busy="isSending.toString()" aria-live="assertive"
             aria-label="Proceed to checkout and send order via WhatsApp">
@@ -61,7 +60,7 @@
               Sending...
             </template>
             <template v-else>
-              Proceed to Checkout
+              Confirm With Whatsapp
             </template>
           </Button>
         </div>
@@ -80,7 +79,8 @@ const config = useRuntimeConfig();
 const lat = ref(null)
 const long = ref(null)
 const zoom = 20
-const whatsappNumber = ref(config.public.whatsappNumber || '6444444444');
+
+
 const checkoutStore = useCheckoutStore();
 
 const mapUrl = computed(() => {
@@ -129,15 +129,8 @@ function handleImageError(event) {
   event.target.onerror = null;
 }
 
-function getWhatsappUrl(message) {
-  // Detect if user is on mobile for better WhatsApp URL
-  const isMobile = /iPhone|Android/i.test(navigator.userAgent);
-  const baseUrl = isMobile ? 'https://wa.me/' : 'https://api.whatsapp.com/send?phone=';
-  return `${baseUrl}${whatsappNumber.value}?text=${encodeURIComponent(message)}`;
-}
-
 async function sendOrderToWhatsapp() {
-  if (!whatsappNumber.value || items.value.length === 0) return;
+  if (!checkoutStore?.phone || items.value.length === 0) return;
 
   isSending.value = true;
 
@@ -178,7 +171,7 @@ async function sendOrderToWhatsapp() {
 
   try {
     const encodedMessage = encodeURIComponent(message);
-    const whatsappUrl = `https://wa.me/${whatsappNumber.value}?text=${encodedMessage}`;
+    const whatsappUrl = `https://wa.me/${checkoutStore?.phone}?text=${encodedMessage}`;
 
     window.open(whatsappUrl, '_blank');
   } catch (error) {
