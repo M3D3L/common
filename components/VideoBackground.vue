@@ -14,7 +14,9 @@
 </template>
 
 <script setup lang="ts">
-import { motion } from 'motion-v'
+import { ref, onMounted, onBeforeUnmount, watch, reactive } from 'vue';
+import { motion } from 'motion-v';
+import { PropType } from 'vue'; // Import PropType
 
 const props = defineProps({
   video: {
@@ -22,42 +24,43 @@ const props = defineProps({
     required: true,
   },
   observeElement: {
-    type: HTMLElement,
+    // Correctly define the prop type for HTMLElement
+    type: Object as PropType<HTMLElement | null>,
     default: null
   }
-})
+});
 
-const emit = defineEmits(['video-active'])
+const emit = defineEmits(['video-active']);
 
-const videoRef = ref<HTMLVideoElement | null>(null)
-const isVideoActive = ref(false)
+const videoRef = ref<HTMLVideoElement | null>(null);
+const isVideoActive = ref(false);
 const videoControls = reactive({
   y: 0,
   opacity: 1
-})
+});
 
-let observer: IntersectionObserver | null = null
+let observer: IntersectionObserver | null = null;
 
 const handleIntersection = (entries: IntersectionObserverEntry[]) => {
   entries.forEach(entry => {
     if (entry.isIntersecting) {
-      isVideoActive.value = true
-      videoControls.y = 0
-      videoControls.opacity = 1
-      videoRef.value?.play().catch(e => console.log("Autoplay prevented:", e))
+      isVideoActive.value = true;
+      videoControls.y = 0;
+      videoControls.opacity = 1;
+      videoRef.value?.play().catch(e => console.log("Autoplay prevented:", e));
     } else {
-      isVideoActive.value = false
-      videoControls.y = -200
-      videoControls.opacity = 0
-      videoRef.value?.pause()
+      isVideoActive.value = false;
+      videoControls.y = -200;
+      videoControls.opacity = 0;
+      videoRef.value?.pause();
     }
-    emit('video-active', isVideoActive.value)
-  })
-}
+    emit('video-active', isVideoActive.value);
+  });
+};
 
 const setupIntersectionObserver = () => {
   if (observer) {
-    observer.disconnect()
+    observer.disconnect();
   }
 
   const elementToObserve = props.observeElement || videoRef.value?.parentElement?.parentElement;
@@ -66,24 +69,24 @@ const setupIntersectionObserver = () => {
     observer = new IntersectionObserver(handleIntersection, {
       threshold: 0.15,
       rootMargin: '0px 0px -100px 0px'
-    })
-    observer.observe(elementToObserve)
+    });
+    observer.observe(elementToObserve);
   }
-}
+};
 
 onMounted(() => {
-  setupIntersectionObserver()
-})
+  setupIntersectionObserver();
+});
 
 watch(() => props.observeElement, () => {
-  setupIntersectionObserver()
-}, { immediate: true })
+  setupIntersectionObserver();
+}, { immediate: true });
 
 onBeforeUnmount(() => {
   if (observer) {
-    observer.disconnect()
+    observer.disconnect();
   }
-})
+});
 </script>
 
 <style scoped>

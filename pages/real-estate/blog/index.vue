@@ -7,7 +7,6 @@
 
 <script setup>
 import usePocketBaseCore from '@/composables/usePocketBaseCore';
-import { createSeoObject } from '@/composables/createSeoObject';
 const pbUtils = usePocketBaseCore();
 const posts = ref([]);
 

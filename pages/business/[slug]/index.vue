@@ -199,7 +199,6 @@ import Modal from '~/components/sections/Modal.vue';
 import ModalCarousel from "~/components/ui/modal/ModalCarousel.vue";
 import useBusinesses from '~/composables/useBusiness';
 import { Facebook, Instagram, Twitter, Linkedin } from 'lucide-vue-next';
-import { createSeoObject } from "~/composables/useSeo";
 
 const route = useRoute();
 const { fetchBusinessBySlug } = useBusinesses();

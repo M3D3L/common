@@ -180,7 +180,6 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { formatDate } from '@/composables/blogHelpers'
 import type { RecordModel } from 'pocketbase'
-import { createSeoObject } from '@/composables/createSeoObject';
 
 const config = useRuntimeConfig()
 

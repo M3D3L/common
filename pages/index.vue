@@ -24,6 +24,7 @@
 
 <script setup>
 import { layoutConfig } from '~/assets/configs/ui/layout'
+import { createSeoObject } from '../composables/useSeo';
 import usePocketBaseCore from '@/composables/usePocketBaseCore';
 
 const computedSeoData = computed(() => {
