@@ -113,6 +113,10 @@
           <span class="text-gray-600">[Advertisement]</span>
         </div>
 
+        <pre>
+          {{ businessServices }}
+        </pre>
+
         <!-- Services -->
         <section v-if="isPremiumMember && businessServices.length" id="services" class="py-12 scroll-mt-40"
           ref="setSectionRef">

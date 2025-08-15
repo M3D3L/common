@@ -44,6 +44,7 @@
     </SectionsNavigator>
   </div>
 </template>
+
 <script setup>
 import { Card, CardTitle, CardDescription } from "@/components/ui/card";
 import usePocketBaseCore from '@/composables/usePocketBaseCore';

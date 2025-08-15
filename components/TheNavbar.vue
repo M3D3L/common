@@ -8,13 +8,19 @@
       </NuxtLink>
 
       <div class="flex items-center gap-6">
-        <nav class="items-center hidden gap-6 text-sm font-medium md:flex">
+        <!-- <nav class="items-center hidden gap-6 text-sm font-medium md:flex">
           <NuxtLink v-for="link in mainLinks" :key="link.href" :to="link.href"
             class="transition-colors text-foreground/60 hover:text-foreground/80"
             active-class="font-medium text-foreground">
             {{ link.label }}
           </NuxtLink>
-        </nav>
+        </nav> -->
+
+        <nuxt-link to="/account">
+          <Button v-if="auth.isAuthenticated.value" class="text-xs md:text-sm" @click="()=>{}" variant="default">
+            My Account
+          </Button>
+        </nuxt-link>
 
         <Button v-if="auth.isAuthenticated.value" class="text-xs md:text-sm" @click="auth.logout()" variant="default">
           Logout
