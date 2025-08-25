@@ -502,7 +502,6 @@ async function reloadData() {
       settings.isPremiumMember = Boolean(b.isPremiumMember)
     }
 
-    // MENU (expand business for phone if needed)
     const menuFilter = slug ? `slug = \"${slug}\"` : ''
     const m = await fetchCollection('menus', 1, 1, menuFilter, '-created', 'business')
     if (m?.items?.length) {

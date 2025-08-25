@@ -7,25 +7,22 @@
       :description="property?.description"
       :sections="[
         { id: 'video', title: 'Video' },
-        { id: 'details', title: 'Details' },
         { id: 'gallery', title: 'Gallery' },
+        { id: 'details', title: 'Details' },
         { id: 'realtor', title: 'Realtor' }
       ]"
       ref="navRef"
     >
       <!-- Video Walkthrough Section -->
-      <section id="video" class="w-full" aria-labelledby="video-heading">
-        <h2 id="walkthrough-heading" class="sr-only">Video Walkthrough</h2>
-        <h2 class="pt-8 pb-8 mb-8 text-3xl font-semibold border-b border-gray-300">
-          Video
-        </h2>
+      <section id="video" class="w-full" aria-labelledby="video-heading aspect-video">
         <Card
-          class="relative w-full h-full min-h-[75vh] mb-4 overflow-hidden rounded-lg lg:aspect-video"
+          class="relative w-full h-full mb-4 overflow-hidden rounded-lg aspect-video"
           role="region"
           aria-label="Property Video Walkthrough"
         >
-          <div ref="heroRef">
+          <div class="aspect-video" ref="heroRef">
             <VideoBackground
+            class="aspect-video"
               :video="video"
               :observe-element="heroRef"
               @video-active="handleVideoComponentActive"
@@ -34,12 +31,17 @@
         </Card>
       </section>
 
+      <!-- Gallery Section -->
+      <section id="gallery" class="w-full scroll-mt-24" aria-labelledby="gallery-heading">
+        <ModalCarousel class="mt-10"
+          :slides="slides"
+          :collectionId="fetchedProperty?.items?.[0]?.collectionId"
+          :propertyId="fetchedProperty?.items?.[0]?.id"
+        />
+      </section>
+
       <!-- Property Details Section -->
       <section id="details" class="w-full scroll-mt-24" aria-labelledby="details-heading">
-        <h2 id="details-heading" class="pt-16 pb-8 text-3xl font-semibold border-b border-gray-300">
-          Property Overview
-        </h2>
-
         <div class="flex flex-col gap-6 mt-10 mb-6 md:flex-row">
           <!-- Property Specifics Card -->
           <Card class="w-full p-8 rounded-lg shadow-md md:w-1/2">
@@ -115,24 +117,15 @@
         </div>
       </section>
 
-      <!-- Gallery Section -->
-      <section id="gallery" class="w-full scroll-mt-24" aria-labelledby="gallery-heading">
-        <h2 id="gallery-heading" class="sr-only">Gallery</h2>
-        <h2 class="pt-16 pb-8 text-3xl font-semibold border-b border-gray-300">
-          Gallery
-        </h2>
-        <ModalCarousel class="mt-10"
-          :slides="slides"
-          :collectionId="fetchedProperty?.items?.[0]?.collectionId"
-          :propertyId="fetchedProperty?.items?.[0]?.id"
-        />
-      </section>
-
       <!-- Realtor Section -->
         <section id="realtor" class="py-12 scroll-mt-40" ref="setSectionRef">
           <h2 class="mb-8 text-3xl font-bold sm:text-4xl font-heading text-primary">
             Realtor
           </h2>
+
+          <pre>
+            {{ property }}
+          </pre>
 
           <Card class="flex flex-col gap-6 p-6 md:flex-row md:gap-8">
             <!-- Realtor Photo -->
@@ -167,7 +160,6 @@
                   <Phone class="w-4 h-4" /> {{ realtor.phone }}
                 </a>
               </div>
-
               <!-- Social Links -->
               <ContainersSocials
                 :socialLinks="realtor.socialLinks"
@@ -220,6 +212,7 @@ const realtor = ref({
 
 const fetchedProperty = ref<any>(null)
 const fetchedProperties = ref<any>(null)
+const fetchedRealtor = ref<any>(null)
 const slides = ref<any[]>([])
 const heroRef = ref<HTMLElement | null>(null)
 const video = 'https://videos.pexels.com/video-files/3410663/3410663-uhd_2562_1440_30fps.mp4'
@@ -250,12 +243,26 @@ const formattedPropertyType = computed(() => {
 const property = computed(() => fetchedProperty.value?.items?.[0] || {})
 
 const fetchPropertiesBySlug = async (slug: string) => {
-  return await fetchCollection('properties', 1, 1, `slug="${slug}"`, '-created', '', ['content'])
+  const queryParams = {
+    filter: `slug="${slug}"`,
+    sort: '-created',
+    expand: 'author',
+  }
+
+  return await fetchCollection(
+    'properties', 
+    1, 
+    1, 
+    `slug="${slug}"`, 
+    '-created', 
+    'author'
+  );
 }
 
 const fetchPropertiesByType = async (type: string) => {
-  return await fetchCollection('properties', 1, 6, `type="${type}"`, '-created', '', ['content'])
+  return await fetchCollection('properties', 1, 6, `type="${type}"`);
 }
+
 
 onMounted(async () => {
   fetchedProperty.value = await fetchPropertiesBySlug(formattedPropertyType.value?.[2])
@@ -263,3 +270,22 @@ onMounted(async () => {
   slides.value = property.value?.gallery || []
 })
 </script>
+
+<style lang="css">
+.aspect-video {
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  height: 0;
+  padding-bottom: 56.25%; /* 16:9 Aspect Ratio */
+}
+
+.aspect-video iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+</style>
