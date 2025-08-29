@@ -1,7 +1,7 @@
 <template>
-  <div class="container relative content-center min-h-screen py-10">
-    <TitleBlock class="mb-6" :title="title" :description="description" />
-
+  <div :class="currentType?.color" class="container relative content-center min-h-screen py-10">
+    <TitleBlock class="mb-6" :title="currentType.type" :description="currentType.description" />
+    
     <form v-if="currentQuestions.length" @submit.prevent="handleSubmit">
       <Card class="grid gap-4 p-8 md:grid-cols-2">
         <div v-for="(q, index) in currentQuestions" :key="index">
@@ -103,63 +103,21 @@ import { Card, CardContent, CardTitle } from "@/components/ui/card";
 
 const route = useRoute();
 const userType = ref("");
-const title = ref("Tell Us About Yourself");
 const description = ref(
   "Share your interests and preferences to help us tailor your experience."
 );
 
-// Define your user types here or import them from a separate file
-const types = [
-  {
-    image: "retirees",
-    type: "Retirees",
-    description:
-      "A user who migrates from one region to another based on the seasons.",
-  },
-  {
-    image: "snow-birds",
-    type: "SnowBirds",
-    description:
-      "A user who migrates from one region to another based on the seasons.",
-  },
-  {
-    image: "digital-nomad",
-    type: "Digital Nomads",
-    description:
-      "A user who works remotely while traveling to different locations.",
-  },
-  {
-    image: "family",
-    type: "Family Adventurers",
-    description:
-      "A user who frequently travels with family and seeks out family activities.",
-  },
-];
-
-// Format route param and set title/description
-onMounted(() => {
-  const formattedUrl = route.params.type
-    .replace(/-/g, " ")
-    .replace(/\b\w/g, (c) => c.toUpperCase());
-  userType.value = formattedUrl;
-
-  const typeConfig = types.find(
-    (x) => x.type.toUpperCase() === userType.value.toUpperCase()
-  );
-
-  if (typeConfig) {
-    title.value = typeConfig.type;
-    description.value = typeConfig.description;
-  }
-});
-
-// Get current questions based on user type
-const currentQuestions = computed(() => {
+const currentType = computed(() => {
   return (
     onboardingQuestions.find(
       (x) => x.type.toUpperCase() === userType.value.toUpperCase()
-    )?.questions || []
+    )|| []
   );
+})
+
+// Get current questions based on user type
+const currentQuestions = computed(() => {
+  return currentType.value?.questions || [];
 });
 
 // Store answers in a parallel array
@@ -178,8 +136,21 @@ watch(
   { immediate: true }
 );
 
-function handleSubmit() {
+const handleSubmit = async () => {
   console.log("Collected Answers:", formAnswers.value);
-  // Post to server or PocketBase here
+
+  try {
+    
+  } catch (error) {
+    console.error("Error submitting form:", error);
+  }
 }
+
+// Format route param and set title/description
+onMounted(() => {
+  const formattedUrl = route.params.type
+    .replace(/-/g, " ")
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+  userType.value = formattedUrl;
+});
 </script>

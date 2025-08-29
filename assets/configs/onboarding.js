@@ -1,6 +1,9 @@
 export const onboardingQuestions = [
   {
     type: "Retirees",
+    description: "A user who migrates from one region to another based on the seasons.",
+    color: "bg-blue-100",
+    image: "retirees",
     questions: [
       {
         type: 'radio',
@@ -42,6 +45,9 @@ export const onboardingQuestions = [
   },
   {
     type: "Family Adventurers",
+    description: "A user who frequently travels with family and seeks out family activities.",
+    color: "bg-yellow-100",
+    image: "family",
     questions: [
       {
         type: 'radio',
@@ -75,6 +81,9 @@ export const onboardingQuestions = [
   },
   {
     type: "Digital Nomads",
+    description: "A user who works remotely while traveling to different locations.",
+    color: "bg-red-100",
+    image: "digital-nomad",
     questions: [
       {
         type: 'number',
@@ -102,6 +111,9 @@ export const onboardingQuestions = [
   },
   {
     type: "SnowBirds",
+    description: "A user who migrates from one region to another based on the seasons.",
+    color: "bg-green-100",
+    image: "snow-birds",
     questions: [
       {
         type: 'radio',

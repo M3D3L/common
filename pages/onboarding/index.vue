@@ -1,5 +1,5 @@
 <template>
-  <div class="container relative content-center h-screen py-10">
+  <div :class="cardHover?.color" class="container relative content-center h-screen py-10 duration-150 ease-in-out transition-color">
 
     <TitleBlock class="mb-6"
       title="Tell Us About Yourself"
@@ -16,6 +16,8 @@
         >
           <Card
             class="grid content-center h-full text-center transition-all cursor-pointer hover:shadow-lg"
+            @mouseenter="() => { cardHover = item }"
+            @mouseleave="() => { cardHover = null }"
           >
             <CardContent>
               <img
@@ -24,7 +26,7 @@
                 width="100"
                 height="100"
                 loading="lazy"
-                class="object-contain w-full h-auto mx-auto mt-6 mb-2 rounded-full md:mb-4 md:mt-12 md:w-24"
+                class="object-contain w-4/5 h-auto mx-auto mt-6 mb-2 rounded-full md:w-24 lg:w-32 md:mb-4 md:mt-12"
               />
 
               <CardTitle class="text-lg font-semibold md:mb-2">
@@ -43,30 +45,24 @@
 
 <script lang="ts" setup>
 import { Card, CardContent, CardTitle } from "@/components/ui/card"
+import { onboardingQuestions } from "~/assets/configs/onboarding";
 import TitleBlock from "~/components/TitleBlock.vue";
+const cardHover = ref<string | null>(null);
 
-const types = [
-  {
-    image: "retirees",
-    type: "Retirees",
-    description: "A user who migrates from one region to another based on the seasons."
-  },
-  {
-    image: "snow-birds",
-    type: "SnowBirds",
-    description: "A user who migrates from one region to another based on the seasons."
-  },
-  {
-    image: "digital-nomad",
-    type: "Digital Nomads",
-    description: "A user who works remotely while traveling to different locations."
-  },
-  {
-    image: "family",
-    type: "Family Adventurers",
-    description: "A user who frequently travels with family and seeks out family activities."
-  }
-]
-
-const video = "https://www.pexels.com/download/video/10994870/"
+const types = onboardingQuestions.map(item => ({
+  image: item.image,
+  type: item.type,
+  description: item.description,
+  color: item.color
+}));
 </script>
+
+<style scoped>
+.bg-blue-100,
+.bg-yellow-100,
+.bg-red-100,
+.bg-pink-100,
+.bg-green-100 {
+  @apply bg-opacity-70;
+}
+</style>
