@@ -4,82 +4,39 @@ export const onboardingQuestions = [
     questions: [
       {
         type: 'radio',
-        question: "What is your preferred climate for retirement?",
+        question: "Do you need medical assistance at home?",
         options: [
-          { value: 'tropical', label: 'Tropical' },
-          { value: 'temperate', label: 'Temperate' },
-          { value: 'arid', label: 'Arid' },
+          { value: 'yes', label: 'Yes' },
+          { value: 'no', label: 'No' },
         ]
       },
-      {
-        type: 'checkbox',
-        question: "What activities do you enjoy?",
-        options: [
-          { value: 'golf', label: 'Golf' },
-          { value: 'fishing', label: 'Fishing' },
-          { value: 'hiking', label: 'Hiking' },
-        ]
-      },
-      {
-        type: 'text',
-        question: "What is your ideal retirement location?",
-        placeholder: "Enter a city or region"
-      }
-    ]
-  },
-  {
-    type: "SnowBirds",
-    questions: [
       {
         type: 'radio',
-        question: "What is your preferred climate for winter?",
+        question: "Are you looking to buy or rent a home?",
         options: [
-          { value: 'tropical', label: 'Tropical' },
-          { value: 'temperate', label: 'Temperate' },
-          { value: 'arid', label: 'Arid' },
+          { value: 'buy', label: 'Buy' },
+          { value: 'rent', label: 'Rent' },
         ]
       },
-      {
-        type: 'checkbox',
-        question: "What activities do you enjoy during winter?",
-        options: [
-          { value: 'skiing', label: 'Skiing' },
-          { value: 'snowboarding', label: 'Snowboarding' },
-          { value: 'hiking', label: 'Hiking' },
-        ]
-      },
-      {
-        type: 'text',
-        question: "What is your ideal winter location?",
-        placeholder: "Enter a city or region"
-      }
-    ]
-  },
-  {
-    type: "Digital Nomads",
-    questions: [
       {
         type: 'radio',
-        question: "What is your preferred work environment?",
+        question: "Are you here for a short term or long term?",
         options: [
-          { value: 'beach', label: 'Beach' },
-          { value: 'mountains', label: 'Mountains' },
-          { value: 'city', label: 'City' },
+          { value: 'short', label: 'Short term (less than 6 months)' },
+          { value: 'long', label: 'Long term (more than 6 months)' },
         ]
       },
       {
-        type: 'checkbox',
-        question: "What activities do you enjoy while working remotely?",
-        options: [
-          { value: 'yoga', label: 'Yoga' },
-          { value: 'surfing', label: 'Surfing' },
-          { value: 'hiking', label: 'Hiking' },
-        ]
+        type: 'slider',
+        question: "What is your monthly budget?",
+        min: 0,
+        max: 10000
       },
       {
-        type: 'text',
-        question: "What is your ideal location for remote work?",
-        placeholder: "Enter a city or region"
+        type: 'number',
+        question: "How many people will be in the household?",
+        min: 1,
+        max: 10
       }
     ]
   },
@@ -88,27 +45,114 @@ export const onboardingQuestions = [
     questions: [
       {
         type: 'radio',
-        question: "What is your preferred family vacation style?",
+        question: "Do you need to enroll kids in school?",
         options: [
-          { value: 'beach', label: 'Beach' },
-          { value: 'mountains', label: 'Mountains' },
-          { value: 'city', label: 'City' },
+          { value: 'yes', label: 'Yes' },
+          { value: 'no', label: 'No' },
         ]
       },
       {
-        type: 'checkbox',
-        question: "What activities do you enjoy as a family?",
+        type: 'radio',
+        question: "Are you here for a short term or long term?",
         options: [
-          { value: 'theme_parks', label: 'Theme Parks' },
-          { value: 'nature_trails', label: 'Nature Trails' },
-          { value: 'cultural_sites', label: 'Cultural Sites' },
+          { value: 'short', label: 'Short term' },
+          { value: 'long', label: 'Long term' },
         ]
       },
       {
-        type: 'text',
-        question: "What is your ideal family vacation location?",
-        placeholder: "Enter a city or region"
+        type: 'slider',
+        question: "What is your monthly budget?",
+        min: 0,
+        max: 15000
+      },
+      {
+        type: 'number',
+        question: "How many people will be in the household?",
+        min: 1,
+        max: 15
       }
     ]
-  }
+  },
+  {
+    type: "Digital Nomads",
+    questions: [
+      {
+        type: 'number',
+        question: "How many people are in your group?",
+        min: 1,
+        max: 10
+      },
+      {
+        type: 'radio',
+        question: "Are you here for a short term or long term?",
+        options: [
+          { value: 'short', label: 'Short term' },
+          { value: 'long', label: 'Long term' },
+        ]
+      },
+      {
+        type: 'radio',
+        question: "Are you looking to buy or rent?",
+        options: [
+          { value: 'buy', label: 'Buy' },
+          { value: 'rent', label: 'Rent' },
+        ]
+      }
+    ]
+  },
+  {
+    type: "SnowBirds",
+    questions: [
+      {
+        type: 'radio',
+        question: "Are you looking to buy or rent a home?",
+        options: [
+          { value: 'buy', label: 'Buy' },
+          { value: 'rent', label: 'Rent' },
+        ]
+      },
+      {
+        type: 'radio',
+        question: "Are you here for a short term or long term?",
+        options: [
+          { value: 'short', label: 'Short term (less than 6 months)' },
+          { value: 'long', label: 'Long term (more than 6 months)' },
+        ]
+      },
+      {
+        type: 'slider',
+        question: "What is your monthly budget?",
+        min: 0,
+        max: 10000
+      },
+      {
+        type: 'number',
+        question: "How many people will be in the household?",
+        min: 1,
+        max: 10
+      }
+    ]
+  },
+  // {
+  //   type: "Vacation",
+  //   questions: [
+  //     {
+  //       type: 'number',
+  //       question: "How many people are in your group?",
+  //       min: 1,
+  //       max: 20
+  //     },
+  //     {
+  //       type: 'number',
+  //       question: "How many weeks will you be staying?",
+  //       min: 1,
+  //       max: 52
+  //     },
+  //     {
+  //       type: 'text',
+  //       question: "What are the ages of the family members?",
+  //       placeholder: "e.g., 2 adults, 3 kids (ages 5, 8, 12)"
+  //     }
+  //   ]
+  // },
 ]

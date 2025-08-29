@@ -1,22 +1,14 @@
 <template>
   <div class="container relative content-center min-h-screen py-10">
-    <TitleBlock
-      class="mb-6"
-      title="Tell Us About Yourself"
-      description="Share your interests and preferences to help us tailor your experience."
-    />
-    <form
-      v-if="currentQuestions"
-      @submit.prevent="handleSubmit"
-      class="space-y-6"
-    >
-      <div v-for="(q, index) in currentQuestions" :key="index">
-        <Card class="p-6">
-          <CardTitle class="mb-4 text-lg font-semibold">{{
-            q.question
-          }}</CardTitle>
+    <TitleBlock class="mb-6" :title="title" :description="description" />
+
+    <form v-if="currentQuestions.length" @submit.prevent="handleSubmit">
+      <Card class="grid gap-4 p-8 md:grid-cols-2">
+        <div v-for="(q, index) in currentQuestions" :key="index">
+          <CardTitle class="mb-4 text-lg font-semibold">
+            {{ q.question }}
+          </CardTitle>
           <CardContent>
-            <!-- Radio -->
             <div v-if="q.type === 'radio'" class="space-y-2">
               <div
                 v-for="opt in q.options"
@@ -34,7 +26,6 @@
               </div>
             </div>
 
-            <!-- Checkbox -->
             <div v-else-if="q.type === 'checkbox'" class="space-y-2">
               <div
                 v-for="opt in q.options"
@@ -51,7 +42,6 @@
               </div>
             </div>
 
-            <!-- Text Input -->
             <div v-else-if="q.type === 'text'">
               <input
                 type="text"
@@ -60,11 +50,32 @@
                 class="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
               />
             </div>
-          </CardContent>
-        </Card>
-      </div>
 
-      <div class="flex w-full">
+            <div v-else-if="q.type === 'slider'" class="space-y-2">
+              <div class="mb-1 text-sm">Selected: {{ formAnswers[index] }}</div>
+              <input
+                type="range"
+                :min="q.min"
+                :max="q.max"
+                v-model.number="formAnswers[index]"
+                class="w-full accent-primary"
+              />
+            </div>
+
+            <div v-else-if="q.type === 'number'">
+              <input
+                type="number"
+                v-model.number="formAnswers[index]"
+                :min="q.min"
+                :max="q.max"
+                class="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+            </div>
+          </CardContent>
+        </div>
+      </Card>
+
+      <div class="flex w-full mt-8">
         <Button
           class="w-full text-lg font-bold"
           variant="outline"
@@ -72,10 +83,10 @@
           type="submit"
           :disabled="
             !formAnswers.every(
-              (answer) => answer !== undefined && answer !== ''
+              (answer) =>
+                answer !== undefined && answer !== '' && answer !== null
             )
           "
-          @click="handleSubmit"
         >
           Submit
         </Button>
@@ -92,17 +103,57 @@ import { Card, CardContent, CardTitle } from "@/components/ui/card";
 
 const route = useRoute();
 const userType = ref("");
+const title = ref("Tell Us About Yourself");
+const description = ref(
+  "Share your interests and preferences to help us tailor your experience."
+);
 
+// Define your user types here or import them from a separate file
+const types = [
+  {
+    image: "retirees",
+    type: "Retirees",
+    description:
+      "A user who migrates from one region to another based on the seasons.",
+  },
+  {
+    image: "snow-birds",
+    type: "SnowBirds",
+    description:
+      "A user who migrates from one region to another based on the seasons.",
+  },
+  {
+    image: "digital-nomad",
+    type: "Digital Nomads",
+    description:
+      "A user who works remotely while traveling to different locations.",
+  },
+  {
+    image: "family",
+    type: "Family Adventurers",
+    description:
+      "A user who frequently travels with family and seeks out family activities.",
+  },
+];
+
+// Format route param and set title/description
 onMounted(() => {
-  // separate - and capitalize
   const formattedUrl = route.params.type
     .replace(/-/g, " ")
     .replace(/\b\w/g, (c) => c.toUpperCase());
-
   userType.value = formattedUrl;
+
+  const typeConfig = types.find(
+    (x) => x.type.toUpperCase() === userType.value.toUpperCase()
+  );
+
+  if (typeConfig) {
+    title.value = typeConfig.type;
+    description.value = typeConfig.description;
+  }
 });
 
-// pull out the right set of questions depending on route param
+// Get current questions based on user type
 const currentQuestions = computed(() => {
   return (
     onboardingQuestions.find(
@@ -111,11 +162,24 @@ const currentQuestions = computed(() => {
   );
 });
 
-// store answers in parallel array
+// Store answers in a parallel array
 const formAnswers = ref<any[]>([]);
+
+// Initialize formAnswers whenever questions change
+watch(
+  currentQuestions,
+  (newQs) => {
+    formAnswers.value = newQs.map((q) => {
+      if (q.type === "checkbox") return [];
+      if (q.type === "slider" || q.type === "number") return q.min || 0;
+      return "";
+    });
+  },
+  { immediate: true }
+);
 
 function handleSubmit() {
   console.log("Collected Answers:", formAnswers.value);
-  // do something useful here, like post to PocketBase
+  // Post to server or PocketBase here
 }
 </script>

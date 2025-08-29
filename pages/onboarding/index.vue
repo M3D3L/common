@@ -5,7 +5,7 @@
       title="Tell Us About Yourself"
       description="Share your interests and preferences to help us tailor your experience."/>
 
-    <ul class="grid grid-cols-2 gap-4 md:gap-6 lg:grid-cols-4">
+    <ul class="grid grid-cols-2 gap-4 mx-auto md:gap-6 lg:grid-cols-4">
       <li
         v-for="(item, index) in types"
         :key="index"
