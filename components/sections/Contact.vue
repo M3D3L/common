@@ -1,5 +1,5 @@
 <template>
-  <containers-video id="contact" :img-src="imgSrc" :video="video" title="" :description="description">
+  <containers-video id="contact" :video="video" title="" :description="description">
     <template #video-container-content>
       <Card class="relative w-full py-1 overflow-hidden rounded-2xl shadow-inner-lg">
         <TextSectionTitle :title :description :imgSrc :h1="false" class="px-6 pt-8 pb-0 md:px-8" />

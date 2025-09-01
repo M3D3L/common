@@ -18,7 +18,7 @@
 
         <SectionsBlogsCols :showPagination="false" :content="posts" />
         
-        <SectionsContact/>
+        <SectionsContact video="https://www.pexels.com/download/video/32915907/" />
     </div>
 </template>
 
