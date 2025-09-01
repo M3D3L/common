@@ -38,6 +38,8 @@
 </template>
 
 <script setup lang="ts">
+import { Card, CardHeader, CardContent } from '~/components/ui/card'
+
 export interface BenefitItem {
   title: string;
   description: string;

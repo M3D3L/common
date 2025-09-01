@@ -8,16 +8,8 @@
       </NuxtLink>
 
       <div class="flex items-center gap-6">
-        <!-- <nav class="items-center hidden gap-6 text-sm font-medium md:flex">
-          <NuxtLink v-for="link in mainLinks" :key="link.href" :to="link.href"
-            class="transition-colors text-foreground/60 hover:text-foreground/80"
-            active-class="font-medium text-foreground">
-            {{ link.label }}
-          </NuxtLink>
-        </nav> -->
-
         <nuxt-link to="/account">
-          <Button v-if="auth.isAuthenticated.value" class="text-xs md:text-sm" @click="()=>{}" variant="default">
+          <Button v-if="auth.isAuthenticated.value" class="text-xs md:text-sm" @click="() => { }" variant="default">
             My Account
           </Button>
         </nuxt-link>
@@ -26,7 +18,6 @@
           Logout
         </Button>
 
-        <!-- Dark/Light Mode toggle. -->
         <ClientOnly>
           <button @click="toggleDark()" class="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800">
             <svg v-if="isDark" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -50,13 +41,17 @@
           </svg>
         </button>
 
-        <button v-if="checkoutStore?.itemCount > 0" @click="checkoutToggled = !checkoutToggled" aria-label="Toggle checkout" class="flex p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800">
-          <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 0 0-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 0 0-16.536-1.84M7.5 14.25 5.106 5.272M6 20.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Zm12.75 0a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z" />
+        <button v-if="checkoutStore?.itemCount > 0" @click="checkoutToggled = !checkoutToggled"
+          aria-label="Toggle checkout" class="flex p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800">
+          <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+            stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 0 0-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 0 0-16.536-1.84M7.5 14.25 5.106 5.272M6 20.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Zm12.75 0a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z" />
           </svg>
 
 
-          <span class="grid items-center w-5 h-5 text-xs font-bold text-center align-middle transform scale-[90%] rounded-full text-background bg-primary">
+          <span
+            class="grid items-center w-5 h-5 text-xs font-bold text-center align-middle transform scale-[90%] rounded-full text-background bg-primary">
             {{ checkoutStore?.itemCount > 0 ? checkoutStore?.itemCount : '' }}
           </span>
         </button>
@@ -79,13 +74,18 @@
   </header>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { useCheckoutStore } from "@/store/checkoutStore";
+import useAuth from "@/composables/useAuth";
 import { Button } from '@/components/ui/button'
 
-const checkoutStore = useCheckoutStore();
+// Initialize a reactive reference to hold the store instance
+const checkoutStore = ref(null);
 
-const totalCount = checkoutStore.total
+onMounted(() => {
+  // Call useCheckoutStore only when the component is mounted (client-side)
+  checkoutStore.value = useCheckoutStore();
+});
 
 const isDark = useDark()
 const toggleDark = useToggle(isDark)

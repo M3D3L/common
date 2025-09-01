@@ -81,7 +81,7 @@
                   <article
                      class="prose prose-lg dark:prose-invert max-w-none prose-headings:font-bold prose-headings:scroll-mt-24 prose-a:text-primary hover:prose-a:text-primary/80 prose-img:rounded-lg prose-img:border prose-img:border-muted prose-blockquote:border-l-primary prose-blockquote:text-muted-foreground prose-pre:bg-muted prose-pre:rounded-lg">
                      <h1 class="text-3xl font-bold md:text-4xl lg:text-5xl">{{ post.title }}</h1>
-                     <img v-if="post.cover_image"
+                     <img v-if="post?.cover_image"
                         :src="`${config.public.pocketbaseUrl}api/files/${post.collectionId}/${post.id}/${post.cover_image}?token=`"
                         :alt="post.title" width="600" height="338" loading="lazy"
                         class="object-cover w-full h-full transition-transform duration-500 rounded-lg" />

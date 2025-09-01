@@ -1,5 +1,5 @@
 export default defineNuxtConfig({
-  compatibilityDate: '2024-04-03',
+  compatibilityDate: '2025-08-30',
 
   // ✅ Tells Nitro to use static output (generates /dist/public)
   nitro: {

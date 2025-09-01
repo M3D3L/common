@@ -1,6 +1,6 @@
 <template>
   <section class="container max-w-xl p-4 mx-auto my-8 md:my-12">
-    <Card class="w-full p-6 overflow-y-auto shadow-lg bg-background/95 shadow-accent">
+    <Card class="w-full p-6 overflow-y-auto">
       <header>
         <CardHeader>
           <CardTitle class="text-3xl font-bold text-center">Your Cart</CardTitle>

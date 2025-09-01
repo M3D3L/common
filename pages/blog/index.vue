@@ -1,7 +1,7 @@
 <template>
     <div>
         <Seo :seoData="computedSeoData" />
-        <SectionsBlogsCols :content="posts" :showMore="false" :showPagination="true" />
+        <SectionsBlogsCols :imgSrc :content="posts" :showMore="false" :showPagination="true" />
     </div>
 </template>
 
@@ -13,6 +13,12 @@ const posts = ref([]);
 
 const route = useRoute();
 const page = ref(route.query.page || 1);
+
+const props = defineProps({
+  imgSrc: {
+    type: String,
+  }
+});
 
 const fetchPosts = async () => {
   try {

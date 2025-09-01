@@ -1,4 +1,4 @@
-Nuxt 3 Shadcn-vue Starter Template
+# Nuxt 3 Shadcn-vue Starter Template
 =====================================
 ![image](https://github.com/user-attachments/assets/64d24990-0d97-46dd-9e88-406ac591db18)
 

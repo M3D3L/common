@@ -1,97 +1,53 @@
 <template>
-  <containers-video
-    id="contact"
-    :img-src="imgSrc"
-    :video="video"
-    :title="title"
-    :description="description"
-  >
+  <containers-video id="contact" :img-src="imgSrc" :video="video" title="" :description="description">
     <template #video-container-content>
-      <Card class="relative w-full py-1 mt-16 overflow-hidden">
-        <!-- Decorative Background Blob -->
-        <div class="absolute top-[-4rem] right-[-4rem] w-64 h-64 bg-primary/10 rounded-full blur-3xl opacity-20 pointer-events-none z-0" />
-
-        <CardContent
-          class="relative grid gap-10 pt-2 pb-12 lg:grid-cols-2"
-          :initial="'hidden'"
-          :animate="'visible'"
-          :variants="containerVariants"
-        >
-
-          <!-- Contact Form -->
-          <motion.div :variants="fadeUp">
-            <form
-              ref="form"
-              :action="formAction"
-              method="POST"
-              class="space-y-6 rounded-b-none md:pr-6 md:border-r border-muted"
-              @submit.prevent="handleSubmit"
-            >
-              <!-- Honeypot Field (hidden from humans but visible to bots) -->
+      <Card class="relative w-full py-1 overflow-hidden rounded-2xl shadow-inner-lg">
+        <TextSectionTitle :title :description :imgSrc :h1="false" class="px-6 pt-8 pb-0 md:px-8" />
+        <CardContent class="relative grid grid-cols-1 gap-10 pt-2 lg:grid-cols-2" :initial="'hidden'" :animate="'visible'"
+          :variants="containerVariants">
+          <motion.div :variants="fadeUp" class="px-4 pb-6 border rounded-lg md:px-6 border-border bg-foreground/15">
+            <form ref="form" :action="formAction" method="POST" class="space-y-6" @submit.prevent="handleSubmit">
               <div class="absolute opacity-0 left-[-9999px]">
                 <label for="honeypot">Leave this field empty</label>
-                <input
-                  id="honeypot"
-                  v-model="honeypot"
-                  type="text"
-                  name="honeypot"
-                  tabindex="-1"
-                  autocomplete="off"
-                />
+                <input id="honeypot" v-model="honeypot" type="text" name="honeypot" tabindex="-1" autocomplete="off" />
               </div>
 
-              <!-- Email Field -->
               <div class="space-y-2">
-                <Label for="email">Email</Label>
-                <div class="flex items-center px-3 py-2 border rounded-md bg-background border-input" :class="{'border-destructive': emailError}">
-                  <Mail class="w-4 h-4 mr-2 text-muted-foreground" />
-                  <Input
-                    id="email"
-                    v-model="email"
-                    name="email"
-                    type="email"
-                    placeholder="you@example.com"
-                    class="px-2 border-0 focus:ring-0"
-                    required
-                    @input="validateEmail"
-                  />
+                <Label for="email" class="font-semibold text-foreground">Email</Label>
+                <div class="relative">
+                  <Mail class="absolute w-5 h-5 -translate-y-1/2 left-3 top-1/2 text-muted-foreground" />
+                  <Input id="email" v-model="email" name="email" type="email" placeholder="you@example.com"
+                    class="w-full py-2 pl-10 pr-4 transition-colors duration-200 border rounded-md border-input focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                    :class="{ 'border-destructive focus:ring-destructive': emailError }" required
+                    @input="validateEmail" />
                 </div>
-                <p v-if="emailError" class="text-sm text-destructive">{{ emailError }}</p>
+                <p v-if="emailError" class="mt-1 text-sm text-destructive">{{ emailError }}</p>
               </div>
 
-              <!-- Message Field -->
               <div class="space-y-2">
-                <Label for="message">Message</Label>
-                <Textarea
-                  id="message"
-                  v-model="message"
-                  name="message"
-                  placeholder="Your message..."
-                  class="min-h-[120px]"
-                  required
-                  :class="{'border-destructive': messageError}"
-                  @input="validateMessage"
-                />
-                <p v-if="messageError" class="text-sm text-destructive">{{ messageError }}</p>
+                <Label for="message" class="font-semibold text-foreground">Message</Label>
+                <Textarea id="message" v-model="message" name="message" placeholder="Your message..."
+                  class="min-h-[120px] rounded-md border border-input focus:ring-2 focus:ring-ring focus:ring-offset-2 transition-colors duration-200"
+                  :class="{ 'border-destructive focus:ring-destructive': messageError }" required
+                  @input="validateMessage" />
+                <p v-if="messageError" class="mt-1 text-sm text-destructive">{{ messageError }}</p>
               </div>
 
-              <!-- Form Status Message -->
               <div v-if="formMessage" class="p-3 text-sm rounded-md" :class="formMessageClass">
                 {{ formMessage }}
               </div>
 
-              <!-- Submit Button -->
-              <Button 
-                type="submit" 
-                size="default" 
-                class="w-full transition-all duration-200 hover:shadow-lg hover:scale-[1.01]"
-                :disabled="isSubmitting"
-              >
+              <Button type="submit" size="default"
+                class="w-full h-12 text-base font-semibold rounded-lg shadow-md hover:shadow-lg transition-all duration-300 transform hover:scale-[1.01]"
+                :disabled="isSubmitting">
                 <span v-if="!isSubmitting">Send Message</span>
                 <span v-else class="flex items-center justify-center">
-                  <svg class="w-5 h-5 mr-2 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <svg class="w-5 h-5 mr-2 text-white animate-spin"
+                    xmlns="[http://www.w3.org/2000/svg](http://www.w3.org/2000/svg)" fill="none" viewBox="0 0 24 24">
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    <path class="opacity-75" fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                    </path>
                   </svg>
                   Sending...
                 </span>
@@ -99,42 +55,43 @@
             </form>
           </motion.div>
 
-          <!-- Contact Info Panel -->
-          <motion.div :variants="fadeUp" class="space-y-6 md:px-8">
-            <div class="pt-8">
-              <h3 class="text-lg font-bold">Contact Information</h3>
+          <motion.div :variants="fadeUp" class="space-y-8 rounded-lg md:p-6 md:bg-secondary/20">
+            <div>
+              <h3 class="text-xl font-bold">Contact Information</h3>
               <p class="mt-2 text-sm text-muted-foreground">
                 Fill out the form or reach out directly through these channels
               </p>
             </div>
 
-            <div class="space-y-4">
-              <div class="flex items-start gap-4">
-                <div class="p-2 rounded-lg bg-primary/10">
-                  <Mail class="w-5 h-5 text-primary" />
+            <div class="space-y-6">
+              <div class="flex items-start gap-4 p-4 transition-colors duration-200 rounded-md hover:bg-muted/50">
+                <div class="flex-shrink-0 p-2 rounded-full bg-primary/10">
+                  <Mail class="w-6 h-6 text-primary" />
                 </div>
                 <div>
-                  <p class="text-sm font-medium">Email</p>
-                  <p class="text-xs md:text-sm text-muted-foreground">
-                    {{ contactEmail }}
-                  </p>
+                  <p class="text-base font-medium">Email</p>
+                  <a :href="`mailto:${contactEmail}`" class="text-xs md:text-sm text-muted-foreground hover:underline">{{
+                    contactEmail }}</a>
                 </div>
               </div>
 
-              <div class="flex items-start gap-4">
-                <div class="p-2 rounded-lg bg-primary/10">
-                  <Phone class="w-5 h-5 text-primary" />
+              <div class="flex items-start gap-4 p-4 transition-colors duration-200 rounded-md hover:bg-muted/50">
+                <div class="flex-shrink-0 p-2 rounded-full bg-primary/10">
+                  <Phone class="w-6 h-6 text-primary" />
                 </div>
                 <div>
-                  <p class="text-sm font-medium">Phone</p>
-                  <p class="text-sm text-muted-foreground">{{ contactPhone }}</p>
+                  <p class="text-base font-medium">Phone</p>
+                  <a :href="`tel:${contactPhone}`" class="text-sm text-muted-foreground hover:underline">{{ contactPhone
+                    }}</a>
                 </div>
               </div>
             </div>
 
-            <div class="pt-4">
-              <h3 class="text-lg font-bold">Follow Me</h3>
-              <ContainersSocials :socialLinks="socialLinks" />
+            <div>
+              <h3 class="text-xl font-bold">Follow Me</h3>
+              <div class="mt-4">
+                <ContainersSocials :socialLinks="socialLinks" />
+              </div>
             </div>
           </motion.div>
         </CardContent>
@@ -176,7 +133,7 @@ const props = defineProps({
   },
   video: {
     type: String,
-    default: 'https://videos.pexels.com/video-files/32106032/13687146_2560_1440_30fps.mp4'
+    default: 'https://www.pexels.com/download/video/2408284/'
   },
   imgSrc: {
     type: String,
@@ -272,17 +229,17 @@ const handleSubmit = async () => {
 
   isSubmitting.value = true
   formMessage.value = ''
-  
+
   try {
     // If using FormSubmit.co or similar service
     if (props.formAction) {
       const formData = new FormData(form.value as HTMLFormElement)
-      
+
       // Add additional hidden fields if needed
       formData.append('_captcha', 'false') // Disable captcha for API submission
       formData.append('_template', 'table') // Example for FormSubmit.co
       formData.append('_next', window.location.href) // Redirect back after submit
-      
+
       const response = await fetch(props.formAction, {
         method: 'POST',
         body: formData,

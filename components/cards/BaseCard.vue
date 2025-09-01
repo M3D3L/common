@@ -47,6 +47,8 @@
 </template>
 
 <script setup lang="ts">
+import { Card, CardHeader, CardContent } from '~/components/ui/card'
+
 defineProps<{
   content: {
     id: number;

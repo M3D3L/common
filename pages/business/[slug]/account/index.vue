@@ -376,7 +376,6 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
 import { useRoute } from '#app'
 import usePocketBaseCore from '@/composables/usePocketBaseCore'
 import usePocketBase from '@/composables/usePocketbase'
@@ -388,8 +387,6 @@ import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { Separator } from '@/components/ui/separator'
-import { Switch } from '@/components/ui/switch'
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select'
 import { Trash2 } from 'lucide-vue-next'
 
 const route = useRoute()
