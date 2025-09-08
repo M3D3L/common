@@ -17,6 +17,7 @@
 </template>
 
 <script setup lang="ts">
+import { Button } from '@/components/ui/button';
 const isOpen = ref(false);
 const emit = defineEmits(['close']);
 

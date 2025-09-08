@@ -1,11 +1,11 @@
 <template>
   <section
-    class="relative flex items-center justify-center w-full min-h-screen py-16 overflow-hidden lg:py-24 text-foreground"
+    class="relative flex items-center justify-center w-full overflow-hidden text-foreground"
     ref="heroRef" :aria-label="'section for video background of a ' + title + ' and hero content'"
-    :aria-labelledby="title" :aria-describedby="description" :role="'region'" :tabindex="0" :class="{
-      'bg-cover bg-center': !isVideoComponentActive, // Use a new reactive property to control this
-    }" :style="{
-      backgroundImage: isVideoComponentActive ? 'none' : 'url(' + video + ')', // Adjust based on component's state
+    :aria-labelledby="title" :aria-describedby="description" :role="'region'" :tabindex="0" :class="[{
+      'bg-cover bg-center': !isVideoComponentActive,
+    }, padding]" :style="{
+      backgroundImage: isVideoComponentActive ? 'none' : 'url(' + video + ')',
       backgroundSize: 'cover',
       backgroundPosition: 'center'
     }" :aria-live="isVideoComponentActive ? 'polite' : 'off'">
@@ -21,11 +21,7 @@
         }
       }">
 
-      <TextSectionTitle :title :description :imgSrc :h1 />
-
-      <div class="flex flex-col gap-8 lg:flex-row">
-        <slot name="video-container-content" />
-      </div>
+      <slot name="video-container-content" />
     </motion.div>
   </section>
 </template>
@@ -56,6 +52,10 @@ const props = defineProps({
   imgSrc: {
     type: String,
     default: ''
+  },
+  padding: {
+    type: String,
+    default: 'md:py-16 lg:py-24'
   }
 })
 

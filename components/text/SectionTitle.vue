@@ -1,16 +1,15 @@
 <template>
   <div class="z-20 flex flex-col w-full">
-    <div class="flex items-center w-full gap-8 mb-8">
-      <h1 v-if="h1" class="text-4xl font-black leading-tight tracking-tighter md:text-6xl lg:text-7xl">
-        <span class="text-transparent bg-clip-text bg-gradient-to-r from-white to-primary/60">{{
-          title }}</span>
+    <div class="flex items-center w-full gap-8 mb-4">
+      <h1 v-if="h1" class="text-4xl font-black leading-tight tracking-tighter md:text-6xl">
+        <span class="text-primary">
+          {{ title }}
+        </span>
       </h1>
 
       <template v-else>
-        <h2 v-if="title" class="text-4xl font-bold leading-tight tracking-tighter md:text-5xl lg:text-5xl">
-          <span class="text-transparent bg-clip-text bg-gradient-to-r from-primary to-primary/60">
-            {{ title }}
-          </span>
+        <h2 v-if="title" class="text-4xl font-bold leading-tight tracking-tighter text-primary md:text-5xl lg:text-4xl">
+          {{ title }}
         </h2>
       </template>
 

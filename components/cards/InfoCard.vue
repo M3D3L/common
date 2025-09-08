@@ -1,5 +1,5 @@
 <template>
-  <Card class="w-full p-6 space-y-4 shadow-md rounded-2xl">
+  <Card class="w-full p-6 space-y-4">
     <CardHeader class="p-0 space-y-2">
       <CardTitle class="text-2xl font-bold tracking-tight text-primary-800">
         <span class="text-transparent bg-clip-text bg-gradient-to-r from-primary to-primary/70">
@@ -38,7 +38,7 @@
 </template>
 
 <script setup lang="ts">
-import { Card, CardHeader, CardContent } from '~/components/ui/card'
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '~/components/ui/card'
 
 export interface BenefitItem {
   title: string;

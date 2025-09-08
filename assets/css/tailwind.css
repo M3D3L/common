@@ -173,6 +173,10 @@
     @apply bg-muted text-muted-foreground;
   }
 
+  .card-styles {
+    @apply transition-all duration-300 ease-in-out transform border border-transparent rounded-lg shadow-md bg-card/90 text-card-foreground hover:shadow-xl hover:border-primary/40 hover:bg-card/95;
+  }
+
   .sticky-position {
     position: sticky !important;
     z-index: 32;

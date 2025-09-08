@@ -2,7 +2,7 @@
     <div v-if="posts.length" class="mt-12">
       <h2 class="mb-6 text-2xl font-bold">Related Posts</h2>
       <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        <Card v-for="post in posts" :key="post.id" class="transition-shadow group hover:shadow-lg">
+        <Card v-for="post in posts" :key="post.id" class="group">
           <NuxtLink :to="post.slug">
             <CardHeader class="p-0 border-b border-muted">
               <div class="overflow-hidden aspect-video">

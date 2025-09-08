@@ -1,3 +1,5 @@
+import path from 'path';
+
 export default defineNuxtConfig({
   compatibilityDate: '2025-08-30',
 
@@ -65,6 +67,10 @@ export default defineNuxtConfig({
 
   build: {
     transpile: ['vueuc'],
+  },
+
+  alias: {
+    "@local": path.resolve(__dirname, "./"),
   },
 
   runtimeConfig: {

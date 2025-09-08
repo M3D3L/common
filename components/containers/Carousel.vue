@@ -1,87 +1,113 @@
-<script setup lang="ts">
-import type { Swiper } from 'swiper/types'
+<template>
+  <div class="relative w-full overflow-hidden">
+    <Button
+      @click="slidePrev"
+      class="absolute left-0 z-10 p-2 m-2 rounded-full top-1/2"
+    >
+      <ChevronLeftIcon class="w-5 h-5" />
+    </Button>
+    <Button
+      @click="slideNext"
+      class="absolute right-0 z-10 p-2 m-2 rounded-full top-1/2"
+    >
+      <ChevronRightIcon class="w-5 h-5" />
+    </Button>
 
-const containerRef = ref<HTMLElement | null>(null)
+    <Swiper
+      :modules="[Autoplay, Navigation]"
+      :loop="true"
+      :centered-slides="true"
+      :space-between="16"
+      :breakpoints="breakpoints"
+      :autoplay="{ delay: 3000, disableOnInteraction: false }"
+      @swiper="onSwiper"
+    >
+      <SwiperSlide
+        v-for="(slide, index) in slides"
+        :key="`slide-${index}`"
+        @click="handleSlideClick(index)"
+        class="py-6"
+      >
+        <slot name="slide" :slide="slide" :index="index">
+          <Card class="flex w-full h-full aspect-square">
+            <img
+              loading="lazy"
+              :src="slide"
+              alt="Slide image"
+              class="object-cover w-full h-full rounded-lg"
+            />
+          </Card>
+        </slot>
+      </SwiperSlide>
+    </Swiper>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref } from "vue"
+import { Swiper, SwiperSlide } from "swiper/vue"
+import { Autoplay, Navigation } from "swiper/modules"
+import "swiper/css"
+
+import { Card } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { ChevronLeftIcon, ChevronRightIcon } from "@radix-icons/vue"
 
 const props = defineProps({
   slides: {
-    type: Array,
-    required: true,
-    default: () => []
+    type: Array as () => any[],
+    default: () => [],
   },
   breakpoints: {
-    type: Object,
-    required: true,
+    type: Object as () => Record<string, any>,
     default: () => ({
+      320: {
+        slidesPerView: 1.25,
+      },
       640: {
         slidesPerView: 1.5,
       },
       768: {
-        slidesPerView: 3,
+        slidesPerView: 2.25,
       },
       1024: {
-        slidesPerView: 3.15,
+        slidesPerView: 3.25,
       },
-    })
-  }
-})
-
-const emit = defineEmits(['selected-event'])
-
-const { instance: swiperInstance } = useSwiper(containerRef, {
-  loop: true,
-  centeredSlides: true,
-  autoplay: {
-    delay: 4000,
-    disableOnInteraction: false,
+    }),
   },
-  slidesPerView: 1.25,
-  spaceBetween: 16,
-  breakpoints: props.breakpoints,
 })
 
-const handleSlideClick = (index: number) => {
-  if (swiperInstance.value) {
-    swiperInstance.value.slideTo(index)
-    emit('selected-event', index)
-  }
+const emit = defineEmits(["selected-event"])
+
+const swiperInstance = ref<any>(null)
+
+const onSwiper = (swiper: any) => {
+  swiperInstance.value = swiper
 }
 
-onMounted(() => {
-  console.log(swiperInstance.value)
-})
+const handleSlideClick = (index: number) => {
+  swiperInstance.value?.slideToLoop(index)
+  emit("selected-event", index)
+}
+
+const slidePrev = () => {
+  if (!swiperInstance.value) return
+  swiperInstance.value.slidePrev()
+  swiperInstance.value.autoplay.start()
+}
+
+const slideNext = () => {
+  if (!swiperInstance.value) return
+  swiperInstance.value.slideNext()
+  swiperInstance.value.autoplay.start()
+}
 </script>
 
-<template>
-  <div class="relative w-full">
-    <ClientOnly>
-      <button
-        class="absolute top-0 bottom-0 left-0 w-10 text-gray-500 transition-all hover:bg-black/5 hover:text-gray-700">
-        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 mx-auto" fill="none" viewBox="0 0 24 24"
-          stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-        </svg>
-      </button>
-      <swiper-container ref="containerRef" :init="false">
-        <swiper-slide v-for="(slide, index) in slides" :key="index" class="aspect-square"
-          @click="handleSlideClick(index)">
-          <Card class="flex w-full h-full aspect-square">
-            <img :lazy="true" :src="slide" alt="Slide image" class="object-cover w-full h-full rounded-lg" />
-          </Card>
-        </swiper-slide>
-      </swiper-container>
-    </ClientOnly>
-  </div>
-</template>
-
 <style lang="css">
-swiper-slide {
+.swiper-slide {
   display: flex;
   justify-content: center;
   align-items: center;
-  font-size: 4rem;
-  font-weight: bold;
-  font-family: 'Roboto', sans-serif;
   cursor: pointer;
 }
 </style>

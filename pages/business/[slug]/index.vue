@@ -112,11 +112,7 @@
         <div v-if="!isPremiumMember" class="flex items-center justify-center w-full h-40 bg-gray-200 rounded-lg">
           <span class="text-gray-600">[Advertisement]</span>
         </div>
-
-        <pre>
-          {{ businessServices }}
-        </pre>
-
+        
         <!-- Services -->
         <section v-if="isPremiumMember && businessServices.length" id="services" class="py-12 scroll-mt-40"
           ref="setSectionRef">

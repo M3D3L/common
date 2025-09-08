@@ -8,6 +8,7 @@ export const whyRentConfig = {
   sectionTitle: "Why Rent in San Carlos, Sonora?",
   sectionSubTitle: "Experience the Benefits of Coastal Living",
   title: "Save Money, Live Better",
+  type: "rentals",
   subtitle: "Discover why more people are choosing to rent in San Carlos, Sonora — a beachfront paradise with real advantages.",
   footerText: "San Carlos is more than a destination it's a lifestyle.",
   benefits: [
@@ -36,6 +37,7 @@ export const whyBuyRealEstateConfig = {
   sectionTitle: "Why Buy Real Estate in San Carlos, Sonora?",
   sectionSubTitle: "Invest in Your Dream Coastal Home",
   title: "Own Your Paradise",
+  type: "properties",
   subtitle: "Discover why purchasing property in San Carlos is a smart investment for your future and lifestyle.",
   footerText: "San Carlos real estate offers both beauty and value that appreciates over time.",
   benefits: [
@@ -64,6 +66,7 @@ export const whyBuyLotsConfig = {
   sectionTitle: "Why Purchase Lots in San Carlos, Sonora?",
   sectionSubTitle: "Build Your Vision from the Ground Up",
   title: "Secure Your Piece of Paradise",
+  type: "lots",
   subtitle: "Discover the advantages of buying land in San Carlos - the perfect canvas for your dream home.",
   footerText: "Land ownership in San Carlos is your opportunity to create exactly what you want.",
   benefits: [
@@ -87,6 +90,7 @@ export const categories = [
     sectionTitle: whyBuyRealEstateConfig.sectionTitle,
     sectionSubTitle: whyBuyRealEstateConfig.sectionSubTitle,
     name: whyBuyRealEstateConfig.title,
+    type: whyBuyRealEstateConfig.type,
     description: whyBuyRealEstateConfig.subtitle,
     mode: 'property',
     cta: 'Get exclusive home listings in San Carlos',
@@ -97,6 +101,7 @@ export const categories = [
     sectionTitle: whyRentConfig.sectionTitle,
     sectionSubTitle: whyRentConfig.sectionSubTitle,
     name: whyRentConfig.title,
+    type: whyRentConfig.type,
     description: whyRentConfig.subtitle,
     mode: 'rental',
     cta: 'Receive rental opportunities first',
@@ -107,6 +112,7 @@ export const categories = [
     sectionTitle: whyBuyLotsConfig.sectionTitle,
     sectionSubTitle: whyBuyLotsConfig.sectionSubTitle,
     name: whyBuyLotsConfig.title,
+    type: whyBuyLotsConfig.type,
     description: whyBuyLotsConfig.subtitle,
     mode: 'lot',
     cta: 'Be notified about new land listings',

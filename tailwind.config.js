@@ -90,6 +90,9 @@ export const theme = {
       "collapsible-down": "collapsible-down 0.2s ease-in-out",
       "collapsible-up": "collapsible-up 0.2s ease-in-out",
     },
+    whiteList: {
+      ".bg-opacity-20": true,
+    },
     typography: (theme) => ({
       DEFAULT: {
         css: {

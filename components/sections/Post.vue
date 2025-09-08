@@ -11,7 +11,7 @@
          }">
          <!-- Breadcrumbs -->
          <nav class="mb-6 text-sm text-muted-foreground" v-if="post">
-            <ul class="flex flex-wrap gap-2 list-none">
+            <ul class="flex flex-wrap gap-2 px-0 list-none">
                <li>
                   <NuxtLink to="/" class="transition-colors hover:text-primary">Home</NuxtLink>
                </li>
@@ -26,7 +26,7 @@
             </ul>
          </nav>
          <TooltipProvider>
-            <Card class="overflow-hidden" v-if="post">
+            <Card styles="card-styles" class="overflow-hidden" v-if="post">
                <CardContent class="pt-6 lg:pt-4">
                   <!-- Article Metadata -->
                   <div class="flex flex-col gap-4 mb-8 sm:flex-row sm:items-center sm:justify-between">

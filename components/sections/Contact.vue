@@ -1,8 +1,8 @@
 <template>
-  <containers-video id="contact" :video="video" title="" :description="description">
+  <containers-video id="contact" :video="videoArray[randomIndex]" title="" :description="description" class="w-full min-h-screen">
     <template #video-container-content>
-      <Card class="relative w-full py-1 overflow-hidden rounded-2xl shadow-inner-lg">
-        <TextSectionTitle :title :description :imgSrc :h1="false" class="px-6 pt-8 pb-0 md:px-8" />
+      <Card class="relative w-full py-1 my-8 overflow-hidden">
+        <TextSectionTitle :title :description :imgSrc :h1="false" class="px-6 pt-6 pb-0 md:px-8" />
         <CardContent class="relative grid grid-cols-1 gap-10 pt-2 lg:grid-cols-2" :initial="'hidden'" :animate="'visible'"
           :variants="containerVariants">
           <motion.div :variants="fadeUp" class="px-4 pb-6 border rounded-lg md:px-6 border-border bg-foreground/15">
@@ -133,7 +133,7 @@ const props = defineProps({
   },
   video: {
     type: String,
-    default: 'https://www.pexels.com/download/video/2408284/'
+    default: 'https://www.pexels.com/download/video/33792753/'
   },
   imgSrc: {
     type: String,
@@ -153,6 +153,15 @@ const props = defineProps({
     ]
   }
 })
+
+const videoArray = [
+  'https://www.pexels.com/download/video/33792753/',
+  'https://www.pexels.com/download/video/32926637/',
+  'https://www.pexels.com/download/video/32106032/',
+  'https://www.pexels.com/download/video/32104595/',
+]
+
+const randomIndex = Math.floor(Math.random() * videoArray.length)
 
 // Form state
 const form = ref<HTMLFormElement | null>(null)

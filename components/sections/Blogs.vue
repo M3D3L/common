@@ -5,7 +5,7 @@
             <!-- Primary Blog - Featured Post -->
             <motion.div :variants="fadeUp" v-if="featuredPost">
                 <article>
-                    <Card class="transition-shadow duration-300 group hover:shadow-lg">
+                    <Card class="group">
                         <CardContent class="flex flex-col items-center gap-6 p-0 md:flex-row">
                             <div class="order-2 w-full px-6 py-6 md:order-1 md:w-1/2 md:px-8 md:py-12">
                                 <div class="flex items-center gap-2 mb-3">

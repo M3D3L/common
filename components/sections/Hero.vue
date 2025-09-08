@@ -3,81 +3,75 @@
     :video
     :hideDescription="true"
     :h1="true"
-    class="min-h-[90vh] md:min-h-screen"
+    class="min-h-[90vh] md:min-h-screen py-16"
     :title
   >
     <template #video-container-content>
-      <main class="relative z-10 flex items-center w-full h-full">
-        <div class="flex flex-col-reverse items-center w-full gap-12 md:flex-row md:justify-between">
-
+      <SectionTitle :title :h1="true" />
+      <main class="relative z-10 flex items-center w-full h-full">  
+        <div
+          class="flex flex-col-reverse items-center w-full gap-12 md:flex-row md:justify-between"
+        >
           <!-- Left Column -->
-          <motion.group
-            class="w-full max-w-xl"
-            :initial="'hidden'"
-            :animate="'visible'"
+
+          <motion.div
+            class="w-full max-w-xl space-y-6"
             :variants="{
-              hidden: {},
+              hidden: { opacity: 0, y: 20 },
               visible: {
-                transition: { staggerChildren: 0.15 }
-              }
+                opacity: 1,
+                y: 0,
+                transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] },
+              },
             }"
           >
-            <motion.div
-              class="space-y-6"
-              :variants="{
-                hidden: { opacity: 0, y: 20 },
-                visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] } }
-              }"
-            >
-              <Card
-                class="pt-6 transition-all duration-300 md:pt-6 hover:border-primary/30 hover:shadow-lg"
-                role="article"
-              >
-                <CardContent class="grid gap-6">
-                  <h2 class="text-2xl font-bold tracking-tight text-primary-800 md:text-3xl">
-                    {{ subTitle }}
-                  </h2>
+            <Card class="pt-6" role="article">
+              <CardContent class="grid gap-6">
+                <h2
+                  class="text-2xl font-bold tracking-tight text-primary-800 md:text-3xl"
+                >
+                  {{ subTitle }}
+                </h2>
 
-                  <motion.p
-                    class="text-base leading-relaxed text-muted-foreground lg:text-xl md:leading-relaxed"
-                    :variants="{
-                      hidden: { opacity: 0, y: 10 },
-                      visible: {
-                        opacity: 1,
-                        y: 0,
-                        transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] }
-                      }
-                    }"
-                  >
-                    {{ description }}
-                  </motion.p>
+                <motion.p
+                  class="text-base leading-relaxed text-muted-foreground lg:text-xl md:leading-relaxed"
+                  :variants="{
+                    hidden: { opacity: 0, y: 10 },
+                    visible: {
+                      opacity: 1,
+                      y: 0,
+                      transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] },
+                    },
+                  }"
+                >
+                  {{ description }}
+                </motion.p>
 
-                  <motion.div
-                    class="flex flex-row gap-3"
-                    :variants="{
-                      hidden: { opacity: 0, y: 10 },
-                      visible: {
-                        opacity: 1,
-                        y: 0,
-                        transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] }
-                      }
-                    }"
+                <motion.div
+                  class="flex flex-row gap-3"
+                  :variants="{
+                    hidden: { opacity: 0, y: 10 },
+                    visible: {
+                      opacity: 1,
+                      y: 0,
+                      transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] },
+                    },
+                  }"
+                >
+                  <Button
+                    v-for="(button, index) in buttons"
+                    :key="index"
+                    @click="toggleNav(button.link)"
+                    variant="default"
+                    class="w-1/2 text-center md:w-1/3"
+                    :aria-label="button.title + ' button'"
                   >
-                    <Button
-                      v-for="(button, index) in buttons"
-                      :key="index"
-                      @click="toggleNav(button.link)"
-                      variant="default"
-                      class="w-1/2 text-center md:w-1/3"
-                      :aria-label="button.title + ' button'"
-                    >
-                      <span class="relative z-10">{{ button.title }}</span>
-                    </Button>
-                  </motion.div>
-                </CardContent>
-              </Card>
-            </motion.div>
-          </motion.group>
+                    <span class="relative z-10">{{ button.title }}</span>
+                  </Button>
+                </motion.div>
+              </CardContent>
+            </Card>
+          </motion.div>
 
           <!-- Right Column -->
           <motion.div
@@ -87,8 +81,12 @@
               visible: {
                 opacity: 1,
                 y: 0,
-                transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1], delay: 0.3 }
-              }
+                transition: {
+                  duration: 0.8,
+                  ease: [0.16, 1, 0.3, 1],
+                  delay: 0.3,
+                },
+              },
             }"
           >
             <motion.img
@@ -98,11 +96,14 @@
               :initial="{ y: 0 }"
               :animate="{
                 y: [-5, 5, -5],
-                transition: { duration: 4, repeat: Infinity, ease: 'easeInOut' }
+                transition: {
+                  duration: 4,
+                  repeat: Infinity,
+                  ease: 'easeInOut',
+                },
               }"
             />
           </motion.div>
-
         </div>
       </main>
     </template>
@@ -110,62 +111,64 @@
 </template>
 
 <script setup lang="ts">
-import { motion } from 'motion-v'
-import { Button } from '@/components/ui/button'
+import { motion } from "motion-v";
+import { Button } from "@/components/ui/button";
+import SectionTitle from "../text/SectionTitle.vue";
 
 import {
-    Card,
-    CardContent,
-    CardFooter,
-    CardHeader,
-    CardTitle,
-} from '@/components/ui/card'
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
 // Props
 const props = defineProps({
-    video: {
-        type: String,
-        default: ''
-    },
-    title: {
-        type: String,
-        default: 'Guillermo Medel | Full Stack Developer | Digital Experiences'
-    },
-    subTitle: {
-        type: String,
-        default: 'Building digital experiences that connect and inspire.'
-    },
-    description: {
-        type: String,
-        default: "Hey, I'm a full-stack developer who builds complete web experiences—from slick frontends to solid backends. Based in San Carlos, Sonora, I’ve worked on big platforms like Law.com and also help local businesses stand out with drone photography and custom digital solutions."
-    },
-    buttons: {
-        type: Array,
-        default: () => [
-            { title: 'Get Started', link: '/docs' },
-            { title: 'Components', link: '/components' }
-        ]
-    },
-    image: {
-        type: String
-    }
-})
+  video: {
+    type: String,
+    default: "",
+  },
+  title: {
+    type: String,
+    default: "Guillermo Medel | Full Stack Developer | Digital Experiences",
+  },
+  subTitle: {
+    type: String,
+    default: "Building digital experiences that connect and inspire.",
+  },
+  description: {
+    type: String,
+    default:
+      "Hey, I'm a full-stack developer who builds complete web experiences—from slick frontends to solid backends. Based in San Carlos, Sonora, I’ve worked on big platforms like Law.com and also help local businesses stand out with drone photography and custom digital solutions.",
+  },
+  buttons: {
+    type: Array,
+    default: () => [
+      { title: "Get Started", link: "/docs" },
+      { title: "Components", link: "/components" },
+    ],
+  },
+  image: {
+    type: String,
+  },
+});
 
 // Methods
 const toggleNav = (link) => {
-    const router = useRouter()
-    router.push(link)
-}
+  const router = useRouter();
+  router.push(link);
+};
 
 // SEO Meta
 useSeoMeta({
-    title: () => props.title,
-    description: () => props.description,
-    ogTitle: () => props.title,
-    ogDescription: () => props.description,
-    ogType: 'website',
-    twitterCard: 'summary_large_image',
-    twitterTitle: () => props.title,
-    twitterDescription: () => props.description
-})
+  title: () => props.title,
+  description: () => props.description,
+  ogTitle: () => props.title,
+  ogDescription: () => props.description,
+  ogType: "website",
+  twitterCard: "summary_large_image",
+  twitterTitle: () => props.title,
+  twitterDescription: () => props.description,
+});
 </script>

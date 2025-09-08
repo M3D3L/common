@@ -1,7 +1,7 @@
 <template>
-    <div>
+    <div class="mt-8 md:pt-16">
         <Seo :seoData="computedSeoData" />
-        <SectionsBlogsCols :imgSrc :content="posts" :showMore="false" :showPagination="true" />
+        <SectionsBlogPage h1="true" :title :description :imgSrc :content="posts" :showMore="false" :showPagination="true" />
     </div>
 </template>
 
@@ -17,7 +17,15 @@ const page = ref(route.query.page || 1);
 const props = defineProps({
   imgSrc: {
     type: String,
-  }
+  },
+  title: {
+    type: String,
+    default: 'Learn Web Development, Drone Photography, and More',
+  },
+  description: {
+    type: String,
+    default: "I'm passsionate about sharing knowledge and helping others grow. Explore my blog for insights, tutorials, and tips on web development, drone photography, and more.",
+  },
 });
 
 const fetchPosts = async () => {
@@ -36,8 +44,8 @@ const loadPosts = async () => {
 
 const computedSeoData = computed(() => {
   return createSeoObject({
-    title: 'Blog Page',
-    summary: 'Explore my latest articles and insights on web development, design, and technology. Learn from practical tutorials and stay updated with industry trends.',
+    title: props.title,
+    summary: props.description,
   })
 });
 

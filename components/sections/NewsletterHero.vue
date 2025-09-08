@@ -5,23 +5,24 @@
             <CardContent class="p-6 space-y-6">
                 <form @submit.prevent="handleSubmit" class="space-y-4">
                     <div class="space-y-2">
-                        <Label for="newsletter-email" class="text-white">Email Address</Label>
+                        <Label for="newsletter-email">Email Address</Label>
                         <Input id="newsletter-email" v-model="form.email" type="email" placeholder="your@email.com"
-                            required
-                            class="text-white placeholder-gray-400 bg-white/10 border-white/20 focus:ring-2 focus:ring-primary-500" />
+                            required class="bg-white/10 border-white/20 focus:ring-2 focus:ring-primary-500" />
                     </div>
                     <div class="space-y-2">
-                        <Label for="newsletter-name" class="text-white">Name (Optional)</Label>
+                        <Label for="newsletter-name">Name (Optional)</Label>
                         <Input id="newsletter-name" v-model="form.name" type="text" placeholder="Your name"
-                            class="text-white placeholder-gray-400 bg-white/10 border-white/20 focus:ring-2 focus:ring-primary-500" />
+                            class=" bg-white/10 border-white/20 focus:ring-2 focus:ring-primary-500" />
                     </div>
 
                     <div class="flex items-center">
                         <input id="newsletter-consent" v-model="form.consent" type="checkbox" required
                             class="w-4 h-4 rounded text-primary-600 bg-white/10 border-white/20 focus:ring-primary-500">
-                        <label for="newsletter-consent" class="ml-2 text-sm text-gray-300">
-                            I agree to receive emails and accept the 
-                            <modal title="Privacy Policy" description='`This Privacy Policy describes how Guillermo Medel ("I," "me," or "my") collects, uses, and discloses information when you visit my website, subscribe to my newsletter, or interact with my blog.`' :htmlContent="privacyConfig">
+                        <label for="newsletter-consent" class="ml-2 text-sm">
+                            I agree to receive emails and accept the
+                            <modal title="Privacy Policy"
+                                description='`This Privacy Policy describes how Guillermo Medel ("I," "me," or "my") collects, uses, and discloses information when you visit my website, subscribe to my newsletter, or interact with my blog.`'
+                                :htmlContent="privacyConfig">
                                 <template #button>
                                     <span class="cursor-pointer text-primary-500 hover:underline">privacy policy</span>
                                 </template>
@@ -42,7 +43,7 @@
                 </div>
 
                 <!-- Trust indicators -->
-                <div class="pt-4 border-t border-white/10">
+                <div class="border-t border-white/10">
                     <div class="flex flex-col items-center space-y-2 text-center">
                         <div class="flex space-x-2">
                             <div class="p-2 rounded-lg bg-primary-600/10">

@@ -16,8 +16,6 @@ const props = defineProps({
 </script>
 
 <template>
-  <section class="w-full">
-    <div class="container flex flex-col gap-12">
       <!-- Header -->
       <div class="flex flex-col w-full gap-4 text-center md:text-left">
         <component :is="type"> {{ title }} </component>
@@ -25,6 +23,4 @@ const props = defineProps({
           {{ description }}
         </p>
       </div>
-    </div>
-  </section>
 </template>

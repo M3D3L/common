@@ -1,21 +1,22 @@
+<template>
+  <div :class="cn(props.styles, props.class)">
+    <slot />
+  </div>
+</template>
+
 <script setup lang="ts">
 import type { HTMLAttributes } from 'vue'
 import { cn } from '~/lib/utils'
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   class?: HTMLAttributes['class']
-}>()
+  styles?: string
+}>(), {
+  styles: 'transform hover:-translate-y-1 hover:scale-[1.01] card-styles'
+})
 </script>
 
-<template>
-  <div
-    :class="
-      cn(
-        'rounded-xl border bg-card/75 text-card-foreground shadow transition-all duration-300 hover:border-primary/30 hover:shadow-l',
-        props.class,
-      )
-    "
-  >
-    <slot />
-  </div>
-</template>
+
+<!-- <style scoped>
+text-5xl
+</style> -->

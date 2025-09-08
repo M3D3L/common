@@ -1,5 +1,5 @@
 <template>
-    <nav class="mb-6 text-sm text-muted-foreground">
+    <nav class="mb-6 text-sm text-muted-foreground" aria-label="Breadcrumb">
       <ol class="flex flex-wrap items-center gap-2">
         <li>
           <NuxtLink to="/" class="transition-colors hover:text-primary">Home</NuxtLink>

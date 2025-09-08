@@ -22,7 +22,8 @@
 
     <div class="relative md:container flex-flex-col">
       <TextSectionTitle :title :description :imgSrc />
-      <div
+      <SectionsBlog class="mt-6" :content="content?.items" :baseUrl />
+      <!-- <div
         class="flex flex-col w-full min-h-screen gap-8 pb-16 mt-12 lg:pb-24 lg:flex-row"
       >
         <motion.div
@@ -33,7 +34,7 @@
             class="grid w-full grid-cols-1 gap-4 lg:grid-cols-1 md:grid-cols-2 lg:w-full"
           >
             <template
-              v-for="(post, index) in props.content.items"
+              v-for="(post, index) in content?.items"
               :key="post.id"
             >
               <BlogHorizontal
@@ -54,7 +55,7 @@
         <div class="w-full lg:w-1/3">
           <SectionsSubscribe class="z-10 sticky-position top-24" />
         </div>
-      </div>
+      </div> -->
 
       <div class="container flex justify-start w-full mr-auto -mt-12 lg:-mt-20">
         <nuxt-link
@@ -88,7 +89,7 @@ import BlockMe5 from "/images/block-me-5.webp";
 import BlogHorizontal from "../cards/BlogHorizontal.vue";
 
 const video =
-  "https://videos.pexels.com/video-files/28100367/12301150_2560_1440_30fps.mp4";
+  "";
 
 const props = defineProps({
   title: {

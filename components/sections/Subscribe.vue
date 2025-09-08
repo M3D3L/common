@@ -1,19 +1,17 @@
 <template>
-    <div class="flex flex-col w-full md:flex-row lg:flex-col">
-      <!-- Left text/CTA block -->
-      <div class="grid content-center w-full px-2 mb-8 md:w-1/2 lg:w-full md:pr-16 lg:pr-0 md:mb-4 md:px-0">
-        <h2 class="text-2xl font-bold tracking-tight md:text-3xl lg:text-4xl">
-          <span class="text-transparent transition-colors bg-clip-text bg-gradient-to-r from-primary to-primary/70 hover:from-primary/80 hover:to-primary/50"
-          >
-            Subscribe to My Newsletter
-          </span>
-        </h2>
-        <p class="mt-3 text-white text-muted-foreground line-clamp-3">
-          Stay updated with the latest articles and insights on web development, design, and technology.
-        </p>
-  
-        <!-- Social proof -->
-        <!-- <div class="inline-flex items-center mt-4 space-x-4 text-gray-400">
+  <div class="flex flex-col w-full md:flex-row lg:flex-col">
+    <!-- Left text/CTA block -->
+    <div class="grid content-center w-full px-2 mb-8 md:w-1/2 lg:w-full md:pr-16 lg:pr-0 md:mb-4 md:px-0">
+      <h2 class="mb-2 text-2xl font-bold tracking-tight text-primary md:text-3xl lg:text-4xl">
+        {{ title }}
+      </h2>
+
+      <p class="mt-3 text-sm line-clamp-3">
+        {{ description }}
+      </p>
+
+      <!-- Social proof -->
+      <!-- <div class="inline-flex items-center mt-4 space-x-4 text-gray-400">
           <div class="flex -space-x-2">
             <img
               v-for="(avatar, index) in avatars"
@@ -27,19 +25,30 @@
             Join <span class="font-semibold text-white">10,000+</span> subscribers
           </span>
         </div> -->
-      </div>
-  
-      <!-- Sticky newsletter hero container -->
-      <SectionsNewsletterHero class="w-full md:w-1/2 md:pl-2 lg:pl-0 lg:w-full" />
     </div>
-  </template>
-  
-  <script setup lang="ts">
-  const avatars = [
-    'https://randomuser.me/api/portraits/women/44.jpg',
-    'https://randomuser.me/api/portraits/men/32.jpg',
-    'https://randomuser.me/api/portraits/women/68.jpg',
-    'https://randomuser.me/api/portraits/men/75.jpg',
-  ]
-  </script>
-  
+
+    <!-- Sticky newsletter hero container -->
+    <SectionsNewsletterHero class="w-full md:w-1/2 md:pl-2 lg:pl-0 lg:w-full" />
+  </div>
+</template>
+
+<script setup lang="ts">
+const props = defineProps({
+  title: {
+    type: String,
+    default: "Join Newsletter",
+  },
+  description: {
+    type: String,
+    default:
+      "Stay updated with the latest news, articles, and resources. Subscribe and never miss out!",
+  },
+});
+
+const avatars = [
+  "https://randomuser.me/api/portraits/women/44.jpg",
+  "https://randomuser.me/api/portraits/men/32.jpg",
+  "https://randomuser.me/api/portraits/women/68.jpg",
+  "https://randomuser.me/api/portraits/men/75.jpg",
+];
+</script>

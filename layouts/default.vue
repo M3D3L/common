@@ -8,6 +8,7 @@
     <main class="w-full">
       <slot />
     </main>
+    <SectionsContact />
     <the-footer :footer-data="layoutConfig.footerData" />
   </div>
 </template>

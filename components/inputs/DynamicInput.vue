@@ -63,6 +63,24 @@
       />
       <p v-if="error" class="text-sm text-red-500">{{ error }}</p>
     </div>
+
+    <!-- MULTISELECT -->
+    <div v-else-if="q.questionType === 'multiselect'" class="flex flex-col gap-1">
+      <select
+        multiple
+        v-model="localValue"
+        class="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+      >
+        <option
+          v-for="opt in q.options"
+          :key="opt.value"
+          :value="opt.value"
+        >
+          {{ opt.label }}
+        </option>
+      </select>
+      <p class="text-xs text-gray-500">Hold Ctrl (Cmd on Mac) to select multiple</p>
+    </div>
   </div>
 </template>
 
@@ -74,7 +92,7 @@ const props = defineProps<{
 
 const emits = defineEmits(["update:modelValue"])
 
-const localValue = ref(props.modelValue)
+const localValue = ref(props.modelValue ?? (props.q.questionType === "multiselect" ? [] : ""))
 
 watch(localValue, (val) => emits("update:modelValue", val))
 watch(() => props.modelValue, (val) => (localValue.value = val))

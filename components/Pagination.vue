@@ -17,6 +17,7 @@
         <li>
           <Button
             variant="page"
+            class="px-4"
             size="sm"
             :class="currentPage === page ? 'bg-primary text-primary-foreground' : ''"
             @click="goToPage(page)"
