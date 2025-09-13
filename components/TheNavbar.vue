@@ -8,11 +8,6 @@
       </NuxtLink>
 
       <div class="flex items-center gap-6">
-        <nuxt-link to="/account">
-          <Button v-if="auth.isAuthenticated.value" class="text-xs md:text-sm" @click="() => { }" variant="default">
-            My Account
-          </Button>
-        </nuxt-link>
 
         <Button v-if="auth.isAuthenticated.value" class="text-xs md:text-sm" @click="auth.logout()" variant="default">
           Logout
