@@ -3,11 +3,6 @@ import path from 'path';
 export default defineNuxtConfig({
   compatibilityDate: '2025-08-30',
 
-  // ✅ Tells Nitro to use static output (generates /dist/public)
-  nitro: {
-    preset: 'ssr',
-  },
-
   // ✅ Correct base URL for GitHub Pages or subdirectory hosting
   app: {
     baseURL: process.env.NUXT_APP_BASE_URL || '/',

@@ -16,7 +16,7 @@
         
         <TitleBlock title="Skills" description="Full-stack developer focused on sleek digital experiences — a part-time drone pilot bringing both code and cameras to new heights. This unique combination allows for a diverse approach to problem-solving and project execution." 
          class="container pt-16 pb-8 mx-auto md:pt-24" /> 
-        <SectionsSkills :content="layoutConfig.skillsData" />-->
+        <SectionsSkills :content="layoutConfig.skillsData" />
         <SectionsBlogPage v-if="posts?.items" class="my-24" :showPagination="false" :content="posts?.items" />
     </div>
 </template>
