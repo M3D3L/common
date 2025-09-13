@@ -1,7 +1,7 @@
 <template>
     <div class="mt-8 md:pt-16">
         <Seo :seoData="computedSeoData" />
-        <SectionsBlogPage h1="true" :title :description :imgSrc :content="posts" :showMore="false" :showPagination="true" />
+        <SectionsBlogPage h1="true" :title :description :imgSrc :content="posts?.items" :showMore="false" :showPagination="true" />
     </div>
 </template>
 
@@ -30,7 +30,7 @@ const props = defineProps({
 
 const fetchPosts = async () => {
   try {
-    const result = await pbUtils.fetchCollection('posts', page.value, 10, '', '-created', '', ['content']);
+    const result = await pbUtils.fetchCollection('posts', page.value, 10, '', '-created');
     return result;
   } catch (error) {
     console.error('Error fetching posts:', error);

@@ -31,7 +31,6 @@ defineProps({
   },
   baseUrl: {
     type: String,
-    required: true,
   },
 });
 </script>

@@ -9,7 +9,7 @@ export type CacheOptions = {
   debug?: boolean
 }
 
-const DEFAULT_TTL = 3600 * 1000 // 1 hour
+const DEFAULT_TTL = 3600 * 1000
 const DEFAULT_NAMESPACE = 'app-cache'
 const DB_NAME = 'cache-db'
 const STORE_NAME = 'cache-store'

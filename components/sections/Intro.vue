@@ -21,7 +21,7 @@
 </template>
 
 <script setup lang="ts">
-const title = "About Our Services";
+const title = "Relocation Services for Every Lifestyle";
 const description =
-  "Learn more about our relocation and real estate services in San Carlos, Sonora. Click on any category below to explore details and submit a quick service request form.";
+  "Whether you’re retiring by the sea, traveling with family, working remotely as a digital nomad, or escaping the cold as a snowbird, our relocation services are designed to make moving to San Carlos seamless. We help retirees, families, adventurers, and professionals find the right homes, activities, and connections so you can settle in with ease.";
 </script>

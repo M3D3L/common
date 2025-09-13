@@ -284,7 +284,7 @@ const loadingText = computed(() => isSpanish.value ? 'Cargando...' : 'Loading...
 const loadingBusinessText = computed(() => isSpanish.value ? 'Cargando datos del negocio...' : 'Loading business data...');
 const errorTitle = computed(() => isSpanish.value ? 'Error al cargar el negocio' : 'Error loading business');
 const errorText = computed(() => isSpanish.value ? 'No se pudo cargar la información del negocio.' : 'Could not load business information.');
-const aboutTitle = computed(() => isSpanish.value ? 'Sobre Nosotros' : 'About Us');
+const aboutTitle = computed(() => isSpanish.value ? 'Servicios de Reubicación para Cada Estilo de Vida' : 'Relocation Services for Every Lifestyle');
 const addressLabel = computed(() => isSpanish.value ? 'Dirección:' : 'Address:');
 const phoneLabel = computed(() => isSpanish.value ? 'Teléfono:' : 'Phone:');
 const emailLabel = computed(() => isSpanish.value ? 'Correo:' : 'Email:');

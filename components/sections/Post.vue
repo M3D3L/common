@@ -255,7 +255,7 @@ const scrollToComments = () => {
 const calculateReadingTime = (html: string) => {
    if (!html) return '0 min read'
    const textContent = html?.replace(/<[^>]*>/g, ' ') || '';
-   const wordCount = textContent.trim().split(/\s+/).length
+   const wordCount = textContent?.trim().split(/\s+/).length
    const readingTime = Math.ceil(wordCount / 200) // 200 words per minute
    return `${readingTime} min read`
 }

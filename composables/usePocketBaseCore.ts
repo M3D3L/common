@@ -1,4 +1,3 @@
-// usePocketBaseCore.ts
 import usePocketBase from './usePocketbase'
 import { getCache, setCache, getCacheKey } from './cacheSingleton'
 import type { ListResult, RecordModel } from 'pocketbase'
@@ -12,8 +11,8 @@ export default function usePocketBaseCore() {
     perPage = 10,
     filter = '',
     sort = '-created',
-    expand = '',
-    excludeFields: string[] = []
+    expand: string | null = null,
+    fields: null | string[] = null,
   ): Promise<ListResult<RecordModel>> {
     let cacheKey = getCacheKey('fetchCollection', {
       collection,
@@ -21,32 +20,25 @@ export default function usePocketBaseCore() {
       perPage,
       filter,
       sort,
+      expand,
+      fields
     })
 
     try {
       const cached = getCache<ListResult<RecordModel>>(cacheKey)
 
+      console.log(cacheKey)
+      
       if (cached) {
         return cached
       }
 
-      console.log(cached)
-
       const response = await pb.collection(collection).getList(page, perPage, {
         filter,
         sort,
-        expand,
+        expand: expand ?? undefined,
+        fields: Array.isArray(fields) ? fields.join(',') : fields ?? undefined
       })
-
-      if (excludeFields.length) {
-        response.items = response.items.map((item: Record<string, any>) => {
-          const clone = { ...item }
-          for (const field of excludeFields) {
-            delete clone[field]
-          }
-          return clone
-        })
-      }
 
       setCache(cacheKey, response)
       return response

@@ -73,5 +73,5 @@ const imageUrl = computed(() =>
 )
 
 // ✅ Safe description rendering
-const safeDescription = computed(() => props.description.trim())
+const safeDescription = computed(() => props?.description?.trim() || '')
 </script>

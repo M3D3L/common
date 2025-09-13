@@ -2,9 +2,9 @@
   <div class="container flex flex-col">
     <SectionTitle class="pb-16" :title :description :h1 />
     <SectionsBlog
-      v-if="content?.items?.length"
+      v-if="content?.length"
       class="flex w-full mt-6"
-      :content="content?.items"
+      :content
       :baseUrl
     />
 

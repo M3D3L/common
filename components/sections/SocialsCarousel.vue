@@ -1,6 +1,6 @@
 <!-- Example usage -->
 <template>
-  <div class="container grid content-center w-full min-h-screen mx-auto overflow-hidden">
+  <div class="grid content-center w-full min-h-screen px-4 mx-auto overflow-hidden lg:px-8 lg:container">
     <TextSectionTitle
       class="pt-12 pb-16"
       :title
