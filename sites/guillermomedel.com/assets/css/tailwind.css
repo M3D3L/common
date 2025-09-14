@@ -1,0 +1,188 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    font-family: "Montserrat", sans-serif !important; /* body font */
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: "Playfair Display", serif !important; /* heading font */
+  }
+
+  h1 {
+    @apply font-bold text-7xl;
+  }
+
+  h2 {
+    @apply text-3xl font-bold;
+  }
+
+  h3 {
+    @apply text-2xl font-medium;
+  }
+
+  h4 {
+    @apply text-xl font-medium;
+  }
+
+  body {
+    font-family: "Montserrat", sans-serif !important;
+    @apply text-base font-light;
+  }
+
+  .logo-text {
+    /* Choose one of the following fonts for your logo */
+    /* font-family: "Cinzel", serif !important; */
+    /* font-family: "Alegreya Sans SC", sans-serif !important; */
+    font-family: "Cormorant Garamond", serif !important;
+  }
+
+  .ui-text {
+    font-family: "Montserrat", sans-serif !important;
+  }
+
+  article h1,
+  article h2,
+  article h3,
+  article h4 {
+    font-family: "Playfair Display", serif !important;
+  }
+
+  article p {
+    font-family: "Montserrat", sans-serif !important;
+  }
+
+  .ui-text {
+    @apply font-sans;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply text-foreground bg-background;
+  }
+
+  .glassmorphism {
+    @apply bg-background/80 backdrop-blur-sm rounded-xl border-border/20;
+  }
+
+  :root {
+    --background: 190 60% 97%; /* pale aqua/foam */
+    --foreground: 200 45% 20%; /* dark rock blue-gray */
+
+    --muted: 190 40% 92%; /* soft seafoam */
+    --muted-foreground: 200 25% 45%; /* muted gray-blue */
+
+    --popover: 190 60% 97%; /* pale aqua */
+    --popover-foreground: 200 45% 20%; /* dark rock blue-gray */
+
+    --card: 190 60% 97%; /* pale aqua */
+    --card-foreground: 200 45% 20%; /* dark rock blue-gray */
+
+    --border: 195 25% 80%; /* subdued gray-teal */
+    --input: 195 25% 80%; /* subdued gray-teal */
+
+    --primary: 185 80% 45%; /* vibrant turquoise water */
+    --primary-foreground: 0 0% 100%; /* white text */
+
+    --secondary: 25 45% 60%; /* warm rocky sand tone */
+    --secondary-foreground: 0 0% 100%; /* white text */
+
+    --accent: 155 80% 45%; /* greenish version of primary */
+    --accent-foreground: 0 0% 100%; /* white text */
+
+    --destructive: 5 75% 50%; /* coral red */
+    --destructive-foreground: 0 0% 100%; /* white text */
+
+    --ring: 185 80% 45%; /* turquoise water */
+    --radius: 0.5rem;
+  }
+
+  /* Blog content styling */
+  article {
+    @apply prose prose-neutral max-w-none;
+  }
+
+  article h1,
+  article h2,
+  article h3,
+  article h4 {
+    @apply font-heading text-foreground;
+  }
+
+  article p {
+    @apply mb-4 leading-relaxed;
+  }
+
+  article a {
+    @apply underline text-primary hover:text-primary-foreground;
+  }
+
+  article blockquote {
+    @apply pl-4 my-4 italic border-l-4 border-muted text-muted-foreground;
+  }
+
+  article ul,
+  article li {
+    @apply pl-6 mb-4;
+  }
+
+  article ul li::marker {
+    @apply text-primary;
+  }
+
+  article ol li::marker {
+    @apply text-primary;
+  }
+
+  article code {
+    @apply bg-muted text-sm px-1 py-0.5 rounded font-mono;
+  }
+
+  pre {
+    @apply !bg-foreground/30 !text-foreground;
+  }
+
+  code {
+    @apply !bg-background !text-foreground;
+  }
+
+  article img {
+    @apply my-4 rounded-md;
+  }
+
+  article hr {
+    @apply my-6 border-t border-muted;
+  }
+
+  article table {
+    @apply w-full my-4 text-left border-collapse;
+  }
+
+  article th,
+  article td {
+    @apply px-3 py-2 border;
+  }
+
+  article th {
+    @apply bg-muted text-muted-foreground;
+  }
+
+  .card-styles {
+    @apply transition-all duration-300 ease-in-out transform border border-transparent rounded-lg shadow-md bg-card/90 text-card-foreground hover:shadow-xl hover:border-primary/40 hover:bg-card/95;
+  }
+
+  .sticky-position {
+    position: sticky !important;
+    z-index: 32;
+  }
+}
