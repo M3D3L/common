@@ -16,7 +16,7 @@ export default defineNuxtConfig({
   ssr: true,
 
   devtools: { enabled: true },
-  extends: ["../common/nuxt.config.ts"],
+  extends: ["../../nuxt.config.ts"],
   css: ["@/assets/css/tailwind.css"],
 
   modules: [
@@ -58,7 +58,7 @@ export default defineNuxtConfig({
   },
 
   alias: {
-    "@common": path.resolve(__dirname, "../common"),
+    "@common": path.resolve(__dirname, "../../../common"),
     "@local": path.resolve(__dirname, "./"),
   },
 
