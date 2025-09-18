@@ -4,7 +4,7 @@
 
     <OrganismsHero />
     <SectionsIntro />
-    <SectionsBlogPage :title :description :showPagination="posts?.totalPages > 1" :content="posts?.items" />
+    <SectionsBlogColumn :title :description :showPagination="posts?.totalPages > 1" :content="posts?.items" />
     <!-- <SectionsBlogsCols imgSrc="" :showPagination="false" :content="posts" /> -->
     <SectionsSocialsCarousel />
   </div>
@@ -30,7 +30,7 @@ const posts = ref([]);
 
 const fetchPosts = async () => {
   try {
-    const result = await pbUtils.fetchCollection('posts', 1, 6, '', '-created', '');
+    const result = await pbUtils.fetchCollection('relocateBlog', 1, 6, '', '-created', '');
     return result;
   } catch (error) {
     console.error('Error fetching posts:', error);

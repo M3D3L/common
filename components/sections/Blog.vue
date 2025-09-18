@@ -24,7 +24,7 @@
 </template>
 
 <script setup lang="ts">
-defineProps({
+const props = defineProps({
   content: {
     type: Array as PropType<any[]>,
     required: true,
@@ -32,5 +32,32 @@ defineProps({
   baseUrl: {
     type: String,
   },
+  type: {
+    type: String,
+    default: 'posts',
+  },
+});
+
+const pbUtils = usePocketBaseCore();
+import type { ListResult, RecordModel } from 'pocketbase';
+
+const posts = ref<ListResult<RecordModel> | RecordModel[]>([]);
+
+const fetchPosts = async () => {
+  try {
+    const result = await pbUtils.fetchCollection(props.type, 1, 6, '', '-created', '');
+    return result;
+  } catch (error) {
+    console.error('Error fetching posts:', error);
+    return [];
+  }
+};
+
+const loadPosts = async () => {
+  posts.value = await fetchPosts();
+};
+
+onMounted(async () => {
+  await loadPosts();
 });
 </script>

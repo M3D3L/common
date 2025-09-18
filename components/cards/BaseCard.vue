@@ -71,7 +71,7 @@ defineProps<{
   removeSpacing?: boolean;
   buttonText?: string;
   baseUrl?: string;
-  image: string;
+  image?: string;
 }>()
 
 const createImgUrl = (content: any) => {

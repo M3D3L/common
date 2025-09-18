@@ -3,11 +3,6 @@ import path from "path";
 export default defineNuxtConfig({
   compatibilityDate: "2025-08-30",
 
-  // ✅ Nitro preset (your comment said "static" but this is set to SSR)
-  nitro: {
-    preset: "ssr",
-  },
-
   app: {
     baseURL: process.env.NUXT_APP_BASE_URL || "/",
     buildAssetsDir: "/_nuxt/",

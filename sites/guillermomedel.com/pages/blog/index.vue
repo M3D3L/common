@@ -1,5 +1,5 @@
 <template>
-    <BlogPage :title="title" :description="description" imgSrc="" />
+    <BlogPage class="mb-24" :title="title" :description="description" imgSrc="" />
 </template>
 
 <script setup>

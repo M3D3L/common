@@ -1,66 +1,46 @@
 <template>
-    <div class="mt-8 md:pt-16">
-        <Seo :seoData="computedSeoData" />
-        <SectionsBlogPage h1="true" :title :description :imgSrc :content="posts?.items" :showMore="false" :showPagination="true" />
-    </div>
+  <div class="mt-8 md:pt-16">
+    <Seo :seoData="computedSeoData" />
+    <SectionsBlogColumn
+      h1="true"
+      :title
+      :description
+      :imgSrc
+      :showMore="false"
+      :showPagination="true"
+    />
+  </div>
 </template>
 
-<script setup>
-import usePocketBaseCore from '@/composables/usePocketBaseCore';
+<script setup lang="ts">
+import usePocketBaseCore from '@/composables/usePocketBaseCore'
 
-const pbUtils = usePocketBaseCore();
-const posts = ref([]);
+const pbUtils = usePocketBaseCore()
+const posts = ref<any>(null)
 
-const route = useRoute();
-const page = ref(route.query.page || 1);
+const route = useRoute()
+const page = ref(Number(route.query.page) || 1)
 
 const props = defineProps({
-  imgSrc: {
-    type: String,
-  },
+  imgSrc: String,
   title: {
     type: String,
     default: 'Learn Web Development, Drone Photography, and More',
   },
   description: {
     type: String,
-    default: "I'm passsionate about sharing knowledge and helping others grow. Explore my blog for insights, tutorials, and tips on web development, drone photography, and more.",
+    default:
+      "I'm passsionate about sharing knowledge and helping others grow. Explore my blog for insights, tutorials, and tips on web development, drone photography, and more.",
   },
-});
+})
 
-const fetchPosts = async () => {
-  try {
-    const result = await pbUtils.fetchCollection('posts', page.value, 10, '', '-created');
-    return result;
-  } catch (error) {
-    console.error('Error fetching posts:', error);
-    return [];
-  }
-};
-
-const loadPosts = async () => {
-  posts.value = await fetchPosts();
-};
-
-const computedSeoData = computed(() => {
-  return createSeoObject({
+const computedSeoData = computed(() =>
+  createSeoObject({
     title: props.title,
     summary: props.description,
+    imageUri: props.imgSrc || '',
+    pubDate: '',
+    byline: '',
   })
-});
-
-// Watch the page query parameter and fetch posts when it changes
-watch(() => route.query.page, async (newPage) => {
-  await loadPosts();
-});
-
-onMounted(async () => {
-  await loadPosts();
-});
+)
 </script>
-
-<style lang="postcss" scoped>
-.active {
-    @apply bg-black text-white rounded-full dark:bg-white dark:text-black;
-}
-</style>

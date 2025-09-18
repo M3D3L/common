@@ -56,11 +56,10 @@
     </li>
   </ul>
 
-  <SectionsBlogPage
+  <SectionsBlogColumn
     :title
     :description
     :showPagination="false"
-    :content="posts?.items"
     class="pb-24"
   />
 </template>
@@ -73,7 +72,6 @@ import { categories } from "@local/assets/configs/cards/real-estate";
 const { fetchCollection } = usePocketBaseCore();
 
 // Vars
-const posts = ref([]);
 const title = 'Our Blog Explains Why Relocating to San Carlos is the Best Decision You\'ll Ever Make';
 const description = 'Discover the latest trends, tips, and insights in real estate with our expert guidance.';
 
@@ -107,5 +105,4 @@ const fetchPosts = async () => {
 categories[0].properties = (await fetchPropertiesByType("property")) || [];
 categories[1].properties = (await fetchPropertiesByType("rental")) || [];
 categories[2].properties = (await fetchPropertiesByType("lot")) || [];
-posts.value = (await fetchPosts()) || [];
 </script>

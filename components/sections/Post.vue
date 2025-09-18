@@ -190,6 +190,13 @@ const post = ref<RecordModel | null>(null)
 const isBookmarked = ref(false)
 const isLiked = ref(false)
 
+const props = defineProps({
+   type: {
+      type: String,
+      default: 'posts',
+   },
+});
+
 onMounted(async () => {
    try {
       // Extract the slug from the route

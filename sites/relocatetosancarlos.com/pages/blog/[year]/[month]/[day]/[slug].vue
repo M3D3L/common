@@ -1,5 +1,3 @@
 <template>
-<div>
-    <SectionsPost />
-</div>
+  <SectionsPost type="relocateBlog" />
 </template>
