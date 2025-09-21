@@ -1,18 +1,17 @@
 name: Build and Deploy Sites
-
 on:
   push:
     branches:
       - main
-
 permissions:
   contents: read
 
 jobs:
-  build-and-deploy-guillermomedel:
+  build-and-deploy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
         with:
           node-version: 20
@@ -22,6 +21,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # --- guillermomedel.com ---
       - name: Build guillermomedel.com
         run: npm run generate
         working-directory: ./sites/guillermomedel.com
@@ -34,11 +34,11 @@ jobs:
         run: |
           OUT_DIR=$(find ./sites/guillermomedel.com -maxdepth 1 -type d -name ".output*" | head -n1)
           PUBLIC_DIR="$OUT_DIR/public"
-          mkdir -p deploy_guillermomedel
+          mkdir deploy_guillermomedel
           cp -a "$PUBLIC_DIR"/. deploy_guillermomedel/
           echo "guillermomedel.com" > deploy_guillermomedel/CNAME
-      
-      - name: Deploy guillermomedel.com
+
+      - name: Deploy guillermomedel.com to repo
         uses: JamesIves/github-pages-deploy-action@v4
         with:
           repository-name: M3D3L/guillermomedel.com
@@ -47,19 +47,7 @@ jobs:
           clean: true
           token: ${{ secrets.DEPLOY_TOKEN }}
 
-  build-and-deploy-relocatetosancarlos:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: npm
-          cache-dependency-path: './package-lock.json'
-
-      - name: Install dependencies
-        run: npm ci
-        
+      # --- relocatetosancarlos.com ---
       - name: Build relocatetosancarlos.com
         run: npm run generate
         working-directory: ./sites/relocatetosancarlos.com
@@ -72,11 +60,11 @@ jobs:
         run: |
           OUT_DIR=$(find ./sites/relocatetosancarlos.com -maxdepth 1 -type d -name ".output*" | head -n1)
           PUBLIC_DIR="$OUT_DIR/public"
-          mkdir -p deploy_relocatetosancarlos
+          mkdir deploy_relocatetosancarlos
           cp -a "$PUBLIC_DIR"/. deploy_relocatetosancarlos/
           echo "relocatetosancarlos.com" > deploy_relocatetosancarlos/CNAME
 
-      - name: Deploy relocatetosancarlos.com
+      - name: Deploy relocatetosancarlos.com to repo
         uses: JamesIves/github-pages-deploy-action@v4
         with:
           repository-name: M3D3L/relocatetosancarlos.com
