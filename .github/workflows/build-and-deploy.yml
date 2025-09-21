@@ -1,10 +1,13 @@
 name: Build and Deploy Monorepo
+
 on:
   push:
     branches:
       - main
+
 permissions:
   contents: write
+
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
@@ -14,23 +17,29 @@ jobs:
           - name: guillermomedel.com
             folder: guillermomedel.com
             target_folder: guillermomedel
-            base_url: /guillermomedel/
+            base_url: /
             domain: guillermomedel.com
           - name: relocatetosancarlos.com
             folder: relocatetosancarlos.com
             target_folder: relocatetosancarlos
-            base_url: /relocatetosancarlos/
+            base_url: /
             domain: relocatetosancarlos.com
+
     steps:
+      # 1. Checkout code
       - uses: actions/checkout@v4
+
+      # 2. Setup Node
       - uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
           cache-dependency-path: './package-lock.json'
 
+      # 3. Install dependencies
       - run: npm ci
 
+      # 4. Build Nuxt site
       - name: Build ${{ matrix.site.name }}
         run: npm run generate
         working-directory: ./sites/${{ matrix.site.folder }}
@@ -39,13 +48,19 @@ jobs:
           POCKETBASE_URL: ${{ vars.POCKETBASE_URL }}
           WHATSAPP_NUMBER: ${{ vars.WHATSAPP_NUMBER }}
 
-      - name: Add CNAME for ${{ matrix.site.name }}
-        run: echo "${{ matrix.site.domain }}" > ./sites/${{ matrix.site.folder }}/.output-${{ matrix.site.target_folder }}/public/CNAME
+      # 5. Prepare deploy folder
+      - name: Prepare deploy folder for ${{ matrix.site.name }}
+        run: |
+          mkdir -p ./deploy/${{ matrix.site.target_folder }}
+          cp -r ./sites/${{ matrix.site.folder }}/.output-${{ matrix.site.target_folder }}/public/* ./deploy/${{ matrix.site.target_folder }}/
+          # Add CNAME for custom domain
+          echo "${{ matrix.site.domain }}" > ./deploy/${{ matrix.site.target_folder }}/CNAME
 
-      - name: Deploy ${{ matrix.site.name }}
+      # 6. Deploy built site
+      - name: Deploy ${{ matrix.site.name }} to gh-pages
         uses: JamesIves/github-pages-deploy-action@v4
         with:
-          folder: ./sites/${{ matrix.site.folder }}/.output-${{ matrix.site.target_folder }}/public
+          folder: ./deploy/${{ matrix.site.target_folder }}
           target-folder: ${{ matrix.site.target_folder }}
           branch: gh-pages
           clean: false
