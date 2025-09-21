@@ -2,19 +2,26 @@ import path from "path";
 
 export default defineNuxtConfig({
   compatibilityDate: "2025-08-30",
+  extends: ["../../nuxt.config.ts"],
+
   app: {
-    baseURL: "/",
+    baseURL: "/guillermomedel.com/",
     buildAssetsDir: "_nuxt/",
   },
+
+  build: {
+    publicPath: "/guillermomedel.com/_nuxt/",
+    transpile: ["vueuc"],
+  },
+
   nitro: {
-    output: {
-      dir: ".output-site",
-    },
+    output: { dir: ".output-site" },
     prerender: { failOnError: false },
   },
+
   ssr: true,
   devtools: { enabled: true },
-  extends: ["../../nuxt.config.ts"],
+
   css: ["@/assets/css/tailwind.css"],
 
   modules: ["@nuxt/image", "@pinia/nuxt", "@nuxtjs/google-fonts"],
@@ -32,18 +39,14 @@ export default defineNuxtConfig({
     download: true,
   },
 
-  build: {
-    transpile: ["vueuc"],
-  },
-
   alias: {
     "@common": path.resolve(__dirname, "../../"),
   },
 
   runtimeConfig: {
     public: {
-      pocketbaseUrl: process.env.POCKETBASE_URL || "http://64.23.150.184/",
-      whatsappNumber: process.env.WHATSAPP_NUMBER || "6444444445",
+      pocketbaseUrl: "http://64.23.150.184/",
+      whatsappNumber: "6444444445",
     },
   },
 });

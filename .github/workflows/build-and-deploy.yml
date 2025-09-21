@@ -37,22 +37,17 @@ jobs:
         run: npm run generate
         working-directory: ./sites/guillermomedel.com
         env:
-          # ✅ Removed NUXT_APP_BASE_URL as Nuxt's default '/' is correct for a custom domain.
+          # CORRECTED: Set the base URL to the repository name for GitHub Pages
+          NUXT_APP_BASE_URL: /guillermomedel.com/ 
           POCKETBASE_URL: ${{ vars.POCKETBASE_URL }}
           WHATSAPP_NUMBER: ${{ vars.WHATSAPP_NUMBER }}
 
       - name: Prepare guillermomedel deploy folder
         run: |
-          # ✅ Use a fixed output directory path as defined in nuxt.config.ts.
-          OUT_DIR="./sites/guillermomedel.com/.output-site" 
+          OUT_DIR=$(find ./sites/guillermomedel.com -maxdepth 1 -type d -name ".output*" | head -n1)
           PUBLIC_DIR="$OUT_DIR/public"
-          
-          # ✅ Convert all filenames to lowercase to resolve case-sensitivity issues on the server.
-          find "$PUBLIC_DIR" -depth -exec rename -f 's/(.*)\/([^\/]*)/$1\/\L$2/' {} \;
-          
           mkdir deploy_guillermomedel
-          # ✅ Use cp -a with a trailing dot to copy all files, including hidden ones like _nuxt.
-          cp -a "$PUBLIC_DIR/." deploy_guillermomedel/
+          cp -a "$PUBLIC_DIR"/. deploy_guillermomedel/
           echo "guillermomedel.com" > deploy_guillermomedel/CNAME
 
       - name: Deploy guillermomedel.com to repo
@@ -69,22 +64,17 @@ jobs:
         run: npm run generate
         working-directory: ./sites/relocatetosancarlos.com
         env:
-          # ✅ Removed NUXT_APP_BASE_URL as Nuxt's default '/' is correct for a custom domain.
+          # CORRECTED: Set the base URL to the repository name for GitHub Pages
+          NUXT_APP_BASE_URL: /relocatetosancarlos.com/
           POCKETBASE_URL: ${{ vars.POCKETBASE_URL }}
           WHATSAPP_NUMBER: ${{ vars.WHATSAPP_NUMBER }}
 
       - name: Prepare relocatetosancarlos deploy folder
         run: |
-          # ✅ Use a fixed output directory path as defined in nuxt.config.ts.
-          OUT_DIR="./sites/relocatetosancarlos.com/.output-site"
+          OUT_DIR=$(find ./sites/relocatetosancarlos.com -maxdepth 1 -type d -name ".output*" | head -n1)
           PUBLIC_DIR="$OUT_DIR/public"
-          
-          # ✅ Convert all filenames to lowercase to resolve case-sensitivity issues on the server.
-          find "$PUBLIC_DIR" -depth -exec rename -f 's/(.*)\/([^\/]*)/$1\/\L$2/' {} \;
-          
           mkdir deploy_relocatetosancarlos
-          # ✅ Use cp -a with a trailing dot to copy all files, including hidden ones like _nuxt.
-          cp -a "$PUBLIC_DIR/." deploy_relocatetosancarlos/
+          cp -a "$PUBLIC_DIR"/. deploy_relocatetosancarlos/
           echo "relocatetosancarlos.com" > deploy_relocatetosancarlos/CNAME
 
       - name: Deploy relocatetosancarlos.com to repo
