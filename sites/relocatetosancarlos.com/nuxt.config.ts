@@ -5,12 +5,11 @@ export default defineNuxtConfig({
   extends: ["../../nuxt.config.ts"],
 
   app: {
-    baseURL: "/guillermomedel.com/",
+    baseURL: "/relocatetosancarlos.com/",
     buildAssetsDir: "_nuxt/",
   },
-
   build: {
-    publicPath: "/guillermomedel.com/_nuxt/",
+    publicPath: "/relocatetosancarlos.com/_nuxt/",
     transpile: ["vueuc"],
   },
 
