@@ -23,7 +23,6 @@ export const contactInfo = {
 // Hero Section
 export const heroSection = {
   id: "hero",
-  video: "/videos/intro.mp4",
   headerId: "header",
   imageSrc: "/images/block-me.png",
   imageAlt: "Guillermo Medel - Full-Stack Developer",
