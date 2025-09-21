@@ -2,14 +2,6 @@ import path from 'path';
 
 export default defineNuxtConfig({
   compatibilityDate: '2025-08-30',
-
-  // ✅ Correct base URL for GitHub Pages or subdirectory hosting
-  app: {
-    baseURL: process.env.NUXT_APP_BASE_URL || '/',
-    buildAssetsDir: '/_nuxt/'
-  },
-
-  // ✅ Required for full static output
   ssr: true,
 
   devtools: { enabled: true },
@@ -63,11 +55,6 @@ export default defineNuxtConfig({
   build: {
     transpile: ['vueuc'],
   },
-
-  alias: {
-    "@local": path.resolve(__dirname, "./"),
-  },
-
   runtimeConfig: {
     public: {
       pocketbaseUrl: process.env.POCKETBASE_URL || 'http://64.23.150.184/',

@@ -39,7 +39,6 @@ export default defineNuxtConfig({
 
   alias: {
     "@common": path.resolve(__dirname, "../../"),
-    "@local": path.resolve(__dirname, "./"),
   },
 
   runtimeConfig: {
