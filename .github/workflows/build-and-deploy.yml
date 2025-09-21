@@ -8,19 +8,6 @@ permissions:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        site:
-          - name: guillermomedel.com
-            folder: guillermomedel.com
-            target_folder: guillermomedel
-            base_url: /guillermomedel/
-            domain: guillermomedel.com
-          - name: relocatetosancarlos.com
-            folder: relocatetosancarlos.com
-            target_folder: relocatetosancarlos
-            base_url: /relocatetosancarlos/
-            domain: relocatetosancarlos.com
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -29,23 +16,39 @@ jobs:
           cache: npm
           cache-dependency-path: './package-lock.json'
 
-      - run: npm ci
+      - name: Install dependencies
+        run: npm ci
 
-      - name: Build ${{ matrix.site.name }}
+      - name: Build guillermomedel.com
         run: npm run generate
-        working-directory: ./sites/${{ matrix.site.folder }}
+        working-directory: ./sites/guillermomedel.com
         env:
-          NUXT_APP_BASE_URL: ${{ matrix.site.base_url }}
+          NUXT_APP_BASE_URL: /guillermomedel/
+          POCKETBASE_URL: ${{ vars.POCKETBASE_URL }}
+          WHATSAPP_NUMBER: ${{ vars.WHATSAPP_NUMBER }}
+      
+      - name: Build relocatetosancarlos.com
+        run: npm run generate
+        working-directory: ./sites/relocatetosancarlos.com
+        env:
+          NUXT_APP_BASE_URL: /relocatetosancarlos/
           POCKETBASE_URL: ${{ vars.POCKETBASE_URL }}
           WHATSAPP_NUMBER: ${{ vars.WHATSAPP_NUMBER }}
 
-      - name: Add CNAME for ${{ matrix.site.name }}
-        run: echo "${{ matrix.site.domain }}" > ./sites/${{ matrix.site.folder }}/.output-${{ matrix.site.target_folder }}/public/CNAME
+      - name: Create combined deployment directory
+        run: |
+          mkdir deploy_gh_pages
+          cp -r ./sites/guillermomedel.com/.output-guillermomedel/public/ deploy_gh_pages/guillermomedel
+          cp -r ./sites/relocatetosancarlos.com/.output-relocatetosancarlos/public/ deploy_gh_pages/relocatetosancarlos
 
-      - name: Deploy ${{ matrix.site.name }}
+      - name: Add CNAME files to their folders
+        run: |
+          echo "guillermomedel.com" > deploy_gh_pages/guillermomedel/CNAME
+          echo "relocatetosancarlos.com" > deploy_gh_pages/relocatetosancarlos/CNAME
+
+      - name: Deploy to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4
         with:
-          folder: ./sites/${{ matrix.site.folder }}/.output-${{ matrix.site.target_folder }}/public
-          target-folder: ${{ matrix.site.target_folder }}
+          folder: deploy_gh_pages
           branch: gh-pages
-          clean: false
+          clean: true
