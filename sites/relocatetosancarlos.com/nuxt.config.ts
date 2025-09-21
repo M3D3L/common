@@ -2,16 +2,19 @@ import path from "path";
 
 export default defineNuxtConfig({
   compatibilityDate: "2025-08-30",
-  ssr: false,
-  app: {
-    baseURL: "/",
-    buildAssetsDir: "_nuxt/",
-  },
+  // ✅ Tells Nitro to use static output (generates /dist/public)
   nitro: {
-    output: {
-      dir: ".output",
-    },
+    preset: 'ssr',
   },
+
+  // ✅ Correct base URL for GitHub Pages or subdirectory hosting
+  app: {
+    baseURL: process.env.NUXT_APP_BASE_URL || '/',
+    buildAssetsDir: '/_nuxt/'
+  },
+
+  // ✅ Required for full static output
+  ssr: true,
 
   devtools: { enabled: true },
   extends: ["../../nuxt.config.ts"],
