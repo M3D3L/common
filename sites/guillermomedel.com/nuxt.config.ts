@@ -12,7 +12,7 @@ export default defineNuxtConfig({
   ssr: false,
   devtools: { enabled: true },
   extends: ["../../nuxt.config.ts"],
-  css: ["../../assets/css/tailwind.css"],
+  css: ["@/assets/css/tailwind.css"],
 
   modules: [
     "@nuxt/image",
@@ -25,9 +25,6 @@ export default defineNuxtConfig({
       Inter: {
         wght: [400],
       },
-      Nunito: {
-        wght: [400],
-      },
       Orbitron: {
         wght: [400],
       },
@@ -36,9 +33,6 @@ export default defineNuxtConfig({
       },
       Rubik: {
         wght: [500],
-      },
-      Sora: {
-        wght: [300],
       },
     },
     display: 'swap',

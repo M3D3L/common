@@ -2,9 +2,49 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Root variables */
 @layer base {
+  :root {
+    /* Font families */
+    --font-body: "Alegreya Sans SC", sans-serif;
+    --font-heading: "Montserrat", sans-serif;
+    --font-logo: "Playfair Display", serif;
+    --font-sans: "Cormorant Garamond", serif;
+
+    /* Colors */
+    --background: hsl(190 60% 97%);
+    --foreground: hsl(200 45% 20%);
+
+    --muted: hsl(190 40% 92%);
+    --muted-foreground: hsl(200 25% 45%);
+
+    --popover: hsl(190 60% 97%);
+    --popover-foreground: hsl(200 45% 20%);
+
+    --card: hsl(190 60% 97%);
+    --card-foreground: hsl(200 45% 20%);
+
+    --border: hsl(195 25% 80%);
+    --input: hsl(195 25% 80%);
+
+    --primary: hsl(185 80% 45%);
+    --primary-foreground: hsl(0 0% 100%);
+
+    --secondary: hsl(25 45% 60%);
+    --secondary-foreground: hsl(0 0% 100%);
+
+    --accent: hsl(155 80% 45%);
+    --accent-foreground: hsl(0 0% 100%);
+
+    --destructive: hsl(5 75% 50%);
+    --destructive-foreground: hsl(0 0% 100%);
+
+    --ring: hsl(185 80% 45%);
+    --radius: 0.5rem;
+  }
+
   html {
-    font-family: "Montserrat", sans-serif !important; /* body font */
+    font-family: var(--font-body) !important;
   }
 
   h1,
@@ -13,7 +53,7 @@
   h4,
   h5,
   h6 {
-    font-family: "Playfair Display", serif !important; /* heading font */
+    font-family: var(--font-heading) !important;
   }
 
   h1 {
@@ -33,90 +73,45 @@
   }
 
   body {
-    font-family: "Montserrat", sans-serif !important;
-    @apply text-base font-light;
+    font-family: var(--font-body) !important;
+    @apply text-base font-light text-foreground bg-background;
   }
 
   .logo-text {
-    /* Choose one of the following fonts for your logo */
-    /* font-family: "Cinzel", serif !important; */
-    /* font-family: "Alegreya Sans SC", sans-serif !important; */
-    font-family: "Cormorant Garamond", serif !important;
+    font-family: var(--font-logo) !important;
   }
 
   .ui-text {
-    font-family: "Montserrat", sans-serif !important;
+    font-family: var(--font-sans) !important;
+    @apply font-sans;
   }
 
   article h1,
   article h2,
   article h3,
   article h4 {
-    font-family: "Playfair Display", serif !important;
+    font-family: var(--font-heading) !important;
   }
 
   article p {
-    font-family: "Montserrat", sans-serif !important;
-  }
-
-  .ui-text {
-    @apply font-sans;
+    font-family: var(--font-body) !important;
   }
 
   * {
     @apply border-border;
   }
 
-  body {
-    @apply text-foreground bg-background;
-  }
-
-  .glassmorphism {
-    @apply bg-background/80 backdrop-blur-sm rounded-xl border-border/20;
-  }
-
-  :root {
-    --background: 190 60% 97%; /* pale aqua/foam */
-    --foreground: 200 45% 20%; /* dark rock blue-gray */
-
-    --muted: 190 40% 92%; /* soft seafoam */
-    --muted-foreground: 200 25% 45%; /* muted gray-blue */
-
-    --popover: 190 60% 97%; /* pale aqua */
-    --popover-foreground: 200 45% 20%; /* dark rock blue-gray */
-
-    --card: 190 60% 97%; /* pale aqua */
-    --card-foreground: 200 45% 20%; /* dark rock blue-gray */
-
-    --border: 195 25% 80%; /* subdued gray-teal */
-    --input: 195 25% 80%; /* subdued gray-teal */
-
-    --primary: 185 80% 45%; /* vibrant turquoise water */
-    --primary-foreground: 0 0% 100%; /* white text */
-
-    --secondary: 25 45% 60%; /* warm rocky sand tone */
-    --secondary-foreground: 0 0% 100%; /* white text */
-
-    --accent: 155 80% 45%; /* greenish version of primary */
-    --accent-foreground: 0 0% 100%; /* white text */
-
-    --destructive: 5 75% 50%; /* coral red */
-    --destructive-foreground: 0 0% 100%; /* white text */
-
-    --ring: 185 80% 45%; /* turquoise water */
-    --radius: 0.5rem;
-  }
-
   /* Blog content styling */
   article {
-    @apply prose prose-neutral max-w-none;
+    @apply max-w-none;
   }
 
   article h1,
   article h2,
   article h3,
   article h4 {
-    @apply font-heading text-foreground;
+    font-family: var(--font-heading);
+    @apply text-foreground;
   }
 
   article p {
@@ -136,10 +131,7 @@
     @apply pl-6 mb-4;
   }
 
-  article ul li::marker {
-    @apply text-primary;
-  }
-
+  article ul li::marker,
   article ol li::marker {
     @apply text-primary;
   }
@@ -149,11 +141,11 @@
   }
 
   pre {
-    @apply !bg-foreground/30 !text-foreground;
+    @apply bg-foreground-30 text-foreground;
   }
 
   code {
-    @apply !bg-background !text-foreground;
+    @apply bg-background text-foreground;
   }
 
   article img {
@@ -178,11 +170,106 @@
   }
 
   .card-styles {
-    @apply transition-all duration-300 ease-in-out transform border border-transparent rounded-lg shadow-md bg-card/90 text-card-foreground hover:shadow-xl hover:border-primary/40 hover:bg-card/95;
+    @apply transition-all duration-300 ease-in-out transform border border-transparent rounded-lg shadow-md hover:shadow-xl hover:border-primary;
   }
 
   .sticky-position {
     position: sticky !important;
     z-index: 32;
+  }
+}
+
+/* Custom utilities mapping var() */
+@layer utilities {
+  .container {
+    @apply px-4 mx-auto lg:px-16;
+  }
+  /* text */
+  .text-foreground {
+    color: var(--foreground) !important;
+  }
+  .text-background {
+    color: var(--background) !important;
+  }
+  .text-muted {
+    color: var(--muted) !important;
+  }
+  .text-muted-foreground {
+    color: var(--muted-foreground) !important;
+  }
+  .text-primary {
+    color: var(--primary) !important;
+  }
+  .text-primary-foreground {
+    color: var(--primary-foreground) !important;
+  }
+  .text-secondary {
+    color: var(--secondary) !important;
+  }
+  .text-secondary-foreground {
+    color: var(--secondary-foreground) !important;
+  }
+
+  /* background */
+  .bg-foreground {
+    background-color: var(--foreground) !important;
+  }
+  .bg-background {
+    background-color: var(--background) !important;
+  }
+  .bg-muted {
+    background-color: var(--muted) !important;
+  }
+  .bg-muted-foreground {
+    background-color: var(--muted-foreground) !important;
+  }
+  .bg-primary {
+    background-color: var(--primary) !important;
+  }
+  .bg-primary-foreground {
+    background-color: var(--primary-foreground) !important;
+  }
+  .bg-secondary {
+    background-color: var(--secondary) !important;
+  }
+  .bg-secondary-foreground {
+    background-color: var(--secondary-foreground) !important;
+  }
+  .bg-card {
+    background-color: var(--card) !important;
+  }
+  .bg-card-foreground {
+    background-color: var(--card-foreground) !important;
+  }
+
+  /* borders */
+  .border-border {
+    border-color: var(--border) !important;
+  }
+  .border-muted {
+    border-color: var(--muted) !important;
+  }
+  .border-primary {
+    border-color: var(--primary) !important;
+  }
+
+  /* opacity variants */
+  .bg-foreground-30 {
+    background-color: color-mix(in srgb, var(--foreground) 30%, transparent) !important;
+  }
+  .bg-foreground-50 {
+    background-color: color-mix(in srgb, var(--foreground) 50%, transparent) !important;
+  }
+  .bg-card-90 {
+    background-color: color-mix(in srgb, var(--card) 90%, transparent) !important;
+  }
+  .bg-card-95 {
+    background-color: color-mix(in srgb, var(--card) 95%, transparent) !important;
+  }
+  .hover\:bg-card-95:hover {
+    background-color: color-mix(in srgb, var(--card) 95%, transparent) !important;
+  }
+  .hover\:border-primary-40:hover {
+    border-color: color-mix(in srgb, var(--primary) 40%, transparent) !important;
   }
 }

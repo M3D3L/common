@@ -1,12 +1,10 @@
 {
-  "name": "nuxt3-shadcn-starter-template",
+  "name": "guillermomedel.com",
   "private": true,
   "type": "module",
   "scripts": {
     "build": "nuxt build",
-    "dev": "cross-env SHEET_ID=2PACX-1vRetljTxAEaD4k6LEJfOHSbBTFyXJsdbUiyuPa8dW_TBmY9WeVMcqxw1SF8X14U2GDVVNidpSt7YrHx node scripts/convertSheetToJson.mjs && nuxt dev",
-    "dev:windows": "set \"sheetId=2PACX-1vRetljTxAEaD4k6LEJfOHSbBTFyXJsdbUiyuPa8dW_TBmY9WeVMcqxw1SF8X14U2GDVVNidpSt7YrHx\" && npm run dev",
-    "dev:unix": "SHEET_ID=2PACX-1vRetljTxAEaD4k6LEJfOHSbBTFyXJsdbUiyuPa8dW_TBmY9WeVMcqxw1SF8X14U2GDVVNidpSt7YrHx npm run dev",
+    "dev": "nuxt dev",
     "generate": "nuxt generate",
     "preview": "nuxt generate && vite preview --outDir .output/public",
     "preview:prod": "NODE_ENV=production nuxt generate && vite preview --outDir .output/public --base /portfolio2025/",

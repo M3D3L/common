@@ -26,7 +26,7 @@
 <script setup lang="ts">
 const props = defineProps({
   content: {
-    type: Array as PropType<any[]>,
+    type: Array as () => Array<any>,
     required: true,
   },
   baseUrl: {

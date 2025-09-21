@@ -1,5 +1,5 @@
 <template>
-  <div class="container flex flex-col w-full gap-8 md:flex-row">
+  <div class="container flex flex-col w-full gap-8 mx-auto md:flex-row">
     <motion.div
       class="w-full"
       :variants="{
@@ -14,7 +14,7 @@
         },
       }"
     >
-      <Card styles="card-styles" class="container h-full px-0 py-8 mx-auto lg:py-16">
+      <Card styles="card-styles" class="h-full px-0 py-8 mx-auto lg:py-16">
         <CardContent>
           <div class="grid w-full gap-4 mt-8 space-y-2 md:grid-cols-2 md:mt-0">
             <motion.div

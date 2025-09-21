@@ -12,7 +12,7 @@
 
     <VideoBackground :video="video" :observe-element="heroRef" @video-active="handleVideoComponentActive" />
 
-    <motion.div class="z-10 w-full px-4 mx-auto lg:container rounded-2xl" initial="hidden" whileInView="visible"
+    <motion.div class="container z-10 w-full mx-auto rounded-2xl" initial="hidden" whileInView="visible"
       :variants="{
         hidden: { opacity: 0 },
         visible: {

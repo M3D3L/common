@@ -2,7 +2,7 @@
   <header
     class="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-md"
   >
-    <div class="container flex items-center justify-between h-16 px-4">
+    <div class="container flex items-center justify-between h-16 px-4 mx-auto">
       <NuxtLink to="/" class="flex items-center">
         <span class="flex flex-col logo-text">
           <span class="text-xl font-bold">{{ siteName }}</span>
@@ -121,7 +121,7 @@
 </template>
 
 <script setup lang="ts">
-import { useCheckoutStore } from "@/store/checkoutStore";
+// import { useCheckoutStore } from "@/store/checkoutStore";
 import useAuth from "@/composables/useAuth";
 import { Button } from "@/components/ui/button";
 import { Sun, Moon, ShoppingCart, Menu, X } from "lucide-vue-next";
@@ -136,7 +136,7 @@ const props = defineProps<{
   siteName?: string;
 }>();
 
-const checkoutStore = useCheckoutStore();
+// const checkoutStore = useCheckoutStore();
 
 const isDark = useDark();
 const toggleDark = useToggle(isDark);

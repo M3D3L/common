@@ -1,5 +1,5 @@
 {
-  "name": "nuxt3-shadcn-starter-template",
+  "name": "nuxt3-common",
   "private": true,
   "type": "module",
   "scripts": {

@@ -14,18 +14,7 @@ export const theme = {
     },
   },
   extend: {
-    fontFamily: {
-      // Default UI/Body text
-      sans: ['Inter', 'Nunito', 'sans-serif'],
-      // Headings
-      heading: ['Poppins', 'Rubik', 'sans-serif'],
-      // Logo/Accent text
-      logo: ['Orbitron', 'sans-serif'],
-      // Alternative body text
-      body: ['Sora', 'Inter', 'sans-serif'],
-    },
     colors: {
-      ocean: "#2589BD",
       border: "hsl(var(--border))",
       input: "hsl(var(--input))",
       ring: "hsl(var(--ring))",

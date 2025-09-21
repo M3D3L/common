@@ -15,7 +15,6 @@
 
 <script setup lang="ts">
 import { motion } from 'motion-v';
-import { PropType } from 'vue';
 
 const props = defineProps({
   video: {
@@ -23,7 +22,7 @@ const props = defineProps({
     required: true,
   },
   observeElement: {
-    type: Object as PropType<HTMLElement | null>,
+    type: Object as () => HTMLElement | null,
     default: null
   }
 });

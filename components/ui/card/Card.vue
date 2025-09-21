@@ -12,7 +12,7 @@ const props = withDefaults(defineProps<{
   class?: HTMLAttributes['class']
   styles?: string
 }>(), {
-  styles: 'transform hover:-translate-y-1 card-styles'
+  styles: 'transform hover:-translate-y-1 card-styles bg-card-90 hover:bg-card-95 hover:border-primary-40'
 })
 </script>
 
