@@ -5,6 +5,7 @@ on:
       - main
 permissions:
   contents: write
+
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
@@ -19,36 +20,40 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # --- Build guillermomedel.com ---
       - name: Build guillermomedel.com
         run: npm run generate
         working-directory: ./sites/guillermomedel.com
         env:
-          NUXT_APP_BASE_URL: /guillermomedel/
+          NUXT_APP_BASE_URL: /
           POCKETBASE_URL: ${{ vars.POCKETBASE_URL }}
           WHATSAPP_NUMBER: ${{ vars.WHATSAPP_NUMBER }}
-      
+
+      - name: Add CNAME for guillermomedel.com
+        run: echo "guillermomedel.com" > ./sites/guillermomedel.com/.output/public/CNAME
+
+      - name: Deploy guillermomedel.com
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: ./sites/guillermomedel.com/.output/public
+          branch: gh-pages-guillermomedel
+          clean: true
+
+      # --- Build relocatetosancarlos.com ---
       - name: Build relocatetosancarlos.com
         run: npm run generate
         working-directory: ./sites/relocatetosancarlos.com
         env:
-          NUXT_APP_BASE_URL: /relocatetosancarlos/
+          NUXT_APP_BASE_URL: /
           POCKETBASE_URL: ${{ vars.POCKETBASE_URL }}
           WHATSAPP_NUMBER: ${{ vars.WHATSAPP_NUMBER }}
 
-      - name: Create combined deployment directory
-        run: |
-          mkdir deploy_gh_pages
-          cp -r ./sites/guillermomedel.com/.output-guillermomedel/public/ deploy_gh_pages/guillermomedel
-          cp -r ./sites/relocatetosancarlos.com/.output-relocatetosancarlos/public/ deploy_gh_pages/relocatetosancarlos
+      - name: Add CNAME for relocatetosancarlos.com
+        run: echo "relocatetosancarlos.com" > ./sites/relocatetosancarlos.com/.output/public/CNAME
 
-      - name: Add CNAME files to their folders
-        run: |
-          echo "guillermomedel.com" > deploy_gh_pages/guillermomedel/CNAME
-          echo "relocatetosancarlos.com" > deploy_gh_pages/relocatetosancarlos/CNAME
-
-      - name: Deploy to GitHub Pages
+      - name: Deploy relocatetosancarlos.com
         uses: JamesIves/github-pages-deploy-action@v4
         with:
-          folder: deploy_gh_pages
-          branch: gh-pages
+          folder: ./sites/relocatetosancarlos.com/.output/public
+          branch: gh-pages-relocatetosancarlos
           clean: true
