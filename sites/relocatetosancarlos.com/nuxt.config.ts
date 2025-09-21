@@ -2,7 +2,10 @@ import path from "path";
 
 export default defineNuxtConfig({
   compatibilityDate: "2025-08-30",
-  ssr: true,
+  ssr: false,
+  nitro: {
+    preset: "static"
+  },
   app: {
     baseURL: "/",
     buildAssetsDir: "_nuxt/"
