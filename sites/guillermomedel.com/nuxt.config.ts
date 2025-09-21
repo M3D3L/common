@@ -17,22 +17,7 @@ export default defineNuxtConfig({
   modules: [
     "@nuxt/image",
     "@pinia/nuxt",
-    "@nuxtjs/google-fonts",   // needed for the googleFonts{} block below
-    // [
-    //   "@nuxtjs/google-gtag",
-    //   {
-    //     id: process.env.NUXT_PUBLIC_GTAG_ID || "G-XXXXXXXXXX",
-    //     config: {
-    //       anonymize_ip: true,
-    //       send_page_view: false,
-    //       linker: {
-    //         domains: ["relocatetosancarlos.com"],
-    //       },
-    //     },
-    //     debug: process.env.NODE_ENV !== "production",
-    //     disableAutoPageTrack: false,
-    //   }
-    // ],
+    "@nuxtjs/google-fonts",
   ],
 
   googleFonts: {
