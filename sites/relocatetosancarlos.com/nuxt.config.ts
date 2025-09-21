@@ -14,11 +14,7 @@ export default defineNuxtConfig({
   extends: ["../../nuxt.config.ts"],
   css: ["@/assets/css/tailwind.css"],
 
-  modules: [
-    "@nuxt/image",
-    "@pinia/nuxt",
-    "@nuxtjs/google-fonts",
-  ],
+  modules: [],
 
   googleFonts: {
     families: {
