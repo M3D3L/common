@@ -37,17 +37,17 @@ jobs:
         run: npm run generate
         working-directory: ./sites/guillermomedel.com
         env:
-          # CORRECTED: Set the base URL to the repository name for GitHub Pages
-          NUXT_APP_BASE_URL: /guillermomedel.com/ 
+          # `NUXT_APP_BASE_URL` is removed as its default value is `/`
           POCKETBASE_URL: ${{ vars.POCKETBASE_URL }}
           WHATSAPP_NUMBER: ${{ vars.WHATSAPP_NUMBER }}
 
       - name: Prepare guillermomedel deploy folder
         run: |
-          OUT_DIR=$(find ./sites/guillermomedel.com -maxdepth 1 -type d -name ".output*" | head -n1)
+          OUT_DIR="./sites/guillermomedel.com/.output-site" 
           PUBLIC_DIR="$OUT_DIR/public"
           mkdir deploy_guillermomedel
-          cp -a "$PUBLIC_DIR"/. deploy_guillermomedel/
+          # Copy all content, including hidden files
+          cp -a "$PUBLIC_DIR/." deploy_guillermomedel/
           echo "guillermomedel.com" > deploy_guillermomedel/CNAME
 
       - name: Deploy guillermomedel.com to repo
@@ -64,17 +64,17 @@ jobs:
         run: npm run generate
         working-directory: ./sites/relocatetosancarlos.com
         env:
-          # CORRECTED: Set the base URL to the repository name for GitHub Pages
-          NUXT_APP_BASE_URL: /relocatetosancarlos.com/
+          # `NUXT_APP_BASE_URL` is removed as its default value is `/`
           POCKETBASE_URL: ${{ vars.POCKETBASE_URL }}
           WHATSAPP_NUMBER: ${{ vars.WHATSAPP_NUMBER }}
 
       - name: Prepare relocatetosancarlos deploy folder
         run: |
-          OUT_DIR=$(find ./sites/relocatetosancarlos.com -maxdepth 1 -type d -name ".output*" | head -n1)
+          OUT_DIR="./sites/relocatetosancarlos.com/.output-site"
           PUBLIC_DIR="$OUT_DIR/public"
           mkdir deploy_relocatetosancarlos
-          cp -a "$PUBLIC_DIR"/. deploy_relocatetosancarlos/
+          # Copy all content, including hidden files
+          cp -a "$PUBLIC_DIR/." deploy_relocatetosancarlos/
           echo "relocatetosancarlos.com" > deploy_relocatetosancarlos/CNAME
 
       - name: Deploy relocatetosancarlos.com to repo
