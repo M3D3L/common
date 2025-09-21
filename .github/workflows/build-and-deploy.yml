@@ -3,111 +3,196 @@ on:
   push:
     branches:
       - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch: # Allow manual triggering
+
 permissions:
   contents: read
 
+env:
+  NODE_VERSION: 20
+  POCKETBASE_URL: ${{ vars.POCKETBASE_URL }}
+  WHATSAPP_NUMBER: ${{ vars.WHATSAPP_NUMBER }}
+
 jobs:
-  build-and-deploy:
+  # Separate job for validation and testing
+  validate:
     runs-on: ubuntu-latest
     steps:
-      # --- Checkout repository ---
       - uses: actions/checkout@v4
+        with:
+          lfs: true # Built-in LFS support
 
-      # --- Setup Git LFS ---
-      - name: Setup Git LFS
-        run: |
-          sudo apt-get update
-          sudo apt-get install git-lfs -y
-          git lfs install
-          git lfs pull
-
-      # --- Setup Node ---
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: ${{ env.NODE_VERSION }}
           cache: npm
           cache-dependency-path: './package-lock.json'
 
-      # --- Install dependencies ---
       - name: Install dependencies
         run: npm ci
 
-      # --- guillermomedel.com ---
-      - name: Build guillermomedel.com
-        run: npm run generate
-        working-directory: ./sites/guillermomedel.com
-        env:
-          POCKETBASE_URL: ${{ vars.POCKETBASE_URL }}
-          WHATSAPP_NUMBER: ${{ vars.WHATSAPP_NUMBER }}
+      - name: Run linting
+        run: npm run lint
+        continue-on-error: false
 
-      - name: Prepare guillermomedel deploy folder
+      - name: Run tests
+        run: npm test
+        continue-on-error: false
+
+  # Matrix strategy for building multiple sites
+  build:
+    needs: validate
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        site:
+          - name: guillermomedel
+            domain: guillermomedel.com
+            path: ./sites/guillermomedel.com
+            repo: M3D3L/guillermomedel.com
+          - name: relocatetosancarlos
+            domain: relocatetosancarlos.com
+            path: ./sites/relocatetosancarlos.com
+            repo: M3D3L/relocatetosancarlos.com
+    
+    outputs:
+      # Export build artifacts info for potential use in other jobs
+      build-${{ matrix.site.name }}-success: ${{ steps.build.outcome == 'success' }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: './package-lock.json'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build ${{ matrix.site.domain }}
+        id: build
         run: |
-          # Look for .output directory (Nuxt 3 default output)
-          OUT_DIR="./sites/guillermomedel.com/.output"
-          PUBLIC_DIR="$OUT_DIR/public"
+          echo "Building site: ${{ matrix.site.domain }}"
+          npm run generate
+        working-directory: ${{ matrix.site.path }}
+        env:
+          POCKETBASE_URL: ${{ env.POCKETBASE_URL }}
+          WHATSAPP_NUMBER: ${{ env.WHATSAPP_NUMBER }}
+
+      - name: Prepare deploy folder for ${{ matrix.site.domain }}
+        id: prepare
+        run: |
+          SITE_PATH="${{ matrix.site.path }}"
+          DEPLOY_DIR="deploy_${{ matrix.site.name }}"
           
-          # Check if .output/public exists, otherwise check dist
-          if [ -d "$PUBLIC_DIR" ]; then
-            echo "Found output at $PUBLIC_DIR"
-          else
-            PUBLIC_DIR="./sites/guillermomedel.com/dist"
-            echo "Fallback to $PUBLIC_DIR"
+          # Function to find build output
+          find_build_output() {
+            local base_path="$1"
+            
+            # Common output directories in order of preference
+            local possible_dirs=(
+              "$base_path/.output/public"
+              "$base_path/dist"
+              "$base_path/build"
+              "$base_path/out"
+              "$base_path/public"
+            )
+            
+            for dir in "${possible_dirs[@]}"; do
+              if [ -d "$dir" ]; then
+                echo "$dir"
+                return 0
+              fi
+            done
+            
+            echo "Error: No build output directory found" >&2
+            exit 1
+          }
+          
+          # Find the build output directory
+          BUILD_OUTPUT=$(find_build_output "$SITE_PATH")
+          echo "Found build output at: $BUILD_OUTPUT"
+          echo "build-output=$BUILD_OUTPUT" >> $GITHUB_OUTPUT
+          
+          # Verify build output has content
+          if [ -z "$(ls -A "$BUILD_OUTPUT" 2>/dev/null)" ]; then
+            echo "Error: Build output directory is empty" >&2
+            exit 1
           fi
           
           # Create deploy directory and copy files
-          mkdir -p deploy_guillermomedel
-          cp -a "$PUBLIC_DIR"/. deploy_guillermomedel/
-          echo "guillermomedel.com" > deploy_guillermomedel/CNAME
+          mkdir -p "$DEPLOY_DIR"
+          cp -a "$BUILD_OUTPUT"/. "$DEPLOY_DIR"/
           
-          # List contents for debugging
+          # Add CNAME file for custom domain
+          echo "${{ matrix.site.domain }}" > "$DEPLOY_DIR/CNAME"
+          
+          # Add deployment timestamp
+          date > "$DEPLOY_DIR/DEPLOY_INFO"
+          echo "Site: ${{ matrix.site.domain }}" >> "$DEPLOY_DIR/DEPLOY_INFO"
+          echo "Commit: ${{ github.sha }}" >> "$DEPLOY_DIR/DEPLOY_INFO"
+          echo "Branch: ${{ github.ref_name }}" >> "$DEPLOY_DIR/DEPLOY_INFO"
+          
+          # Verify deployment folder
           echo "Deploy folder contents:"
-          ls -la deploy_guillermomedel/
-
-      - name: Deploy guillermomedel.com to repo
-        uses: JamesIves/github-pages-deploy-action@v4
-        with:
-          repository-name: M3D3L/guillermomedel.com
-          branch: gh-pages
-          folder: deploy_guillermomedel
-          clean: true
-          token: ${{ secrets.DEPLOY_TOKEN }}
-
-      # --- relocatetosancarlos.com ---
-      - name: Build relocatetosancarlos.com
-        run: npm run generate
-        working-directory: ./sites/relocatetosancarlos.com
-        env:
-          POCKETBASE_URL: ${{ vars.POCKETBASE_URL }}
-          WHATSAPP_NUMBER: ${{ vars.WHATSAPP_NUMBER }}
-
-      - name: Prepare relocatetosancarlos deploy folder
-        run: |
-          # Look for .output directory (Nuxt 3 default output)
-          OUT_DIR="./sites/relocatetosancarlos.com/.output"
-          PUBLIC_DIR="$OUT_DIR/public"
+          ls -la "$DEPLOY_DIR/"
           
-          # Check if .output/public exists, otherwise check dist
-          if [ -d "$PUBLIC_DIR" ]; then
-            echo "Found output at $PUBLIC_DIR"
-          else
-            PUBLIC_DIR="./sites/relocatetosancarlos.com/dist"
-            echo "Fallback to $PUBLIC_DIR"
+          # Check for critical files
+          if [ ! -f "$DEPLOY_DIR/index.html" ]; then
+            echo "Warning: No index.html found in deploy folder" >&2
           fi
           
-          # Create deploy directory and copy files
-          mkdir -p deploy_relocatetosancarlos
-          cp -a "$PUBLIC_DIR"/. deploy_relocatetosancarlos/
-          echo "relocatetosancarlos.com" > deploy_relocatetosancarlos/CNAME
-          
-          # List contents for debugging
-          echo "Deploy folder contents:"
-          ls -la deploy_relocatetosancarlos/
+          echo "deploy-dir=$DEPLOY_DIR" >> $GITHUB_OUTPUT
 
-      - name: Deploy relocatetosancarlos.com to repo
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.site.name }}-build
+          path: ${{ steps.prepare.outputs.deploy-dir }}
+          retention-days: 7
+
+      # Only deploy on main branch pushes (not PRs)
+      - name: Deploy ${{ matrix.site.domain }} to GitHub Pages
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: JamesIves/github-pages-deploy-action@v4
         with:
-          repository-name: M3D3L/relocatetosancarlos.com
+          repository-name: ${{ matrix.site.repo }}
           branch: gh-pages
-          folder: deploy_relocatetosancarlos
+          folder: ${{ steps.prepare.outputs.deploy-dir }}
           clean: true
           token: ${{ secrets.DEPLOY_TOKEN }}
+          commit-message: |
+            Deploy ${{ matrix.site.domain }} 🚀
+            
+            Source commit: ${{ github.sha }}
+            Deployed from: ${{ github.repository }}@${{ github.ref_name }}
+            Workflow: ${{ github.workflow }} #${{ github.run_number }}
+
+  # Optional: Notification job that runs after all builds
+  notify:
+    needs: build
+    runs-on: ubuntu-latest
+    if: always() && github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - name: Notify deployment status
+        run: |
+          echo "Deployment Summary:"
+          echo "==================="
+          echo "Workflow: ${{ github.workflow }}"
+          echo "Run Number: ${{ github.run_number }}"
+          echo "Commit: ${{ github.sha }}"
+          echo "Sites processed: guillermomedel.com, relocatetosancarlos.com"
+          
+          # You could add Slack, Discord, or email notifications here
+          # Example:
+          # curl -X POST -H 'Content-type: application/json' \
+          #   --data '{"text":"Sites deployed successfully!"}' \
+          #   ${{ secrets.SLACK_WEBHOOK_URL }}
