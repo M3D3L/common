@@ -2,29 +2,24 @@ import path from "path";
 
 export default defineNuxtConfig({
   compatibilityDate: "2025-08-30",
-
   app: {
     baseURL: process.env.NUXT_APP_BASE_URL || "/",
     buildAssetsDir: "_nuxt/",
   },
   nitro: {
     output: {
-      dir: `.output-${process.env.NUXT_APP_BASE_URL?.replace(/\W/g, '') || 'site'}`
+      dir: `.output-${
+        process.env.NUXT_APP_BASE_URL?.replace(/\W/g, "") || "site"
+      }`,
     },
     prerender: { failOnError: false },
   },
-
   ssr: true,
-
   devtools: { enabled: true },
   extends: ["../../nuxt.config.ts"],
   css: ["../../assets/css/tailwind.css"],
 
-  modules: [
-    "@nuxt/image",
-    "@pinia/nuxt",
-    "@nuxtjs/google-fonts",
-  ],
+  modules: ["@nuxt/image", "@pinia/nuxt", "@nuxtjs/google-fonts"],
 
   googleFonts: {
     families: {
@@ -50,7 +45,7 @@ export default defineNuxtConfig({
       // 'Open Sans': true, // Equivalent to { Open+Sans: { wght: [100,200,300,400,500,600,700,800,900] } }
       // 'Lato': [400, 700], // For specific weights
     },
-    display: 'swap', // Recommended for performance (prevents FOIT/FOUT)
+    display: "swap", // Recommended for performance (prevents FOIT/FOUT)
     preload: true, // Preload fonts for better performance, if needed
     download: true, // Download fonts and serve them locally (recommended for performance and GDPR)
     // base64: false, // Encode fonts as base64 (might not be ideal for all cases)

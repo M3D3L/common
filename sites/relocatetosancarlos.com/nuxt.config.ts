@@ -2,29 +2,24 @@ import path from "path";
 
 export default defineNuxtConfig({
   compatibilityDate: "2025-08-30",
-
   app: {
     baseURL: process.env.NUXT_APP_BASE_URL || "/",
     buildAssetsDir: "_nuxt/",
   },
   nitro: {
     output: {
-      dir: `.output-${process.env.NUXT_APP_BASE_URL?.replace(/\W/g, '') || 'site'}`
+      dir: `.output-${
+        process.env.NUXT_APP_BASE_URL?.replace(/\W/g, "") || "site"
+      }`,
     },
     prerender: { failOnError: false },
   },
-
   ssr: true,
-
   devtools: { enabled: true },
   extends: ["../../nuxt.config.ts"],
   css: ["@/assets/css/tailwind.css"],
 
-  modules: [
-    "@nuxt/image",
-    "@pinia/nuxt",
-    "@nuxtjs/google-fonts",
-  ],
+  modules: ["@nuxt/image", "@pinia/nuxt", "@nuxtjs/google-fonts"],
 
   googleFonts: {
     families: {
