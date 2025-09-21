@@ -354,7 +354,7 @@ onMounted(async () => {
 }
 
 .gallery-nav-btn.left-0 {
-  @apply rounded-l-lg bg-background/5;
+  @apply rounded-l-lg;
 }
 
 .gallery-nav-btn.right-0 {
