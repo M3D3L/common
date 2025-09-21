@@ -2,20 +2,14 @@ import path from "path";
 
 export default defineNuxtConfig({
   compatibilityDate: "2025-08-30",
-  // ✅ Tells Nitro to use static output (generates /dist/public)
   nitro: {
-    preset: 'ssr',
+    preset: 'github-pages',
   },
-
-  // ✅ Correct base URL for GitHub Pages or subdirectory hosting
   app: {
-    baseURL: '/guillermomedel.com/',
+    baseURL: '/',
     buildAssetsDir: '/_nuxt/'
   },
-
-  // ✅ Required for full static output
-  ssr: true,
-
+  ssr: false,
   devtools: { enabled: true },
   extends: ["../../nuxt.config.ts"],
   css: ["../../assets/css/tailwind.css"],
@@ -46,14 +40,10 @@ export default defineNuxtConfig({
       Sora: {
         wght: [300],
       },
-      // You can also specify an array directly if you only need the default weight (400) or want all available
-      // 'Open Sans': true, // Equivalent to { Open+Sans: { wght: [100,200,300,400,500,600,700,800,900] } }
-      // 'Lato': [400, 700], // For specific weights
     },
-    display: 'swap', // Recommended for performance (prevents FOIT/FOUT)
-    preload: true, // Preload fonts for better performance, if needed
-    download: true, // Download fonts and serve them locally (recommended for performance and GDPR)
-    // base64: false, // Encode fonts as base64 (might not be ideal for all cases)
+    display: 'swap',
+    preload: true,
+    download: true,
   },
 
   build: {

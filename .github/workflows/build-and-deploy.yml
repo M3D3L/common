@@ -42,11 +42,26 @@ jobs:
 
       - name: Prepare guillermomedel deploy folder
         run: |
-          OUT_DIR=$(find ./sites/guillermomedel.com -maxdepth 1 -type d -name ".output*" | head -n1)
+          # Look for .output directory (Nuxt 3 default output)
+          OUT_DIR="./sites/guillermomedel.com/.output"
           PUBLIC_DIR="$OUT_DIR/public"
-          mkdir deploy_guillermomedel
+          
+          # Check if .output/public exists, otherwise check dist
+          if [ -d "$PUBLIC_DIR" ]; then
+            echo "Found output at $PUBLIC_DIR"
+          else
+            PUBLIC_DIR="./sites/guillermomedel.com/dist"
+            echo "Fallback to $PUBLIC_DIR"
+          fi
+          
+          # Create deploy directory and copy files
+          mkdir -p deploy_guillermomedel
           cp -a "$PUBLIC_DIR"/. deploy_guillermomedel/
           echo "guillermomedel.com" > deploy_guillermomedel/CNAME
+          
+          # List contents for debugging
+          echo "Deploy folder contents:"
+          ls -la deploy_guillermomedel/
 
       - name: Deploy guillermomedel.com to repo
         uses: JamesIves/github-pages-deploy-action@v4
@@ -67,11 +82,26 @@ jobs:
 
       - name: Prepare relocatetosancarlos deploy folder
         run: |
-          OUT_DIR=$(find ./sites/relocatetosancarlos.com -maxdepth 1 -type d -name ".output*" | head -n1)
+          # Look for .output directory (Nuxt 3 default output)
+          OUT_DIR="./sites/relocatetosancarlos.com/.output"
           PUBLIC_DIR="$OUT_DIR/public"
-          mkdir deploy_relocatetosancarlos
+          
+          # Check if .output/public exists, otherwise check dist
+          if [ -d "$PUBLIC_DIR" ]; then
+            echo "Found output at $PUBLIC_DIR"
+          else
+            PUBLIC_DIR="./sites/relocatetosancarlos.com/dist"
+            echo "Fallback to $PUBLIC_DIR"
+          fi
+          
+          # Create deploy directory and copy files
+          mkdir -p deploy_relocatetosancarlos
           cp -a "$PUBLIC_DIR"/. deploy_relocatetosancarlos/
           echo "relocatetosancarlos.com" > deploy_relocatetosancarlos/CNAME
+          
+          # List contents for debugging
+          echo "Deploy folder contents:"
+          ls -la deploy_relocatetosancarlos/
 
       - name: Deploy relocatetosancarlos.com to repo
         uses: JamesIves/github-pages-deploy-action@v4
