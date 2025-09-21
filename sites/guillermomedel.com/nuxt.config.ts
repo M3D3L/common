@@ -9,7 +9,7 @@ export default defineNuxtConfig({
 
   // ✅ Correct base URL for GitHub Pages or subdirectory hosting
   app: {
-    baseURL: process.env.NUXT_APP_BASE_URL || '/',
+    baseURL: '/guillermomedel.com/',
     buildAssetsDir: '/_nuxt/'
   },
 
