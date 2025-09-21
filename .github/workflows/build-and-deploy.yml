@@ -1,62 +1,51 @@
 name: Build and Deploy Monorepo
-
 on:
   push:
     branches:
       - main
-
 permissions:
   contents: write
-
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        site:
+          - name: guillermomedel.com
+            folder: guillermomedel.com
+            target_folder: guillermomedel
+            base_url: /guillermomedel/
+            domain: guillermomedel.com
+          - name: relocatetosancarlos.com
+            folder: relocatetosancarlos.com
+            target_folder: relocatetosancarlos
+            base_url: /relocatetosancarlos/
+            domain: relocatetosancarlos.com
     steps:
-      # 1. Checkout code
       - uses: actions/checkout@v4
-
-      # 2. Setup Node
       - uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
           cache-dependency-path: './package-lock.json'
 
-      # 3. Install dependencies
       - run: npm ci
 
-      # 4. Build both sites
-      - name: Build guillermomedel.com
+      - name: Build ${{ matrix.site.name }}
         run: npm run generate
-        working-directory: ./sites/guillermomedel.com
+        working-directory: ./sites/${{ matrix.site.folder }}
         env:
-          NUXT_APP_BASE_URL: /
+          NUXT_APP_BASE_URL: ${{ matrix.site.base_url }}
           POCKETBASE_URL: ${{ vars.POCKETBASE_URL }}
           WHATSAPP_NUMBER: ${{ vars.WHATSAPP_NUMBER }}
 
-      - name: Build relocatetosancarlos.com
-        run: npm run generate
-        working-directory: ./sites/relocatetosancarlos.com
-        env:
-          NUXT_APP_BASE_URL: /
-          POCKETBASE_URL: ${{ vars.POCKETBASE_URL }}
-          WHATSAPP_NUMBER: ${{ vars.WHATSAPP_NUMBER }}
+      - name: Add CNAME for ${{ matrix.site.name }}
+        run: echo "${{ matrix.site.domain }}" > ./sites/${{ matrix.site.folder }}/.output-${{ matrix.site.target_folder }}/public/CNAME
 
-      # 5. Prepare a deploy folder containing both sites
-      - name: Prepare deploy folder
-        run: |
-          mkdir -p deploy/guillermomedel
-          cp -r ./sites/guillermomedel.com/.output-guillermomedel/public/* deploy/guillermomedel/
-          echo "guillermomedel.com" > deploy/guillermomedel/CNAME
-
-          mkdir -p deploy/relocatetosancarlos
-          cp -r ./sites/relocatetosancarlos.com/.output-relocatetosancarlos/public/* deploy/relocatetosancarlos/
-          echo "relocatetosancarlos.com" > deploy/relocatetosancarlos/CNAME
-
-      # 6. Deploy both sites at once
-      - name: Deploy all sites
+      - name: Deploy ${{ matrix.site.name }}
         uses: JamesIves/github-pages-deploy-action@v4
         with:
-          folder: deploy
+          folder: ./sites/${{ matrix.site.folder }}/.output-${{ matrix.site.target_folder }}/public
+          target-folder: ${{ matrix.site.target_folder }}
           branch: gh-pages
           clean: false
