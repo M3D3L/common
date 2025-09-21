@@ -37,7 +37,8 @@ jobs:
         run: npm run generate
         working-directory: ./sites/guillermomedel.com
         env:
-          NUXT_APP_BASE_URL: /
+          # CORRECTED: Set the base URL to the repository name for GitHub Pages
+          NUXT_APP_BASE_URL: /guillermomedel.com/ 
           POCKETBASE_URL: ${{ vars.POCKETBASE_URL }}
           WHATSAPP_NUMBER: ${{ vars.WHATSAPP_NUMBER }}
 
@@ -63,7 +64,8 @@ jobs:
         run: npm run generate
         working-directory: ./sites/relocatetosancarlos.com
         env:
-          NUXT_APP_BASE_URL: /
+          # CORRECTED: Set the base URL to the repository name for GitHub Pages
+          NUXT_APP_BASE_URL: /relocatetosancarlos.com/
           POCKETBASE_URL: ${{ vars.POCKETBASE_URL }}
           WHATSAPP_NUMBER: ${{ vars.WHATSAPP_NUMBER }}
 
