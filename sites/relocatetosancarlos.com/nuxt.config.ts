@@ -50,7 +50,7 @@ export default defineNuxtConfig({
   runtimeConfig: {
     public: {
       pocketbaseUrl: process.env.POCKETBASE_URL || "http://64.23.150.184/",
-      whatsappNumber: process.env.WHATSAPP_NUMBER || "6444444444",
+      whatsappNumber: process.env.WHATSAPP_NUMBER || "6444444445",
     },
   },
 });
