@@ -3,12 +3,14 @@ import path from "path";
 export default defineNuxtConfig({
   compatibilityDate: "2025-08-30",
   ssr: false,
-  nitro: {
-    preset: "static"
-  },
   app: {
     baseURL: "/",
-    buildAssetsDir: "_nuxt/"
+    buildAssetsDir: "_nuxt/",
+  },
+  nitro: {
+    output: {
+      dir: ".output",
+    },
   },
 
   devtools: { enabled: true },
