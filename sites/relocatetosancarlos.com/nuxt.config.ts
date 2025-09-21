@@ -3,7 +3,7 @@ import path from "path";
 export default defineNuxtConfig({
   compatibilityDate: "2025-08-30",
   app: {
-    // The baseURL property is removed because its default value is '/'
+    baseURL: "/",
     buildAssetsDir: "_nuxt/",
   },
   nitro: {
