@@ -1,10 +1,8 @@
 <template>
-    <BlogPage class="mb-24" :title="title" :description="description" imgSrc="" />
+    <BlogPage class="mb-24" type="relocateBlog" :title="blogSection?.title" :description="blogSection?.description" imgSrc="" />
 </template>
 
 <script setup>
 import BlogPage from '@common/pages/blog/index.vue'
-
-const title = 'Our Blog Explains Why Relocating to San Carlos is the Best Decision You\'ll Ever Make';
-const description = 'Discover the latest trends, tips, and insights in real estate with our expert guidance.';
+import { blogSection } from '~/assets/configs/layout'
 </script>

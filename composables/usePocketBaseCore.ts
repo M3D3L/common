@@ -5,53 +5,48 @@ import type { ListResult, RecordModel } from 'pocketbase'
 export default function usePocketBaseCore() {
   const pb = usePocketBase()
 
-  async function fetchCollection(
+  const fetchCollection = async (
     collection: string,
     page = 1,
     perPage = 10,
     filter = '',
     sort = '-created',
     expand: string | null = null,
-    fields: null | string[] = null,
-  ): Promise<ListResult<RecordModel>> {
-    let cacheKey = getCacheKey('fetchCollection', {
+    fields: string[] | null = null,
+  ): Promise<ListResult<RecordModel>> => {
+    const cacheKey = getCacheKey('fetchCollection', {
       collection,
       page,
       perPage,
       filter,
       sort,
       expand,
-      fields
+      fields,
     })
 
+    const cached = getCache<ListResult<RecordModel>>(cacheKey)
+    if (cached) return cached
+
     try {
-      const cached = getCache<ListResult<RecordModel>>(cacheKey)
-
-      console.log(cacheKey)
-      
-      if (cached) {
-        return cached
-      }
-
       const response = await pb.collection(collection).getList(page, perPage, {
         filter,
         sort,
         expand: expand ?? undefined,
-        fields: Array.isArray(fields) ? fields.join(',') : fields ?? undefined
+        fields: fields?.join(','),
       })
 
       setCache(cacheKey, response)
       return response
     } catch (error) {
       console.error(`Error fetching ${collection}:`, error)
-      throw error
+      throw new Error(`Failed to fetch ${collection}`)
     }
   }
 
-  async function fetchRecord(
+  const fetchRecord = async (
     collection: string,
-    id: string | number
-  ): Promise<RecordModel> {
+    id: string | number,
+  ): Promise<RecordModel> => {
     const stringId = id.toString()
     const cacheKey = getCacheKey('fetchRecord', { collection, id: stringId })
 
@@ -68,27 +63,32 @@ export default function usePocketBaseCore() {
     }
   }
 
-  async function createItem(collection: string, data: Record<string, any>): Promise<RecordModel> {
+  const createItem = async (
+    collection: string,
+    data: Record<string, any>,
+  ): Promise<RecordModel> => {
     try {
-      const item = await pb.collection(collection).create(data)
-      return item
+      return await pb.collection(collection).create(data)
     } catch (error) {
       console.error(`Error creating item in ${collection}:`, error)
       throw new Error(`Failed to create item in ${collection}`)
     }
   }
 
-  async function updateItem(collection: string, id: string, data: Record<string, any>): Promise<RecordModel> {
+  const updateItem = async (
+    collection: string,
+    id: string,
+    data: Record<string, any>,
+  ): Promise<RecordModel> => {
     try {
-      const item = await pb.collection(collection).update(id, data)
-      return item
+      return await pb.collection(collection).update(id, data)
     } catch (error) {
       console.error(`Error updating item in ${collection}:`, error)
       throw new Error(`Failed to update item in ${collection}`)
     }
   }
 
-  async function deleteItem(collection: string, id: string): Promise<boolean> {
+  const deleteItem = async (collection: string, id: string): Promise<boolean> => {
     try {
       await pb.collection(collection).delete(id)
       return true
@@ -98,7 +98,12 @@ export default function usePocketBaseCore() {
     }
   }
 
-  async function uploadFile(file: File, collection: string, recordId: string, field: string): Promise<string> {
+  const uploadFile = async (
+    file: File,
+    collection: string,
+    recordId: string,
+    field: string,
+  ): Promise<string> => {
     try {
       const formData = new FormData()
       formData.append(field, file)
@@ -107,13 +112,12 @@ export default function usePocketBaseCore() {
       return pb.files.getUrl(record, record[field])
     } catch (error) {
       console.error('Error uploading file:', error)
-      throw error
+      throw new Error('Failed to upload file')
     }
   }
 
-  function getFileUrl(record: RecordModel, filename: string): string {
-    return pb.files.getUrl(record, filename)
-  }
+  const getFileUrl = (record: RecordModel, filename: string): string =>
+    pb.files.getUrl(record, filename)
 
   return {
     fetchCollection,

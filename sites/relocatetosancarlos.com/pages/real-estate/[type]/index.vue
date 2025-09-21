@@ -4,7 +4,7 @@
       <li v-if="currentCategory?.properties?.items?.length > 0">
         <TextSectionTitle
           class="pt-12 pb-16"
-          :title="currentCategory.sectionTitle"
+          :title="currentCategory.title"
           :description="currentCategory.sectionSubTitle"
           :h1="true"
         />
@@ -41,11 +41,12 @@
 
           <div class="w-full lg:w-1/3">
             <CardsInfoCard
-              :title="currentCategory.name"
+              v-if="currentCategory"
+              :title="currentCategory.sectionTitle"
               :footerText="currentCategory.footerText"
-              :subtitle="currentCategory.description"
-              :benefits="currentCategory.benifits"
-              :categories
+              :subtitle="currentCategory.subtitle"
+              :benefits="currentCategory.benefits"
+              :categories="currentCategory.categories"
               :dataArray="currentCategory?.properties?.items"
               class="z-10 sticky-position top-28"
               :mode="currentCategory.mode"
@@ -54,30 +55,17 @@
         </div>
       </li>
     </ul>
-
-    <SectionsBlogColumn
-      :title
-      :description
-      :showPagination="false"
-      class="pb-24"
-    />
   </div>
 </template>
 
 <script lang="ts" setup>
 import usePocketBaseCore from "@common/composables/usePocketBaseCore";
-import { categories } from "@local/assets/configs/cards/real-estate";
+import { categories } from "~/assets/configs/layout.js";
 
 const { fetchCollection } = usePocketBaseCore();
 const route = useRoute();
-
-const perPage = 10;
-const title =
-  "Our Blog Explains Why Relocating to San Carlos is the Best Decision You'll Ever Make";
-const description =
-  "Discover the latest trends, tips, and insights in real estate with our expert guidance.";
-
 const page = computed(() => Number(route.query.page) || 1);
+const perPage = 10;
 const type = computed(
   () => (route.params.type as string | undefined)?.toLowerCase() ?? ""
 );

@@ -201,8 +201,7 @@ onMounted(async () => {
    try {
       // Extract the slug from the route
       const fullSlug = route.path.replace('/blog', '')
-      const fetchedPost = await fetchPostBySlug(fullSlug, false);
-      post.value = fetchedPost
+      post.value = await fetchPostBySlug(fullSlug, props.type);
    } catch (error) {
       console.error('Error fetching post:', error)
    }
@@ -275,8 +274,7 @@ const refresh = async () => {
    try {
       if (post.value?.slug) {
          const fullSlug = route.path.replace('/blog', '')
-         const fetchedPost = await fetchPostBySlug(fullSlug, false);
-         post.value = fetchedPost
+         post.value = await fetchPostBySlug(fullSlug, props.type.value);
       }
    } catch (error) {
       console.error('Error fetching post:', error)

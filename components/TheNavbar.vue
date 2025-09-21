@@ -1,66 +1,117 @@
 <template>
-  <header class="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-md">
+  <header
+    class="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-md"
+  >
     <div class="container flex items-center justify-between h-16 px-4">
       <NuxtLink to="/" class="flex items-center">
         <span class="flex flex-col logo-text">
-          <span class="text-xl font-bold">{{ !route.path.includes('real-estate') ? 'GuillermoMedel' : 'SCLotSales' }}</span>
+          <span class="text-xl font-bold">{{ siteName }}</span>
         </span>
       </NuxtLink>
 
-      <div class="flex items-center gap-6">
+      <!-- Right side buttons -->
+      <div class="flex items-center gap-4">
+        <!-- Desktop nav -->
+        <nav class="items-center hidden gap-4 md:flex">
+          <NuxtLink
+            v-for="link in links"
+            :key="link.href"
+            :to="link.href"
+            class="px-3 py-2 text-sm font-medium transition-colors rounded-md hover:bg-accent hover:text-accent-foreground"
+            active-class="text-primary"
+          >
+            {{ link.label }}
+          </NuxtLink>
+        </nav>
 
-        <Button v-if="auth.isAuthenticated.value" class="text-xs md:text-sm" @click="auth.logout()" variant="default">
+        <!-- Auth buttons -->
+        <Button
+          v-if="auth.isAuthenticated.value"
+          class="text-xs md:text-sm"
+          @click="auth.logout()"
+          variant="default"
+        >
           Logout
         </Button>
 
+        <template v-else>
+          <NuxtLink
+            :to="getLoginHref()"
+            class="px-3 py-2 text-sm transition-colors rounded-md hover:bg-accent hover:text-accent-foreground"
+          >
+            Login
+          </NuxtLink>
+          <NuxtLink
+            :to="getRegisterHref()"
+            class="px-3 py-2 text-sm transition-colors rounded-md hover:bg-accent hover:text-accent-foreground"
+          >
+            Register
+          </NuxtLink>
+        </template>
+
+        <!-- Dark mode toggle -->
         <ClientOnly>
-          <button @click="toggleDark()" class="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800">
-            <svg v-if="isDark" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-            </svg>
-            <svg v-else class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-            </svg>
+          <button
+            @click="toggleDark()"
+            class="p-2 transition-colors rounded-md hover:bg-accent hover:text-accent-foreground"
+            aria-label="Toggle dark mode"
+          >
+            <Sun v-if="isDark" class="w-5 h-5" />
+            <Moon v-else class="w-5 h-5" />
           </button>
 
           <CheckoutView v-if="checkoutToggled" class="absolute top-0 right-0" />
         </ClientOnly>
 
-        <button @click="isMobileMenuOpen = !isMobileMenuOpen"
-          class="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 md:hidden">
-          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              :d="isMobileMenuOpen ? 'M6 18L18 6M6 6l12 12' : 'M4 6h16M4 12h16M4 18h16'" />
-          </svg>
+        <!-- Checkout -->
+        <button
+          v-if="checkoutStore?.itemCount > 0"
+          @click="checkoutToggled = !checkoutToggled"
+          aria-label="Toggle checkout"
+          class="relative flex p-2 transition-colors rounded-md hover:bg-accent hover:text-accent-foreground"
+        >
+          <ShoppingCart class="w-5 h-5" />
+          <span
+            class="absolute flex items-center justify-center w-5 h-5 text-xs font-bold rounded-full -top-1 -right-1 text-background bg-primary"
+          >
+            {{ checkoutStore?.itemCount }}
+          </span>
         </button>
 
-        <button v-if="checkoutStore?.itemCount > 0" @click="checkoutToggled = !checkoutToggled"
-          aria-label="Toggle checkout" class="flex p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800">
-          <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-            stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round"
-              d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 0 0-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 0 0-16.536-1.84M7.5 14.25 5.106 5.272M6 20.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Zm12.75 0a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z" />
-          </svg>
-
-
-          <span
-            class="grid items-center w-5 h-5 text-xs font-bold text-center align-middle transform scale-[90%] rounded-full text-background bg-primary">
-            {{ checkoutStore?.itemCount > 0 ? checkoutStore?.itemCount : '' }}
-          </span>
+        <!-- Mobile menu button -->
+        <button
+          @click="isMobileMenuOpen = !isMobileMenuOpen"
+          class="p-2 transition-colors rounded-md hover:bg-accent hover:text-accent-foreground md:hidden"
+          aria-label="Toggle menu"
+        >
+          <X v-if="isMobileMenuOpen" class="w-5 h-5" />
+          <Menu v-else class="w-5 h-5" />
         </button>
       </div>
     </div>
 
-    <Transition enter-active-class="transition duration-200 ease-out" enter-from-class="transform scale-95 opacity-0"
-      enter-to-class="transform scale-100 opacity-100" leave-active-class="transition duration-150 ease-in"
-      leave-from-class="transform scale-100 opacity-100" leave-to-class="transform scale-95 opacity-0">
-      <div v-if="isMobileMenuOpen" class="absolute w-full border-b shadow-md bg-background md:hidden">
+    <!-- Mobile menu -->
+    <Transition
+      enter-active-class="transition duration-200 ease-out"
+      enter-from-class="transform scale-95 opacity-0"
+      enter-to-class="transform scale-100 opacity-100"
+      leave-active-class="transition duration-150 ease-in"
+      leave-from-class="transform scale-100 opacity-100"
+      leave-to-class="transform scale-95 opacity-0"
+    >
+      <div
+        v-if="isMobileMenuOpen"
+        class="absolute w-full border-b shadow-md bg-background md:hidden"
+      >
         <div class="container flex flex-col gap-1 px-4 py-3">
-          <NuxtLink v-for="link in mainLinks" :key="link.href" :to="link.href"
-            class="px-3 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800"
-            active-class="font-medium text-primary" @click="isMobileMenuOpen = false">
+          <NuxtLink
+            v-for="link in links"
+            :key="link.href"
+            :to="link.href"
+            class="px-3 py-2 text-sm transition-colors rounded-md hover:bg-accent hover:text-accent-foreground"
+            active-class="text-primary"
+            @click="isMobileMenuOpen = false"
+          >
             {{ link.label }}
           </NuxtLink>
         </div>
@@ -72,64 +123,42 @@
 <script setup lang="ts">
 import { useCheckoutStore } from "@/store/checkoutStore";
 import useAuth from "@/composables/useAuth";
-import { Button } from '@/components/ui/button'
+import { Button } from "@/components/ui/button";
+import { Sun, Moon, ShoppingCart, Menu, X } from "lucide-vue-next";
 
-// Initialize a reactive reference to hold the store instance
-const checkoutStore = ref(null);
-
-onMounted(() => {
-  // Call useCheckoutStore only when the component is mounted (client-side)
-  checkoutStore.value = useCheckoutStore();
-});
-
-const isDark = useDark()
-const toggleDark = useToggle(isDark)
-const isMobileMenuOpen = ref(false)
-const auth = useAuth()
-const route = useRoute()
-
-const checkoutToggled = ref(false)
-
-const toggleCheckout = () => {
-  checkoutToggled.value = !checkoutToggled.value
+interface NavLink {
+  href: string;
+  label: string;
 }
+
+const props = defineProps<{
+  links?: NavLink[];
+  siteName?: string;
+}>();
+
+const checkoutStore = useCheckoutStore();
+
+const isDark = useDark();
+const toggleDark = useToggle(isDark);
+const isMobileMenuOpen = ref(false);
+const auth = useAuth();
+const route = useRoute();
+
+const checkoutToggled = ref(false);
 
 const getLoginHref = () => {
-  // Only add source if we're not on the home page
-  return route.path === '/' ? '/login' : `/login?source=${encodeURIComponent(route.path)}`
-}
+  return route.path === "/"
+    ? "/login"
+    : `/login?source=${encodeURIComponent(route.path)}`;
+};
 
 const getRegisterHref = () => {
-  // Only add source if we're not on the home page
-  return route.path === '/' ? '/register' : `/register?source=${encodeURIComponent(route.path)}`
-}
+  return route.path === "/"
+    ? "/register"
+    : `/register?source=${encodeURIComponent(route.path)}`;
+};
 
-// Links that always show
-const mainLinks = computed(() => {
-  const mainLinksArray = [
-    { label: 'Portfolio', href: '/#portfolio' },
-  ]
-
-  // check if on the home '/' page
-  if (route.path === '/') {
-    mainLinksArray.push(
-      { label: 'Skills', href: '#skills' },
-      { label: 'Blog', href: '#blogs' },
-      { label: 'Contact', href: '#contact' },
-    )
-  }
-
-  if (!auth.isAuthenticated.value) {
-    mainLinksArray.push(
-      { label: 'Join Now', href: getRegisterHref() },
-      { label: 'Sign in', href: getLoginHref() },
-    )
-  }
-  return mainLinksArray
-})
-
-// watch for route changes to update the mobile menu state
 watch(route, () => {
-  isMobileMenuOpen.value = false
-})
+  isMobileMenuOpen.value = false;
+});
 </script>

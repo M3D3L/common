@@ -1,12 +1,21 @@
 <template>
-<TheFooter v-if="footerData" :footer-data="footerData" />
+<TheFooter :links="siteMap" :contactInfo :socials type="relocateBlog" />
 </template>
 
 <script setup lang="ts">
+
 const props = defineProps({
-  footerData: {
+  socials: {
+    type: Array,
+    default: () => []
+  },
+  contactInfo: {
     type: Object,
-    required: true
-  }
+    default: () => ({})
+  },
+  siteMap: {
+    type: Array,
+    default: () => []
+  },
 })
 </script>

@@ -2,7 +2,7 @@
   <containers-video id="contact" :video="videoArray[randomIndex]" title="" :description="description" class="w-full min-h-screen">
     <template #video-container-content>
       <Card class="relative w-full py-1 my-8 overflow-hidden">
-        <TextSectionTitle :title :description :imgSrc :h1="false" class="px-6 pt-6 pb-0 md:px-8" />
+        <TextSectionTitle :title :description :imgSrc :h1="false" class="px-6 pt-6 pb-4 md:px-8" />
         <CardContent class="relative grid grid-cols-1 gap-10 pt-2 lg:grid-cols-2" :initial="'hidden'" :animate="'visible'"
           :variants="containerVariants">
           <motion.div :variants="fadeUp" class="px-4 pb-6 border rounded-lg md:px-6 border-border bg-foreground/15">
@@ -70,8 +70,7 @@
                 </div>
                 <div>
                   <p class="text-base font-medium">Email</p>
-                  <a :href="`mailto:${contactEmail}`" class="text-xs md:text-sm text-muted-foreground hover:underline">{{
-                    contactEmail }}</a>
+                  <a :href="`mailto:${contactInfo?.email}`" class="text-xs md:text-sm text-muted-foreground hover:underline">{{ contactInfo?.email }}</a>
                 </div>
               </div>
 
@@ -81,8 +80,7 @@
                 </div>
                 <div>
                   <p class="text-base font-medium">Phone</p>
-                  <a :href="`tel:${contactPhone}`" class="text-sm text-muted-foreground hover:underline">{{ contactPhone
-                    }}</a>
+                  <a :href="`tel:${contactInfo?.phone}`" class="text-sm text-muted-foreground hover:underline">{{ contactInfo?.phone }}</a>
                 </div>
               </div>
             </div>
@@ -114,8 +112,6 @@ import {
   Github,
 } from 'lucide-vue-next'
 
-import BlockMe4 from '/images/block-me-4.webp'
-
 const props = defineProps({
   title: { type: String, default: 'Contact Me' },
   description: { type: String, default: '' },
@@ -123,21 +119,13 @@ const props = defineProps({
     type: String,
     default: 'https://formsubmit.co/7cbfcf8a8143c9f8708006416b2a0aae'
   },
-  contactEmail: {
-    type: String,
-    default: 'guillermoantoniomedel@gmail.com'
-  },
-  contactPhone: {
-    type: String,
-    default: '+52 (644) 194-2391'
-  },
-  video: {
-    type: String,
-    default: 'https://www.pexels.com/download/video/33792753/'
+  contactInfo : {
+    type: Object,
+    default: () => ({})
   },
   imgSrc: {
     type: String,
-    default: BlockMe4
+    default: ''
   },
   socialLinks: {
     type: Array,

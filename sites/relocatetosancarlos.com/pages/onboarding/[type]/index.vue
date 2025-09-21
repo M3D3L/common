@@ -1,7 +1,7 @@
 <template>
   <div
     v-if="currentType?.type"
-    class="container relative content-center min-h-screen py-10"
+    class="container relative content-center min-h-screen pt-10 pb-32"
   >
     <TitleBlock
       class="mb-8"

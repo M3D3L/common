@@ -1,6 +1,6 @@
 <template>
   <div
-    class="relative w-full p-6 mx-auto lg:max-w-6xl font-body bg-background text-foreground md:p-10"
+    class="container relative w-full p-6 font-body bg-background text-foreground md:py-10"
   >
     <SectionsNavigator
       :title="property?.title"

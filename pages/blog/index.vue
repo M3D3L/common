@@ -5,6 +5,7 @@
       h1="true"
       :title
       :description
+      :type
       :imgSrc
       :showMore="false"
       :showPagination="true"
@@ -31,6 +32,10 @@ const props = defineProps({
     type: String,
     default:
       "I'm passsionate about sharing knowledge and helping others grow. Explore my blog for insights, tutorials, and tips on web development, drone photography, and more.",
+  },
+  type: {
+    type: String,
+    default: 'posts',
   },
 })
 

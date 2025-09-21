@@ -102,7 +102,7 @@ export const privacyConfig = `<section>
     <h2>11. Contact Me</h2>
     <p>If you have questions or concerns about this policy, reach out at:</p>
     <address>
-      Guillermo Medel<br />
-      <a href="mailto:guillermoantoniomedel@gmail.com">guillermoantoniomedel@gmail.com</a>
+      RelocateToSanCarlos.com<br />
+      <a href="mailto:relocateToSanCarlos@gmail.com">relocateToSanCarlos@gmail.com</a>
     </address>
   </section>`

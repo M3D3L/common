@@ -3,19 +3,19 @@
     <!-- <div class="flex items-center justify-center w-full bg-gray-200 rounded-lg h-72">
       <span class="text-gray-600">[Advertisement]</span>
     </div> -->
-    <the-navbar class="fixed top-0 left-0 right-0 z-50 w-full" />
+    <the-navbar :links="siteMap" :siteName="contactInfo?.siteName" class="fixed top-0 left-0 right-0 z-50 w-full" />
     <Modal />
     <main class="w-full">
       <slot />
     </main>
-    <SectionsContact />
-    <the-footer :footer-data="layoutConfig.footerData" />
+    <SectionsContact :contactInfo :social-links="socials" v-bind="contactSection" />
+    <the-footer :links="siteMap" type="posts" :contactInfo :socials />
   </div>
 </template>
 
 <script setup lang="ts">
-import { layoutConfig } from '~/assets/configs/ui/layout'
-import Modal from '~/components/ui/modal/Modal.vue';
+import { contactInfo, siteMap, blogSection, contactSection, socials  } from '~/assets/configs/layout'
+import Modal from '@common/components/ui/modal/Modal.vue';
 
 </script>
 

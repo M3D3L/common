@@ -1,11 +1,11 @@
 <template>
-  <OrganismsHero />
+  <OrganismsHero v-bind="realEstateHeroSection" />
 
   <ul class="pt-16 pb-32 space-y-32 lg:pt-24">
     <li v-for="(category, index) in categories" :key="category.name">
       <TextSectionTitle
         class="container pt-12 pb-16"
-        :title="category.sectionTitle"
+        :title="category.title"
         :description="category.sectionSubTitle"
         :h1="false"
       />
@@ -28,13 +28,18 @@
               :buttonText="category.name"
             >
               <template #extraButton>
-                <MoleculesWhatsappButton text="Send" :message="`Hello, I would like more information on this ${item?.type} : https://www.RelocateToSanCarlos.com/real-estate${item.slug}`" />
+                <MoleculesWhatsappButton
+                  text="Send"
+                  :message="`Hello, I would like more information on this ${item?.type} : https://www.RelocateToSanCarlos.com/real-estate${item.slug}`"
+                />
               </template>
             </CardsBaseCard>
           </template>
           <div class="flex justify-center md:col-span-2">
-            <nuxt-link :to="`/real-estate/${category?.type}/`"
-              class="text-sm font-medium underline capitalize transition-colors hover:text-primary underline-offset-4">
+            <nuxt-link
+              :to="`/real-estate/${category?.type}/`"
+              class="text-sm font-medium underline capitalize transition-colors hover:text-primary underline-offset-4"
+            >
               View All {{ category?.type }}
             </nuxt-link>
           </div>
@@ -42,10 +47,10 @@
         <div class="w-full lg:w-1/3">
           <CardsInfoCard
             v-if="category"
-            :title="category.name"
+            :title="category.sectionTitle"
             :footerText="category.footerText"
-            :subtitle="category.description"
-            :benefits="category.benifits"
+            :subtitle="category.subtitle"
+            :benefits="category.benefits"
             :categories
             :dataArray="category?.properties?.items"
             class="z-10 sticky-position top-28"
@@ -55,26 +60,13 @@
       </div>
     </li>
   </ul>
-
-  <SectionsBlogColumn
-    :title
-    :description
-    :showPagination="false"
-    class="pb-24"
-  />
 </template>
 
 <script lang="ts" setup>
-import { layoutConfig } from "~/assets/configs/ui/layoutRealEstate";
 import usePocketBaseCore from "@common/composables/usePocketBaseCore";
-import { categories } from "@local/assets/configs/cards/real-estate";
+import { realEstateHeroSection, categories } from "~/assets/configs/layout.js";
 
 const { fetchCollection } = usePocketBaseCore();
-
-// Vars
-const title = 'Our Blog Explains Why Relocating to San Carlos is the Best Decision You\'ll Ever Make';
-const description = 'Discover the latest trends, tips, and insights in real estate with our expert guidance.';
-
 
 // Methods
 const fetchPropertiesByType = async (type: string) => {
@@ -85,20 +77,10 @@ const fetchPropertiesByType = async (type: string) => {
       6,
       `type="${type}"`,
       "-created",
-      "",
+      ""
     );
   } catch (error) {
     console.error(`Error fetching ${type}:`, error);
-  }
-};
-
-const fetchPosts = async () => {
-  try {
-    const result = await fetchCollection("posts", 1, 6, "", "-created", "");
-    return result;
-  } catch (error) {
-    console.error("Error fetching posts:", error);
-    return [];
   }
 };
 

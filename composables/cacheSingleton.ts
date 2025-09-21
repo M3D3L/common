@@ -1,4 +1,3 @@
-// cacheSingleton.ts
 import { useCacheUtils } from './cacheUtils'
 
 // Create and export a single instance of the cache utilities
