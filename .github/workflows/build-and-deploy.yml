@@ -13,10 +13,12 @@ jobs:
         # Define the list of sites to build and deploy
         site:
           - name: guillermomedel.com
-            folder: guillermomedel
+            folder: guillermomedel.com
+            target_folder: guillermomedel
             base_url: /guillermomedel/
           - name: relocatetosancarlos.com
-            folder: relocatetosancarlos
+            folder: relocatetosancarlos.com
+            target_folder: relocatetosancarlos
             base_url: /relocatetosancarlos/
     steps:
       - name: Checkout 🛎️
@@ -45,11 +47,10 @@ jobs:
         uses: JamesIves/github-pages-deploy-action@v4
         with:
           folder: ./sites/${{ matrix.site.folder }}/.output/public
-          target-folder: ${{ matrix.site.folder }}
+          target-folder: ${{ matrix.site.target_folder }}
           branch: gh-pages
           clean: false
           
-      # Add this step only on the first run to create the .nojekyll file
       - name: Add .nojekyll to gh-pages root
         if: matrix.site.name == 'guillermomedel.com'
         run: |
