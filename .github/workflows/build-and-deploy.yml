@@ -45,7 +45,7 @@ jobs:
           branch: gh-pages
           folder: deploy_guillermomedel
           clean: true
-          token: ${{ secrets.DEPLOY_TOKEN }}
+          token: ${{ vars.DEPLOY_TOKEN }}
 
       # --- relocatetosancarlos.com ---
       - name: Build relocatetosancarlos.com
@@ -71,4 +71,4 @@ jobs:
           branch: gh-pages
           folder: deploy_relocatetosancarlos
           clean: true
-          token: ${{ secrets.DEPLOY_TOKEN }}
+          token: ${{ var.DEPLOY_TOKEN }}
