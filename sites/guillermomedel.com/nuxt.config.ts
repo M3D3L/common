@@ -3,8 +3,8 @@ import path from "path";
 export default defineNuxtConfig({
   compatibilityDate: "2025-08-30",
   app: {
-    baseURL: process.env.NUXT_APP_BASE_URL || "/",
-    buildAssetsDir: "_nuxt/",
+    // The baseURL property is removed because its default value is '/'
+    buildAssetsDir: "/_nuxt/",
   },
   nitro: {
     output: {
@@ -17,7 +17,7 @@ export default defineNuxtConfig({
   ssr: true,
   devtools: { enabled: true },
   extends: ["../../nuxt.config.ts"],
-  css: ["../../assets/css/tailwind.css"],
+  css: ["@/assets/css/tailwind.css"],
 
   modules: ["@nuxt/image", "@pinia/nuxt", "@nuxtjs/google-fonts"],
 
@@ -62,7 +62,7 @@ export default defineNuxtConfig({
   runtimeConfig: {
     public: {
       pocketbaseUrl: process.env.POCKETBASE_URL || "http://64.23.150.184/",
-      whatsappNumber: process.env.WHATSAPP_NUMBER || "6444444444",
+      whatsappNumber: process.env.WHATSAPP_NUMBER || "6444444445",
     },
   },
 });
