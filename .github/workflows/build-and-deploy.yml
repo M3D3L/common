@@ -34,7 +34,7 @@ jobs:
         run: |
           OUT_DIR=$(find ./sites/guillermomedel.com -maxdepth 1 -type d -name ".output*" | head -n1)
           PUBLIC_DIR="$OUT_DIR/public"
-          mkdir deploy_guillermomedel
+          mkdir -p deploy_guillermomedel
           cp -a "$PUBLIC_DIR"/. deploy_guillermomedel/
           echo "guillermomedel.com" > deploy_guillermomedel/CNAME
 
@@ -60,7 +60,7 @@ jobs:
         run: |
           OUT_DIR=$(find ./sites/relocatetosancarlos.com -maxdepth 1 -type d -name ".output*" | head -n1)
           PUBLIC_DIR="$OUT_DIR/public"
-          mkdir deploy_relocatetosancarlos
+          mkdir -p deploy_relocatetosancarlos
           cp -a "$PUBLIC_DIR"/. deploy_relocatetosancarlos/
           echo "relocatetosancarlos.com" > deploy_relocatetosancarlos/CNAME
 
