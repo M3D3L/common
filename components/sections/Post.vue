@@ -223,29 +223,27 @@ const likePost = () => {
 }
 
 const share = (platform: string) => {
-   const url = encodeURIComponent(window.location.href)
-   const title = encodeURIComponent(post.value?.title || '')
+  const url = encodeURIComponent(window.location.href)
+  const title = encodeURIComponent(post.value?.title || '')
 
-   switch (platform) {
-      case 'twitter':
-         window.open(`https://twitter.com/intent/tweet?text=${title}&url=${url}`, '_blank')
-         break
-      case 'linkedin':
-         window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${url}`, '_blank')
-         break
-   }
+  switch (platform) {
+    case 'twitter':
+      window.open(`https://twitter.com/intent/tweet?text=${title}&url=${url}`, '_blank')
+      break
+    case 'linkedin':
+      window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${url}`, '_blank')
+      break
+  }
 }
 
 const copyLink = async () => {
-   try {
-      await navigator.clipboard.writeText(window.location.href)
-      // Add toast notification here
-      console.log('Link copied to clipboard')
-   } catch (err) {
-      console.error('Failed to copy link:', err)
-   }
+  try {
+    await navigator.clipboard.writeText(window.location.href)
+    console.log('Link copied to clipboard')
+  } catch (err) {
+    console.error('Failed to copy link:', err)
+  }
 }
-
 const navigateToTag = (tag: string) => {
    if (!tag) return
    navigateTo(`/blog/tags/${tag?.toLowerCase()?.replace(/\s+/g, '-')}`)
