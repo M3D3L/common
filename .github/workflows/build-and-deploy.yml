@@ -6,14 +6,16 @@ on:
       - main
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build-and-deploy-guillermomedel:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
@@ -30,28 +32,45 @@ jobs:
           POCKETBASE_URL: ${{ vars.POCKETBASE_URL }}
           WHATSAPP_NUMBER: ${{ vars.WHATSAPP_NUMBER }}
 
-      - name: Prepare guillermomedel deploy folder
+      - name: Deploy guillermomedel.com
         run: |
           OUT_DIR=$(find ./sites/guillermomedel.com -maxdepth 1 -type d -name ".output*" | head -n1)
           PUBLIC_DIR="$OUT_DIR/public"
+          
+          # Configure Git
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # Add remote for the target repository
+          git remote add deploy-guillermomedel https://x-access-token:${{ secrets.DEPLOY_TOKEN }}@github.com/M3D3L/guillermomedel.com.git
+          
+          # Fetch the gh-pages branch
+          git fetch deploy-guillermomedel gh-pages --depth=1
+          
+          # Create and switch to a temporary branch
+          git switch -c temp-deploy
+          
+          # Prepare deploy folder
           mkdir -p deploy_guillermomedel
           cp -a "$PUBLIC_DIR"/. deploy_guillermomedel/
           echo "guillermomedel.com" > deploy_guillermomedel/CNAME
-      
-      - name: Deploy guillermomedel.com
-        uses: JamesIves/github-pages-deploy-action@v4
-        with:
-          repository-name: M3D3L/guillermomedel.com
-          branch: gh-pages
-          folder: deploy_guillermomedel
-          clean: true
-          token: ${{ secrets.DEPLOY_TOKEN }}
+          
+          # Remove all files from the gh-pages branch and copy new ones
+          git rm -r --ignore-unmatch .
+          cp -a deploy_guillermomedel/. .
+          
+          # Commit and push
+          git add .
+          git commit -m "Deploying guillermomedel.com via GitHub Actions"
+          git push deploy-guillermomedel temp-deploy:gh-pages --force
 
   build-and-deploy-relocatetosancarlos:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
@@ -68,19 +87,34 @@ jobs:
           POCKETBASE_URL: ${{ vars.POCKETBASE_URL }}
           WHATSAPP_NUMBER: ${{ vars.WHATSAPP_NUMBER }}
 
-      - name: Prepare relocatetosancarlos deploy folder
+      - name: Deploy relocatetosancarlos.com
         run: |
           OUT_DIR=$(find ./sites/relocatetosancarlos.com -maxdepth 1 -type d -name ".output*" | head -n1)
           PUBLIC_DIR="$OUT_DIR/public"
+          
+          # Configure Git
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # Add remote for the target repository
+          git remote add deploy-relocatetosancarlos https://x-access-token:${{ secrets.DEPLOY_TOKEN }}@github.com/M3D3L/relocatetosancarlos.com.git
+          
+          # Fetch the gh-pages branch
+          git fetch deploy-relocatetosancarlos gh-pages --depth=1
+          
+          # Create and switch to a temporary branch
+          git switch -c temp-deploy
+          
+          # Prepare deploy folder
           mkdir -p deploy_relocatetosancarlos
           cp -a "$PUBLIC_DIR"/. deploy_relocatetosancarlos/
           echo "relocatetosancarlos.com" > deploy_relocatetosancarlos/CNAME
-
-      - name: Deploy relocatetosancarlos.com
-        uses: JamesIves/github-pages-deploy-action@v4
-        with:
-          repository-name: M3D3L/relocatetosancarlos.com
-          branch: gh-pages
-          folder: deploy_relocatetosancarlos
-          clean: true
-          token: ${{ secrets.DEPLOY_TOKEN }}
+          
+          # Remove all files from the gh-pages branch and copy new ones
+          git rm -r --ignore-unmatch .
+          cp -a deploy_relocatetosancarlos/. .
+          
+          # Commit and push
+          git add .
+          git commit -m "Deploying relocatetosancarlos.com via GitHub Actions"
+          git push deploy-relocatetosancarlos temp-deploy:gh-pages --force
