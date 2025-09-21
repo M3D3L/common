@@ -11,6 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
         with:
           node-version: 20
@@ -20,7 +21,6 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      # --- Build guillermomedel.com ---
       - name: Build guillermomedel.com
         run: npm run generate
         working-directory: ./sites/guillermomedel.com
@@ -29,17 +29,33 @@ jobs:
           POCKETBASE_URL: ${{ vars.POCKETBASE_URL }}
           WHATSAPP_NUMBER: ${{ vars.WHATSAPP_NUMBER }}
 
-      - name: Add CNAME for guillermomedel.com
-        run: echo "guillermomedel.com" > ./sites/guillermomedel.com/.output/public/CNAME
+      - name: Prepare guillermomedel deploy folder
+        run: |
+          set -e
+          OUT_DIR=$(find ./sites/guillermomedel.com -maxdepth 1 -type d -name ".output*" | head -n1)
+          if [ -z "$OUT_DIR" ]; then
+            echo "No .output* directory found for guillermomedel" >&2
+            ls -la ./sites/guillermomedel.com || true
+            exit 1
+          fi
+          PUBLIC_DIR="$OUT_DIR/public"
+          if [ ! -d "$PUBLIC_DIR" ]; then
+            echo "Public dir not found at $PUBLIC_DIR" >&2
+            ls -la "$OUT_DIR" || true
+            exit 1
+          fi
+          rm -rf deploy_guillermomedel
+          mkdir -p deploy_guillermomedel
+          cp -a "$PUBLIC_DIR"/. deploy_guillermomedel/
+          echo "guillermomedel.com" > deploy_guillermomedel/CNAME
 
       - name: Deploy guillermomedel.com
         uses: JamesIves/github-pages-deploy-action@v4
         with:
-          folder: ./sites/guillermomedel.com/.output/public
+          folder: deploy_guillermomedel
           branch: gh-pages-guillermomedel
           clean: true
 
-      # --- Build relocatetosancarlos.com ---
       - name: Build relocatetosancarlos.com
         run: npm run generate
         working-directory: ./sites/relocatetosancarlos.com
@@ -48,12 +64,29 @@ jobs:
           POCKETBASE_URL: ${{ vars.POCKETBASE_URL }}
           WHATSAPP_NUMBER: ${{ vars.WHATSAPP_NUMBER }}
 
-      - name: Add CNAME for relocatetosancarlos.com
-        run: echo "relocatetosancarlos.com" > ./sites/relocatetosancarlos.com/.output/public/CNAME
+      - name: Prepare relocatetosancarlos deploy folder
+        run: |
+          set -e
+          OUT_DIR=$(find ./sites/relocatetosancarlos.com -maxdepth 1 -type d -name ".output*" | head -n1)
+          if [ -z "$OUT_DIR" ]; then
+            echo "No .output* directory found for relocatetosancarlos" >&2
+            ls -la ./sites/relocatetosancarlos.com || true
+            exit 1
+          fi
+          PUBLIC_DIR="$OUT_DIR/public"
+          if [ ! -d "$PUBLIC_DIR" ]; then
+            echo "Public dir not found at $PUBLIC_DIR" >&2
+            ls -la "$OUT_DIR" || true
+            exit 1
+          fi
+          rm -rf deploy_relocatetosancarlos
+          mkdir -p deploy_relocatetosancarlos
+          cp -a "$PUBLIC_DIR"/. deploy_relocatetosancarlos/
+          echo "relocatetosancarlos.com" > deploy_relocatetosancarlos/CNAME
 
       - name: Deploy relocatetosancarlos.com
         uses: JamesIves/github-pages-deploy-action@v4
         with:
-          folder: ./sites/relocatetosancarlos.com/.output/public
+          folder: deploy_relocatetosancarlos
           branch: gh-pages-relocatetosancarlos
           clean: true
