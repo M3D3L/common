@@ -37,16 +37,21 @@ jobs:
         run: npm run generate
         working-directory: ./sites/guillermomedel.com
         env:
-          # `NUXT_APP_BASE_URL` is removed as its default value is `/`
+          # ✅ Removed NUXT_APP_BASE_URL as Nuxt's default '/' is correct for a custom domain.
           POCKETBASE_URL: ${{ vars.POCKETBASE_URL }}
           WHATSAPP_NUMBER: ${{ vars.WHATSAPP_NUMBER }}
 
       - name: Prepare guillermomedel deploy folder
         run: |
+          # ✅ Use a fixed output directory path as defined in nuxt.config.ts.
           OUT_DIR="./sites/guillermomedel.com/.output-site" 
           PUBLIC_DIR="$OUT_DIR/public"
+          
+          # ✅ Convert all filenames to lowercase to resolve case-sensitivity issues on the server.
+          find "$PUBLIC_DIR" -depth -exec rename -f 's/(.*)\/([^\/]*)/$1\/\L$2/' {} \;
+          
           mkdir deploy_guillermomedel
-          # Copy all content, including hidden files
+          # ✅ Use cp -a with a trailing dot to copy all files, including hidden ones like _nuxt.
           cp -a "$PUBLIC_DIR/." deploy_guillermomedel/
           echo "guillermomedel.com" > deploy_guillermomedel/CNAME
 
@@ -64,16 +69,21 @@ jobs:
         run: npm run generate
         working-directory: ./sites/relocatetosancarlos.com
         env:
-          # `NUXT_APP_BASE_URL` is removed as its default value is `/`
+          # ✅ Removed NUXT_APP_BASE_URL as Nuxt's default '/' is correct for a custom domain.
           POCKETBASE_URL: ${{ vars.POCKETBASE_URL }}
           WHATSAPP_NUMBER: ${{ vars.WHATSAPP_NUMBER }}
 
       - name: Prepare relocatetosancarlos deploy folder
         run: |
+          # ✅ Use a fixed output directory path as defined in nuxt.config.ts.
           OUT_DIR="./sites/relocatetosancarlos.com/.output-site"
           PUBLIC_DIR="$OUT_DIR/public"
+          
+          # ✅ Convert all filenames to lowercase to resolve case-sensitivity issues on the server.
+          find "$PUBLIC_DIR" -depth -exec rename -f 's/(.*)\/([^\/]*)/$1\/\L$2/' {} \;
+          
           mkdir deploy_relocatetosancarlos
-          # Copy all content, including hidden files
+          # ✅ Use cp -a with a trailing dot to copy all files, including hidden ones like _nuxt.
           cp -a "$PUBLIC_DIR/." deploy_relocatetosancarlos/
           echo "relocatetosancarlos.com" > deploy_relocatetosancarlos/CNAME
 
