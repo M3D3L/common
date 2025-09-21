@@ -8,9 +8,10 @@ export default defineNuxtConfig({
     buildAssetsDir: "_nuxt/",
   },
   nitro: {
-    prerender: {
-      failOnError: false
-    }
+    output: {
+      dir: `.output-${process.env.NUXT_APP_BASE_URL?.replace(/\W/g, '') || 'site'}`
+    },
+    prerender: { failOnError: false },
   },
 
   ssr: true,

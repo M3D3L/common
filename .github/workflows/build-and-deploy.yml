@@ -10,58 +10,42 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        # Define the list of sites to build and deploy
         site:
           - name: guillermomedel.com
             folder: guillermomedel.com
             target_folder: guillermomedel
             base_url: /guillermomedel/
+            domain: guillermomedel.com
           - name: relocatetosancarlos.com
             folder: relocatetosancarlos.com
             target_folder: relocatetosancarlos
             base_url: /relocatetosancarlos/
+            domain: relocatetosancarlos.com
     steps:
-      - name: Checkout 🛎️
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'npm'
+          cache: npm
           cache-dependency-path: './package-lock.json'
-      
-      - name: Install dependencies
-        run: npm ci
-      
-      - name: Build and Deploy ${{ matrix.site.name }} 🔧🚀
-        run: |
-          npm run generate
+
+      - run: npm ci
+
+      - name: Build ${{ matrix.site.name }}
+        run: npm run generate
         working-directory: ./sites/${{ matrix.site.folder }}
         env:
           NUXT_APP_BASE_URL: ${{ matrix.site.base_url }}
           POCKETBASE_URL: ${{ vars.POCKETBASE_URL }}
           WHATSAPP_NUMBER: ${{ vars.WHATSAPP_NUMBER }}
 
-      - name: Deploy to GitHub Pages 🚀
+      - name: Add CNAME for ${{ matrix.site.name }}
+        run: echo "${{ matrix.site.domain }}" > ./sites/${{ matrix.site.folder }}/.output-${{ matrix.site.target_folder }}/public/CNAME
+
+      - name: Deploy ${{ matrix.site.name }}
         uses: JamesIves/github-pages-deploy-action@v4
         with:
-          folder: ./sites/${{ matrix.site.folder }}/.output/public
+          folder: ./sites/${{ matrix.site.folder }}/.output-${{ matrix.site.target_folder }}/public
           target-folder: ${{ matrix.site.target_folder }}
           branch: gh-pages
           clean: false
-          
-      - name: Add .nojekyll to gh-pages root
-        if: matrix.site.name == 'guillermomedel.com'
-        run: |
-          touch .nojekyll
-        
-      - name: Deploy .nojekyll
-        if: matrix.site.name == 'guillermomedel.com'
-        uses: JamesIves/github-pages-deploy-action@v4
-        with:
-          folder: .
-          branch: gh-pages
-          clean: false
-          target-folder: ''
-          commit-message: "chore: add .nojekyll file"
