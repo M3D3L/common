@@ -37,7 +37,7 @@
 
 <script setup>
 import { layoutConfig } from "~/assets/configs/ui/layout";
-import { createSeoObject } from "@common/composables/useSeo";
+import { createSeoObject } from "@common/composables/useSeo.ts";
 
 const computedSeoData = computed(() => {
   return createSeoObject({
