@@ -3,6 +3,10 @@ import path from 'path';
 export default defineNuxtConfig({
   compatibilityDate: '2025-08-30',
   ssr: true,
+  app: {
+    baseURL: "/",
+    buildAssetsDir: "_nuxt/"
+  },
 
   devtools: { enabled: true },
   modules: [
