@@ -182,7 +182,7 @@
 /* Custom utilities mapping var() */
 @layer utilities {
   .container {
-    @apply px-4 mx-auto lg:px-16;
+    @apply max-w-6xl px-4 mx-auto lg:px-0;
   }
   /* text */
   .text-foreground {
