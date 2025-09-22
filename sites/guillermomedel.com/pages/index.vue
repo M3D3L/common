@@ -15,23 +15,24 @@
     />
 
     <!-- Projects Section -->
-  <TitleBlock
-      title="Projects"
-      description="A selection of projects I've worked on recently."
-      class="container pt-16 pb-8 mx-auto md:pt-24"
-    />
-    <SectionsProjects />
+    <div class="flex flex-col items-center justify-center w-full min-h-screen py-16">
+      <TextSectionTitle
+        class="container py-16"
+        title="Projects"
+        description="A selection of projects I've worked on recently."
+      />
+      <SectionsProjects />
+    </div>
 
-    <TitleBlock
-      title="Skills"
-      description="Full-stack developer focused on sleek digital experiences — a part-time drone pilot bringing both code and cameras to new heights. This unique combination allows for a diverse approach to problem-solving and project execution."
-      class="container pt-16 pb-8 mx-auto md:pt-24"
-    />
-    <SectionsSkills :content="layoutConfig.skillsData" />
-    <SectionsBlogColumn
-      class="my-24"
-      :showPagination="false"
-    />
+    <div class="flex flex-col items-center justify-center w-full min-h-screen py-16">
+      <TextSectionTitle
+        class="container py-16"
+        title="Skills"
+        description="Full-stack developer focused on sleek digital experiences — a part-time drone pilot bringing both code and cameras to new heights. This unique combination allows for a diverse approach to problem-solving and project execution."
+      />
+      <SectionsSkills :content="layoutConfig.skillsData" />
+    </div>
+    <SectionsBlogColumn class="my-24" :showPagination="false" />
   </div>
 </template>
 
