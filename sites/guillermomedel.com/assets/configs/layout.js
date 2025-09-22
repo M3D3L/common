@@ -16,7 +16,7 @@ export const seoDefaults = {
 export const contactInfo = {
     siteName: "GuillermoMedel.com",
     slogan: "Full-Stack Developer & Tech Enthusiast",
-    email: "brenda@gmail.com",
+    email: "guillermoantoniomedel@gmail.com",
     phone: "+52 (644) 194-2391",
 }
 

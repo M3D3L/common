@@ -148,18 +148,6 @@
     @apply text-primary;
   }
 
-  article code {
-    @apply bg-muted text-sm px-1 py-0.5 rounded font-mono;
-  }
-
-  pre {
-    @apply bg-foreground-30 text-foreground;
-  }
-
-  code {
-    @apply bg-background text-foreground;
-  }
-
   article img {
     @apply my-4 rounded-md;
   }
@@ -179,6 +167,14 @@
 
   article th {
     @apply bg-muted text-muted-foreground;
+  }
+
+  pre {
+    @apply bg-foreground-30;
+  }
+
+  code {
+    @apply bg-background text-foreground;
   }
 
   .card-styles {

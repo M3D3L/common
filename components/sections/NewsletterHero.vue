@@ -21,7 +21,7 @@
                         <label for="newsletter-consent" class="ml-2 text-sm">
                             I agree to receive emails and accept the
                             <modal title="Privacy Policy"
-                                description='`This Privacy Policy describes how Guillermo Medel ("I," "me," or "my") collects, uses, and discloses information when you visit my website, subscribe to my newsletter, or interact with my blog.`'
+                                description='`This Privacy Policy explains how information may be collected, used, and shared when you visit this website, subscribe to a newsletter, or interact with any blog content.`'
                                 :htmlContent="privacyConfig">
                                 <template #button>
                                     <span class="cursor-pointer text-primary-500 hover:underline">privacy policy</span>
