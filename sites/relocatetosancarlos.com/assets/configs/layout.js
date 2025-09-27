@@ -158,7 +158,7 @@ const categoryConfigs = {
     sectionSubTitle: "Enjoy Affordable Coastal Living",
     sectionTitle: "Live by the Beach in San Carlos, Sonora",
     type: "rentals",
-    subtitle:
+    subTitle:
       "Experience comfort, adventure, and affordability by renting in San Carlos, Mexico’s coastal paradise.",
     footerText:
       "San Carlos isn’t just a destination, it’s a lifestyle you can start now.",
@@ -184,7 +184,7 @@ const categoryConfigs = {
   },
   properties: {
     title: "Own Your Paradise Today",
-    subtitle:
+    subTitle:
       "Purchasing property in San Carlos is a smart investment and your gateway to an ideal coastal lifestyle.",
     sectionTitle: "Invest in Real Estate in San Carlos, Sonora",
     sectionSubTitle: "Secure Your Dream Coastal Home",
@@ -213,7 +213,7 @@ const categoryConfigs = {
   },
   lots: {
     title: "Secure Your Piece of Paradise",
-    subtitle:
+    subTitle:
       "Buying land in San Carlos gives you the freedom to design your ideal home on the perfect canvas.",
     sectionTitle: "Build Your Dream Home in San Carlos, Sonora",
     sectionSubTitle: "Prime Coastal Land Available Now",

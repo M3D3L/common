@@ -169,6 +169,18 @@
     @apply bg-muted text-muted-foreground;
   }
 
+  video {
+    filter: brightness(1) saturate(1.5) !important;
+  }
+
+  button:hover {
+    @apply hover:opacity-80 transition-default !important;
+  }
+
+  .transition-default {
+    @apply transition-all duration-300 ease-in-out !important;
+  }
+
   .card-styles {
     @apply transition-all duration-300 ease-in-out transform border border-transparent rounded-lg shadow-md hover:shadow-xl hover:border-primary;
   }
@@ -255,21 +267,45 @@
 
   /* opacity variants */
   .bg-foreground-30 {
-    background-color: color-mix(in srgb, var(--foreground) 30%, transparent) !important;
+    background-color: color-mix(
+      in srgb,
+      var(--foreground) 30%,
+      transparent
+    ) !important;
   }
   .bg-foreground-50 {
-    background-color: color-mix(in srgb, var(--foreground) 50%, transparent) !important;
+    background-color: color-mix(
+      in srgb,
+      var(--foreground) 50%,
+      transparent
+    ) !important;
   }
   .bg-card-90 {
-    background-color: color-mix(in srgb, var(--card) 90%, transparent) !important;
+    background-color: color-mix(
+      in srgb,
+      var(--card) 90%,
+      transparent
+    ) !important;
   }
   .bg-card-95 {
-    background-color: color-mix(in srgb, var(--card) 95%, transparent) !important;
+    background-color: color-mix(
+      in srgb,
+      var(--card) 95%,
+      transparent
+    ) !important;
   }
   .hover\:bg-card-95:hover {
-    background-color: color-mix(in srgb, var(--card) 95%, transparent) !important;
+    background-color: color-mix(
+      in srgb,
+      var(--card) 95%,
+      transparent
+    ) !important;
   }
   .hover\:border-primary-40:hover {
-    border-color: color-mix(in srgb, var(--primary) 40%, transparent) !important;
+    border-color: color-mix(
+      in srgb,
+      var(--primary) 40%,
+      transparent
+    ) !important;
   }
 }

@@ -2,12 +2,12 @@
   <Card class="w-full p-6 space-y-4">
     <CardHeader class="p-0 space-y-2">
       <CardTitle class="text-2xl font-bold tracking-tight text-primary-800">
-        <span class="text-transparent bg-clip-text bg-gradient-to-r from-primary to-primary/70">
+        <span class="text-primary">
           {{ title }}
         </span>
       </CardTitle>
       <CardDescription class="text-base text-muted-foreground">
-        {{ subtitle }}
+        {{ subTitle }}
       </CardDescription>
     </CardHeader>
 
@@ -47,7 +47,7 @@ export interface BenefitItem {
 
 interface Props {
   title: string;
-  subtitle: string;
+  subTitle: string;
   footerText: string;
   benefits: BenefitItem[];
 }

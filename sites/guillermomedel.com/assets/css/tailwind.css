@@ -201,7 +201,6 @@
   button:hover {
     @apply hover:opacity-80 transition-default !important;
   }
-  
 
   .transition-default {
     @apply transition-all duration-300 ease-in-out !important;
