@@ -8,7 +8,7 @@
       <SectionTitle :title :h1="true" />
       <main class="relative z-10 flex items-center w-full h-full md:mt-8 lg:-mt-16">  
         <div
-          class="flex flex-col-reverse items-center w-full gap-12 md:flex-row md:justify-between"
+          class="flex flex-col-reverse items-center w-full gap-12 md:gap-4 md:flex-row md:justify-between"
         >
           <!-- Left Column -->
 
@@ -23,7 +23,7 @@
               },
             }"
           >
-            <Card class="pt-6" role="article">
+            <Card class="pt-6 mt-4" role="article">
               <CardContent class="grid gap-6">
                 <h2
                   class="text-2xl font-bold tracking-tight text-primary-800 md:text-3xl"

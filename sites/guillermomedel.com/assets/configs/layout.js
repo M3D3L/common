@@ -36,7 +36,7 @@ export const recentProjects = {
   title: "Featured Nuxt & Modernization Projects",
   // Adjusted description to focus on your specific expertise (Nuxt/web development)
   description:
-    "Here’s a look at projects where I provided <span class=\"font-bold\">Nuxt and web development expertise</span> and was the primary developer for the <span class=\"font-bold\">modernization</span> and launch of platforms for international publishers and digital brands.",
+    'Here’s a look at projects where I provided <span class="font-bold">Nuxt and web development expertise</span> and was the primary developer for the <span class="font-bold">modernization</span> and launch of platforms for international publishers and digital brands.',
   image: "/images/projects.webp",
   link: "#portfolio",
   items: [
@@ -45,60 +45,60 @@ export const recentProjects = {
       title: "Law.com Platform Modernization & Redesign",
       client: "Law.com",
       description:
-        "I implemented the development and modernization of Law.com, delivering a significantly faster, more accessible user experience for one of the top legal news platforms.",
+        "Developed the homepage redesign using Nuxt.js and Tailwind CSS for performance.",
       cover_image: "/images/law.webp",
       slug: "https://www.law.com",
-      tags: ["Performance Optimization", "CMS Development", "Nuxt"],
+      tags: ["Performance Optimization", "Nuxt.js", "Front-End Coding"],
     },
     {
       id: 2,
       title: "China Law & Practice Tech Stack Migration",
       client: "China Law & Practice",
       description:
-        "I successfully executed the migration and rebuilt the digital platform, resulting in improved content delivery speed and overall system efficiency.",
+        "Built and maintained the platform with Nuxt.js and GraphQL for scalability.",
       cover_image: "/images/clp.webp",
       slug: "https://www.chinalawandpractice.com/",
-      tags: ["Tech Migration", "Content Development"],
+      tags: ["Tech Migration", "GraphQL", "Nuxt.js"],
     },
     {
       id: 3,
       title: "Law Journal Newsletters System Upgrade",
       client: "ALM Law Journals",
       description:
-        "I rebuilt the newsletters platform from the ground up, ensuring better subscription handling and compliance with modern web standards.",
+        "Developed the platform and implemented testing with Cypress and Storybook.",
       cover_image: "/images/ljn.webp",
       slug: "https://www.lawjournalnewsletters.com/",
-      tags: ["Subscriptions", "System Rebuild"],
+      tags: ["Cypress Testing", "System Rebuild", "Front-end Coding"],
     },
     {
       id: 4,
       title: "ThinkAdvisor Full Redesign & Implementation",
       client: "ThinkAdvisor",
       description:
-        "I consulted on the UX and personally executed the complete ThinkAdvisor site redesign, focusing on clean navigation and maximizing reader engagement.",
+        "Developed high-performance apps using Nuxt.js, ensuring SEO and accessibility.",
       cover_image: "/images/thinkadvisor.webp",
       slug: "https://www.thinkadvisor.com/",
-      tags: ["Financial Media", "UX Implementation"],
+      tags: ["UX Implementation", "Nuxt.js", "SEO"],
     },
     {
       id: 5,
       title: "Globest Platform Development & Data Tools",
       client: "Globest",
       description:
-        "I modernized Globest’s real estate platform, developing new tools that make property data easier to visualize and browse.",
+        "Integrated GraphQL for efficient data fetching and system maintainability.",
       cover_image: "/images/globest.webp",
       slug: "https://www.globest.com/",
-      tags: ["Real Estate Tech", "Data Visualization"],
+      tags: ["Real Estate Tech", "GraphQL", "Performance"],
     },
     {
       id: 6,
       title: "Consulting Magazine Website Overhaul",
       client: "Consulting Magazine",
       description:
-        "I implemented the website overhaul, delivering better layouts, improved readability, and integrated advanced analytics.",
+        "Developed the platform with Nuxt.js and Tailwind CSS in an agile environment.",
       cover_image: "/images/consultingmag.webp",
       slug: "https://www.consultingmag.com/",
-      tags: ["Professional Services", "Analytics Integration"],
+      tags: ["Professional Services", "Agile Workflows", "Nuxt.js"],
     },
   ],
 };
@@ -108,7 +108,7 @@ export const skillsSection = {
   title: "Expertise: Nuxt, Full-Stack Development & Tools",
   // Description: Highlights Nuxt expertise and full-stack development
   description:
-    "I work as a <span class=\"font-bold\">remote Nuxt Specialist and Full-Stack Developer</span>, specializing in building fast, scalable, and clean digital solutions. My native English fluency allows for seamless collaboration with U.S. and international teams.",
+    'I work as a <span class="font-bold">remote Nuxt Specialist and Full-Stack Developer</span>, specializing in building fast, scalable, and clean digital solutions. My native English fluency allows for seamless collaboration with U.S. and international teams.',
   skills: [
     // Frontend Skills
     {
@@ -265,7 +265,8 @@ export const heroSection = {
       link: "#portfolio",
     },
   ],
-  imageAlt: "Illustration of Guillermo Medel, remote Nuxt specialist and full-stack developer",
+  imageAlt:
+    "Illustration of Guillermo Medel, remote Nuxt specialist and full-stack developer",
 };
 
 // --- Blog Section ---

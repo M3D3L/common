@@ -5,17 +5,19 @@
     </div> -->
     <the-navbar :links="siteMap" :siteName="contactInfo?.siteName" class="fixed top-0 left-0 right-0 z-50 w-full" />
     <Modal />
-    <main class="w-full">
-      <slot />
-    </main>
-    <SectionsBlogColumn v-if="!isOnBlogPage" v-bind="blogSection" class="my-24" :showPagination="false" />
-    <SectionsContact :contactInfo :social-links="socials" v-bind="contactSection" />
+    <div>
+      <main class="w-full">
+        <slot />
+      </main>
+      <SectionsBlogColumn v-if="!isOnBlogPage" v-bind="blogSection" class="my-24" :showPagination="false" />
+      <SectionsContact :contactInfo :social-links="socials" v-bind="contactSection" />
+    </div>
     <the-footer :links="siteMap" type="posts" :contactInfo :socials />
   </div>
 </template>
 
 <script setup lang="ts">
-import { contactInfo, siteMap, contactSection, socials, blogSection  } from '~/assets/configs/layout'
+import { contactInfo, siteMap, contactSection, socials, blogSection } from '~/assets/configs/layout'
 import Modal from '@common/components/ui/modal/Modal.vue';
 
 const route = useRoute()
