@@ -46,7 +46,7 @@
                 </motion.p>
 
                 <motion.div
-                  class="flex flex-row gap-3"
+                  class="flex flex-row gap-3 w-full lg:w-4/5"
                   :variants="{
                     hidden: { opacity: 0, y: 10 },
                     visible: {
@@ -61,7 +61,7 @@
                     :key="index"
                     @click="toggleNav(button.link)"
                     variant="default"
-                    class="w-1/2 text-center md:w-1/3"
+                    class="w-1/2 text-center"
                     :aria-label="button.title + ' button'"
                   >
                     <span class="relative z-10">{{ button.title }}</span>
