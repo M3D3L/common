@@ -4,102 +4,118 @@ import {
   LinkedinLogoIcon,
 } from "@radix-icons/vue";
 
+// --- SEO Defaults ---
 export const seoDefaults = {
-    home: {
-        title: "Guillermo Medel | Full-Stack Developer & Tech Enthusiast",
-        description: `Guillermo Medel is a Full-Stack Developer & Tech Enthusiast based in San Carlos, Sonora. Discover his latest projects, insights, and expertise in web development and technology.`,
-        keywords: "Guillermo Medel, Full-Stack Developer, Tech Enthusiast, San Carlos, web development, programming, technology",
-        image: "/images/block-me.png",
-    },
-}
+  home: {
+    // Title: Positions you as the expert in Nuxt first, then as a Full-Stack developer
+    title:
+      "Guillermo Medel | Nuxt Specialist & Full-Stack Developer | Remote Expert",
 
+    // Description: Highlights the Nuxt expertise and the full-stack capability
+    description: `I'm Guillermo Medel, a <span class="font-bold">Nuxt Specialist</span> and full-stack developer working remotely with international clients. I deliver high-performance web solutions, focusing on Nuxt/Vue, Go, and Node.js modernization.`,
+
+    // Keywords: Includes both "specialist" and "connoisseur" intent for SEO benefit
+    keywords:
+      "Nuxt specialist, Nuxt expert, Vue.js specialist, remote full-stack developer, Nuxt freelance, Go backend, Node.js modernization, web application delivery, high-performance web, freelance developer, native English speaker, Nuxt connoisseur",
+
+    image: "/images/block-me.png",
+  },
+};
+
+// --- Contact Info ---
 export const contactInfo = {
-    siteName: "GuillermoMedel.com",
-    slogan: "Full-Stack Developer & Tech Enthusiast",
-    email: "guillermoantoniomedel@gmail.com",
-    phone: "+52 (644) 194-2391",
-}
+  siteName: "GuillermoMedel.com",
+  // Slogan: Reinforces the expert development and remote status
+  slogan: "Nuxt Specialist & Full-Stack Developer | Remote",
+  email: "guillermoantoniomedel@gmail.com",
+  phone: "+52 (644) 194-2391",
+};
 
+// --- Recent Projects ---
 export const recentProjects = {
-  title: "Projects",
-  description: "A selection of projects I've worked on recently.",
+  title: "Featured Nuxt & Modernization Projects",
+  // Adjusted description to focus on your specific expertise (Nuxt/web development)
+  description:
+    "Here’s a look at projects where I provided <span class=\"font-bold\">Nuxt and web development expertise</span> and was the primary developer for the <span class=\"font-bold\">modernization</span> and launch of platforms for international publishers and digital brands.",
   image: "/images/projects.webp",
   link: "#portfolio",
   items: [
     {
       id: 1,
-      title: "Law.com Redesign",
+      title: "Law.com Platform Modernization & Redesign",
       client: "Law.com",
       description:
-        "Complete redesign of the leading legal news platform with improved UX and performance.",
+        "I implemented the development and modernization of Law.com, delivering a significantly faster, more accessible user experience for one of the top legal news platforms.",
       cover_image: "/images/law.webp",
       slug: "https://www.law.com",
-      tags: ["Redesign", "UX", "CMS"],
-      // "tech": ["Vue.js", "Nuxt", "Tailwind CSS", "Storyblok", "Node.js"]
+      tags: ["Performance Optimization", "CMS Development", "Nuxt"],
     },
     {
       id: 2,
-      title: "China Law & Practice Conversion",
+      title: "China Law & Practice Tech Stack Migration",
       client: "China Law & Practice",
       description:
-        "Migration and modernization of the legal publication platform with improved content delivery.",
+        "I successfully executed the migration and rebuilt the digital platform, resulting in improved content delivery speed and overall system efficiency.",
       cover_image: "/images/clp.webp",
       slug: "https://www.chinalawandpractice.com/",
-      tags: ["Migration", "Content Platform"],
+      tags: ["Tech Migration", "Content Development"],
     },
     {
       id: 3,
-      title: "Law Journal Newsletters Conversion",
+      title: "Law Journal Newsletters System Upgrade",
       client: "ALM Law Journals",
       description:
-        "Conversion of legal newsletter platform to modern web standards with improved subscription management.",
+        "I rebuilt the newsletters platform from the ground up, ensuring better subscription handling and compliance with modern web standards.",
       cover_image: "/images/ljn.webp",
       slug: "https://www.lawjournalnewsletters.com/",
-      tags: ["Newsletters", "Subscription"],
+      tags: ["Subscriptions", "System Rebuild"],
     },
     {
       id: 4,
-      title: "ThinkAdvisor Redesign",
+      title: "ThinkAdvisor Full Redesign & Implementation",
       client: "ThinkAdvisor",
       description:
-        "Redesign of financial advisory news platform with enhanced content discovery and reader engagement.",
+        "I consulted on the UX and personally executed the complete ThinkAdvisor site redesign, focusing on clean navigation and maximizing reader engagement.",
       cover_image: "/images/thinkadvisor.webp",
       slug: "https://www.thinkadvisor.com/",
-      tags: ["Redesign", "Financial Media"],
+      tags: ["Financial Media", "UX Implementation"],
     },
     {
       id: 5,
-      title: "Globest Redesign",
+      title: "Globest Platform Development & Data Tools",
       client: "Globest",
       description:
-        "Modernization of commercial real estate news platform with improved property market data visualization.",
+        "I modernized Globest’s real estate platform, developing new tools that make property data easier to visualize and browse.",
       cover_image: "/images/globest.webp",
       slug: "https://www.globest.com/",
-      tags: ["Redesign", "Real Estate"],
+      tags: ["Real Estate Tech", "Data Visualization"],
     },
     {
       id: 6,
-      title: "Consulting Magazine Redesign",
+      title: "Consulting Magazine Website Overhaul",
       client: "Consulting Magazine",
       description:
-        "Overhaul of professional services industry publication with enhanced article presentation and analytics.",
+        "I implemented the website overhaul, delivering better layouts, improved readability, and integrated advanced analytics.",
       cover_image: "/images/consultingmag.webp",
       slug: "https://www.consultingmag.com/",
-      tags: ["Redesign", "Professional Services"],
+      tags: ["Professional Services", "Analytics Integration"],
     },
   ],
 };
 
+// --- Skills Section ---
 export const skillsSection = {
-  title: "My Skills",
+  title: "Expertise: Nuxt, Full-Stack Development & Tools",
+  // Description: Highlights Nuxt expertise and full-stack development
   description:
-    "Full-stack developer focused on sleek digital experiences — a part-time drone pilot bringing both code and cameras to new heights. This unique combination allows for a diverse approach to problem-solving and project execution.",
+    "I work as a <span class=\"font-bold\">remote Nuxt Specialist and Full-Stack Developer</span>, specializing in building fast, scalable, and clean digital solutions. My native English fluency allows for seamless collaboration with U.S. and international teams.",
   skills: [
     // Frontend Skills
     {
       title: "Nuxt 3",
+      // Emphasize expertise
       description:
-        "Building modern web applications with Nuxt 3, a powerful framework for Vue.js. I leverage its features to create dynamic and performant user experiences.",
+        "As a Nuxt Specialist, I focus on building and optimizing modern web applications for performance, advanced SEO, and dynamic user interfaces.",
       icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/vuejs/vuejs-original.svg",
       link: "https://nuxtjs.org/",
       category: "frontend",
@@ -108,7 +124,7 @@ export const skillsSection = {
     {
       title: "Pinia",
       description:
-        "Managing state efficiently with Pinia, the modern and intuitive store for Vue.js applications.",
+        "Managing complex application state effectively with Pinia, the modern, type-safe store for large-scale Vue.js projects.",
       icon: "https://pinia.vuejs.org/logo.svg",
       link: "https://pinia.vuejs.org/",
       category: "frontend",
@@ -117,7 +133,7 @@ export const skillsSection = {
     {
       title: "Tailwind CSS",
       description:
-        "Crafting beautiful and responsive designs using Tailwind CSS, a utility-first CSS framework. I utilize its classes to build custom styles efficiently.",
+        "Rapidly building and customizing responsive, utility-first UI designs using the Tailwind CSS framework.",
       icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/tailwindcss/tailwindcss-original.svg",
       link: "https://tailwindcss.com/",
       category: "frontend",
@@ -126,7 +142,7 @@ export const skillsSection = {
     {
       title: "React Native",
       description:
-        "Building cross-platform mobile applications with React Native. Experienced in creating native-like user interfaces for iOS and Android.",
+        "Developing and deploying high-quality cross-platform mobile applications for both iOS and Android.",
       icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/react/react-original.svg",
       link: "https://reactnative.dev/",
       category: "frontend",
@@ -135,7 +151,7 @@ export const skillsSection = {
     {
       title: "TypeScript",
       description:
-        "Building type-safe applications with TypeScript to improve code quality and developer experience.",
+        "Using TypeScript to write robust, scalable, and maintainable application code with improved development tooling.",
       icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/typescript/typescript-original.svg",
       link: "https://www.typescriptlang.org/",
       category: "frontend",
@@ -146,16 +162,16 @@ export const skillsSection = {
     {
       title: "GraphQL",
       description:
-        "Querying APIs efficiently using GraphQL. Experienced with schema design, resolvers, and client-side integration.",
+        "Developing efficient APIs and optimizing data fetching using GraphQL for both new and legacy systems.",
       icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/graphql/graphql-plain.svg",
       link: "https://graphql.org/",
       category: "backend",
       proficiency: "advanced",
     },
     {
-      title: "Go",
+      title: "Go (Golang)",
       description:
-        "Developing efficient and scalable backend services with Go. Experienced in building robust APIs and concurrent applications.",
+        "Building fast, concurrent, and highly reliable backend services and microservices with the Go language.",
       icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/go/go-original.svg",
       link: "https://go.dev/",
       category: "backend",
@@ -164,16 +180,16 @@ export const skillsSection = {
     {
       title: "SQLite",
       description:
-        "Using SQLite for lightweight, embedded database solutions. Useful for prototyping and local-first applications.",
+        "Using SQLite for lightweight, embedded database solutions, excellent for fast prototyping and local data management.",
       icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/sqlite/sqlite-original.svg",
       link: "https://sqlite.org/",
       category: "backend",
       proficiency: "intermediate",
     },
     {
-      title: "Node.js",
+      title: "Node.js (APIs & Services)",
       description:
-        "Creating scalable server-side applications with Node.js. Experience with Express and other frameworks.",
+        "Creating scalable server-side applications and high-throughput REST/GraphQL APIs with Node.js.",
       icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nodejs/nodejs-original.svg",
       link: "https://nodejs.org/",
       category: "backend",
@@ -182,36 +198,36 @@ export const skillsSection = {
 
     // DevOps Skills
     {
-      title: "Docker",
+      title: "Docker & Containerization",
       description:
-        "Containerizing applications with Docker for consistent development and deployment environments.",
+        "Implementing Docker for consistent, portable development and deployment environments.",
       icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/docker/docker-original.svg",
       link: "https://www.docker.com/",
       category: "devops",
-      proficiency: "beginner",
+      proficiency: "intermediate",
     },
     {
-      title: "GitHub",
+      title: "GitHub & CI/CD",
       description:
-        "Utilizing GitHub for version control, collaboration, and CI/CD workflows.",
+        "Utilizing GitHub for advanced version control, collaborative workflows, and configuring CI/CD pipelines.",
       icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/github/github-original.svg",
       link: "https://github.com/",
       category: "devops",
       proficiency: "advanced",
     },
     {
-      title: "Linux",
+      title: "Linux & Server Management",
       description:
-        "Using the Linux operating system for development, server management, and command-line proficiency.",
+        "Experienced in Linux server deployment, environment setup, and command-line proficiency.",
       icon: "https://upload.wikimedia.org/wikipedia/commons/a/af/Tux.png",
       link: "https://www.linux.org/",
       category: "operating system",
       proficiency: "intermediate",
     },
     {
-      title: "Cypress",
+      title: "Cypress (E2E Testing)",
       description:
-        "Writing and running end-to-end tests for web applications using Cypress.",
+        "Writing and implementing end-to-end (E2E) testing suites for web applications using Cypress.",
       icon: "https://docs.cypress.io/img/logo/cypress-logo-circle-dark.png",
       link: "https://www.cypress.io/",
       category: "devops",
@@ -220,7 +236,7 @@ export const skillsSection = {
     {
       title: "Google Cloud Platform",
       description:
-        "Leveraging Google Cloud Platform services for hosting, deployment, and scalable infrastructure.",
+        "Leveraging GCP services for hosting, scalable infrastructure, and efficient deployment pipelines.",
       icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/googlecloud/googlecloud-original.svg",
       link: "https://cloud.google.com/",
       category: "devops",
@@ -231,34 +247,40 @@ export const skillsSection = {
     "https://videos.pexels.com/video-files/1456685/1456685-hd_1920_1080_30fps.mp4",
 };
 
-// Hero Section
+// --- Hero Section ---
 export const heroSection = {
   id: "hero",
-  title: "Guillermo Medel | Full Stack Developer | Digital Experiences",
-  subTitle: "Full-Stack Developer & Tech Enthusiast",
-  description: `Based in San Carlos, Sonora, I specialize in creating dynamic and responsive web applications. Explore my portfolio to see how I can help bring your ideas to life.`,
+  // Title: Nuxt focus
+  title: "Guillermo Medel | Nuxt Specialist & Full-Stack Developer",
+  subTitle: "High-Performance Nuxt/Vue and Full-Stack Delivery",
+  // Description: Highlights Nuxt expertise and core tech
+  description: `I’m Guillermo Medel, a <span class="font-bold">Nuxt Specialist</span> and full-stack developer from Sonora, Mexico. I partner with international clients to build and modernize high-performance web applications using <span class="font-bold">Nuxt, Vue, Go, and Node.js.</span>`,
   buttons: [
     {
-      title: "Get in Touch",
+      title: "Hire A Nuxt Specialist", // Action-oriented button
       link: "#contact",
     },
     {
-      title: "See My Projects",
+      title: "View Recent Projects",
       link: "#portfolio",
     },
   ],
-  imageAlt: "A block person version of Guillermo Medel - Full-Stack Developer",
+  imageAlt: "Illustration of Guillermo Medel, remote Nuxt specialist and full-stack developer",
 };
 
-// Blog Section
+// --- Blog Section ---
 export const blogSection = {
-  title: "Learn the latest tech trends and tips",
-  description: `Explore articles on web <span class="!text-accent">development</span>, programming, and tech <span class="text-accent">insights</span> to stay ahead in the ever-evolving digital landscape.`,
-}
-// Contact Section
+  title: "Modern Web Development & Nuxt Insights",
+  // Description: Focuses on Nuxt best practices and related technologies
+  description: `I share practical guides, code tips, and insights on <span class="!text-accent">Nuxt best practices</span>, <span class="!text-accent">performance optimization</span>, and the <span class="!text-accent">Nuxt/Go/Node stack</span>.`,
+};
+
+// --- Contact Section ---
 export const contactSection = {
-  title: "Get in Touch with Guillermo",
-  description: `Have questions or need assistance? I'm here to help! Reach out via email or phone, and let's connect.`,
+  // Title: Focuses on working with the expert
+  title: "Work With Guillermo Medel (Nuxt Specialist)",
+  // Description: Clear pitch focusing on expertise
+  description: `I’m a remote Nuxt Specialist fluent in English and Spanish. Let’s connect to discuss the technical delivery and modernization of your next project.`,
   formAction: "https://formsubmit.co/7cbfcf8a8143c9f8708006416b2a0aae",
   contactEmail: "guillermoantoniomedel@gmail.com",
   contactPhone: "+52 (644) 194-2391",
@@ -271,12 +293,13 @@ export const contactSection = {
   imgSrc: "",
 };
 
+// --- Site Map ---
 export const siteMap = [
   { label: "Blog", href: "/blog" },
-  { label: "Contact Me", href: "/#contact" },
+  { label: "Contact", href: "/#contact" },
 ];
 
-// Socials Icons
+// --- Socials ---
 export const socials = [
   {
     icon: LinkedinLogoIcon,

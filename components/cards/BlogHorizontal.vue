@@ -27,7 +27,7 @@
 
         <!-- Image -->
         <div v-if="coverImage"
-          class="relative md:w-1/3 w-full aspect-[16/9] card-styles overflow-hidden min-h-[160px]"
+          class="relative md:w-2/5 aspect-[16/9] card-styles my-auto overflow-hidden"
         >
           <img v-if="imageUrl"
             :src="imageUrl"

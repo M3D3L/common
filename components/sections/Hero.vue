@@ -41,8 +41,8 @@
                       transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] },
                     },
                   }"
+                  v-html="description"
                 >
-                  {{ description }}
                 </motion.p>
 
                 <motion.div

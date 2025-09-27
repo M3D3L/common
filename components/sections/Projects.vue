@@ -1,6 +1,6 @@
 <template>
-  <motion.div
-    class="container grid w-full grid-cols-1 gap-6 mx-auto mt-12 sm:grid-cols-2 lg:grid-cols-3"
+  <motion.div id="portfolio"
+    class="container grid w-full grid-cols-1 gap-6 mx-auto mt-12 sm:grid-cols-2 lg:grid-cols-3 scroll-mt-96"
     initial="hidden"
     whileInView="visible"
     :variants="{

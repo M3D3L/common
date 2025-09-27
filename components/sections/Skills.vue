@@ -1,5 +1,5 @@
 <template>
-  <div class="container flex flex-col w-full gap-8 mx-auto md:flex-row">
+  <div id="skills" class="container flex flex-col w-full gap-8 mx-auto md:flex-row">
     <motion.div
       class="w-full"
       :variants="{
