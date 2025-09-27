@@ -29,7 +29,6 @@
       />
       <SectionsSkills v-bind="skillsSection" />
     </div>
-    <SectionsBlogColumn class="my-24" :showPagination="false" />
   </div>
 </template>
 

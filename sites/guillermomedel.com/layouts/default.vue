@@ -8,14 +8,22 @@
     <main class="w-full">
       <slot />
     </main>
+    <SectionsBlogColumn v-if="!isOnBlogPage" v-bind="blogSection" class="my-24" :showPagination="false" />
     <SectionsContact :contactInfo :social-links="socials" v-bind="contactSection" />
     <the-footer :links="siteMap" type="posts" :contactInfo :socials />
   </div>
 </template>
 
 <script setup lang="ts">
-import { contactInfo, siteMap, contactSection, socials  } from '~/assets/configs/layout'
+import { contactInfo, siteMap, contactSection, socials, blogSection  } from '~/assets/configs/layout'
 import Modal from '@common/components/ui/modal/Modal.vue';
+
+const route = useRoute()
+
+const isOnBlogPage = computed(() => {
+  const path = route.path.replace(/\/$/, '')
+  return path === '/blog'
+})
 
 </script>
 

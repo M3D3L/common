@@ -15,9 +15,7 @@
     </div>
 
 
-    <p v-if="description" class="max-w-3xl text-lg text-foreground/70">
-      {{ description }}
-    </p>
+    <p v-if="description" v-html="description" class="max-w-3xl text-lg text-foreground/70"></p>
   </div>
 </template>
 

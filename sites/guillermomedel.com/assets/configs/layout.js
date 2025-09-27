@@ -253,9 +253,8 @@ export const heroSection = {
 // Blog Section
 export const blogSection = {
   title: "Learn the latest tech trends and tips",
-  description: `Explore articles on web development, programming, and tech insights to stay ahead in the ever-evolving digital landscape.`,
-};
-
+  description: `Explore articles on web <span class="!text-accent">development</span>, programming, and tech <span class="text-accent">insights</span> to stay ahead in the ever-evolving digital landscape.`,
+}
 // Contact Section
 export const contactSection = {
   title: "Get in Touch with Guillermo",
