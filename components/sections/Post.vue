@@ -291,12 +291,22 @@ const computedSeoData = computed(() => {
       return createSeoObject({
          title: 'Blog Post',
          summary: 'A detailed blog post',
+         imageUri: undefined,
+         pubDate: undefined,
+         byline: '',
       })
    }
 
   return createSeoObject({
     title: post.value?.title,
-    summary: post.value?.description
+    summary: post.value?.description,
+    imageUri: post.value?.cover_image
+      ? `${config.public.pocketbaseUrl}api/files/${post.value.collectionId}/${post.value.id}/${post.value.cover_image}`
+      : undefined,
+    pubDate: post.value?.created,
+    byline: post.value?.expand?.author?.username || '',
+    tags: post.value?.tags || [],
+    siteName: 'Blog',
   })
 });
 </script>

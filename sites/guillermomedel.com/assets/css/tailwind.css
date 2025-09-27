@@ -59,6 +59,7 @@
 
   html {
     font-family: var(--font-body) !important;
+    @apply scroll-smooth;
   }
 
   h1,
@@ -179,8 +180,30 @@
     @apply bg-background text-foreground;
   }
 
+  /* dark mode styles */
+  .dark video {
+    filter: brightness(0.75) saturate(1) !important;
+  }
+
+  .hero-section h1 {
+    @apply text-white drop-shadow-lg !important;
+  }
+
+  .dark .hero-section h1 {
+    @apply text-muted-foreground drop-shadow-lg !important;
+  }
+
+  /* light mode styles */
+  video {
+    filter: brightness(1) saturate(1.5) !important;
+  }
+
+  .transition-default {
+    @apply transition-all duration-300 ease-in-out !important;
+  }
+
   .card-styles {
-    @apply transition-all duration-300 ease-in-out transform border border-transparent rounded-lg shadow-md hover:shadow-xl hover:border-primary;
+    @apply transition-default ease-in-out transform border border-transparent rounded-lg shadow-md hover:shadow-xl hover:border-primary;
   }
 
   .sticky-position {

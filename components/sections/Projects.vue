@@ -12,9 +12,9 @@
     }"
   >
     <CardsBaseCard
-      v-if="projectsData"
+      v-if="items"
       :class="{ 'md:block hidden': index > 2 }"
-      v-for="(project, index) in projectsData"
+      v-for="(project, index) in items"
       :key="project.id"
       :image="project.cover_image"
       :removeSpacing="false"
@@ -25,29 +25,30 @@
 
 <script setup lang="ts">
 import { motion } from "motion-v";
-import BlockMe3 from "/images/block-me-3.webp";
-import { projectsData } from "~/assets/configs/cards/projects";
 
 // Props
-const props = defineProps({
-  content: {
-    type: Object,
-    required: false,
-    default: () => ({
-      title: "My Portfolio",
-      subtitle: "Selected projects I've worked on for clients and companies",
-      video:
-        "https://videos.pexels.com/video-files/2344545/2344545-uhd_2560_1440_25fps.mp4",
-    }),
-  },
-  title: {
-    type: String,
-    default: "My Projects",
-  },
-  description: {
-    type: String,
-    default:
-      "A selection of projects I have worked on, showcasing my skills and expertise.",
-  },
-});
+interface Project {
+  id: number;
+  title: string;
+  sub_title: string;
+  description: string;
+  cover_image?: string;
+  slug?: string;
+  caseStudy?: string;
+  tags?: string[];
+  tech?: string[];
+  collectionId?: string;
+  [key: string]: any;
+}
+
+const props = defineProps<{
+  content?: {
+    title?: string;
+    subtitle?: string;
+    video?: string;
+  };
+  title?: string;
+  description?: string;
+  items?: Project[];
+}>();
 </script>

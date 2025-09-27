@@ -18,7 +18,7 @@
         <CardContent>
           <div class="grid w-full gap-4 mt-8 space-y-2 md:grid-cols-2 md:mt-0">
             <motion.div
-              v-for="(skill, index) in content.skills"
+              v-for="(skill, index) in skills"
               :key="'visual-' + index"
               class="flex flex-row items-center gap-4 transition-all rounded-lg md:p-4 group"
               :initial="{ opacity: 0, x: 0 }"
@@ -58,7 +58,7 @@
                   }"
                 >
                   <motion.div
-                    class="h-full bg-gradient-to-r from-primary to-primary/60"
+                    class="h-full bg-gradient-to-r from-[var(--accent)] to-primary/60"
                     :initial="{ width: 0 }"
                     :whileInView="{
                       width: getProficiencyWidth(skill.proficiency),
@@ -83,20 +83,21 @@
 <script setup lang="ts">
 import { motion } from "motion-v";
 import { Card, CardContent } from "@/components/ui/card";
-import BlockMe2 from "/images/block-me-2.webp";
 
 // Props
 const props = defineProps({
-  content: {
-    type: Object,
+  title: {
+    type: String,
     required: true,
-    default: () => ({
-      title: "",
-      description: "",
-      skills: [],
-      video: "",
-    }),
   },
+  description: {
+    type: String,
+    required: false,
+  },
+  skills: {
+    type: Array,
+    required: true,
+  }
 });
 
 // Convert proficiency text to percentage width

@@ -1,6 +1,6 @@
 // useComments.ts
-import type { RecordModel } from 'pocketbase';
-import usePocketBase from './usePocketbase';
+import type { RecordModel } from "pocketbase";
+import usePocketBase from "./usePocketbase";
 
 interface Author {
   id: string;
@@ -28,7 +28,10 @@ interface Comment {
 export default function useComments() {
   const pb = usePocketBase();
 
-  async function createItem(collection: string, data: any): Promise<RecordModel> {
+  async function createItem(
+    collection: string,
+    data: any
+  ): Promise<RecordModel> {
     try {
       return await pb.collection(collection).create(data);
     } catch (error) {
@@ -37,7 +40,11 @@ export default function useComments() {
     }
   }
 
-  async function updateItem(collection: string, id: string, data: any): Promise<RecordModel> {
+  async function updateItem(
+    collection: string,
+    id: string,
+    data: any
+  ): Promise<RecordModel> {
     try {
       return await pb.collection(collection).update(id, data);
     } catch (error) {
@@ -55,76 +62,21 @@ export default function useComments() {
     }
   }
 
-  async function fetchList(
-    collection: string,
-    page = 1,
-    perPage = 30,
-    filter = '',
-    sort = ''
-  ): Promise<{ items: RecordModel[]; totalItems: number; totalPages: number }> {
+  async function fetchComments(postId: string): Promise<Comment[]> {
     try {
-      const result = await pb.collection(collection).getList(page, perPage, { filter, sort });
-      return {
-        items: result.items,
-        totalItems: result.totalItems,
-        totalPages: result.totalPages,
-      };
+      const comments = await pb
+        .collection("comments")
+        .getFullList<Comment>(200, {
+          filter: `post="${postId}" && parentCommentId=""`,
+          expand: "author,parentComment.author,replies.author",
+          sort: "-created",
+        });
+      return comments;
     } catch (error) {
-      console.error(`Error fetching list from ${collection}:`, error);
+      console.error("Error fetching comments:", error);
       throw error;
     }
   }
-
-  async function fetchSingle(collection: string, id: string, expand = ''): Promise<RecordModel> {
-    try {
-      return await pb.collection(collection).getOne(id, { expand });
-    } catch (error) {
-      console.error(`Error fetching single item from ${collection} (${id}):`, error);
-      throw error;
-    }
-  }
-
-  async function fetchPostComments(postId: string): Promise<Comment[]> {
-  try {
-    const records = await pb.collection('comments').getFullList({
-      filter: `post = "${postId}"`,
-      sort: '-created',
-      expand: 'author',
-    }) as Comment[];
-
-    // Function to recursively fetch parent comments and their authors
-    async function expandParent(comment: Comment): Promise<Comment> {
-      if (comment.parentCommentId) {
-        try {
-          const parent = await pb.collection('comments').getOne(comment.parentCommentId, {
-            expand: 'author',
-          }) as Comment & { expand?: { author?: Author } };
-          comment.expand = { ...comment.expand, parentComment: parent };
-          if (parent.parentCommentId && parent.expand) {
-            parent.expand.parentComment = await expandParent(parent);
-          }
-        } catch (error) {
-          console.error('Error fetching parent comment:', error);
-        }
-      }
-      return comment;
-    }
-
-    // Expand parent comments for all records
-    const expandedRecords = await Promise.all(records.map(expandParent));
-
-    // Structure the comments with their replies
-    const commentsWithReplies = expandedRecords.map(comment => ({
-      ...comment,
-      replies: expandedRecords.filter(reply => reply.parentCommentId === comment.id)
-    }));
-
-    return commentsWithReplies.filter(comment => !comment.parentCommentId);
-  } catch (error) {
-    console.error('Error fetching post comments:', error);
-    return [];
-  }
-}
 
   async function createComment(
     postId: string,
@@ -148,20 +100,11 @@ export default function useComments() {
     }
 
     try {
-      const comment = await createItem('comments', data);
+      const comment = await createItem("comments", data);
       return comment;
     } catch (error) {
-      console.error('Error creating comment:', error);
+      console.error("Error creating comment:", error);
       throw error;
-    }
-  }
-
-  async function fetchUser(userId: string) {
-    try {
-      return await fetchSingle('users', userId);
-    } catch (error) {
-      console.error('Error fetching user:', error);
-      return null;
     }
   }
 
@@ -170,10 +113,7 @@ export default function useComments() {
     createItem,
     updateItem,
     deleteItem,
-    fetchList,
-    fetchSingle,
-    fetchPostComments,
     createComment,
-    fetchUser,
+    fetchComments
   };
 }

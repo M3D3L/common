@@ -2,13 +2,11 @@
   <containers-video
     :video
     :hideDescription="true"
-    :h1="true"
-    class="min-h-[90vh] md:min-h-screen py-16"
-    :title
+    class="min-h-[85vh] hero-section py-16"
   >
     <template #video-container-content>
       <SectionTitle :title :h1="true" />
-      <main class="relative z-10 flex items-center w-full h-full">  
+      <main class="relative z-10 flex items-center w-full h-full md:mt-8 lg:-mt-16">  
         <div
           class="flex flex-col-reverse items-center w-full gap-12 md:flex-row md:justify-between"
         >
@@ -91,8 +89,8 @@
           >
             <motion.img
               :src="image"
-              alt="Hero Image"
-              class="w-full max-w-xs mx-auto sm:max-w-sm md:max-w-md lg:max-w-lg 3xl:max-w-xl"
+              :alt="imageAlt"
+              class="w-full max-w-xs lg:relative lg:top-24 xl:top-32 mx-auto sm:max-w-sm md:max-w-md lg:max-w-lg 3xl:max-w-xl"
               :initial="{ y: 0 }"
               :animate="{
                 y: [-5, 5, -5],
@@ -131,11 +129,11 @@ const props = defineProps({
   },
   title: {
     type: String,
-    default: "Guillermo Medel | Full Stack Developer | Digital Experiences",
+    default: "",
   },
   subTitle: {
     type: String,
-    default: "Building digital experiences that connect and inspire.",
+    default: "",
   },
   description: {
     type: String,
@@ -145,12 +143,16 @@ const props = defineProps({
   buttons: {
     type: Array,
     default: () => [
-      { title: "Get Started", link: "/docs" },
-      { title: "Components", link: "/components" },
+      { title: "See My Work", link: "/#projects" },
+      { title: "Contact Me", link: "/#contact" },
     ],
   },
   image: {
     type: String,
+  },
+  imageAlt: {
+    type: String,
+    default: "Hero Image",
   },
 });
 

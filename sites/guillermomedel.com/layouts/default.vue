@@ -14,7 +14,7 @@
 </template>
 
 <script setup lang="ts">
-import { contactInfo, siteMap, blogSection, contactSection, socials  } from '~/assets/configs/layout'
+import { contactInfo, siteMap, contactSection, socials  } from '~/assets/configs/layout'
 import Modal from '@common/components/ui/modal/Modal.vue';
 
 </script>

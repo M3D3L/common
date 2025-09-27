@@ -17,13 +17,13 @@
   >
     <!-- Fade wrapper -->
     <motion.div
-      class="absolute top-0 left-0 w-full h-full overflow-hidden"
+      class="absolute top-0 left-0 bottom-0 w-full h-full overflow-hidden"
       initial="{ opacity: 0 }"
       :animate="{ opacity: videoOpacity }"
       transition="{ duration: 1 }"
     >
       <VideoBackground
-        :video="video"
+        :video
         :observe-element="heroRef"
         @video-active="handleVideoComponentActive"
       />

@@ -15,6 +15,10 @@ const computedSeoData = computed(() => {
   return createSeoObject({
     title: seoDefaults?.home?.title || '',
     summary: seoDefaults?.home?.description || '',
+    imageUri: seoDefaults?.home?.image || '',
+    pubDate: '',
+    byline: '',
+    siteName: 'RelocateToSanCarlos.com',
   })
 });
 </script>
