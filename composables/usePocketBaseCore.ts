@@ -119,6 +119,21 @@ export default function usePocketBaseCore() {
   const getFileUrl = (record: RecordModel, filename: string): string =>
     pb.files.getUrl(record, filename)
 
+  const toggleEmailVisibility = async (
+    id: string,
+    isVisible: boolean
+  ): Promise<RecordModel> => {
+    try {
+      return await pb.collection("users").update(id, {
+        emailVisibility: isVisible,
+      })
+    } catch (err) {
+      console.error("Failed to toggle email visibility:", err)
+      throw err
+    }
+  }
+
+
   return {
     fetchCollection,
     fetchRecord,
@@ -128,5 +143,6 @@ export default function usePocketBaseCore() {
     uploadFile,
     getFileUrl,
     getCacheKey,
+    toggleEmailVisibility,
   }
 }
