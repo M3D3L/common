@@ -1,0 +1,336 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Root variables */
+@layer base {
+  :root {
+    /* Font families */
+    --font-body: "Inter", sans-serif;
+    --font-heading: "Poppins", sans-serif;
+    --font-logo: "Orbitron", sans-serif;
+    --font-sans: "Rubik", sans-serif;
+
+    /* Light mode colors */
+    --background: hsl(44 100% 98%); /* soft sand */
+    --foreground: hsl(218 14% 15%); /* deep ocean navy */
+    --muted: hsl(44 80% 90%); /* pale sand highlight */
+    --muted-foreground: hsl(218 12% 35%); /* muted text */
+    --popover: hsl(44 100% 95%); /* light sand overlay */
+    --popover-foreground: hsl(218 14% 15%);
+    --card: hsl(44 100% 97%);
+    --card-foreground: hsl(218 14% 15%);
+    --border: hsl(44 70% 85%);
+    --input: hsl(44 70% 85%);
+    --primary: hsl(197 82% 38%); /* tropical blue */
+    --primary-foreground: hsl(44 100% 98%); /* light sand text */
+    --secondary: hsl(34 90% 65%); /* warm sunset */
+    --secondary-foreground: hsl(218 14% 15%);
+    --accent: hsl(161 72% 40%); /* cactus green */
+    --accent-foreground: hsl(44 100% 98%);
+    --destructive: hsl(6 85% 55%); /* vibrant coral */
+    --destructive-foreground: hsl(44 100% 98%);
+    --ring: hsl(218 14% 15%);
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    /* Dark mode colors */
+    --background: hsl(218 14% 15%); /* deep ocean navy */
+    --foreground: hsl(44 100% 98%); /* pale sand text */
+    --muted: hsl(218 12% 25%); /* muted dark overlay */
+    --muted-foreground: hsl(44 100% 80%); /* light muted text */
+    --popover: hsl(218 14% 20%);
+    --popover-foreground: hsl(44 100% 98%);
+    --card: hsl(218 14% 20%);
+    --card-foreground: hsl(44 100% 98%);
+    --border: hsl(218 14% 25%);
+    --input: hsl(218 14% 25%);
+    --primary: hsl(44 100% 98%); /* sand text */
+    --primary-foreground: hsl(197 82% 38%); /* tropical blue accent */
+    --secondary: hsl(218 12% 25%); /* dark muted */
+    --secondary-foreground: hsl(34 90% 65%); /* sunset accent */
+    --accent: hsl(161 72% 40%); /* cactus green */
+    --accent-foreground: hsl(44 100% 98%);
+    --destructive: hsl(6 85% 55%);
+    --destructive-foreground: hsl(44 100% 98%);
+    --ring: hsl(44 100% 98%);
+  }
+
+  html {
+    font-family: var(--font-body) !important;
+    @apply scroll-smooth;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: var(--font-heading) !important;
+  }
+
+  h1 {
+    @apply font-bold text-7xl;
+  }
+
+  h2 {
+    @apply text-3xl font-bold;
+  }
+
+  h3 {
+    @apply text-2xl font-medium;
+  }
+
+  h4 {
+    @apply text-xl font-medium;
+  }
+
+  body {
+    font-family: var(--font-body) !important;
+    @apply text-base font-light text-foreground bg-background;
+  }
+
+  .logo-text {
+    font-family: var(--font-logo) !important;
+  }
+
+  .ui-text {
+    font-family: var(--font-sans) !important;
+    @apply font-sans;
+  }
+
+  article h1,
+  article h2,
+  article h3,
+  article h4 {
+    font-family: var(--font-heading) !important;
+  }
+
+  article p {
+    font-family: var(--font-body) !important;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  /* Blog content styling */
+  article {
+    @apply max-w-none;
+  }
+
+  article h1,
+  article h2,
+  article h3,
+  article h4 {
+    font-family: var(--font-heading);
+    @apply text-foreground;
+  }
+
+  article p {
+    @apply mb-4 leading-relaxed;
+  }
+
+  article a {
+    @apply underline text-primary hover:text-primary-foreground;
+  }
+
+  article blockquote {
+    @apply pl-4 my-4 italic border-l-4 border-muted text-muted-foreground;
+  }
+
+  article ul,
+  article li {
+    @apply pl-6 mb-4;
+  }
+
+  article ul li::marker,
+  article ol li::marker {
+    @apply text-primary;
+  }
+
+  article img {
+    @apply my-4 rounded-md;
+  }
+
+  article hr {
+    @apply my-6 border-t border-muted;
+  }
+
+  article table {
+    @apply w-full my-4 text-left border-collapse;
+  }
+
+  article th,
+  article td {
+    @apply px-3 py-2 border;
+  }
+
+  article th {
+    @apply bg-muted text-muted-foreground;
+  }
+
+  pre {
+    @apply bg-foreground-30;
+  }
+
+  code {
+    @apply bg-background text-foreground;
+  }
+
+  /* dark mode styles */
+  .dark video {
+    filter: brightness(0.75) saturate(1) !important;
+  }
+
+  .hero-section h1 {
+    @apply text-white drop-shadow-lg !important;
+  }
+
+  .dark .hero-section h1 {
+    @apply text-muted-foreground drop-shadow-lg !important;
+  }
+
+  /* light mode styles */
+  video {
+    filter: brightness(1) saturate(1.5) !important;
+  }
+
+  button:hover {
+    @apply hover:opacity-80 transition-default !important;
+  }
+
+  .transition-default {
+    @apply transition-all duration-300 ease-in-out !important;
+  }
+
+  .card-styles {
+    @apply transition-default ease-in-out transform border border-transparent rounded-lg shadow-md hover:shadow-xl hover:border-primary;
+  }
+
+  .sticky-position {
+    position: sticky !important;
+    z-index: 32;
+  }
+}
+
+/* Custom utilities mapping var() */
+@layer utilities {
+  .container {
+    @apply max-w-6xl px-4 mx-auto;
+  }
+  /* text */
+  .text-foreground {
+    color: var(--foreground) !important;
+  }
+  .text-background {
+    color: var(--background) !important;
+  }
+  .text-muted {
+    color: var(--muted) !important;
+  }
+  .text-muted-foreground {
+    color: var(--muted-foreground) !important;
+  }
+  .text-primary {
+    color: var(--primary) !important;
+  }
+  .text-primary-foreground {
+    color: var(--primary-foreground) !important;
+  }
+  .text-secondary {
+    color: var(--secondary) !important;
+  }
+  .text-secondary-foreground {
+    color: var(--secondary-foreground) !important;
+  }
+
+  /* background */
+  .bg-foreground {
+    background-color: var(--foreground) !important;
+  }
+  .bg-background {
+    background-color: var(--background) !important;
+  }
+  .bg-muted {
+    background-color: var(--muted) !important;
+  }
+  .bg-muted-foreground {
+    background-color: var(--muted-foreground) !important;
+  }
+  .bg-primary {
+    background-color: var(--primary) !important;
+  }
+  .bg-primary-foreground {
+    background-color: var(--primary-foreground) !important;
+  }
+  .bg-secondary {
+    background-color: var(--secondary) !important;
+  }
+  .bg-secondary-foreground {
+    background-color: var(--secondary-foreground) !important;
+  }
+  .bg-card {
+    background-color: var(--card) !important;
+  }
+  .bg-card-foreground {
+    background-color: var(--card-foreground) !important;
+  }
+
+  /* borders */
+  .border-border {
+    border-color: var(--border) !important;
+  }
+  .border-muted {
+    border-color: var(--muted) !important;
+  }
+  .border-primary {
+    border-color: var(--primary) !important;
+  }
+
+  /* opacity variants */
+  .bg-foreground-30 {
+    background-color: color-mix(
+      in srgb,
+      var(--foreground) 30%,
+      transparent
+    ) !important;
+  }
+  .bg-foreground-50 {
+    background-color: color-mix(
+      in srgb,
+      var(--foreground) 50%,
+      transparent
+    ) !important;
+  }
+  .bg-card-90 {
+    background-color: color-mix(
+      in srgb,
+      var(--card) 90%,
+      transparent
+    ) !important;
+  }
+  .bg-card-95 {
+    background-color: color-mix(
+      in srgb,
+      var(--card) 95%,
+      transparent
+    ) !important;
+  }
+  .hover\:bg-card-95:hover {
+    background-color: color-mix(
+      in srgb,
+      var(--card) 95%,
+      transparent
+    ) !important;
+  }
+  .hover\:border-primary-40:hover {
+    border-color: color-mix(
+      in srgb,
+      var(--primary) 40%,
+      transparent
+    ) !important;
+  }
+}

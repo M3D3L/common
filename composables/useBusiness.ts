@@ -1,7 +1,8 @@
 import usePocketBaseCore from './usePocketBaseCore';
 import usePocketBase from './usePocketbase';
 import { useCacheUtils } from './cacheUtils';
-import { ListResult, RecordModel } from 'pocketbase'; // Assuming these types are available
+import type { ListResult, RecordModel } from 'pocketbase'; // Assuming these types are available
+ // Assuming these types are available
 
 // You might rename the file to useBusinesses.ts
 export default function useBusinesses() {

@@ -377,21 +377,22 @@
 
 <script setup lang="ts">
 import { useRoute } from '#app'
-import usePocketBaseCore from '@/composables/usePocketBaseCore'
-import usePocketBase from '@/composables/usePocketbase'
+// IMPORTS: Only use usePocketBaseCore
+import usePocketBaseCore from '@common/composables/usePocketBaseCore'
 // shadcn/ui (Vue) imports
-import { Button } from '@/components/ui/button'
-import { Card, CardTitle } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
-import { Label } from '@/components/ui/label'
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
-import { Separator } from '@/components/ui/separator'
+import { Button } from '@common/components/ui/button'
+import { Card, CardTitle } from '@common/components/ui/card'
+import { Input } from '@common/components/ui/input'
+import { Textarea } from '@common/components/ui/textarea'
+import { Label } from '@common/components/ui/label'
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@common/components/ui/tabs'
+import { Separator } from '@common/components/ui/separator'
 import { Trash2 } from 'lucide-vue-next'
+import type { RecordModel } from 'pocketbase' // Import for PocketBase types if available/needed
 
 const route = useRoute()
-const { fetchCollection } = usePocketBaseCore()
-const pb = usePocketBase()
+// DESTRUCTURING: Get all necessary functions from usePocketBaseCore
+const { fetchCollection, createItem, updateItem } = usePocketBaseCore() 
 
 /**
  * SHARED STATE
@@ -486,7 +487,9 @@ async function reloadData() {
       businessId.value = b.id
       Object.assign(landing, {
         name: b.name ?? '',
-        slogan: isSpanish.value ?? b.description_SP ? b.description_SP : b.descriptionEn,
+        // NOTE: The original code had a strange ternary here. Assuming it meant to use b.slogan.
+        // It was: slogan: isSpanish.value ?? b.description_SP ? b.description_SP : b.descriptionEn,
+        slogan: b.slogan ?? '', 
         banner: Array.isArray(b.banner) && b.banner.length ? b.banner : [''], 
         descriptionEn: b.descriptionEn ?? '',
         descriptionEs: b.descriptionEs ?? '',
@@ -499,6 +502,7 @@ async function reloadData() {
       settings.isPremiumMember = Boolean(b.isPremiumMember)
     }
 
+    // MENU
     const menuFilter = slug ? `slug = \"${slug}\"` : ''
     const m = await fetchCollection('menus', 1, 1, menuFilter, '-created', 'business')
     if (m?.items?.length) {
@@ -519,6 +523,10 @@ async function reloadData() {
   }
 }
 
+// ---
+// BUSINESS SAVE FUNCTIONS: Replaced pb.collection().update/create with updateItem/createItem
+// ---
+
 async function saveLanding() {
   if (!businessId.value) return saveNewBusiness()
   const payload = {
@@ -534,7 +542,8 @@ async function saveLanding() {
     gallery: landing.gallery,
     isPremiumMember: settings.isPremiumMember,
   }
-  await pb.collection('businesses').update(businessId.value, payload)
+  // Use updateItem from usePocketBaseCore
+  await updateItem('businesses', businessId.value, payload)
 }
 
 async function saveNewBusiness() {
@@ -543,9 +552,14 @@ async function saveNewBusiness() {
     ...landing,
     isPremiumMember: settings.isPremiumMember,
   }
-  const rec = await pb.collection('businesses').create(payload)
+  // Use createItem from usePocketBaseCore
+  const rec = await createItem('businesses', payload) as RecordModel // Cast to RecordModel if PocketBase types are available
   businessId.value = rec.id
 }
+
+// ---
+// MENU SAVE FUNCTIONS: Replaced pb.collection().update/create with updateItem/createItem
+// ---
 
 async function saveMenu() {
   if (!menuId.value) return saveNewMenu()
@@ -556,7 +570,8 @@ async function saveMenu() {
     descriptionEs: menu.descriptionEs,
     items: menu.items,
   }
-  await pb.collection('menus').update(menuId.value, payload)
+  // Use updateItem from usePocketBaseCore
+  await updateItem('menus', menuId.value, payload)
 }
 
 async function saveNewMenu() {
@@ -564,7 +579,8 @@ async function saveNewMenu() {
     slug: route.params.slug || undefined,
     ...menu,
   }
-  const rec = await pb.collection('menus').create(payload)
+  // Use createItem from usePocketBaseCore
+  const rec = await createItem('menus', payload) as RecordModel // Cast to RecordModel if PocketBase types are available
   menuId.value = rec.id
 }
 

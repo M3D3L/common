@@ -14,7 +14,7 @@
 </template>
 
 <script setup lang="ts">
-import usePocketBaseCore from '@/composables/usePocketBaseCore'
+import usePocketBaseCore from '@common/composables/usePocketBaseCore'
 
 const { fetchCollection } = usePocketBaseCore()
 const posts = ref<any>(null)

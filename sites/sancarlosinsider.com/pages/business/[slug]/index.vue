@@ -194,10 +194,10 @@
 </template>
 
 <script setup lang="ts">
-import { Card, CardTitle, CardDescription } from "@/components/ui/card";
-import Modal from '~/components/sections/Modal.vue';
-import ModalCarousel from "~/components/ui/modal/ModalCarousel.vue";
-import useBusinesses from '~/composables/useBusiness';
+import { Card, CardTitle, CardDescription } from "@common/components/ui/card";
+import Modal from '@common/components/sections/Modal.vue';
+import ModalCarousel from "@common/components/ui/modal/ModalCarousel.vue";
+import useBusinesses from '@common/composables/useBusiness';
 import { Facebook, Instagram, Twitter, Linkedin } from 'lucide-vue-next';
 
 const route = useRoute();

@@ -1,6 +1,6 @@
 <template>
   <Card v-if="content"
-    class="h-full overflow-hidden transition-all duration-300 border group border-muted hover:border-primary/30 hover:shadow-lg">
+    class="h-full overflow-hidden group">
 
     <CardHeader class="p-0 border-b border-muted">
       <nuxt-link v-if="content && content?.slug && content?.cover_image" :to="baseUrl + content?.slug" class="w-full">
