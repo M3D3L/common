@@ -134,6 +134,42 @@ export const useCacheUtils = ({
     }
   }
 
+  const delPattern = (pattern: string): void => {
+    // Delete all keys matching the pattern from memory cache
+    const keysToDelete: string[] = []
+    memoryCache.forEach((_, key) => {
+      if (key.includes(pattern)) {
+        keysToDelete.push(key)
+      }
+    })
+    
+    keysToDelete.forEach(key => memoryCache.delete(key))
+    
+    // Delete from IndexedDB in background
+    if (typeof window !== 'undefined') {
+      indexedDB.open(DB_NAME).onsuccess = (event) => {
+        const db = (event.target as IDBOpenDBRequest).result
+        const transaction = db.transaction(STORE_NAME, 'readwrite')
+        const store = transaction.objectStore(STORE_NAME)
+        
+        // Get all keys and delete matching ones
+        const getAllRequest = store.getAllKeys()
+        getAllRequest.onsuccess = () => {
+          const allKeys = getAllRequest.result as string[]
+          allKeys.forEach(key => {
+            if (key.includes(pattern)) {
+              store.delete(key)
+            }
+          })
+        }
+      }
+    }
+    
+    if (debug) {
+      console.log(`Cleared ${keysToDelete.length} cache entries matching pattern: ${pattern}`)
+    }
+  }
+
   const clearExpired = (): void => {
     const now = Date.now()
     memoryCache.forEach((entry, key) => {
@@ -162,6 +198,7 @@ export const useCacheUtils = ({
     set,
     get,
     del,
+    delPattern,
     clearExpired,
     clearAll,
   } as const

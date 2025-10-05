@@ -14,14 +14,6 @@
 </template>
 
 <script setup lang="ts">
-import usePocketBaseCore from '@/composables/usePocketBaseCore'
-
-const pbUtils = usePocketBaseCore()
-const posts = ref<any>(null)
-
-const route = useRoute()
-const page = ref(Number(route.query.page) || 1)
-
 const props = defineProps({
   imgSrc: String,
   title: {

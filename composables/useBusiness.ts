@@ -1,36 +1,29 @@
 import usePocketBaseCore from './usePocketBaseCore';
-import usePocketBase from './usePocketbase';
-import { useCacheUtils } from './cacheUtils';
-import type { ListResult, RecordModel } from 'pocketbase'; // Assuming these types are available
- // Assuming these types are available
+// import { useCacheUtils } from './cacheUtils'; // <-- REMOVED
+import type { ListResult, RecordModel } from 'pocketbase';
 
-// You might rename the file to useBusinesses.ts
 export default function useBusinesses() {
-  const { fetchCollection, fetchRecord, uploadFile } = usePocketBaseCore();
-  const pb = usePocketBase();
-  const { getCacheKey, get, set, del, clearAll } = useCacheUtils({
-    ttl: 60 * 60 * 1000, // 1 hour
-    namespace: 'businesses', // Changed namespace from 'posts' to 'businesses'
-  });
+  // Only destructure the necessary PocketBase functions
+  const { fetchCollection, uploadFile, createItem } = usePocketBaseCore();
 
-  // This function can remain generic as slugs are generated similarly
-  function generateSlug(title: string): string {
-    return title
+  // --- Utility Function ---
+
+  const generateSlug = (title: string): string =>
+    title
       .toLowerCase()
       .replace(/[^\w\s-]/g, '')
       .replace(/[\s_-]+/g, '-')
       .replace(/^-+|-+$/g, '');
-  }
 
-  // Adapted to fetch multiple businesses
-  async function fetchBusinesses(options: {
+  // --- Fetch and Mutate Functions ---
+
+  const fetchBusinesses = async (options: {
     page?: number;
     perPage?: number;
     filter?: string;
     sort?: string;
     expand?: string;
-    // You might add specific business filters here, e.g., categoryId?: string;
-  } = {}): Promise<ListResult<RecordModel>> {
+  } = {}): Promise<ListResult<RecordModel>> => {
     const defaults = {
       page: 1,
       perPage: 10,
@@ -40,69 +33,69 @@ export default function useBusinesses() {
     };
 
     const { page, perPage, filter, sort, expand } = { ...defaults, ...options };
-    // Add any specific business filters here if needed
-    let finalFilter = filter;
+    const finalFilter = filter;
 
-    const cacheKey = getCacheKey('fetchBusinesses', { page, perPage, filter: finalFilter, sort, expand });
-
-    const cached = get<ListResult<RecordModel>>(cacheKey);
-    if (cached) return cached;
-
-    // Changed collection name from 'posts' to 'businesses'
-    const result = await fetchCollection('businesses', page, perPage, finalFilter, sort, expand);
-    set(cacheKey, result);
-    return result;
-  }
-
-  // This is the core function adapted for fetching a single business by slug
-  async function fetchBusinessBySlug(slug: string, useCache = true): Promise<RecordModel> {
-    const cacheKey = getCacheKey('fetchBusinessBySlug', { slug });
-
-    const cached = get<RecordModel>(cacheKey);
-    if (cached && useCache) return cached;
-
+    // Direct call to fetchCollection (caching handled inside usePocketBaseCore)
     try {
-      // Changed collection name from 'posts' to 'businesses'
-      // Changed expand from 'author,comments_via_post.author' to 'category'
-      const business = await pb.collection('businesses').getFirstListItem(`slug = "${slug}"`, {
-        expand: 'category',
-      });
-      set(cacheKey, business);
-      return business;
+      return await fetchCollection('businesses', page, perPage, finalFilter, sort, expand);
     } catch (error) {
-      console.error('Error fetching business:', error);
+      console.error('Error fetching businesses:', error);
       throw error;
     }
-  }
+  };
 
-  // You would also need to adapt createPost, updatePost, deletePost, and fetchAllTags
-  // to work with 'businesses' and their specific fields (e.g., no 'tags' field
-  // directly on 'businesses' but a 'category' field)
+  const fetchBusinessBySlug = async (slug: string): Promise<RecordModel> => {
+    // This logic relies on fetchCollection which handles caching.
+    try {
+      // Use fetchCollection with slug filter to get the single item
+      const listResult = await fetchCollection(
+        'businesses', 
+        1, // page
+        1, // perPage
+        `slug = "${slug}"`, // filter
+        '', // sort
+        'category' // expand
+      );
 
-  // Example adaptation for createBusiness (assuming you have a category ID to link)
-  async function createBusiness(businessData: {
+      if (listResult.items.length === 0) {
+        throw new Error('Business not found');
+      }
+
+      return listResult.items[0];
+    } catch (error) {
+      console.error('Error fetching business by slug:', error);
+      throw error;
+    }
+  };
+
+  const createBusiness = async (businessData: {
     name_en: string;
     name_es: string;
     description_en?: string;
     description_es?: string;
-    category: string; // Assuming this is the ID of the category
-    // Add other fields like location, address, contact_info, socials, etc.
-    cover_image?: File; // If you have a primary image for the business itself
-  }): Promise<RecordModel> {
-    if (!pb.authStore.model) throw new Error('Authentication required');
-
+    category: string;
+    cover_image?: File;
+  }): Promise<RecordModel> => {
     try {
-      const business = await pb.collection('businesses').create({
+      const dataToCreate = {
         ...businessData,
-        slug: generateSlug(businessData.name_en), // Or name_es, choose consistently
-      });
+        slug: generateSlug(businessData.name_en),
+      };
 
-      // Invalidate relevant caches
-      clearAll(); // A broad invalidate for simplicity, refine as needed
+      const business = await createItem('businesses', dataToCreate);
 
       if (businessData.cover_image) {
-        // Assuming 'cover_image' is a file field name in 'businesses'
-        return await uploadFile(businessData.cover_image, 'businesses', business.id, 'cover_image');
+        const fileUrl = await uploadFile(businessData.cover_image, 'businesses', business.id, 'cover_image');
+        // Optionally, fetch the updated business record after file upload
+        const updatedBusiness = await fetchCollection(
+          'businesses',
+          1,
+          1,
+          `id = "${business.id}"`,
+          '',
+          'category'
+        );
+        return updatedBusiness.items[0];
       }
 
       return business;
@@ -110,32 +103,31 @@ export default function useBusinesses() {
       console.error('Error creating business:', error);
       throw error;
     }
-  }
+  };
 
-  async function fetchAllCategories(): Promise<RecordModel[]> {
-    const cacheKey = getCacheKey('fetchAllCategories');
-    const cached = get<RecordModel[]>(cacheKey);
-    if (cached) return cached;
-
+  const fetchAllCategories = async (): Promise<RecordModel[]> => {
+    // This logic relies on fetchCollection which handles caching.
     try {
-      // Fetch all category records
-      const result = await pb.collection('categories').getFullList({
-        sort: 'name_en',
-      });
-      set(cacheKey, result);
-      return result;
+      const result = await fetchCollection(
+        'categories', 
+        1, // page
+        500, // very high perPage to simulate getFullList
+        '', // filter
+        'name_en' // sort
+      );
+
+      return result.items;
     } catch (error) {
       console.error('Error fetching categories:', error);
       throw error;
     }
-  }
-
+  };
 
   return {
     fetchBusinesses,
     fetchBusinessBySlug,
     createBusiness,
-    fetchAllCategories, 
+    fetchAllCategories,
     generateSlug,
   };
 }

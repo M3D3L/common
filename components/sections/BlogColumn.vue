@@ -67,7 +67,7 @@ const props = defineProps({
   },
 });
 
-const pbUtils = usePocketBaseCore();
+const { fetchCollection } = usePocketBaseCore();
 
 interface RecordModel {
   [key: string]: any;
@@ -92,7 +92,7 @@ const route = useRoute();
 
 const fetchPosts = async (page: number, perPage: number): Promise<ListResult<RecordModel>> => {
   try {
-    const result = await pbUtils.fetchCollection(
+    const result = await fetchCollection(
       props.type,
       page,
       perPage,

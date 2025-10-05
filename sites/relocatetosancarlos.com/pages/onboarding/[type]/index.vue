@@ -3,6 +3,7 @@
     v-if="currentType?.type"
     class="container relative content-center min-h-screen pt-10 pb-32"
   >
+    <Seo :seoData="computedSeoData" />
     <TitleBlock
       class="mb-8"
       :title="currentType.type"
@@ -73,7 +74,7 @@ import userData from "../../../data/user-data.json";
 
 const route = useRoute();
 const userType = ref("");
-const pbUtils = usePocketBaseCore();
+const { fetchCollection, createItem } = usePocketBaseCore();
 
 // State for posts and SEO
 const posts = ref<any>(null);
@@ -95,12 +96,12 @@ const formAnswers = ref<any[]>([]);
 
 // Data fetching and SEO logic
 const { data: fetchedPosts, error } = await useAsyncData("posts", () =>
-  pbUtils.fetchCollection("posts", 1, 5, "", "-created")
+  fetchCollection("posts", 1, 5, "", "-created")
 );
 
 // helper: create inbox message
 const sendMessage = (email: string, message: string) => {
-  pbUtils?.createItem("inbox", {
+  createItem("inbox", {
     email: email || "default@example.com",
     message,
   });

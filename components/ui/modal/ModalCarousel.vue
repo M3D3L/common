@@ -1,6 +1,9 @@
 <template>
   <div>
-    <ContainersCarousel :slides="slides.map(slide => `${config.public.pocketbaseUrl}api/files/${props.collectionId}/${props.propertyId}/${slide}?token=`)" @selected-event="openModalWithImage" />
+    <ContainersCarousel :breakpoints
+      :slides="normalizedSlides.map(slide => slide.url)"
+      @selected-event="openModalWithImage"
+    />
 
     <Modal ref="modal" class="w-full">
       <template #default>
@@ -17,9 +20,9 @@
 
         <div class="w-full h-full">
           <img
-            :src="imageUrl"
+            :src="selectedImage?.url"
+            :alt="selectedImage?.alt || 'Selected property image'"
             class="object-cover w-full h-full"
-            alt="Selected property image"
           />
         </div>
 
@@ -44,35 +47,49 @@ import Modal from '@/components/ui/modal/Modal.vue'
 const config = useRuntimeConfig()
 
 const props = defineProps<{
-  slides: string[]
+  slides: (string | { url: string; alt?: string })[]
   collectionId: string
   propertyId: string
+  breakpoints: Record<string, { slidesPerView: number }>
 }>()
 
 const modal = ref<typeof Modal | null>(null)
-const selectedImage = ref('')
+const selectedImage = ref<{ url: string; alt?: string } | null>(null)
+
+const normalizedSlides = computed(() => {
+  // Detect structure
+  if (!props.slides.length) return []
+  const isObjectFormat = typeof props.slides[0] === 'object'
+
+  if (isObjectFormat) {
+    return props.slides as { url: string; alt?: string }[]
+  }
+
+  // Assume string[] => build PocketBase URLs
+  return (props.slides as string[]).map((filename) => ({
+    url: `${config.public.pocketbaseUrl}api/files/${props.collectionId}/${props.propertyId}/${filename}?token=`,
+    alt: filename
+  }))
+})
 
 const openModalWithImage = (index: number) => {
-  selectedImage.value = props.slides[index]
+  selectedImage.value = normalizedSlides.value[index]
   modal.value?.toggleModal()
 }
 
 const moveSlider = (direction: 'back' | 'forward') => {
-  const currentIndex = props.slides.findIndex(slide => slide === selectedImage.value)
+  const currentIndex = normalizedSlides.value.findIndex(s => s.url === selectedImage.value?.url)
   let newIndex = direction === 'back' ? currentIndex - 1 : currentIndex + 1
-
-  if (newIndex < 0) newIndex = props.slides.length - 1
-  if (newIndex >= props.slides.length) newIndex = 0
-
-  selectedImage.value = props.slides[newIndex] || ''
+  if (newIndex < 0) newIndex = normalizedSlides.value.length - 1
+  if (newIndex >= normalizedSlides.value.length) newIndex = 0
+  selectedImage.value = normalizedSlides.value[newIndex]
 }
 
-const imageUrl = computed(() => {
-  return `${config.public.pocketbaseUrl}api/files/${props.collectionId}/${props.propertyId}/${selectedImage.value}?token=`
-})
-
-// Reset selectedImage if slides change
-watch(() => props.slides, (newSlides) => {
-  if (newSlides.length > 0) selectedImage.value = newSlides[0] || ''
-})
+watch(
+  () => props.slides,
+  (newSlides) => {
+    if (newSlides.length) selectedImage.value = normalizedSlides.value[0]
+  },
+  { immediate: true }
+)
 </script>

@@ -18,7 +18,7 @@
       :loop="true"
       :centered-slides="true"
       :space-between="16"
-      :breakpoints="breakpoints"
+      :breakpoints
       :autoplay="{ delay: 3000, disableOnInteraction: false }"
       @swiper="onSwiper"
     >
@@ -26,10 +26,10 @@
         v-for="(slide, index) in slides"
         :key="`slide-${index}`"
         @click="handleSlideClick(index)"
-        class="py-6"
+        class="w-full h-full py-6"
       >
-        <slot name="slide" :slide="slide" :index="index">
-          <Card class="flex w-full h-full aspect-square">
+        <slot name="slide" class="w-full h-full" :slide="slide" :index="index">
+          <Card class="w-full h-full overflow-hidden cursor-pointer">
             <img
               loading="lazy"
               :src="slide"

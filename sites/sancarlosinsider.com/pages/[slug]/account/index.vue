@@ -8,8 +8,12 @@
       </div>
 
       <div class="flex items-center gap-2">
-        <Button variant="outline" @click="reloadData">Reload</Button>
-        <Button class="bg-primary text-primary-foreground" @click="saveAll">Save All</Button>
+        <Button variant="outline" @click="reloadData" :disabled="loading">
+          {{ loading ? 'Loading...' : 'Reload' }}
+        </Button>
+        <Button class="bg-primary text-primary-foreground" @click="saveAll" :disabled="loading">
+          Save All
+        </Button>
       </div>
     </div>
 
@@ -32,7 +36,7 @@
                 <CardTitle>Landing Content</CardTitle>
                 <div class="flex items-center gap-2">
                   <Button variant="secondary" size="sm" @click="resetLanding">Reset</Button>
-                  <Button size="sm" @click="saveLanding">Save</Button>
+                  <Button size="sm" @click="saveLanding" :disabled="loading">Save</Button>
                 </div>
               </div>
               <Separator />
@@ -184,7 +188,7 @@
                 <CardTitle>Menu</CardTitle>
                 <div class="flex items-center gap-2">
                   <Button variant="secondary" size="sm" @click="resetMenu">Reset</Button>
-                  <Button size="sm" @click="saveMenu">Save</Button>
+                  <Button size="sm" @click="saveMenu" :disabled="loading">Save</Button>
                 </div>
               </div>
               <Separator />
@@ -290,9 +294,36 @@
             <Card class="p-6 space-y-6">
               <div class="flex items-center justify-between">
                 <CardTitle>Settings</CardTitle>
-                <Button size="sm" @click="saveSettings">Save</Button>
+                <Button size="sm" @click="saveSettings" :disabled="loading">Save</Button>
               </div>
               <Separator />
+              
+              <div class="space-y-4">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <Label>Preview Language</Label>
+                    <p class="text-sm text-muted-foreground">Choose language for preview panel</p>
+                  </div>
+                  <div class="flex gap-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      :class="{ 'bg-primary text-primary-foreground': settings.previewLang === 'en' }"
+                      @click="settings.previewLang = 'en'"
+                    >
+                      EN
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      :class="{ 'bg-primary text-primary-foreground': settings.previewLang === 'es' }"
+                      @click="settings.previewLang = 'es'"
+                    >
+                      ES
+                    </Button>
+                  </div>
+                </div>
+              </div>
             </Card>
           </TabsContent>
         </div>
@@ -376,9 +407,6 @@
 </template>
 
 <script setup lang="ts">
-import { useRoute } from '#app'
-// IMPORTS: Only use usePocketBaseCore
-import usePocketBaseCore from '@common/composables/usePocketBaseCore'
 // shadcn/ui (Vue) imports
 import { Button } from '@common/components/ui/button'
 import { Card, CardTitle } from '@common/components/ui/card'
@@ -388,222 +416,300 @@ import { Label } from '@common/components/ui/label'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@common/components/ui/tabs'
 import { Separator } from '@common/components/ui/separator'
 import { Trash2 } from 'lucide-vue-next'
-import type { RecordModel } from 'pocketbase' // Import for PocketBase types if available/needed
+import type { RecordModel } from 'pocketbase'
 
 const route = useRoute()
-// DESTRUCTURING: Get all necessary functions from usePocketBaseCore
-const { fetchCollection, createItem, updateItem } = usePocketBaseCore() 
+const { fetchCollection, createItem, updateItem } = usePocketBaseCore()
 
 /**
- * SHARED STATE
+ * --- TYPES ---
+ */
+interface Contact { phone: string; email: string; website: string }
+interface Address { street: string; city: string; state: string; postalCode: string }
+interface SocialLink { label: string; url: string }
+interface Service { title: string; description: string; image?: string }
+interface GalleryImage { url: string; alt?: string }
+
+interface MenuItem {
+    nameEn: string
+    nameEs: string
+    descriptionEn: string
+    descriptionEs: string
+    image?: string
+    price?: number | string
+}
+
+interface MenuCategory {
+    nameEn: string
+    nameEs: string
+    image?: string
+    items: MenuItem[]
+}
+
+// --- INITIAL DATA (For Resets) ---
+const initialLandingState = () => ({
+    name: '',
+    slogan: '',
+    banner: [''],
+    descriptionEn: '',
+    descriptionEs: '',
+    contact: { phone: '', email: '', website: '' } as Contact,
+    address: { street: '', city: '', state: '', postalCode: '' } as Address,
+    socialLinks: [] as SocialLink[],
+    services: [] as Service[],
+    gallery: [] as GalleryImage[],
+});
+
+const initialMenuState = () => ({
+    titleEn: 'Menu',
+    titleEs: 'Menú',
+    descriptionEn: '',
+    descriptionEs: '',
+    items: [] as MenuCategory[],
+});
+
+
+/**
+ * --- SHARED STATE ---
  */
 const loading = ref(false)
-const isSpanish = ref(false)
 const businessId = ref<string | null>(null)
 const menuId = ref<string | null>(null)
 
 const settings = reactive({
-  isPremiumMember: true,
-  previewLang: 'en' as 'en' | 'es',
+    isPremiumMember: true,
+    previewLang: 'en' as 'en' | 'es',
 })
 
 /**
- * LANDING STATE
+ * --- LANDING STATE ---
  */
-const landing = reactive({
-  name: '',
-  slogan: '',
-  banner: [''],
-  descriptionEn: '',
-  descriptionEs: '',
-  contact: { phone: '', email: '', website: '' },
-  address: { street: '', city: '', state: '', postalCode: '' },
-  socialLinks: [] as Array<{ label: string; url: string }>,
-  services: [] as Array<{ title: string; description: string; image?: string }>,
-  gallery: [] as Array<{ url: string; alt?: string }>,
-})
+const landing = reactive(initialLandingState())
 
 /**
- * MENU STATE
+ * --- MENU STATE ---
  */
-const menu = reactive({
-  titleEn: 'Menu',
-  titleEs: 'Menú',
-  descriptionEn: '',
-  descriptionEs: '',
-  items: [] as Array<{
-    nameEn: string; nameEs: string; image?: string; items: Array<MenuItem>
-  }>,
-})
+const menu = reactive(initialMenuState())
 
-type MenuItem = {
-  nameEn: string
-  nameEs: string
-  descriptionEn: string
-  descriptionEs: string
-  image?: string
-  price?: number | string
+/**
+ * --- HELPERS ---
+ */
+const removeFromArray = <T>(arr: T[], i: number): void => {
+    arr.splice(i, 1)
+}
+
+const addService = (): void => {
+    landing.services.push({ title: '', description: '', image: '' })
+}
+
+const addCategory = (): void => {
+    menu.items.push({ nameEn: '', nameEs: '', image: '', items: [] })
+}
+
+const addMenuItem = (ci: number): void => {
+    const def: MenuItem = { nameEn: '', nameEs: '', descriptionEn: '', descriptionEs: '', image: '', price: '' }
+    menu.items[ci].items.push(def)
+}
+
+const removeMenuItem = (ci: number, ii: number): void => {
+    menu.items[ci].items.splice(ii, 1)
+}
+
+
+/**
+ * --- DATA IO (PocketBase) ---
+ */
+const reloadData = async () => {
+    loading.value = true
+    try {
+        const slug = String(route.params.slug || '')
+        const filter = slug ? `slug = \"${slug}\"` : ''
+        
+        // 1. BUSINESS (Landing Page)
+        const bizResult = await fetchCollection('businesses', 1, 1, filter, '-created')
+        const businessRecord = bizResult?.items?.[0] as RecordModel | undefined
+        
+        if (businessRecord) {
+            businessId.value = businessRecord.id
+            
+            Object.assign(landing, {
+                name: businessRecord.name ?? '',
+                slogan: businessRecord.slogan ?? '',
+                banner: Array.isArray(businessRecord.banner) && businessRecord.banner.length ? businessRecord.banner : [''], 
+                descriptionEn: businessRecord.descriptionEn ?? '',
+                descriptionEs: businessRecord.descriptionEs ?? '',
+                contact: Object.assign(initialLandingState().contact, businessRecord.contact ?? {}),
+                address: Object.assign(initialLandingState().address, businessRecord.address ?? {}),
+                socialLinks: businessRecord.socialLinks ?? [],
+                services: businessRecord.services ?? [],
+                gallery: businessRecord.gallery ?? [],
+            })
+            settings.isPremiumMember = Boolean(businessRecord.isPremiumMember)
+        } else {
+            businessId.value = null
+            Object.assign(landing, initialLandingState())
+            settings.isPremiumMember = true 
+        }
+
+        // 2. MENU
+        const menuResult = await fetchCollection('menus', 1, 1, filter, '-created', 'business')
+        const menuRecord = menuResult?.items?.[0] as RecordModel | undefined
+
+        if (menuRecord) {
+            menuId.value = menuRecord.id
+            Object.assign(menu, {
+                titleEn: menuRecord.titleEn ?? 'Menu',
+                titleEs: menuRecord.titleEs ?? 'Menú',
+                descriptionEn: menuRecord.descriptionEn ?? '',
+                descriptionEs: menuRecord.descriptionEs ?? '',
+                items: menuRecord.items ?? [],
+            })
+        } else {
+            menuId.value = null
+            Object.assign(menu, initialMenuState())
+        }
+
+    } catch (e) {
+        console.error('Error reloading data:', e)
+    } finally {
+        loading.value = false
+    }
 }
 
 /**
- * HELPERS
+ * --- INTERNAL SAVE FUNCTIONS (no loading checks) ---
  */
-function removeFromArray<T>(arr: T[], i: number) {
-  arr.splice(i, 1)
+const saveLandingInternal = async () => {
+    if (!businessId.value) {
+        await saveNewBusiness()
+        return
+    }
+    
+    const payload = {
+        name: landing.name,
+        slogan: landing.slogan,
+        banner: landing.banner.filter(url => url.trim()), 
+        descriptionEn: landing.descriptionEn,
+        descriptionEs: landing.descriptionEs,
+        contact: landing.contact,
+        address: landing.address,
+        socialLinks: landing.socialLinks,
+        services: landing.services,
+        gallery: landing.gallery,
+        isPremiumMember: settings.isPremiumMember,
+    }
+    await updateItem('businesses', businessId.value, payload)
 }
 
-function addService() {
-  landing.services.push({ title: '', description: '', image: '' })
-}
-
-function addCategory() {
-  menu.items.push({ nameEn: '', nameEs: '', image: '', items: [] })
-}
-
-function addMenuItem(ci: number) {
-  const def: MenuItem = { nameEn: '', nameEs: '', descriptionEn: '', descriptionEs: '', image: '', price: '' }
-  menu.items[ci].items.push(def)
-}
-
-function removeMenuItem(ci: number, ii: number) {
-  menu.items[ci].items.splice(ii, 1)
-}
-
-/**
- * DATA IO (PocketBase)
- * Assumes collections: `businesses` and `menus`.
- * Uses your existing `fetchCollection` helper to get by slug.
- */
-async function reloadData() {
-  loading.value = true
-  try {
-    const slug = String(route.params.slug || '')
-
-    // BUSINESS
-    const bizFilter = slug ? `slug = \"${slug}\"` : ''
-    const biz = await fetchCollection('businesses', 1, 1, bizFilter, '-created')
-    if (biz?.items?.length) {
-      const b = biz.items[0]
-      businessId.value = b.id
-      Object.assign(landing, {
-        name: b.name ?? '',
-        // NOTE: The original code had a strange ternary here. Assuming it meant to use b.slogan.
-        // It was: slogan: isSpanish.value ?? b.description_SP ? b.description_SP : b.descriptionEn,
-        slogan: b.slogan ?? '', 
-        banner: Array.isArray(b.banner) && b.banner.length ? b.banner : [''], 
-        descriptionEn: b.descriptionEn ?? '',
-        descriptionEs: b.descriptionEs ?? '',
-        contact: { phone: b?.contact?.phone ?? '', email: b?.contact?.email ?? '', website: b?.contact?.website ?? '' },
-        address: b.address ?? { street: '', city: '', state: '', postalCode: '' },
-        socialLinks: b.socialLinks ?? [],
-        services: b.services ?? [],
-        gallery: b.gallery ?? [],
-      })
-      settings.isPremiumMember = Boolean(b.isPremiumMember)
+const saveMenuInternal = async () => {
+    if (!menuId.value) {
+        await saveNewMenu()
+        return
     }
 
-    // MENU
-    const menuFilter = slug ? `slug = \"${slug}\"` : ''
-    const m = await fetchCollection('menus', 1, 1, menuFilter, '-created', 'business')
-    if (m?.items?.length) {
-      const mm = m.items[0]
-      menuId.value = mm.id
-      Object.assign(menu, {
-        titleEn: mm.titleEn ?? 'Menu',
-        titleEs: mm.titleEs ?? 'Menú',
-        descriptionEn: mm.descriptionEn ?? '',
-        descriptionEs: mm.descriptionEs ?? '',
-        items: mm.items ?? [],
-      })
+    const payload = {
+        business: businessId.value,
+        titleEn: menu.titleEn,
+        titleEs: menu.titleEs,
+        descriptionEn: menu.descriptionEn,
+        descriptionEs: menu.descriptionEs,
+        items: menu.items,
     }
-  } catch (e) {
-    console.error(e)
-  } finally {
-    loading.value = false
-  }
+    await updateItem('menus', menuId.value, payload)
 }
 
-// ---
-// BUSINESS SAVE FUNCTIONS: Replaced pb.collection().update/create with updateItem/createItem
-// ---
-
-async function saveLanding() {
-  if (!businessId.value) return saveNewBusiness()
-  const payload = {
-    name: landing.name,
-    slogan: landing.slogan,
-    banner: landing.banner.filter(Boolean),
-    descriptionEn: landing.descriptionEn,
-    descriptionEs: landing.descriptionEs,
-    contact: landing.contact,
-    address: landing.address,
-    socialLinks: landing.socialLinks,
-    services: landing.services,
-    gallery: landing.gallery,
-    isPremiumMember: settings.isPremiumMember,
-  }
-  // Use updateItem from usePocketBaseCore
-  await updateItem('businesses', businessId.value, payload)
+/**
+ * --- PUBLIC SAVE FUNCTIONS (with loading) ---
+ */
+const saveLanding = async () => {
+    if (loading.value) return
+    loading.value = true
+    try {
+        await saveLandingInternal()
+        console.log('✅ Landing saved successfully')
+    } catch (e) {
+        console.error('Error saving landing data:', e)
+    } finally {
+        loading.value = false
+    }
 }
 
-async function saveNewBusiness() {
-  const payload = {
-    slug: route.params.slug || undefined,
-    ...landing,
-    isPremiumMember: settings.isPremiumMember,
-  }
-  // Use createItem from usePocketBaseCore
-  const rec = await createItem('businesses', payload) as RecordModel // Cast to RecordModel if PocketBase types are available
-  businessId.value = rec.id
+const saveMenu = async () => {
+    if (loading.value) return
+    loading.value = true
+    try {
+        await saveMenuInternal()
+        console.log('✅ Menu saved successfully')
+    } catch (e) {
+        console.error('Error saving menu data:', e)
+    } finally {
+        loading.value = false
+    }
 }
 
-// ---
-// MENU SAVE FUNCTIONS: Replaced pb.collection().update/create with updateItem/createItem
-// ---
-
-async function saveMenu() {
-  if (!menuId.value) return saveNewMenu()
-  const payload = {
-    titleEn: menu.titleEn,
-    titleEs: menu.titleEs,
-    descriptionEn: menu.descriptionEn,
-    descriptionEs: menu.descriptionEs,
-    items: menu.items,
-  }
-  // Use updateItem from usePocketBaseCore
-  await updateItem('menus', menuId.value, payload)
+const saveNewBusiness = async () => {
+    const payload = {
+        slug: route.params.slug || undefined,
+        name: landing.name,
+        slogan: landing.slogan,
+        banner: landing.banner.filter(url => url.trim()),
+        descriptionEn: landing.descriptionEn,
+        descriptionEs: landing.descriptionEs,
+        contact: landing.contact,
+        address: landing.address,
+        socialLinks: landing.socialLinks,
+        services: landing.services,
+        gallery: landing.gallery,
+        isPremiumMember: settings.isPremiumMember,
+    }
+    const rec = await createItem('businesses', payload) as RecordModel 
+    businessId.value = rec.id
 }
 
-async function saveNewMenu() {
-  const payload = {
-    slug: route.params.slug || undefined,
-    ...menu,
-  }
-  // Use createItem from usePocketBaseCore
-  const rec = await createItem('menus', payload) as RecordModel // Cast to RecordModel if PocketBase types are available
-  menuId.value = rec.id
+const saveNewMenu = async () => {
+    const payload = {
+        slug: route.params.slug || undefined,
+        business: businessId.value,
+        titleEn: menu.titleEn,
+        titleEs: menu.titleEs,
+        descriptionEn: menu.descriptionEn,
+        descriptionEs: menu.descriptionEs,
+        items: menu.items,
+    }
+    const rec = await createItem('menus', payload) as RecordModel 
+    menuId.value = rec.id
 }
 
-async function saveSettings() {
-  await Promise.all([saveLanding(), saveMenu()])
+const saveSettings = async () => {
+    await saveAll()
 }
 
-async function saveAll() {
-  await Promise.all([saveLanding(), saveMenu()])
+const saveAll = async () => {
+    if (loading.value) return
+    loading.value = true
+    try {
+        await Promise.all([
+            saveLandingInternal(),
+            saveMenuInternal()
+        ])
+        console.log('✅ All data saved successfully')
+    } catch (e) {
+        console.error('Error saving all data:', e)
+    } finally {
+        loading.value = false
+    }
 }
 
-function resetLanding() {
-  Object.assign(landing, {
-    name: '', slogan: '', banner: [''], descriptionEn: '', descriptionEs: '',
-    contact: { phone: '', email: '', website: '' }, address: { street: '', city: '', state: '', postalCode: '' },
-    socialLinks: [], services: [], gallery: []
-  })
+const resetLanding = () => {
+    Object.assign(landing, initialLandingState())
 }
 
-function resetMenu() {
-  Object.assign(menu, { titleEn: 'Menu', titleEs: 'Menú', descriptionEn: '', descriptionEs: '', items: [] })
+const resetMenu = () => {
+    Object.assign(menu, initialMenuState())
 }
 
-// init
-reloadData()
+// Initialization logic
+onMounted(() => {
+    reloadData()
+})
 </script>

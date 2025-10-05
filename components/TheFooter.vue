@@ -75,7 +75,7 @@ const props = defineProps<{
   links: FooterLink[];
 }>();
 
-const pbUtils = usePocketBaseCore();
+const { fetchCollection } = usePocketBaseCore();
 import type { ListResult, RecordModel } from 'pocketbase';
 
 const posts = ref<ListResult<RecordModel> | null>(null);
@@ -88,7 +88,7 @@ interface FooterColumn {
 const localFooterColumns = ref<FooterColumn[]>([]);
 
 onMounted(async () => {
-  const result = await pbUtils.fetchCollection(props.type, 1, 6, '', '-created', '');
+  const result = await fetchCollection(props.type, 1, 6, '', '-created', '');
   posts.value = result;
 
   if (result?.items?.length) {

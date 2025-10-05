@@ -1,18 +1,20 @@
 import { useCacheUtils } from './cacheUtils'
 
-// Create and export a single instance of the cache utilities
-export const cache = useCacheUtils({
-  // 1 hour
-  ttl: 60 * 60 * 1000,
-  namespace: 'pb',
-  // Set to true if you want to see cache debug logs
-  debug: false,
+// Create a singleton instance of the cache
+const cache = useCacheUtils({
+  ttl: 3600 * 1000, // 1 hour
+  namespace: 'pocketbase-cache',
+  debug: import.meta.env.DEV,
 })
 
-// You can also export individual methods if you prefer
+// Export simple wrapper functions for convenience
 export const getCacheKey = cache.getCacheKey
 export const setCache = cache.set
 export const getCache = cache.get
-export const deleteCache = cache.del
+export const clearCache = cache.del
+export const clearCachePattern = cache.delPattern
 export const clearExpiredCache = cache.clearExpired
 export const clearAllCache = cache.clearAll
+
+// Export the cache instance for advanced usage
+export default cache

@@ -38,14 +38,14 @@ const props = defineProps({
   },
 });
 
-const pbUtils = usePocketBaseCore();
+const { fetchCollection } = usePocketBaseCore();
 import type { ListResult, RecordModel } from 'pocketbase';
 
 const posts = ref<ListResult<RecordModel> | RecordModel[]>([]);
 
 const fetchPosts = async () => {
   try {
-    const result = await pbUtils.fetchCollection(props.type, 1, 6, '', '-created', '');
+    const result = await fetchCollection(props.type, 1, 6, '', '-created', '');
     return result;
   } catch (error) {
     console.error('Error fetching posts:', error);

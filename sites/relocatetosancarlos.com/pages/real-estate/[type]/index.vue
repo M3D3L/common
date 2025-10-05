@@ -60,7 +60,6 @@
 </template>
 
 <script lang="ts" setup>
-import usePocketBaseCore from "@common/composables/usePocketBaseCore";
 import { categories } from "~/assets/configs/layout.js";
 
 const { fetchCollection } = usePocketBaseCore();

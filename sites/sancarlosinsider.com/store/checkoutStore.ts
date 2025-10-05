@@ -26,7 +26,6 @@ export const useCheckoutStore = defineStore('checkout', {
     addItem(item: any) {
       const key = getItemKey(item);
       const existing = this.items.find((i) => i.key === key);
-
       if (existing) {
         existing.quantity++;
       } else {
@@ -41,29 +40,24 @@ export const useCheckoutStore = defineStore('checkout', {
         });
       }
     },
-
     removeItem(item: any) {
       const key = getItemKey(item);
       const existing = this.items.find((i) => i.key === key);
       if (!existing) return;
-
       existing.quantity--;
       if (existing.quantity <= 0) {
         this.items = this.items.filter((i) => i.key !== key);
       }
     },
-
     setItemQuantity(item: any, quantity: number) {
       const key = getItemKey(item);
       const existing = this.items.find((i) => i.key === key);
       if (!existing) return;
-
       existing.quantity = quantity;
       if (existing.quantity <= 0) {
         this.items = this.items.filter((i) => i.key !== key);
       }
     },
-
     clearCart() {
       this.items = [];
     },

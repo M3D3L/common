@@ -1,10 +1,13 @@
 import usePocketBase from './usePocketbase'
-import { getCache, setCache, getCacheKey } from './cacheSingleton'
+import { getCache, setCache, getCacheKey, clearCache, clearCachePattern } from './cacheSingleton'
 import type { ListResult, RecordModel } from 'pocketbase'
 
 export default function usePocketBaseCore() {
   const pb = usePocketBase()
 
+  /**
+   * Fetch list of records
+   */
   const fetchCollection = async (
     collection: string,
     page = 1,
@@ -32,8 +35,14 @@ export default function usePocketBaseCore() {
         filter,
         sort,
         expand: expand ?? undefined,
-        fields: fields?.join(','),
       })
+
+      // Optional client-side field filtering
+      if (fields) {
+        response.items = response.items.map((item) =>
+          Object.fromEntries(Object.entries(item).filter(([k]) => fields.includes(k))),
+        ) as any
+      }
 
       setCache(cacheKey, response)
       return response
@@ -43,10 +52,10 @@ export default function usePocketBaseCore() {
     }
   }
 
-  const fetchRecord = async (
-    collection: string,
-    id: string | number,
-  ): Promise<RecordModel> => {
+  /**
+   * Fetch a single record
+   */
+  const fetchRecord = async (collection: string, id: string | number): Promise<RecordModel> => {
     const stringId = id.toString()
     const cacheKey = getCacheKey('fetchRecord', { collection, id: stringId })
 
@@ -63,34 +72,53 @@ export default function usePocketBaseCore() {
     }
   }
 
-  const createItem = async (
-    collection: string,
-    data: Record<string, any>,
-  ): Promise<RecordModel> => {
+  /**
+   * Create record
+   */
+  const createItem = async (collection: string, data: Record<string, any>): Promise<RecordModel> => {
     try {
-      return await pb.collection(collection).create(data)
+      const record = await pb.collection(collection).create(data)
+      invalidateCollectionCache(collection)
+      return record
     } catch (error) {
       console.error(`Error creating item in ${collection}:`, error)
       throw new Error(`Failed to create item in ${collection}`)
     }
   }
 
+  /**
+   * Update record
+   */
   const updateItem = async (
     collection: string,
     id: string,
     data: Record<string, any>,
   ): Promise<RecordModel> => {
     try {
-      return await pb.collection(collection).update(id, data)
+      const record = await pb.collection(collection).update(id, data)
+
+      invalidateCollectionCache(collection)
+      const recordCacheKey = getCacheKey('fetchRecord', { collection, id })
+      clearCache(recordCacheKey)
+
+      return record
     } catch (error) {
       console.error(`Error updating item in ${collection}:`, error)
       throw new Error(`Failed to update item in ${collection}`)
     }
   }
 
+  /**
+   * Delete record
+   */
   const deleteItem = async (collection: string, id: string): Promise<boolean> => {
     try {
       await pb.collection(collection).delete(id)
+
+      invalidateCollectionCache(collection)
+      const recordCacheKey = getCacheKey('fetchRecord', { collection, id })
+      clearCache(recordCacheKey)
+
       return true
     } catch (error) {
       console.error(`Error deleting item from ${collection}:`, error)
@@ -98,6 +126,9 @@ export default function usePocketBaseCore() {
     }
   }
 
+  /**
+   * Upload a file to a record field
+   */
   const uploadFile = async (
     file: File,
     collection: string,
@@ -109,6 +140,11 @@ export default function usePocketBaseCore() {
       formData.append(field, file)
 
       const record = await pb.collection(collection).update(recordId, formData)
+
+      invalidateCollectionCache(collection)
+      const recordCacheKey = getCacheKey('fetchRecord', { collection, id: recordId })
+      clearCache(recordCacheKey)
+
       return pb.files.getUrl(record, record[field])
     } catch (error) {
       console.error('Error uploading file:', error)
@@ -116,23 +152,43 @@ export default function usePocketBaseCore() {
     }
   }
 
+  /**
+   * Build file URL from record + filename
+   */
   const getFileUrl = (record: RecordModel, filename: string): string =>
     pb.files.getUrl(record, filename)
 
+  /**
+   * Toggle user email visibility
+   */
   const toggleEmailVisibility = async (
     id: string,
-    isVisible: boolean
+    isVisible: boolean,
   ): Promise<RecordModel> => {
     try {
-      return await pb.collection("users").update(id, {
+      const record = await pb.collection('users').update(id, {
         emailVisibility: isVisible,
       })
+
+      invalidateCollectionCache('users')
+      return record
     } catch (err) {
-      console.error("Failed to toggle email visibility:", err)
+      console.error('Failed to toggle email visibility:', err)
       throw err
     }
   }
 
+  /**
+   * Invalidate all cache entries for a given collection
+   */
+  const invalidateCollectionCache = (collection: string) => {
+    if (typeof clearCachePattern === 'function') {
+      // Match any cache key containing the collection name
+      clearCachePattern(`fetchCollection.*"${collection}"`)
+    } else {
+      console.warn('clearCachePattern not available, consider implementing it')
+    }
+  }
 
   return {
     fetchCollection,
@@ -144,5 +200,6 @@ export default function usePocketBaseCore() {
     getFileUrl,
     getCacheKey,
     toggleEmailVisibility,
+    invalidateCollectionCache,
   }
 }

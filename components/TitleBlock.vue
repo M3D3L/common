@@ -12,14 +12,18 @@ const props = defineProps({
     type: String,
     default: 'h2',
   },
+  textPosition: {
+    type: String,
+    default: 'text-center md:text-left',
+  },
 })
 </script>
 
 <template>
       <!-- Header -->
-      <div class="flex flex-col w-full gap-4 text-center md:text-left">
+      <div :class="textPosition" class="flex flex-col w-full gap-4">
         <component :is="type" class="text-4xl lg:text-6xl text-primary md:text-5xl"> {{ title }} </component>
-        <p class="max-w-2xl text-lg text-muted-foreground">
+        <p :class="textPosition"  class="w-full max-w-2xl text-lg text-muted-foreground">
           {{ description }}
         </p>
       </div>
