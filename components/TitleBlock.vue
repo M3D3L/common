@@ -22,7 +22,7 @@ const props = defineProps({
 <template>
       <!-- Header -->
       <div :class="textPosition" class="flex flex-col w-full gap-4">
-        <component :is="type" class="text-4xl lg:text-6xl text-primary md:text-5xl"> {{ title }} </component>
+        <component :is="type" class="text-4xl lg:text-6xl text-primary md:text-5xl" v-html="title"></component>
         <p :class="textPosition"  class="w-full max-w-2xl text-lg text-muted-foreground">
           {{ description }}
         </p>

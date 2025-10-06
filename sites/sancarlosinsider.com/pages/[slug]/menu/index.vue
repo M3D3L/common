@@ -3,7 +3,7 @@
     class="container relative w-full py-10 md:py-16 font-body bg-background text-foreground"
   >
     <Seo :seoData="computedSeoData" />
-    
+
     <div v-if="pending" class="py-16 text-center text-muted-foreground">
       Loading menu...
     </div>
@@ -16,18 +16,24 @@
 
     <div v-else class="space-y-8 md:space-y-16">
       <section v-if="business" class="space-y-8 text-center">
-        <div class="container flex flex-col gap-4 mt-16 mb-6 md:flex-row md:items-center md:justify-between">
-        <TitleBlock class="mb-6" :title="business.name"
-          :description="isSpanish ? business.description_ES : business.description_En" />
+        <div
+          class="container flex flex-row justify-between gap-4 mt-16 mb-6 md:items-center"
+        >
+          <TitleBlock
+            class="mb-6"
+            :title="business.name"
+            :description="
+              isSpanish ? business.description_ES : business.description_En
+            "
+          />
 
-        <!-- Social Links -->
-
-        <ContainersSocials v-if="business?.isFeatured && business?.socials" :socialLinks="business.socials"
-          :columnOnMobile="true" />
-
-      </div>
-
-        
+          <!-- Social Links -->
+          <ContainersSocialsIcons
+            v-if="business?.socials?.length && business?.is_featured"
+            :socials="business.socials"
+          :columnOnMobile="true"
+          />
+        </div>
 
         <div
           v-if="business.gallery?.length && isPremiumUser"
@@ -160,45 +166,6 @@
         />
         {{ isSpanish ? "English" : "Español" }}
       </button>
-
-      <footer
-        v-if="business.contact || business.address"
-        class="pt-10 mt-16 text-sm text-center border-t border-muted-foreground/20 text-muted-foreground"
-      >
-        <div class="flex flex-col items-center gap-2">
-          <img
-            v-if="business?.logo && business?.is_featured"
-            :src="business.logo"
-            alt="Business Logo"
-            class="h-16 mb-4"
-          />
-
-          <span>
-            {{ business.address.street }}, {{ business.address.city }},
-            {{ business.address.state }}
-          </span>
-          <a
-            v-if="business.contact?.phone"
-            :href="`tel:${business.contact.phone}`"
-            class="transition-colors hover:text-primary"
-          >
-            {{ business.contact.phone }}
-          </a>
-          <a
-            v-if="business.contact?.website"
-            :href="business.contact.website"
-            target="_blank"
-            class="transition-colors hover:text-primary"
-          >
-            {{ business.contact.website }}
-          </a>
-
-          <ContainersSocials
-            v-if="business?.is_featured"
-            :socialLinks="mappedSocials"
-          />
-        </div>
-      </footer>
     </div>
   </div>
 </template>
@@ -248,7 +215,8 @@ const computedSeoData = computed(() => {
   return createSeoObject({
     title: business.value?.name,
     summary: isSpanish
-      ? business.value?.description_Sp : business.value?.description_En,
+      ? business.value?.description_Sp
+      : business.value?.description_En,
     imageUri: "",
     pubDate: new Date().toISOString(),
     byline: "RelocateToSanCarlos",

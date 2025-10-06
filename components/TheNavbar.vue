@@ -2,7 +2,7 @@
   <header
     class="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-md"
   >
-    <div class="container flex items-center justify-between h-16 px-4 mx-auto">
+    <div class="container relative flex items-center justify-between h-16 px-4 mx-auto">
       <!-- Logo -->
       <nuxt-link v-if="logo" to="/" class="flex items-center gap-2">
         <img :src="logo" alt="Logo" class="h-12" />
@@ -28,29 +28,33 @@
             {{ link.label }}
           </NuxtLink>
 
+          <slot name="extra-links" />
+
           <!-- Auth buttons for desktop -->
-          <template v-if="!auth.isAuthenticated.value">
-            <NuxtLink
-              :to="getLoginHref()"
-              class="px-3 py-2 text-sm transition-colors rounded-md hover:bg-accent hover:text-accent-foreground"
+          <template v-if="showAuthButtons">
+            <template v-if="!auth.isAuthenticated.value">
+              <NuxtLink
+                :to="getLoginHref()"
+                class="px-3 py-2 text-sm transition-colors rounded-md hover:bg-accent hover:text-accent-foreground"
+              >
+                Login
+              </NuxtLink>
+              <NuxtLink
+                :to="getRegisterHref()"
+                class="px-3 py-2 text-sm transition-colors rounded-md hover:bg-accent hover:text-accent-foreground"
+              >
+                Register
+              </NuxtLink>
+            </template>
+            <Button
+              v-else
+              class="text-xs md:text-sm"
+              @click="auth.logout()"
+              variant="default"
             >
-              Login
-            </NuxtLink>
-            <NuxtLink
-              :to="getRegisterHref()"
-              class="px-3 py-2 text-sm transition-colors rounded-md hover:bg-accent hover:text-accent-foreground"
-            >
-              Register
-            </NuxtLink>
+              Logout
+            </Button>
           </template>
-          <Button
-            v-else
-            class="text-xs md:text-sm"
-            @click="auth.logout()"
-            variant="default"
-          >
-            Logout
-          </Button>
         </nav>
 
         <!-- Dark mode toggle -->
@@ -64,23 +68,8 @@
             <Moon v-else class="w-5 h-5" />
           </button>
 
-          <CheckoutView v-if="checkoutToggled" class="absolute top-0 right-0" />
+          <CheckoutView v-if="checkoutToggled" class="fixed right-0 top-32" />
         </ClientOnly>
-
-        <!-- Checkout -->
-        <!-- <button
-          v-if="checkoutStore?.itemCount > 0"
-          @click="checkoutToggled = !checkoutToggled"
-          aria-label="Toggle checkout"
-          class="relative flex p-2 transition-colors rounded-md hover:bg-accent hover:text-accent-foreground"
-        >
-          <ShoppingCart class="w-5 h-5" />
-          <span
-            class="absolute flex items-center justify-center w-5 h-5 text-xs font-bold rounded-full -top-1 -right-1 text-background bg-primary"
-          >
-            {{ checkoutStore?.itemCount }}
-          </span>
-        </button> -->
 
         <!-- Mobile menu button -->
         <button
@@ -162,22 +151,30 @@
 import useAuth from "@/composables/useAuth";
 import { Button } from "@/components/ui/button";
 import { Sun, Moon, ShoppingCart, Menu, X } from "lucide-vue-next";
-import { businessData } from "~/assets/configs/mock";
 
 interface NavLink {
   href: string;
   label: string;
 }
 
-const props = defineProps<{
-  links?: NavLink[];
-  siteName?: string;
-  logo?: string;
-  showAuthButtons?: {
-    type: Boolean;
-    default: true;
-  }
-}>();
+const props = defineProps({
+  links: {
+    type: Array as () => NavLink[],
+    default: () => [],
+  },
+  siteName: {
+    type: String,
+    default: "",
+  },
+  logo: {
+    type: String,
+    default: "",
+  },
+  showAuthButtons: {
+    type: Boolean,
+    default: true,
+  },
+});
 
 const auth = useAuth();
 const route = useRoute();
@@ -191,6 +188,7 @@ const getLoginHref = () =>
   route.path === "/"
     ? "/login"
     : `/login?source=${encodeURIComponent(route.path)}`;
+
 const getRegisterHref = () =>
   route.path === "/"
     ? "/register"

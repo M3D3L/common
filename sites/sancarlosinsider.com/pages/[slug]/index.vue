@@ -1,92 +1,49 @@
 <template>
   <SeoMeta :seoData="seoData" />
 
-  <div class="relative w-full mx-auto font-body bg-background text-foreground">
-    <div
-      v-if="loading"
-      class="flex flex-col items-center justify-center min-h-[50vh] text-center"
-    >
+  <div class="container relative w-full py-10 md:py-16 font-body bg-background text-foreground">
+    <div v-if="loading" class="flex flex-col items-center justify-center min-h-[50vh] text-center">
       <p class="text-lg font-semibold">{{ loadingBusinessText }}</p>
-      <div
-        class="w-12 h-12 mt-4 border-b-2 rounded-full animate-spin border-primary"
-      ></div>
+      <div class="w-12 h-12 mt-4 border-b-2 rounded-full animate-spin border-primary"></div>
     </div>
 
-    <div
-      v-else-if="error"
-      class="flex flex-col items-center justify-center min-h-[50vh] text-center text-red-500"
-    >
+    <div v-else-if="error" class="flex flex-col items-center justify-center min-h-[50vh] text-center text-red-500">
       <h2 class="text-2xl font-bold">{{ errorTitle }}</h2>
       <p class="mt-2">{{ error.message || errorText }}</p>
     </div>
 
     <template v-else-if="business">
-      <div
-        class="container flex flex-col gap-4 mt-16 mb-6 md:flex-row md:items-center md:justify-between"
-      >
-        <TitleBlock
-          class="mb-6"
-          :title="business.name"
-          :description="
-            isSpanish ? business.description_ES : business.description_En
-          "
-        />
+      <div class="container flex flex-row justify-between gap-4 mt-16 mb-6 md:items-center">
+        <TitleBlock class="mb-6" :title="business.name" :description="isSpanish ? business.description_ES : business.description_En
+          " />
 
         <!-- Social Links -->
-
-        <ContainersSocials
-          v-if="isPremiumMember && socialLinks.length"
-          :socialLinks="socialLinks"
-          :columnOnMobile="true"
-        />
+        <ContainersSocialsIcons v-if="business.socials.length && business?.is_featured" :socials="business.socials"
+          :columnOnMobile="true" />
       </div>
 
-      <button
-        @click="isSpanish = !isSpanish"
-        class="fixed flex flex-col items-center content-center gap-2 right-4 bottom-4"
-      >
-        <img
-          :src="
-            isSpanish
-              ? '/images/countries/USA.png'
-              : '/images/countries/Mexico.png'
-          "
-          alt="Country Flag"
-          class="w-10 h-10"
-        />
+      <button @click="isSpanish = !isSpanish"
+        class="fixed flex flex-col items-center content-center gap-2 right-4 bottom-4">
+        <img :src="isSpanish
+            ? '/images/countries/USA.png'
+            : '/images/countries/Mexico.png'
+          " alt="Country Flag" class="w-10 h-10" />
         {{ isSpanish ? "English" : "Español" }}
       </button>
 
-      <section
-        id="hero"
-        class="relative w-full h-[40vh] lg:h-[60vh] container overflow-hidden scroll-mt-72"
-      >
-        <ModalCarousel
-          v-if="isPremiumMember && business?.promoGallery"
-          :slides="business?.promoGallery"
-          :collection-id="business?.collectionId"
-          :propertyId="business?.id"
-          @selected-event="openModalWithImage"
-          :aspectRatio="'aspect-video'"
-          :breakpoints="{
+      <section id="hero" class="relative w-full h-[40vh] lg:h-[60vh] container overflow-hidden scroll-mt-72">
+        <ModalCarousel v-if="business?.promoGallery" :slides="business?.promoGallery"
+          :collection-id="business?.collectionId" :propertyId="business?.id" @selected-event="openModalWithImage"
+          :aspectRatio="'aspect-video'" :breakpoints="{
             640: { slidesPerView: 1.1 },
             768: { slidesPerView: 1.1 },
             1024: { slidesPerView: 1.1 },
-          }"
-        />
+          }" />
       </section>
 
-      <div
-        class="p-6 mx-auto lg:max-w-6xl font-body md:p-10 lg:flex lg:gap-8 lg:pt-16"
-      >
-        <aside
-          class="self-start mb-10 space-y-6 lg:w-1/3 lg:sticky lg:top-8 lg:mb-0"
-        >
-          <Card
-            id="contact"
-            class="p-6 space-y-4 shadow-lg scroll-mt-20"
-            ref="setSectionRef"
-          >
+      <div class="container mx-auto font-body lg:flex lg:gap-8 lg:pt-16">
+        <aside class="self-start mb-10 space-y-6 lg:w-1/3 lg:sticky lg:top-8 lg:mb-0">
+          <Card id="contact" class="p-6 space-y-4 shadow-lg scroll-mt-20" ref="setSectionRef">
             <h2 class="text-xl font-bold font-heading text-primary">
               {{ contactTitle }}
             </h2>
@@ -104,31 +61,18 @@
             <div v-if="business.contact?.phone">
               <p class="font-semibold text-foreground">{{ phoneLabel }}</p>
               <div class="flex items-center gap-2">
-                <a
-                  :href="`tel:${business.contact.phone}`"
-                  class="text-blue-600 hover:text-blue-700 hover:underline"
-                >
+                <a :href="`tel:${business.contact.phone}`" class="text-blue-600 hover:text-blue-700 hover:underline">
                   {{ business.contact.phone }}
                 </a>
-                <a
-                  :href="`https://wa.me/${formatPhoneForWhatsapp(
-                    business.contact.phone
-                  )}`"
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <a :href="`https://wa.me/${formatPhoneForWhatsapp(
+                  business.contact.phone
+                )}`" target="_blank" rel="noopener noreferrer"
                   class="flex items-center justify-center w-8 h-8 text-white transition-colors bg-green-500 rounded-full hover:bg-green-600"
-                  aria-label="Chat on WhatsApp"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="currentColor"
-                  >
+                  aria-label="Chat on WhatsApp">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                    fill="currentColor">
                     <path
-                      d="M12 0C5.373 0 0 5.373 0 12c0 3.535 1.442 6.75 3.77 9.06l-.75 2.76 2.87-.75c2.31 1.25 4.96 1.95 7.09 1.95 6.627 0 12-5.373 12-12S18.627 0 12 0zm5.176 15.658c-.146.243-.75.54-.925.748-.175.208-.344.225-.632.075-.288-.15-.992-.37-1.89-1.162-.647-.565-1.076-1.265-1.206-1.465-.13-.2-.105-.375-.034-.52.071-.145.176-.38.35-.555.175-.175.26-.302.35-.502.09-.2.045-.375-.018-.502-.063-.127-.585-1.397-.8-1.928-.215-.53-.438-.456-.632-.456-.192 0-.41.015-.632.015-.222 0-.585.075-.895.45-.31.375-1.18 1.15-1.18 2.812 0 1.662 1.21 3.268 1.385 3.518.175.25 2.373 3.633 5.768 5.045 3.395 1.412 3.395.955 4.015.918.62-.038 1.69-.693 1.93-1.365.24-.672.24-1.248.165-1.36-.075-.112-.276-.177-.585-.327z"
-                    />
+                      d="M12 0C5.373 0 0 5.373 0 12c0 3.535 1.442 6.75 3.77 9.06l-.75 2.76 2.87-.75c2.31 1.25 4.96 1.95 7.09 1.95 6.627 0 12-5.373 12-12S18.627 0 12 0zm5.176 15.658c-.146.243-.75.54-.925.748-.175.208-.344.225-.632.075-.288-.15-.992-.37-1.89-1.162-.647-.565-1.076-1.265-1.206-1.465-.13-.2-.105-.375-.034-.52.071-.145.176-.38.35-.555.175-.175.26-.302.35-.502.09-.2.045-.375-.018-.502-.063-.127-.585-1.397-.8-1.928-.215-.53-.438-.456-.632-.456-.192 0-.41.015-.632.015-.222 0-.585.075-.895.45-.31.375-1.18 1.15-1.18 2.812 0 1.662 1.21 3.268 1.385 3.518.175.25 2.373 3.633 5.768 5.045 3.395 1.412 3.395.955 4.015.918.62-.038 1.69-.693 1.93-1.365.24-.672.24-1.248.165-1.36-.075-.112-.276-.177-.585-.327z" />
                   </svg>
                 </a>
               </div>
@@ -136,20 +80,13 @@
 
             <div v-if="business.contact?.email">
               <p class="font-semibold text-foreground">{{ emailLabel }}</p>
-              <a
-                :href="`mailto:${business.contact.email}`"
-                class="text-sm text-blue-600 hover:underline"
-              >
+              <a :href="`mailto:${business.contact.email}`" class="text-sm text-blue-600 hover:underline">
                 {{ business.contact.email }}
               </a>
             </div>
             <div v-if="business.contact?.website">
               <p class="font-semibold text-foreground">{{ websiteLabel }}</p>
-              <a
-                :href="business.contact.website"
-                target="_blank"
-                class="text-sm text-blue-600 hover:underline"
-              >
+              <a :href="business.contact.website" target="_blank" class="text-sm text-blue-600 hover:underline">
                 {{ business.contact.website }}
               </a>
             </div>
@@ -157,93 +94,52 @@
             <div v-if="business.hours_of_operation" class="pt-4">
               <h3 class="font-semibold text-foreground">{{ hoursTitle }}</h3>
               <ul class="mt-2 space-y-1 text-sm">
-                <li
-                  v-for="(hours, day) in business.hours_of_operation"
-                  :key="day"
-                  :class="{ 'font-bold text-green-600': isCurrentDay(day) }"
-                  class="flex justify-between"
-                >
+                <li v-for="(hours, day) in business.hours_of_operation" :key="day"
+                  :class="{ 'font-bold text-green-600': isCurrentDay(day) }" class="flex justify-between">
                   <span>{{ formatDay(day) }}:</span>
                   <span v-if="hours === 'Closed'" class="text-red-500">{{
                     closedLabel
-                  }}</span>
+                    }}</span>
                   <span v-else>{{ hours }}</span>
                 </li>
               </ul>
             </div>
-
-            <div v-if="socialLinks.length" class="pt-4">
-              <ContainersSocials
-                :socialLinks="socialLinks"
-                :columnOnMobile="false"
-                :title="socialTitle"
-              />
-            </div>
           </Card>
 
-          <Card
-            v-if="mapSrc"
-            class="relative w-full h-[300px] overflow-hidden shadow-lg"
-          >
-            <iframe
-              class="absolute inset-0 w-full h-full"
-              :src="mapSrc"
-              style="border: 0"
-              allowfullscreen
-              loading="lazy"
-            ></iframe>
+          <Card v-if="mapSrc" class="relative w-full h-[300px] overflow-hidden shadow-lg">
+            <iframe class="absolute inset-0 w-full h-full" :src="mapSrc" style="border: 0" allowfullscreen
+              loading="lazy"></iframe>
           </Card>
-          <Card
-            v-else
-            class="relative flex items-center justify-center w-full h-[300px] bg-gray-100 text-gray-500 shadow-lg"
-          >
+          <Card v-else
+            class="relative flex items-center justify-center w-full h-[300px] bg-gray-100 text-gray-500 shadow-lg">
             {{ locationUnavailableText }}
           </Card>
         </aside>
 
         <main class="space-y-12 lg:w-2/3">
-          <div
-            v-if="!isPremiumMember"
-            class="flex items-center justify-center w-full h-32 bg-gray-200 rounded-lg shadow-inner"
-          >
-            <span class="text-lg font-semibold text-gray-600"
-              >[Advertisement Placeholder]</span
-            >
+          <div v-if="!isPremiumMember"
+            class="flex items-center justify-center w-full h-32 bg-gray-200 rounded-lg shadow-inner">
+            <span class="text-lg font-semibold text-gray-600">[Advertisement Placeholder]</span>
           </div>
 
-          <section
-            v-if="isPremiumMember && businessServices.length"
-            id="services"
-            class="scroll-mt-20"
-            ref="setSectionRef"
-          >
-            <h2
-              class="pb-2 mb-6 text-2xl font-bold border-b sm:text-3xl font-heading text-primary"
-            >
+          <section v-if="isPremiumMember && businessServices.length" id="services" class="scroll-mt-20"
+            ref="setSectionRef">
+            <h2 class="pb-2 mb-6 text-2xl font-bold border-b sm:text-3xl font-heading text-primary">
               {{ servicesTitle }}
             </h2>
             <ul class="grid grid-cols-1 gap-6 md:grid-cols-2">
               <li v-for="(service, i) in businessServices" :key="i">
-                <Card
-                  class="flex h-full p-4 overflow-hidden transition-all duration-300 hover:shadow-xl group"
-                >
-                  <div
-                    class="flex-shrink-0 w-24 h-24 overflow-hidden rounded-md"
-                  >
-                    <img
-                      :src="service.image"
-                      :alt="service.alt"
+                <Card class="flex h-full p-4 overflow-hidden transition-all duration-300 hover:shadow-xl group">
+                  <div class="flex-shrink-0 w-24 h-24 overflow-hidden rounded-md">
+                    <img :src="service.image" :alt="service.alt"
                       class="object-cover w-full h-full transition-transform duration-300 group-hover:scale-105"
-                      @error="replaceWithPlaceholder($event, 'Service')"
-                    />
+                      @error="replaceWithPlaceholder($event, 'Service')" />
                   </div>
                   <div class="flex flex-col flex-grow ml-4">
                     <CardTitle class="text-lg font-bold text-primary">{{
                       service.title
-                    }}</CardTitle>
-                    <CardDescription
-                      class="mt-1 text-sm leading-relaxed text-muted-foreground"
-                    >
+                      }}</CardTitle>
+                    <CardDescription class="mt-1 text-sm leading-relaxed text-muted-foreground">
                       {{ service.description }}
                     </CardDescription>
                   </div>
@@ -252,73 +148,30 @@
             </ul>
           </section>
 
-          <section
-            v-if="isPremiumMember && businessGallery.length"
-            id="gallery"
-            class="scroll-mt-20"
-            ref="setSectionRef"
-          >
-            <h2
-              class="pb-2 mb-6 text-2xl font-bold border-b sm:text-3xl font-heading text-primary"
-            >
+          <section v-if="isPremiumMember && businessGallery.length" id="gallery" class="scroll-mt-20"
+            ref="setSectionRef">
+            <h2 class="pb-2 mb-6 text-2xl font-bold border-b sm:text-3xl font-heading text-primary">
               {{ galleryTitle }}
             </h2>
-            <ModalCarousel
-              :slides="businessGallery"
-              :collection-id="business?.collectionId"
-              :propertyId="business?.id"
-              @selected-event="openModalWithImage"
-              :aspectRatio="'aspect-video'"
-            />
+            <ModalCarousel v-if="business?.gallery?.length" :slides="business.gallery"
+              :collection-id="business?.collectionId" :propertyId="business?.id" @selected-event="openModalWithImage"
+              :aspectRatio="'aspect-video'" />
             <Modal ref="modal">
-              <Card
-                class="relative flex flex-row items-center justify-between p-4 bg-background"
-              >
-                <button
-                  @click="moveSlider('back')"
-                  class="left-0 gallery-nav-btn"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    class="w-6 h-6 mx-auto"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M15 19l-7-7 7-7"
-                    />
+              <Card class="relative flex flex-row items-center justify-between p-4 bg-background">
+                <button @click="moveSlider('back')" class="left-0 gallery-nav-btn">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 mx-auto" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
                   </svg>
                 </button>
-                <div
-                  class="w-full min-h-[80vh] lg:aspect-video flex items-center justify-center"
-                >
-                  <img
-                    :src="selectedImage.url"
-                    :alt="selectedImage.alt"
-                    class="object-contain max-w-full max-h-[80vh] rounded-lg shadow-lg"
-                  />
+                <div class="w-full min-h-[80vh] lg:aspect-video flex items-center justify-center">
+                  <img :src="selectedImage.url" :alt="selectedImage.alt"
+                    class="object-contain max-w-full max-h-[80vh] rounded-lg shadow-lg" />
                 </div>
-                <button
-                  @click="moveSlider('next')"
-                  class="right-0 gallery-nav-btn"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    class="w-6 h-6 mx-auto transform rotate-180"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M15 19l-7-7 7-7"
-                    />
+                <button @click="moveSlider('next')" class="right-0 gallery-nav-btn">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 mx-auto transform rotate-180" fill="none"
+                    viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
                   </svg>
                 </button>
               </Card>
@@ -327,80 +180,41 @@
 
           <section id="menu" class="scroll-mt-20" ref="setSectionRef">
             <Card
-              class="relative flex flex-col items-center justify-center gap-6 p-8 overflow-hidden text-center md:flex-row md:justify-between md:text-left"
-            >
-              <div class="z-10 flex flex-col items-center gap-2 md:items-start">
-                <h2 class="text-3xl font-extrabold drop-shadow-md">
-                  {{
-                    isSpanish ? "¡Descubre Nuestro Menú!" : "Discover Our Menu!"
-                  }}
+              class="relative flex flex-col items-center justify-between gap-8 p-8 overflow-hidden md:flex-row">
+              <!-- Text content -->
+              <div class="z-10 flex flex-col items-center space-y-3 text-center md:items-start md:text-left">
+                <h2 class="text-3xl font-extrabold tracking-tight">
+                  {{ isSpanish ? "¡Descubre Nuestro Menú!" : "Discover Our Menu!" }}
                 </h2>
-                <p class="max-w-md pb-2">
+
+                <p class="max-w-md text-muted-foreground">
                   {{
                     isSpanish
                       ? "Explora deliciosos platillos de mariscos frescos y tradicionales mexicanos."
                       : "Explore delicious seafood dishes made with fresh, local ingredients."
                   }}
                 </p>
-                <NuxtLink :to="`${route.path}menu`">
-                  <Button>
+
+                <NuxtLink :to="`${route.path.endsWith('/') ? route.path : `${route.path}/`}menu`">
+                  <Button class="mt-2">
                     {{ isSpanish ? "Ver Menú Completo" : "View Full Menu" }}
                   </Button>
                 </NuxtLink>
               </div>
 
-              <div
-                class="absolute inset-0 overflow-hidden opacity-10 md:static md:opacity-100 md:flex md:items-center"
-              >
-                <img
-                  src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTxPPCzE7IDzDog-ufAkkokAWsxA0_DHk_KGw&s"
-                  alt="Menu preview"
-                  class="object-cover w-full h-full rounded-lg shadow-md md:w-56 md:h-56 md:rounded-xl"
-                />
+              <!-- Icon or background graphic -->
+              <div class="relative flex items-center justify-center w-full md:w-auto opacity-20 md:opacity-100">
+                <MenuSquare class="w-48 h-48 text-primary/70" />
               </div>
+
+              <!-- Decorative gradient overlay -->
+              <div class="absolute inset-0 pointer-events-none bg-gradient-to-tr from-primary/5 to-transparent" />
             </Card>
           </section>
+
         </main>
       </div>
     </template>
-    <footer
-        v-if="business?.contact || business?.address"
-        class="pt-10 my-16 text-sm text-center border-t border-muted-foreground/20 text-muted-foreground"
-      >
-        <div class="flex flex-col items-center gap-2">
-          <img
-            v-if="business?.logo && business?.is_featured"
-            :src="business.logo"
-            alt="Business Logo"
-            class="h-16 mb-4"
-          />
-
-          <span>
-            {{ business.address.street }}, {{ business.address.city }},
-            {{ business.address.state }}
-          </span>
-          <a
-            v-if="business.contact?.phone"
-            :href="`tel:${business.contact.phone}`"
-            class="transition-colors hover:text-primary"
-          >
-            {{ business.contact.phone }}
-          </a>
-          <a
-            v-if="business.contact?.website"
-            :href="business.contact.website"
-            target="_blank"
-            class="transition-colors hover:text-primary"
-          >
-            {{ business.contact.website }}
-          </a>
-
-          <ContainersSocials
-            v-if="business?.is_featured"
-            :socialLinks="mappedSocials"
-          />
-        </div>
-      </footer>
   </div>
 </template>
 
@@ -411,7 +225,7 @@ import Modal from "@common/components/sections/Modal.vue";
 import ModalCarousel from "@common/components/ui/modal/ModalCarousel.vue";
 // Composables
 import useBusinesses from "@common/composables/useBusiness";
-import { Facebook, Instagram, Twitter, Linkedin } from "lucide-vue-next";
+import { Facebook, Instagram, Twitter, Linkedin, MenuSquare } from "lucide-vue-next";
 import {
   TwitterLogoIcon,
   GithubLogoIcon,
@@ -467,7 +281,6 @@ const iconMap: Record<string, any> = {
   linkedin: LinkedinLogoIcon,
   github: GithubLogoIcon,
 };
-
 
 const socialLinks = computed(() => {
   const iconMap = {

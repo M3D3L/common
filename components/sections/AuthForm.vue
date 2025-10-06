@@ -2,14 +2,9 @@
   <containers-video class="min-h-screen" video="https://videos.pexels.com/video-files/2867873/2867873-uhd_2560_1440_24fps.mp4">
     <template #video-container-content>
       <ClientOnly>
-        <Card class="container">
+        <Card class="max-w-2xl mx-auto">
           <CardContent class="p-6">
             <!-- Logo / Title -->
-            <div class="flex justify-center mb-6" :class="{ 'pt-15': isRegister }">
-              <span class="flex flex-col logo-text">
-                <span class="text-xl font-bold">GuillermoMedel</span>
-              </span>
-            </div>
 
             <!-- Tabs -->
             <div class="flex justify-center mb-6">
