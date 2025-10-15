@@ -2,23 +2,27 @@ import {
   TwitterLogoIcon,
   GithubLogoIcon,
   LinkedinLogoIcon,
+  InstagramLogoIcon,
 } from "@radix-icons/vue";
+import { Facebook, Music } from "lucide-vue-next";
 
 export const seoDefaults = {
-    home: {
-        title: "Relocate to San Carlos, Sonora | Expert Real Estate & Relocation Services",
-        description: `RelocateToSanCarlos.com helps you move seamlessly to San Carlos, Sonora. Discover your dream home, find ideal rental properties, or invest in prime lots along the breathtaking Sea of Cortez. Our expert relocation services guide you through every step, from property tours to settling into your new coastal lifestyle.`,
-        keywords: "San Carlos real estate, San Carlos relocation services, San Carlos property rentals, San Carlos homes for sale, San Carlos lots for sale, move to San Carlos, invest in San Carlos real estate",
-        image: "/images/brenda.png",
-    },
-}
+  home: {
+    title:
+      "Relocate to San Carlos, Sonora | Expert Real Estate & Relocation Services",
+    description: `RelocateToSanCarlos.com helps you move seamlessly to San Carlos, Sonora. Discover your dream home, find ideal rental properties, or invest in prime lots along the breathtaking Sea of Cortez. Our expert relocation services guide you through every step, from property tours to settling into your new coastal lifestyle.`,
+    keywords:
+      "San Carlos real estate, San Carlos relocation services, San Carlos property rentals, San Carlos homes for sale, San Carlos lots for sale, move to San Carlos, invest in San Carlos real estate",
+    image: "/images/brenda.png",
+  },
+};
 
 export const contactInfo = {
-    siteName: "RelocateToSanCarlos.com",
-    slogan: "Invest in San Carlos, live like a local.",
-    email: "brenda@gmail.com",
-    phone: "+52 (644) 194-2391",
-}
+  siteName: "RelocateToSanCarlos.com",
+  slogan: "Invest in San Carlos, live like a local.",
+  email: "brenda@gmail.com",
+  phone: "+52 (644) 194-2391",
+};
 
 // Hero Section
 export const heroSection = {
@@ -34,8 +38,16 @@ export const heroSection = {
 Discover your dream home, find ideal rental properties, or invest in prime lots along 
 the breathtaking Sea of Cortez. Our expert relocation services guide you through every step, 
 from property tours to settling into your new coastal lifestyle.`,
-  propertiesLink: "/real-estate/",
-  propertiesText: "Explore Properties",
+  buttons: [
+    {
+      link: "/real-estate/",
+      title: "Explore Properties",
+    },
+    {
+      link: "/#contact",
+      title: "Contact Brenda",
+    },
+  ],
 };
 
 // Services Section
@@ -53,40 +65,52 @@ export const socialsSection = {
     "Follow Brenda and RelocateToSanCarlos.com for the latest updates on San Carlos real estate, rental opportunities, and lifestyle tips.",
   socials: [
     {
-      title: "RelocateToSanCarlos.com",
-      description: "Expert guidance for relocating to San Carlos. 🌊🏡",
-      likes: 1245,
-      imageUrl: "https://picsum.photos/400/400?random=1",
+      platform: "Instagram",
+      handle: "@RelocateToSanCarlos",
+      tagline: "Your San Carlos Journey Starts Here",
+      description: "Daily updates from paradise 🌊🏡",
+      ctaText: "Follow on Instagram",
+      imageUrl: "https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=800&h=1000&fit=crop",
     },
     {
-      title: "SanCarlosNomad",
-      description: "Remote work and life in paradise. 💻🌮",
-      likes: 842,
-      imageUrl: "https://picsum.photos/400/400?random=2",
+      platform: "Facebook",
+      handle: "RelocateToSanCarlos",
+      tagline: "Join Our Community",
+      description: "Connect with San Carlos locals & expats 🏖️",
+      ctaText: "Like Our Page",
+      imageUrl: "https://images.unsplash.com/photo-1506929562872-bb421503ef21?w=800&h=1000&fit=crop",
     },
     {
-      title: "OceanViewHomes",
-      description: "Find your perfect coastal home. ☕🌅",
-      likes: 2301,
-      imageUrl: "https://picsum.photos/400/400?random=3",
+      platform: "TikTok",
+      handle: "@SanCarlosLife",
+      tagline: "See San Carlos Come Alive",
+      description: "Behind-the-scenes tours & local tips 🎥",
+      ctaText: "Follow on TikTok",
+      imageUrl: "https://images.unsplash.com/photo-1473496169904-658ba7c44d8a?w=800&h=1000&fit=crop",
     },
     {
-      title: "SonoraAdventures",
-      description: "Explore San Carlos like a local. 🚣‍♂️🔥",
-      likes: 563,
-      imageUrl: "https://picsum.photos/400/400?random=4",
+      platform: "Instagram",
+      handle: "@SanCarlosNomad",
+      tagline: "Work Remote, Live Better",
+      description: "Remote work paradise living 💻🌮",
+      ctaText: "Follow Us",
+      imageUrl: "https://images.unsplash.com/photo-1551244072-5d12893278ab?w=800&h=1000&fit=crop",
     },
     {
-      title: "TasteSanCarlos",
-      description: "Local cuisine, seafood, and culture. 🦐🍺",
-      likes: 1769,
-      imageUrl: "https://picsum.photos/400/400?random=5",
+      platform: "Facebook",
+      handle: "SanCarlosRealEstateExperts",
+      tagline: "Your Property Experts",
+      description: "Expert real estate guidance ☕🌅",
+      ctaText: "Connect With Us",
+      imageUrl: "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&h=1000&fit=crop",
     },
     {
-      title: "DesertMeetsSea",
-      description: "Experience San Carlos nature and beaches. 🌵🌊",
-      likes: 987,
-      imageUrl: "https://picsum.photos/400/400?random=6",
+      platform: "TikTok",
+      handle: "@ExploreSanCarlos",
+      tagline: "Adventure Awaits",
+      description: "Discover hidden gems & activities 🚣‍♂️🔥",
+      ctaText: "Watch Now",
+      imageUrl: "https://images.unsplash.com/photo-1501594907352-04cda38ebc29?w=800&h=1000&fit=crop",
     },
   ],
 };
@@ -133,6 +157,8 @@ export const socials = [
     href: "https://www.linkedin.com/in/guillermo-medel-9a4465151/",
   },
   { icon: GithubLogoIcon, label: "GitHub", href: "https://github.com/M3D3L" },
+  { icon: InstagramLogoIcon, label: "Instagram", href: "https://instagram.com" },
+  { icon: Facebook, label: "Facebook", href: "https://facebook.com" },
 ];
 
 // Real Estate Hero Section
@@ -159,9 +185,9 @@ const categoryConfigs = {
     sectionTitle: "Live by the Beach in San Carlos, Sonora",
     type: "rentals",
     subTitle:
-      "Experience comfort, adventure, and affordability by renting in San Carlos, Mexico’s coastal paradise.",
+      "Experience comfort, adventure, and affordability by renting in San Carlos, Mexico's coastal paradise.",
     footerText:
-      "San Carlos isn’t just a destination, it’s a lifestyle you can start now.",
+      "San Carlos isn't just a destination, it's a lifestyle you can start now.",
     benefits: [
       {
         title: "Lower Cost of Living",
@@ -205,7 +231,7 @@ const categoryConfigs = {
       {
         title: "Rental Income Opportunities",
         description:
-          "Generate income by renting your property when you’re not using it.",
+          "Generate income by renting your property when you're not using it.",
       },
     ],
     mode: "property",

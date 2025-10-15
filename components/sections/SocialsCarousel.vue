@@ -9,8 +9,7 @@
     />
     <ContainersCarousel :slides="socials">
       <template #slide="{ slide, index }">
-        <CardsSocialsCard :key="index" :title="slide.title" :description="slide.description" :likes="slide.likes"
-          :imageUrl="slide.imageUrl" />
+        <CardsSocialsCard :key="index" v-bind="slide" />
       </template>
     </ContainersCarousel>
   </div>

@@ -1,31 +1,41 @@
 <template>
   <header
-    class="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-md"
+    class="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60"
   >
-    <div class="container relative flex items-center justify-between h-16 px-4 mx-auto">
+    <div class="container relative flex items-center justify-between h-16 px-4 mx-auto lg:px-6">
       <!-- Logo -->
-      <nuxt-link v-if="logo" to="/" class="flex items-center gap-2">
-        <img :src="logo" alt="Logo" class="h-12" />
+      <nuxt-link 
+        v-if="logo" 
+        to="/" 
+        class="flex items-center gap-2 transition-opacity hover:opacity-80"
+      >
+        <img :src="logo" alt="Logo" class="h-10 md:h-12" />
       </nuxt-link>
-      <NuxtLink v-else to="/" class="flex items-center">
+      <NuxtLink 
+        v-else 
+        to="/" 
+        class="flex items-center transition-colors hover:text-primary"
+      >
         <span class="flex flex-col logo-text">
-          <span class="text-xl font-bold">{{ siteName }}</span>
+          <span class="text-lg font-bold md:text-xl">{{ siteName }}</span>
         </span>
       </NuxtLink>
 
       <!-- Right side buttons -->
-      <div class="flex items-center gap-4">
+      <div class="flex items-center gap-2 md:gap-4">
         <!-- Desktop nav -->
-        <nav class="items-center hidden gap-4 md:flex">
+        <nav class="items-center hidden gap-1 md:flex">
           <!-- Main links -->
           <NuxtLink
             v-for="link in links"
             :key="link.href"
             :to="link.href"
-            class="px-3 py-2 text-sm font-medium transition-colors rounded-md hover:bg-accent hover:text-accent-foreground"
-            active-class="text-primary"
+            class="relative px-4 py-2 text-sm font-medium transition-all rounded-lg hover:bg-accent/50 hover:text-foreground group"
+            active-class="font-semibold text-primary"
           >
             {{ link.label }}
+            <!-- Active indicator -->
+            <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full" />
           </NuxtLink>
 
           <slot name="extra-links" />
@@ -35,22 +45,23 @@
             <template v-if="!auth.isAuthenticated.value">
               <NuxtLink
                 :to="getLoginHref()"
-                class="px-3 py-2 text-sm transition-colors rounded-md hover:bg-accent hover:text-accent-foreground"
+                class="px-4 py-2 text-sm font-medium transition-all rounded-lg hover:bg-accent/50"
               >
                 Login
               </NuxtLink>
               <NuxtLink
                 :to="getRegisterHref()"
-                class="px-3 py-2 text-sm transition-colors rounded-md hover:bg-accent hover:text-accent-foreground"
+                class="px-4 py-2 text-sm font-medium transition-all rounded-lg shadow-sm bg-primary text-primary-foreground hover:bg-primary/90 hover:shadow-md"
               >
                 Register
               </NuxtLink>
             </template>
             <Button
               v-else
-              class="text-xs md:text-sm"
+              class="text-sm font-medium shadow-sm hover:shadow-md"
               @click="auth.logout()"
               variant="default"
+              size="sm"
             >
               Logout
             </Button>
@@ -61,11 +72,11 @@
         <ClientOnly>
           <button
             @click="toggleDark()"
-            class="p-2 transition-colors rounded-md hover:bg-accent hover:text-accent-foreground"
+            class="p-2.5 transition-all rounded-lg hover:bg-accent/50 hover:scale-110 active:scale-95"
             aria-label="Toggle dark mode"
           >
-            <Sun v-if="isDark" class="w-5 h-5" />
-            <Moon v-else class="w-5 h-5" />
+            <Sun v-if="isDark" class="w-5 h-5 transition-transform duration-500 rotate-0 hover:rotate-180" />
+            <Moon v-else class="w-5 h-5 transition-transform duration-300 rotate-0 hover:rotate-12" />
           </button>
 
           <CheckoutView v-if="checkoutToggled" class="fixed right-0 top-32" />
@@ -74,54 +85,57 @@
         <!-- Mobile menu button -->
         <button
           @click="isMobileMenuOpen = !isMobileMenuOpen"
-          class="p-2 transition-colors rounded-md hover:bg-accent hover:text-accent-foreground md:hidden"
+          class="p-2.5 transition-all rounded-lg hover:bg-accent/50 md:hidden hover:scale-110 active:scale-95"
           aria-label="Toggle menu"
         >
-          <X v-if="isMobileMenuOpen" class="w-5 h-5" />
-          <Menu v-else class="w-5 h-5" />
+          <X v-if="isMobileMenuOpen" class="w-5 h-5 transition-transform duration-300 rotate-0 hover:rotate-90" />
+          <Menu v-else class="w-5 h-5 transition-transform duration-200 rotate-0 hover:scale-110" />
         </button>
       </div>
     </div>
 
     <!-- Mobile menu -->
     <Transition
-      enter-active-class="transition duration-200 ease-out"
-      enter-from-class="transform scale-95 opacity-0"
-      enter-to-class="transform scale-100 opacity-100"
-      leave-active-class="transition duration-150 ease-in"
-      leave-from-class="transform scale-100 opacity-100"
-      leave-to-class="transform scale-95 opacity-0"
+      enter-active-class="transition duration-300 ease-out"
+      enter-from-class="transform -translate-y-2 opacity-0"
+      enter-to-class="transform translate-y-0 opacity-100"
+      leave-active-class="transition duration-200 ease-in"
+      leave-from-class="transform translate-y-0 opacity-100"
+      leave-to-class="transform -translate-y-2 opacity-0"
     >
       <div
         v-if="isMobileMenuOpen"
-        class="absolute w-full border-b shadow-md bg-background md:hidden"
+        class="absolute w-full border-b shadow-lg border-border/40 bg-background/95 backdrop-blur md:hidden"
       >
-        <div class="container flex flex-col gap-1 px-4 py-3">
+        <div class="container flex flex-col gap-1 px-4 py-4">
           <!-- Main links -->
           <NuxtLink
             v-for="link in links"
             :key="link.href"
             :to="link.href"
-            class="px-3 py-2 text-sm transition-colors rounded-md hover:bg-accent hover:text-accent-foreground"
-            active-class="text-primary"
+            class="px-4 py-3 text-sm font-medium transition-all rounded-lg hover:bg-accent/50 hover:translate-x-1 active:scale-95"
+            active-class="font-semibold text-primary bg-accent/30"
             @click="isMobileMenuOpen = false"
           >
             {{ link.label }}
           </NuxtLink>
+
+          <!-- Divider -->
+          <div v-if="showAuthButtons" class="h-px my-2 bg-border/40" />
 
           <!-- Auth buttons included in mobile list -->
           <template v-if="showAuthButtons">
             <template v-if="!auth.isAuthenticated.value">
               <NuxtLink
                 :to="getLoginHref()"
-                class="px-3 py-2 text-sm transition-colors rounded-md hover:bg-accent hover:text-accent-foreground"
+                class="px-4 py-3 text-sm font-medium transition-all rounded-lg hover:bg-accent/50 hover:translate-x-1 active:scale-95"
                 @click="isMobileMenuOpen = false"
               >
                 Login
               </NuxtLink>
               <NuxtLink
                 :to="getRegisterHref()"
-                class="px-3 py-2 text-sm transition-colors rounded-md hover:bg-accent hover:text-accent-foreground"
+                class="px-4 py-3 text-sm font-semibold transition-all rounded-lg shadow-sm bg-primary text-primary-foreground hover:bg-primary/90 hover:translate-x-1 active:scale-95"
                 @click="isMobileMenuOpen = false"
               >
                 Register
@@ -129,7 +143,7 @@
             </template>
             <Button
               v-else
-              class="text-xs md:text-sm"
+              class="w-full text-sm font-medium shadow-sm"
               @click="
                 () => {
                   auth.logout();
@@ -137,6 +151,7 @@
                 }
               "
               variant="default"
+              size="sm"
             >
               Logout
             </Button>

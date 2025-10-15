@@ -1,7 +1,14 @@
 <template>
-  <OrganismsHero v-bind="realEstateHeroSection" />
-
   <ul class="pt-16 pb-32 space-y-32 lg:pt-24">
+    <TextSectionTitle
+      class="container pt-12 pb-16"
+      title="Relocate to San Carlos"
+      description="Your trusted partner for finding the perfect property in San Carlos, Mexico. From expert guidance and personalized service to comprehensive support throughout your relocation journey, we're here to make your move seamless and stress-free."
+      :h1="true"
+    />
+
+    <AtomsPictureGrid />
+
     <li v-for="(category, index) in categories" :key="category.name">
       <TextSectionTitle
         class="container pt-12 pb-16"

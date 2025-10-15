@@ -1,42 +1,45 @@
 <template>
-  <Card class="w-full overflow-hidden">
-    <!-- Image -->
-    <div class="relative w-full aspect-square bg-muted">
-      <img :src="imageUrl" alt="post image" class="object-cover w-full h-full" />
-      <div
-        class="absolute bottom-3 right-3 flex items-center space-x-1.5 rounded-full bg-black/50 px-2 py-1 text-[11px] text-white">
-        <span>1/3</span>
-        <StackIcon class="w-3.5 h-3.5" />
-      </div>
+  <Card class="group relative w-full aspect-[4/5] overflow-hidden border-0 shadow-lg hover:shadow-2xl transition-all duration-500">
+    <!-- Background Image with Overlay -->
+    <div class="absolute inset-0">
+      <img 
+        :src="imageUrl" 
+        :alt="platform"
+        class="object-cover w-full h-full transition-transform duration-700 group-hover:scale-110"
+      />
+      <div :class="`absolute inset-0 bg-gradient-to-br ${gradient} opacity-80 group-hover:opacity-70 transition-opacity duration-500`" />
     </div>
 
-    <!-- Actions -->
-    <div class="flex items-center justify-between px-3 pt-3">
+    <!-- Content -->
+    <div class="relative flex flex-col justify-between h-full p-6 text-white">
+      <!-- Platform Icon & Name -->
       <div class="flex items-center space-x-3">
-        <Button variant="ghost" size="icon" class="h-9 w-9 text-muted-foreground hover:text-red-500">
-          <HeartIcon class="w-5 h-5" />
-        </Button>
-        <Button variant="ghost" size="icon" class="h-9 w-9 text-muted-foreground">
-          <ChatBubbleIcon class="w-5 h-5" />
-        </Button>
-        <Button variant="ghost" size="icon" class="h-9 w-9 text-muted-foreground">
-          <PaperPlaneIcon class="w-5 h-5" />
+        <div :class="`p-2.5 rounded-full ${iconBg} backdrop-blur-sm`">
+          <component :is="platformIcon" class="w-6 h-6" />
+        </div>
+        <div>
+          <h3 class="text-xl font-bold">{{ platform }}</h3>
+          <p class="text-sm text-white/90">{{ handle }}</p>
+        </div>
+      </div>
+
+      <!-- Call to Action -->
+      <div class="space-y-4">
+        <div class="space-y-2">
+          <p class="text-2xl font-bold leading-tight drop-shadow-lg">
+            {{ tagline }}
+          </p>
+          <p class="text-sm text-white/80 drop-shadow">
+            {{ description }}
+          </p>
+        </div>
+        
+        <Button 
+          :class="`w-full ${buttonStyle} font-semibold py-6 text-base shadow-xl hover:scale-105 transition-transform duration-300`"
+        >
+          {{ ctaText }}
         </Button>
       </div>
-      <Button variant="ghost" size="icon" class="h-9 w-9 text-muted-foreground">
-        <BookmarkIcon class="w-5 h-5" />
-      </Button>
-    </div>
-
-    <!-- Post Body -->
-    <div class="px-3 pb-3 space-y-1 text-sm">
-      <p class="font-semibold">{{ likes }} likes</p>
-      <p>
-        <span class="font-semibold">{{ title }}</span>
-        <br />
-        <span class="text-card-foreground/90">{{ description }}</span>
-      </p>
-      <p class="text-xs text-muted-foreground">View all comments</p>
     </div>
   </Card>
 </template>
@@ -44,26 +47,61 @@
 <script setup lang="ts">
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import {
-  DotsHorizontalIcon,
-  HeartIcon,
-  ChatBubbleIcon,
-  PaperPlaneIcon,
-  BookmarkIcon,
-  StackIcon,
-} from '@radix-icons/vue';
+import { 
+  InstagramIcon, 
+  FacebookIcon, 
+  MusicIcon, 
+  TwitterIcon 
+} from 'lucide-vue-next';
 
-interface SocialsCardProps {
-  title?: string;
-  description?: string;
-  likes?: number;
+interface SocialCardProps {
+  platform?: 'Instagram' | 'Facebook' | 'TikTok' | 'Twitter';
   imageUrl?: string;
+  handle?: string;
+  tagline?: string;
+  description?: string;
+  ctaText?: string;
 }
 
-const props = defineProps<SocialsCardProps>();
+const props = withDefaults(defineProps<SocialCardProps>(), {
+  platform: 'Instagram',
+  imageUrl: 'https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=800&h=1000&fit=crop',
+  handle: '@RelocateToSanCarlos',
+  tagline: 'Follow Our Journey',
+  description: 'Daily updates from paradise 🌊☀️',
+  ctaText: 'Follow Us'
+});
 
-const title = props.title ?? 'RelocateToSanCarlos.com';
-const description = props.description ?? 'Living the good life in San Carlos 🌊☀️';
-const likes = props.likes ?? 1245;
-const imageUrl = props.imageUrl ?? 'https://picsum.photos/400/400';
+const platformConfig = {
+  Instagram: {
+    icon: InstagramIcon,
+    gradient: 'from-purple-600 via-pink-600 to-orange-500',
+    iconBg: 'bg-white/20',
+    buttonStyle: 'bg-white text-purple-600 hover:bg-white/90'
+  },
+  Facebook: {
+    icon: FacebookIcon,
+    gradient: 'from-blue-600 via-blue-700 to-blue-800',
+    iconBg: 'bg-white/20',
+    buttonStyle: 'bg-white text-blue-600 hover:bg-white/90'
+  },
+  TikTok: {
+    icon: MusicIcon,
+    gradient: 'from-black via-gray-900 to-pink-900',
+    iconBg: 'bg-white/20',
+    buttonStyle: 'bg-white text-black hover:bg-white/90'
+  },
+  Twitter: {
+    icon: TwitterIcon,
+    gradient: 'from-sky-400 via-blue-500 to-blue-600',
+    iconBg: 'bg-white/20',
+    buttonStyle: 'bg-white text-blue-500 hover:bg-white/90'
+  }
+};
+
+const config = computed(() => platformConfig[props.platform]);
+const platformIcon = computed(() => config.value.icon);
+const gradient = computed(() => config.value.gradient);
+const iconBg = computed(() => config.value.iconBg);
+const buttonStyle = computed(() => config.value.buttonStyle);
 </script>

@@ -1,51 +1,35 @@
 <template>
   <containers-video :id="id" :padding="padding" :video="video">
     <template #video-container-content>
-      <section
-        :id="headerId"
-        class="relative flex flex-col items-center justify-center w-full overflow-hidden placeholder md:flex-row"
-      >
+      <section :id="headerId"
+        class="relative flex flex-col items-center justify-center w-full py-16 overflow-hidden placeholder md:flex-row md:py-0">
         <!-- Left: Image -->
-        <div
-          class="relative flex items-end justify-center w-full lg:w-1/2 md:w-2/5"
-        >
-          <img
-            :src="imageSrc"
-            :alt="imageAlt"
-            class="hidden object-cover w-4/5 transform md:block"
-          />
+        <div class="relative flex items-end justify-center w-full lg:w-1/2 md:w-2/5">
+          <img :src="imageSrc" :alt="imageAlt" class="hidden object-cover w-4/5 transform md:block" />
         </div>
 
         <!-- Right: Text content -->
-        <Card class="items-center my-16 lg:w-1/2 md:w-3/5">
-          <CardHeader>
-            <CardTitle
-              class="text-3xl font-bold leading-tight text-center md:text-4xl lg:text-5xl md:text-left"
-            >
-              {{ titleLine1 }} <br />
-              <span class="mt-2 text-primary">{{ titleHighlight }}</span>
+        <Card>
+          <CardHeader class="p-6 space-y-6 lg:p-8">
+            <CardTitle class="text-4xl font-bold tracking-tight text-center md:text-5xl lg:text-6xl lg:text-left">
+              {{ titleLine1 }}
+              <span class="block mt-2 text-primary">
+                {{ titleHighlight }}
+              </span>
             </CardTitle>
 
-            <div class="w-full mx-auto mt-4 md:hidden md:w-1/3 lg:w-1/2">
-              <img
-                :src="imageSrc"
-                :alt="imageAlt"
-                class="object-cover w-full h-full"
-              />
-            </div>
-
-            <CardDescription class="mt-4 text-sm lg:text-lg font-base">
+            <CardDescription class="max-w-2xl mx-auto text-lg lg:mx-0 lg:text-left">
               {{ description }}
             </CardDescription>
           </CardHeader>
 
-          <CardContent
-            class="flex flex-col gap-4 mt-8 sm:flex-row sm:justify-start"
-          >
-            <Button asChild size="lg">
-              <NuxtLink :to="propertiesLink">{{ propertiesText }}</NuxtLink>
+          <CardContent class="flex flex-col gap-4 px-6 sm:flex-row sm:justify-center lg:justify-start lg:px-8">
+            <Button v-for="(button, index) in buttons" :key="button.title" asChild size="lg"
+              :variant="index === 0 ? 'default' : 'outline'" class="font-semibold">
+              <NuxtLink :to="button.link">
+                {{ button.title }}
+              </NuxtLink>
             </Button>
-            <WhatsappButton />
           </CardContent>
         </Card>
       </section>
@@ -62,7 +46,6 @@ import {
   CardContent,
 } from "@common/components/ui/card";
 import { Button } from "@common/components/ui/button";
-import WhatsappButton from "@common/components/molecules/WhatsappButton.vue";
 
 interface Props {
   id: string;
@@ -74,8 +57,7 @@ interface Props {
   titleLine1: string;
   titleHighlight: string;
   description: string;
-  propertiesLink: string;
-  propertiesText: string;
+  buttons: Array<{ text: string; title: string; link: string }>;
 }
 
 const props = defineProps<Partial<Props>>();

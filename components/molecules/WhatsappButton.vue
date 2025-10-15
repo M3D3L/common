@@ -7,19 +7,18 @@
     rel="noopener noreferrer"
     aria-label="Chat on WhatsApp"
   >
-    <Button @click="()=> {}" size="lg" :variant class="w-full">
+    <button @click="()=> {}" size="lg" :variant class="w-full">
       <div class="flex flex-row gap-2 bg-opacity-0">
         <p>
           {{ text }}
         </p>
         <img src="/icons/whatsapp.svg" alt="WhatsApp Icon" :class="iconStyles" />
       </div>
-    </Button>
+    </button>
   </a>
 </template>
 
 <script setup lang="ts">
-import { Button } from "@/components/ui/button";
 
 const props = defineProps({
   phone: {
