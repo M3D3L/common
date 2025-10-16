@@ -138,12 +138,22 @@
     @apply pl-4 my-4 italic border-l-4 border-muted text-muted-foreground;
   }
 
-  article ul,
-  article li {
-    @apply pl-6 mb-4;
+  article ul {
+    @apply pl-6 mb-4 list-disc list-inside;
   }
 
-  article ul li::marker,
+  article ol {
+    @apply pl-6 mb-4 list-decimal list-inside;
+  }
+
+  article li {
+    @apply mb-2;
+  }
+
+  article ul li::marker {
+    @apply text-primary;
+  }
+
   article ol li::marker {
     @apply text-primary;
   }

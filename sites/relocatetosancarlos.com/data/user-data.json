@@ -1,425 +1,231 @@
 [
   {
     "type": "Retirees",
-    "description": "Ready to enjoy your golden years in paradise? Let us help you find the perfect coastal retirement home.",
+    "description": "A user who migrates from one region to another based on the seasons.",
     "color": "bg-blue-100",
-    "image": "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&h=400&fit=crop&q=80",
+    "image": "retirees",
     "questions": [
       {
         "questionType": "radio",
-        "question": "What brings you to San Carlos?",
+        "question": "Do you need medical assistance at home?",
+        "min": "",
+        "max": "",
         "options": [
-          { "value": "retire_fulltime", "label": "Retiring full-time" },
-          { "value": "seasonal", "label": "Seasonal living (6-8 months)" },
-          { "value": "vacation_home", "label": "Vacation home" }
+          {
+            "value": "yes",
+            "label": "Yes"
+          },
+          {
+            "value": "no",
+            "label": "No"
+          }
         ]
       },
       {
         "questionType": "radio",
-        "question": "Are you looking to buy or rent?",
+        "question": "Are you looking to buy or rent a home?",
+        "min": "",
+        "max": "",
         "options": [
-          { "value": "buy", "label": "Buy a home" },
-          { "value": "rent_longterm", "label": "Rent long-term (6+ months)" },
-          { "value": "rent_shortterm", "label": "Rent short-term (1-6 months)" },
-          { "value": "exploring", "label": "Just exploring options" }
-        ]
-      },
-      {
-        "questionType": "checkbox",
-        "question": "What amenities are important to you?",
-        "options": [
-          { "value": "ocean_view", "label": "Ocean view" },
-          { "value": "single_level", "label": "Single-level/wheelchair accessible" },
-          { "value": "medical_nearby", "label": "Near medical facilities" },
-          { "value": "golf_community", "label": "Golf community" },
-          { "value": "pet_friendly", "label": "Pet-friendly" },
-          { "value": "expat_community", "label": "Active expat community" }
+          {
+            "value": "buy",
+            "label": "Buy"
+          },
+          {
+            "value": "rent",
+            "label": "Rent"
+          }
         ]
       },
       {
         "questionType": "radio",
-        "question": "Do you need assistance with healthcare or medical services?",
+        "question": "Are you here for a short term or long term?",
+        "min": "",
+        "max": "",
         "options": [
-          { "value": "yes", "label": "Yes, please provide information" },
-          { "value": "no", "label": "No" }
+          {
+            "value": "short",
+            "label": "Short term (less than 6 months)"
+          },
+          {
+            "value": "long",
+            "label": "Long term (more than 6 months)"
+          }
         ]
       },
       {
         "questionType": "slider",
-        "question": "What is your monthly housing budget? (USD)",
-        "min": "500",
-        "max": "8000",
-        "step": "250"
+        "question": "What is your monthly budget?",
+        "min": "0",
+        "max": "10000"
       },
       {
         "questionType": "number",
-        "question": "How many bedrooms do you need?",
+        "question": "How many people will be in the household?",
         "min": "1",
-        "max": "6"
-      },
-      {
-        "questionType": "email",
-        "question": "Email address for property alerts",
-        "placeholder": "your.email@example.com"
-      },
-      {
-        "questionType": "phone",
-        "question": "Phone number (optional)",
-        "placeholder": "+1 (555) 123-4567"
+        "max": "10"
       }
     ]
   },
   {
     "type": "Family Adventurers",
-    "description": "Create unforgettable memories! Find a family-friendly home near beaches, schools, and adventure.",
+    "description": "A user who frequently travels with family and seeks out family activities.",
     "color": "bg-yellow-100",
-    "image": "https://images.unsplash.com/photo-1511895426328-dc8714191300?w=400&h=400&fit=crop&q=80",
+    "image": "family",
     "questions": [
       {
-        "questionType": "number",
-        "question": "How many adults in your family?",
-        "min": "1",
-        "max": "6"
-      },
-      {
-        "questionType": "number",
-        "question": "How many children?",
-        "min": "0",
-        "max": "8"
-      },
-      {
-        "questionType": "checkbox",
-        "question": "Do you need help with any of the following?",
+        "questionType": "radio",
+        "question": "Do you need to enroll kids in school?",
+        "min": "",
+        "max": "",
         "options": [
-          { "value": "school_enrollment", "label": "School enrollment (bilingual education)" },
-          { "value": "childcare", "label": "Childcare services" },
-          { "value": "activities", "label": "Kids activities and sports programs" },
-          { "value": "pediatrician", "label": "Finding a pediatrician" }
+          {
+            "value": "yes",
+            "label": "Yes"
+          },
+          {
+            "value": "no",
+            "label": "No"
+          }
         ]
       },
       {
         "questionType": "radio",
-        "question": "How long are you planning to stay?",
+        "question": "Are you here for a short term or long term?",
+        "min": "",
+        "max": "",
         "options": [
-          { "value": "short", "label": "1-3 months" },
-          { "value": "medium", "label": "3-6 months" },
-          { "value": "long", "label": "6-12 months" },
-          { "value": "permanent", "label": "Permanent relocation" }
-        ]
-      },
-      {
-        "questionType": "radio",
-        "question": "Are you looking to buy or rent?",
-        "options": [
-          { "value": "buy", "label": "Buy a home" },
-          { "value": "rent", "label": "Rent" },
-          { "value": "undecided", "label": "Not sure yet" }
-        ]
-      },
-      {
-        "questionType": "checkbox",
-        "question": "What features are must-haves?",
-        "options": [
-          { "value": "pool", "label": "Swimming pool" },
-          { "value": "fenced_yard", "label": "Fenced yard" },
-          { "value": "beach_access", "label": "Beach access" },
-          { "value": "playground_nearby", "label": "Playground nearby" },
-          { "value": "secure_community", "label": "Gated/secure community" }
+          {
+            "value": "short",
+            "label": "Short term"
+          },
+          {
+            "value": "long",
+            "label": "Long term"
+          }
         ]
       },
       {
         "questionType": "slider",
-        "question": "Monthly housing budget (USD)",
-        "min": "1000",
-        "max": "10000",
-        "step": "500"
+        "question": "What is your monthly budget?",
+        "min": "0",
+        "max": "15000"
       },
       {
-        "questionType": "email",
-        "question": "Best email to reach you",
-        "placeholder": "family@example.com"
+        "questionType": "number",
+        "question": "How many people will be in the household?",
+        "min": "1",
+        "max": "15"
       }
     ]
   },
   {
     "type": "Digital Nomads",
-    "description": "Work from paradise! High-speed internet, coworking spaces, and the perfect work-life balance await.",
+    "description": "A user who works remotely while traveling to different locations.",
     "color": "bg-red-100",
-    "image": "https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=400&h=400&fit=crop&q=80",
+    "image": "digital-nomad",
     "questions": [
       {
-        "questionType": "radio",
-        "question": "Are you traveling solo or with others?",
-        "options": [
-          { "value": "solo", "label": "Solo" },
-          { "value": "couple", "label": "Couple" },
-          { "value": "group", "label": "Group/Friends" }
-        ]
+        "questionType": "number",
+        "question": "How many people are in your group?",
+        "min": "1",
+        "max": "10"
       },
       {
         "questionType": "radio",
-        "question": "How long do you plan to stay in San Carlos?",
+        "question": "Are you here for a short term or long term?",
+        "min": "",
+        "max": "",
         "options": [
-          { "value": "1month", "label": "1 month" },
-          { "value": "3months", "label": "3 months" },
-          { "value": "6months", "label": "6+ months" },
-          { "value": "flexible", "label": "Flexible/ongoing" }
-        ]
-      },
-      {
-        "questionType": "checkbox",
-        "question": "What workspace needs do you have?",
-        "options": [
-          { "value": "high_speed_internet", "label": "High-speed fiber internet (essential)" },
-          { "value": "dedicated_workspace", "label": "Dedicated home office" },
-          { "value": "coworking_access", "label": "Near coworking spaces" },
-          { "value": "quiet_area", "label": "Quiet neighborhood" },
-          { "value": "backup_internet", "label": "Backup internet option" }
+          {
+            "value": "short",
+            "label": "Short term"
+          },
+          {
+            "value": "long",
+            "label": "Long term"
+          }
         ]
       },
       {
         "questionType": "radio",
-        "question": "What's your timezone situation?",
+        "question": "Are you looking to buy or rent?",
+        "min": "",
+        "max": "",
         "options": [
-          { "value": "us_east", "label": "US East Coast hours" },
-          { "value": "us_west", "label": "US West Coast hours" },
-          { "value": "europe", "label": "European hours" },
-          { "value": "flexible", "label": "Flexible schedule" }
+          {
+            "value": "buy",
+            "label": "Buy"
+          },
+          {
+            "value": "rent",
+            "label": "Rent"
+          }
         ]
-      },
-      {
-        "questionType": "checkbox",
-        "question": "What lifestyle features matter to you?",
-        "options": [
-          { "value": "beach_nearby", "label": "Walking distance to beach" },
-          { "value": "cafes", "label": "Coffee shops and cafés" },
-          { "value": "fitness", "label": "Gym or yoga studios" },
-          { "value": "nightlife", "label": "Restaurants and nightlife" },
-          { "value": "nomad_community", "label": "Digital nomad community" }
-        ]
-      },
-      {
-        "questionType": "slider",
-        "question": "Monthly housing budget (USD)",
-        "min": "600",
-        "max": "6000",
-        "step": "200"
-      },
-      {
-        "questionType": "email",
-        "question": "Email for property matches",
-        "placeholder": "nomad@example.com"
       }
     ]
   },
   {
-    "type": "Snowbirds",
-    "description": "Escape the cold! Your perfect winter haven in warm, sunny San Carlos is waiting.",
+    "type": "SnowBirds",
+    "description": "A user who migrates from one region to another based on the seasons.",
     "color": "bg-green-100",
-    "image": "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=400&fit=crop&q=80",
+    "image": "snow-birds",
     "questions": [
       {
         "questionType": "radio",
-        "question": "When do you plan to arrive in San Carlos?",
+        "question": "Are you looking to buy or rent a home?",
+        "min": "",
+        "max": "",
         "options": [
-          { "value": "oct_nov", "label": "October-November" },
-          { "value": "dec_jan", "label": "December-January" },
-          { "value": "feb_mar", "label": "February-March" },
-          { "value": "flexible", "label": "Flexible dates" }
+          {
+            "value": "buy",
+            "label": "Buy"
+          },
+          {
+            "value": "rent",
+            "label": "Rent"
+          }
         ]
       },
       {
         "questionType": "radio",
-        "question": "How long will you stay?",
+        "question": "Are you here for a short term or long term?",
+        "min": "",
+        "max": "",
         "options": [
-          { "value": "2_3months", "label": "2-3 months" },
-          { "value": "4_5months", "label": "4-5 months" },
-          { "value": "6months", "label": "6+ months" },
-          { "value": "varies", "label": "It varies year to year" }
+          {
+            "value": "short",
+            "label": "Short term (less than 6 months)"
+          },
+          {
+            "value": "long",
+            "label": "Long term (more than 6 months)"
+          }
         ]
       },
       {
-        "questionType": "radio",
-        "question": "Is this your first year as a snowbird in San Carlos?",
-        "options": [
-          { "value": "yes", "label": "Yes, first time!" },
-          { "value": "returning", "label": "No, I'm returning" }
-        ]
-      },
-      {
-        "questionType": "radio",
-        "question": "Are you interested in buying or renting?",
-        "options": [
-          { "value": "rent_seasonal", "label": "Rent seasonally" },
-          { "value": "buy_winter", "label": "Buy a winter home" },
-          { "value": "rent_to_buy", "label": "Rent now, maybe buy later" }
-        ]
-      },
-      {
-        "questionType": "checkbox",
-        "question": "What's important for your winter home?",
-        "options": [
-          { "value": "rv_parking", "label": "RV parking or storage" },
-          { "value": "golf_nearby", "label": "Near golf courses" },
-          { "value": "marina_access", "label": "Marina or boat access" },
-          { "value": "pet_friendly", "label": "Pet-friendly" },
-          { "value": "snowbird_community", "label": "Active snowbird community" },
-          { "value": "low_maintenance", "label": "Low maintenance property" }
-        ]
+        "questionType": "slider",
+        "question": "What is your monthly budget?",
+        "min": "0",
+        "max": "10000"
       },
       {
         "questionType": "number",
-        "question": "How many pets will you bring?",
+        "question": "How many people will be in the household?",
+        "min": "1",
+        "max": "10"
+      },
+      {
+        "questionType": "number",
+        "question": "How many pets?",
         "min": "0",
-        "max": "5"
-      },
-      {
-        "questionType": "slider",
-        "question": "Monthly budget during season (USD)",
-        "min": "800",
-        "max": "7000",
-        "step": "200"
+        "max": "3"
       },
       {
         "questionType": "email",
-        "question": "Email for seasonal rental alerts",
-        "placeholder": "snowbird@example.com"
-      }
-    ]
-  },
-  {
-    "type": "Property Owners",
-    "description": "List or manage your San Carlos property with expert local guidance and maximum exposure.",
-    "color": "bg-purple-100",
-    "image": "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=400&h=400&fit=crop&q=80",
-    "questions": [
-      {
-        "questionType": "radio",
-        "question": "What type of service do you need?",
-        "options": [
-          { "value": "sell", "label": "Sell my property" },
-          { "value": "rent_out", "label": "Rent out my property" },
-          { "value": "property_management", "label": "Property management services" },
-          { "value": "vacation_rental", "label": "Vacation rental management" }
-        ]
-      },
-      {
-        "questionType": "radio",
-        "question": "What type of property do you own?",
-        "options": [
-          { "value": "house", "label": "House/Villa" },
-          { "value": "condo", "label": "Condo/Apartment" },
-          { "value": "lot", "label": "Land/Lot" },
-          { "value": "commercial", "label": "Commercial property" }
-        ]
-      },
-      {
-        "questionType": "radio",
-        "question": "Where is your property located?",
-        "options": [
-          { "value": "beachfront", "label": "Beachfront" },
-          { "value": "ocean_view", "label": "Ocean view" },
-          { "value": "downtown", "label": "Downtown San Carlos" },
-          { "value": "residential", "label": "Residential area" },
-          { "value": "marina", "label": "Near Marina" }
-        ]
-      },
-      {
-        "questionType": "checkbox",
-        "question": "What services are you interested in?",
-        "options": [
-          { "value": "market_analysis", "label": "Free market analysis" },
-          { "value": "professional_photos", "label": "Professional photography" },
-          { "value": "virtual_tours", "label": "Virtual tours/drone footage" },
-          { "value": "marketing", "label": "Marketing and advertising" },
-          { "value": "tenant_screening", "label": "Tenant screening (for rentals)" },
-          { "value": "maintenance", "label": "Property maintenance coordination" }
-        ]
-      },
-      {
-        "questionType": "radio",
-        "question": "When do you want to list or rent your property?",
-        "options": [
-          { "value": "immediately", "label": "Immediately" },
-          { "value": "1_3months", "label": "In 1-3 months" },
-          { "value": "3_6months", "label": "In 3-6 months" },
-          { "value": "just_exploring", "label": "Just exploring options" }
-        ]
-      },
-      {
-        "questionType": "text",
-        "question": "Property address or area in San Carlos",
-        "placeholder": "e.g., Colonia Centro, Bahía Delfín"
-      },
-      {
-        "questionType": "email",
-        "question": "Best email to contact you",
-        "placeholder": "owner@example.com"
-      },
-      {
-        "questionType": "phone",
-        "question": "Phone number",
-        "placeholder": "+52 or +1 number"
-      }
-    ]
-  },
-  {
-    "type": "Investors",
-    "description": "Discover lucrative investment opportunities in San Carlos' growing real estate market.",
-    "color": "bg-amber-100",
-    "image": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop&q=80",
-    "questions": [
-      {
-        "questionType": "radio",
-        "question": "What type of investment interests you?",
-        "options": [
-          { "value": "rental_income", "label": "Rental income property" },
-          { "value": "vacation_rental", "label": "Vacation rental business" },
-          { "value": "fix_flip", "label": "Fix and flip" },
-          { "value": "land_development", "label": "Land/development opportunity" },
-          { "value": "commercial", "label": "Commercial property" }
-        ]
-      },
-      {
-        "questionType": "radio",
-        "question": "What's your investment timeline?",
-        "options": [
-          { "value": "short_term", "label": "Short-term (1-3 years)" },
-          { "value": "medium_term", "label": "Medium-term (3-7 years)" },
-          { "value": "long_term", "label": "Long-term (7+ years)" }
-        ]
-      },
-      {
-        "questionType": "slider",
-        "question": "Investment budget (USD)",
-        "min": "50000",
-        "max": "2000000",
-        "step": "50000"
-      },
-      {
-        "questionType": "checkbox",
-        "question": "What information do you need?",
-        "options": [
-          { "value": "market_trends", "label": "Market trends and analysis" },
-          { "value": "roi_projections", "label": "ROI projections" },
-          { "value": "legal_process", "label": "Legal process for foreigners" },
-          { "value": "property_management", "label": "Property management options" },
-          { "value": "financing", "label": "Financing options" },
-          { "value": "tax_implications", "label": "Tax implications" }
-        ]
-      },
-      {
-        "questionType": "radio",
-        "question": "Have you invested in Mexico before?",
-        "options": [
-          { "value": "yes", "label": "Yes" },
-          { "value": "no", "label": "No, this would be my first" }
-        ]
-      },
-      {
-        "questionType": "email",
-        "question": "Email for investment opportunities",
-        "placeholder": "investor@example.com"
+        "question": "What is your email?",
+        "min": "",
+        "max": ""
       }
     ]
   }

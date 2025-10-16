@@ -141,14 +141,28 @@
     @apply pl-4 my-4 italic border-l-4 border-muted text-muted-foreground;
   }
 
-  article ul,
-  article li {
-    @apply pl-6 mb-4;
+  article ul {
+    @apply pl-6 mb-4 list-disc list-inside;
   }
 
-  article ul li::marker,
+  article ol {
+    @apply pl-6 mb-4 list-decimal list-inside;
+  }
+
+  article li {
+    @apply mb-2;
+  }
+
+  article ul li::marker {
+    @apply text-primary;
+  }
+
   article ol li::marker {
     @apply text-primary;
+  }
+
+  article code {
+    @apply bg-muted text-sm px-1 py-0.5 rounded font-mono;
   }
 
   article img {
@@ -207,7 +221,7 @@
   }
 
   .card-styles {
-    @apply transition-default ease-in-out transform border border-transparent rounded-lg shadow-md hover:shadow-xl hover:border-primary;
+    @apply ease-in-out transform border border-transparent rounded-lg shadow-md transition-default hover:shadow-xl hover:border-primary;
   }
 
   .sticky-position {
