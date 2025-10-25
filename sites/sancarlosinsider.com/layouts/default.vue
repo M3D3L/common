@@ -3,7 +3,8 @@
     <!-- <div class="flex items-center justify-center w-full bg-gray-200 rounded-lg h-72">
       <span class="text-gray-600">[Advertisement]</span>
     </div> -->
-    <the-navbar v-if="!useSCDigital"
+    <the-navbar
+      v-if="!useSCDigital"
       :logo="business?.is_featured ? business?.logo : undefined"
       :links="businessMap"
       :show-auth-buttons="false"
@@ -11,7 +12,14 @@
       class="fixed top-0 left-0 right-0 z-50 w-full"
     >
       <template #extra-links>
-        <template v-if="route.path.includes('/menu') && business && business?.is_featured && route.path.split('/').filter(Boolean).length === 2">
+        <template
+          v-if="
+            route.path.includes('/menu') &&
+            business &&
+            business?.is_featured &&
+            route.path.split('/').filter(Boolean).length === 2
+          "
+        >
           <CheckoutView
             v-if="checkoutToggled"
             class="absolute inset-0 right-0 z-100"
@@ -35,16 +43,27 @@
     </the-navbar>
 
     <!-- Header -->
-    <header v-else class="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur">
+    <header
+      v-else
+      class="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur"
+    >
       <div class="container flex items-center justify-between h-16">
         <a href="/" class="text-2xl font-bold tracking-tight">
           SC<span class="text-primary">Digital</span>
         </a>
         <nav class="hidden space-x-6 text-sm font-medium md:flex">
-          <a href="#features" class="transition-colors hover:text-primary">Features</a>
-          <a href="#pricing" class="transition-colors hover:text-primary">Pricing</a>
-          <a href="#success" class="transition-colors hover:text-primary">Success Stories</a>
-          <a href="#how" class="transition-colors hover:text-primary">How It Works</a>
+          <a href="#features" class="transition-colors hover:text-primary"
+            >Features</a
+          >
+          <a href="#pricing" class="transition-colors hover:text-primary"
+            >Pricing</a
+          >
+          <a href="#success" class="transition-colors hover:text-primary"
+            >Success Stories</a
+          >
+          <a href="#how" class="transition-colors hover:text-primary"
+            >How It Works</a
+          >
           <a href="#faq" class="transition-colors hover:text-primary">FAQ</a>
         </nav>
         <Button size="sm">Start Free</Button>
@@ -123,7 +142,10 @@ const toggleCheckout = () => {
   checkoutToggled.value = !checkoutToggled.value;
 };
 
-const useSCDigital = computed(() => route.path === "/" || route.path === "/login" || route.path === "/register");
+const useSCDigital = computed(
+  () =>
+    route.path === "/" || route.path === "/login" || route.path === "/register"
+);
 
 const { data, pending, error } = await useAsyncData(
   () => `menu-${route.params.slug}`,

@@ -203,6 +203,10 @@
 
 /* Custom utilities mapping var() */
 @layer utilities {
+  a {
+    @apply underline text-primary hover:text-primary-foreground !important;
+  }
+
   .container {
     @apply px-4 mx-auto lg:px-0;
   }

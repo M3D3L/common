@@ -1,156 +1,197 @@
-import usePocketBase from './usePocketbase'
-import { useRouter, useRoute } from '#app'
-import { onMounted } from 'vue'
+import usePocketBase from "./usePocketbase";
+import { onMounted } from "vue";
 
 interface LoginCredentials {
-  email: string
-  password: string
+  email: string;
+  password: string;
 }
 
 interface RegisterCredentials {
-  email: string
-  password: string
-  passwordConfirm: string
-  username?: string
-  [key: string]: any
+  email: string;
+  password: string;
+  passwordConfirm: string;
+  username?: string;
+  [key: string]: any;
 }
 
 interface AuthUser {
-  id: string
-  email: string
-  username?: string
-  [key: string]: any
+  id: string;
+  email: string;
+  username?: string;
+  [key: string]: any;
 }
 
 interface AuthResult {
-  success: boolean
-  message?: string
+  success: boolean;
+  message?: string;
 }
 
-export default () => {
-  const pb = usePocketBase()
-  const router = useRouter()
-  const route = useRoute()
+export default function useAuth() {
+  const pb = usePocketBase();
+  const config = useRuntimeConfig();
 
-  // Utility to transform PB model into AuthUser
-  const getUserFromModel = (): AuthUser | null => {
-    const model = pb.authStore.model
-    if (!model) return null
+  // Initialize state with stored user if available
+  const user = useState<AuthUser | null>("auth:user", () => {
+    return pb.authStore.model ? getUserFromModel() : null;
+  });
 
-    return {
-      id: model.id,
-      email: model.email,
-      username: model.username,
-      ...model
-    }
+  const isAuthenticated = useState<boolean>("auth:isAuthenticated", () => {
+    return pb.authStore.isValid;
+  });
+
+  // Load auth state from cookie when composable is initialized
+  onMounted(() => {
+    pb.authStore.loadFromCookie(document?.cookie || "");
+  });
+
+  function getUserFromModel(): AuthUser | null {
+    const model = pb.authStore.model;
+    if (!model) return null;
+
+    return { ...(model as any) } as AuthUser;
   }
 
-  // Reactive auth state
-  const user = useState<AuthUser | null>('auth:user', () =>
-    pb.authStore.model ? getUserFromModel() : null
-  )
+  // Set up auth store change listener
+  pb.authStore.onChange((token, model) => {
+    user.value = getUserFromModel();
+    isAuthenticated.value = pb.authStore.isValid;
 
-  const isAuthenticated = useState<boolean>('auth:isAuthenticated', () =>
-    pb.authStore.isValid
-  )
-
-  // Load auth state from cookie on client
-  onMounted(() => {
-    if (process.client) {
-      pb.authStore.loadFromCookie(document?.cookie || '')
-    }
-  })
-
-  // Listen for auth store changes
-  pb.authStore.onChange(() => {
-    user.value = getUserFromModel()
-    isAuthenticated.value = pb.authStore.isValid
-
-    if (process.client) {
+    // Update cookie when auth state changes (client-side only)
+    if (import.meta.client) {
       document.cookie = pb.authStore.exportToCookie({
         httpOnly: false,
-        sameSite: 'lax',
-        secure: process.env.NODE_ENV === 'production',
-        path: '/'
-      })
+        sameSite: "lax",
+        secure: config.public.nodeEnv === "production",
+        path: "/",
+      });
     }
-  }, true)
+  }, true);
 
-  // Register new user
-  const register = async (credentials: RegisterCredentials): Promise<AuthResult> => {
+  async function register(
+    credentials: RegisterCredentials
+  ): Promise<AuthResult> {
+    // Validate passwords match
     if (credentials.password !== credentials.passwordConfirm) {
-      return { success: false, message: 'Passwords do not match' }
+      return {
+        success: false,
+        message: "Passwords do not match",
+      };
     }
 
     try {
-      await pb.collection('users').create(credentials)
-      const loginResult = await login({
-        email: credentials.email,
-        password: credentials.password
-      })
-      return loginResult.success
-        ? { success: true }
-        : { success: false, message: 'Login after registration failed' }
+      // Create the user
+      await pb.collection("users").create(credentials);
+
+      // Return success without auto-login
+      return { success: true };
     } catch (error: any) {
-      console.error('Registration error:', error)
-      return { success: false, message: error.message || 'Registration failed' }
-    }
-  }
+      console.error("Registration error:", error);
 
-  // Login with email/password
-  const login = async (credentials: LoginCredentials): Promise<AuthResult> => {
-    try {
-      await pb.collection('users').authWithPassword(credentials.email, credentials.password)
+      // Extract PocketBase error message
+      let message = "Registration failed";
 
-      if (!pb.authStore.isValid) {
-        throw new Error('Authentication failed')
+      if (error?.data?.data) {
+        const firstError = Object.values(error.data.data)[0];
+        if (Array.isArray(firstError)) {
+          message = firstError[0]?.message || firstError[0] || message;
+        } else if (typeof firstError === "object" && firstError.message) {
+          message = firstError.message;
+        } else if (typeof firstError === "string") {
+          message = firstError;
+        }
+      } else if (error?.message) {
+        message = error.message;
       }
 
-      return { success: true }
-    } catch (error: any) {
-      console.error('Login error:', error)
-      return { success: false, message: error.message || 'Login failed' }
+      return {
+        success: false,
+        message,
+      };
     }
   }
 
-  // Login with OAuth provider
-  const loginWithOAuth = async (
-    provider: 'google' | 'github' | 'facebook' | 'discord'
-  ): Promise<AuthResult> => {
+  async function login(credentials: LoginCredentials): Promise<AuthResult> {
     try {
-      await pb.collection('users').authWithOAuth2({ provider })
+      // Trim email and authenticate
+      const identity = credentials.email.trim();
+      const password = credentials.password;
 
+      await pb.collection("users").authWithPassword(identity, password);
+
+      // Verify authentication was successful
       if (!pb.authStore.isValid) {
-        throw new Error('OAuth authentication failed')
+        return {
+          success: false,
+          message: "Authentication failed",
+        };
       }
 
-      return { success: true }
+      return { success: true };
     } catch (error: any) {
-      console.error('OAuth login error:', error)
-      return { success: false, message: error.message || 'OAuth login failed' }
+      console.error("Login error:", error);
+
+      // Handle specific error codes
+      let message = "Login failed";
+
+      if (error?.status === 400) {
+        message = "Invalid email or password";
+      } else if (error?.status === 401) {
+        message = "Invalid credentials";
+      } else if (error?.status === 403) {
+        message = "Account is not verified or disabled";
+      } else if (error?.message) {
+        message = error.message;
+      }
+
+      return {
+        success: false,
+        message,
+      };
     }
   }
 
-  // Logout user
-  const logout = async (redirectPath?: string): Promise<AuthResult> => {
+  async function loginWithOAuth(
+    provider: "google" | "github" | "facebook" | "discord"
+  ): Promise<AuthResult> {
     try {
-      pb.authStore.clear()
+      await pb.collection("users").authWithOAuth2({ provider });
 
-      if (process.client) {
+      if (!pb.authStore.isValid) {
+        return {
+          success: false,
+          message: "OAuth authentication failed",
+        };
+      }
+
+      return { success: true };
+    } catch (error: any) {
+      console.error("OAuth login error:", error);
+      return {
+        success: false,
+        message: error?.message || "OAuth login failed",
+      };
+    }
+  }
+
+  async function logout(): Promise<AuthResult> {
+    try {
+      pb.authStore.clear();
+
+      if (import.meta.client) {
+        // Clear the auth cookie
         document.cookie = pb.authStore.exportToCookie({
-          expires: new Date(0),
-          path: '/'
-        })
+          expires: new Date(0), // Expire immediately
+          path: "/",
+        });
       }
 
-      if (redirectPath) {
-        await router.push(redirectPath)
-      }
-
-      return { success: true }
+      return { success: true };
     } catch (error: any) {
-      console.error('Logout error:', error)
-      return { success: false, message: error.message || 'Logout failed' }
+      console.error("Logout error:", error);
+      return {
+        success: false,
+        message: error?.message || "Logout failed",
+      };
     }
   }
 
@@ -160,6 +201,6 @@ export default () => {
     register,
     login,
     loginWithOAuth,
-    logout
-  }
+    logout,
+  };
 }

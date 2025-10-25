@@ -2,18 +2,20 @@
   <header
     class="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60"
   >
-    <div class="container relative flex items-center justify-between h-16 px-4 mx-auto lg:px-6">
+    <div
+      class="container relative flex items-center justify-between h-16 px-4 mx-auto lg:px-6"
+    >
       <!-- Logo -->
-      <nuxt-link 
-        v-if="logo" 
-        to="/" 
+      <nuxt-link
+        v-if="logo"
+        to="/"
         class="flex items-center gap-2 transition-opacity hover:opacity-80"
       >
         <img :src="logo" alt="Logo" class="h-10 md:h-12" />
       </nuxt-link>
-      <NuxtLink 
-        v-else 
-        to="/" 
+      <NuxtLink
+        v-else
+        to="/"
         class="flex items-center transition-colors hover:text-primary"
       >
         <span class="flex flex-col logo-text">
@@ -24,37 +26,22 @@
       <!-- Right side buttons -->
       <div class="flex items-center gap-2 md:gap-4">
         <!-- Desktop nav -->
-        <nav class="items-center hidden gap-1 md:flex">
+        <nav class="items-center hidden gap-8 md:flex">
           <!-- Main links -->
-          <NuxtLink
-            v-for="link in links"
-            :key="link.href"
+          <AtomsStyledLink
+            v-for="(link, linkIndex) in links"
+            :key="linkIndex"
             :to="link.href"
-            class="relative px-4 py-2 text-sm font-medium transition-all rounded-lg hover:bg-accent/50 hover:text-foreground group"
-            active-class="font-semibold text-primary"
-          >
-            {{ link.label }}
-            <!-- Active indicator -->
-            <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full" />
-          </NuxtLink>
+            :title="link.label"
+          />
 
           <slot name="extra-links" />
 
           <!-- Auth buttons for desktop -->
           <template v-if="showAuthButtons">
             <template v-if="!auth.isAuthenticated.value">
-              <NuxtLink
-                :to="getLoginHref()"
-                class="px-4 py-2 text-sm font-medium transition-all rounded-lg hover:bg-accent/50"
-              >
-                Login
-              </NuxtLink>
-              <NuxtLink
-                :to="getRegisterHref()"
-                class="px-4 py-2 text-sm font-medium transition-all rounded-lg shadow-sm bg-primary text-primary-foreground hover:bg-primary/90 hover:shadow-md"
-              >
-                Register
-              </NuxtLink>
+              <AtomsStyledLink :to="getLoginHref()" title="Login" />
+              <AtomsStyledLink :to="getRegisterHref()" title="Register" />
             </template>
             <Button
               v-else
@@ -75,11 +62,17 @@
             class="p-2.5 transition-all rounded-lg hover:bg-accent/50 hover:scale-110 active:scale-95"
             aria-label="Toggle dark mode"
           >
-            <Sun v-if="isDark" class="w-5 h-5 transition-transform duration-500 rotate-0 hover:rotate-180" />
-            <Moon v-else class="w-5 h-5 transition-transform duration-300 rotate-0 hover:rotate-12" />
+            <Sun
+              v-if="isDark"
+              class="w-5 h-5 transition-transform duration-500 rotate-0 hover:rotate-180"
+            />
+            <Moon
+              v-else
+              class="w-5 h-5 transition-transform duration-300 rotate-0 hover:rotate-12"
+            />
           </button>
 
-          <CheckoutView v-if="checkoutToggled" class="fixed right-0 top-32" />
+          <!-- <CheckoutView v-if="checkoutToggled" class="fixed right-0 top-32" /> -->
         </ClientOnly>
 
         <!-- Mobile menu button -->
@@ -88,8 +81,14 @@
           class="p-2.5 transition-all rounded-lg hover:bg-accent/50 md:hidden hover:scale-110 active:scale-95"
           aria-label="Toggle menu"
         >
-          <X v-if="isMobileMenuOpen" class="w-5 h-5 transition-transform duration-300 rotate-0 hover:rotate-90" />
-          <Menu v-else class="w-5 h-5 transition-transform duration-200 rotate-0 hover:scale-110" />
+          <X
+            v-if="isMobileMenuOpen"
+            class="w-5 h-5 transition-transform duration-300 rotate-0 hover:rotate-90"
+          />
+          <Menu
+            v-else
+            class="w-5 h-5 transition-transform duration-200 rotate-0 hover:scale-110"
+          />
         </button>
       </div>
     </div>
@@ -200,14 +199,10 @@ const isDark = useDark();
 const toggleDark = useToggle(isDark);
 
 const getLoginHref = () =>
-  route.path === "/"
-    ? "/login"
-    : `/login?source=${encodeURIComponent(route.path)}`;
+  route.path === "/" ? "/login" : `/login?source=${route.path}`;
 
 const getRegisterHref = () =>
-  route.path === "/"
-    ? "/register"
-    : `/register?source=${encodeURIComponent(route.path)}`;
+  route.path === "/" ? "/register" : `/register?source=${route.path}`;
 
 watch(route, () => {
   isMobileMenuOpen.value = false;

@@ -18,7 +18,7 @@ const props = defineProps({
   imgSrc: String,
   title: {
     type: String,
-    default: 'Learn Web Development, Drone Photography, and More',
+    default: "Learn Web Development, Drone Photography, and More",
   },
   description: {
     type: String,
@@ -27,17 +27,17 @@ const props = defineProps({
   },
   type: {
     type: String,
-    default: 'posts',
+    default: "posts",
   },
-})
+});
 
 const computedSeoData = computed(() =>
   createSeoObject({
     title: props.title,
     summary: props.description,
-    imageUri: props.imgSrc || '',
-    pubDate: '',
-    byline: '',
+    imageUri: props.imgSrc || "",
+    pubDate: "",
+    byline: "",
   })
-)
+);
 </script>

@@ -1,6 +1,13 @@
 <template>
   <div class="container flex flex-col w-full mx-auto">
-    <TextSectionTitle v-if="title || description" class="pb-16" :title="title" :description="description" :h1="h1" />
+    <TextSectionTitle
+      v-if="title || description"
+      class="pb-16"
+      :title="title"
+      :description="description"
+      :h1="h1"
+    />
+
     <SectionsBlog
       v-if="posts?.items?.length"
       class="flex w-full mt-6"
@@ -8,21 +15,24 @@
       :baseUrl
     />
 
-    <div class="flex justify-start w-full mr-auto -mt-12 lg:-mt-20">
+    <div class="flex justify-center w-full mr-auto -mt-12 lg:-mt-20 lg:w-2/3">
       <nuxt-link
         v-if="showMore"
         to="/blog/"
-        class="z-50 flex flex-row justify-end w-full cursor-pointer lg:pr-16 lg:w-2/3"
+        class="text-foreground hover:text-primary"
       >
         View All Posts
       </nuxt-link>
-      <Pagination v-if="showPagination" :total-pages="posts?.totalPages" />
+      <Pagination
+        v-if="posts?.totalPages > 1 && showPagination"
+        :total-pages="posts?.totalPages"
+        :show-pagination="true"
+      />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-
 const props = defineProps({
   title: {
     type: String,
@@ -30,11 +40,12 @@ const props = defineProps({
   },
   description: {
     type: String,
-    default: "Explore my latest articles and insights on web development, design, and technology. Learn from practical tutorials and stay updated with industry trends.",
+    default:
+      "Explore my latest articles and insights on web development, design, and technology. Learn from practical tutorials and stay updated with industry trends.",
   },
   perPage: {
     type: Number,
-    default: 6,
+    default: 5,
   },
   content: {
     type: Object as () => {
@@ -90,7 +101,10 @@ const posts = ref<ListResult<RecordModel>>({
 });
 const route = useRoute();
 
-const fetchPosts = async (page: number, perPage: number): Promise<ListResult<RecordModel>> => {
+const fetchPosts = async (
+  page: number,
+  perPage: number
+): Promise<ListResult<RecordModel>> => {
   try {
     const result = await fetchCollection(
       props.type,
@@ -125,8 +139,13 @@ watch(
 );
 
 onMounted(async () => {
-  const initialPage = route.query.page ? parseInt(route.query.page as string, 10) : 1;
-  posts.value = await fetchPosts(isNaN(initialPage) ? 1 : initialPage, props.perPage);
+  const initialPage = route.query.page
+    ? parseInt(route.query.page as string, 10)
+    : 1;
+  posts.value = await fetchPosts(
+    isNaN(initialPage) ? 1 : initialPage,
+    props.perPage
+  );
 });
 </script>
 

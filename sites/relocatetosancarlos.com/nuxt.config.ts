@@ -3,11 +3,11 @@ import path from "path";
 export default defineNuxtConfig({
   compatibilityDate: "2025-08-30",
   nitro: {
-    preset: 'github-pages',
+    preset: "github-pages",
   },
   app: {
-    baseURL: '/',
-    buildAssetsDir: '/_nuxt/'
+    baseURL: "/",
+    buildAssetsDir: "/_nuxt/",
   },
   ssr: false,
   devtools: { enabled: true },
@@ -38,7 +38,8 @@ export default defineNuxtConfig({
 
   runtimeConfig: {
     public: {
-      pocketbaseUrl: process.env.POCKETBASE_URL || "http://64.23.150.184/",
+      pocketbaseUrl:
+        process.env.POCKETBASE_URL || "https://api.sancarlosinsider.com/",
       whatsappNumber: process.env.WHATSAPP_NUMBER || "6444444444",
     },
   },

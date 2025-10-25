@@ -1,4 +1,3 @@
-// useComments.ts
 import type { RecordModel } from "pocketbase";
 import usePocketBase from "./usePocketbase";
 
@@ -67,7 +66,7 @@ export default function useComments() {
       const comments = await pb
         .collection("comments")
         .getFullList<Comment>(200, {
-          filter: `post="${postId}" && parentCommentId=""`,
+          filter: `post="${postId}"`,
           expand: "author,parentComment.author,replies.author",
           sort: "-created",
         });
@@ -114,6 +113,6 @@ export default function useComments() {
     updateItem,
     deleteItem,
     createComment,
-    fetchComments
+    fetchComments,
   };
 }

@@ -15,10 +15,12 @@
               {{ contactInfo?.slogan }}
             </p>
           </div>
-          
+
           <!-- Social Links -->
           <div class="flex flex-col gap-3">
-            <p class="text-xs font-semibold tracking-wide uppercase text-foreground/60">
+            <p
+              class="text-xs font-semibold tracking-wide uppercase text-foreground/60"
+            >
               Connect With Us
             </p>
             <ContainersSocials :socialLinks="socials" />
@@ -31,28 +33,27 @@
           :key="colIndex"
           class="flex flex-col gap-4"
         >
-          <h3 class="text-sm font-semibold tracking-wide uppercase text-foreground/80">
+          <h3
+            class="text-sm font-semibold tracking-wide uppercase text-foreground/80"
+          >
             {{ column.title }}
           </h3>
           <div class="flex flex-col gap-2.5">
-            <a
+            <AtomsStyledLink
               v-for="(link, linkIndex) in column.links"
               :key="linkIndex"
-              :href="link.href"
-              class="text-sm transition-all text-muted-foreground hover:text-primary hover:translate-x-1 w-fit group"
-            >
-              <span class="relative">
-                {{ link.label }}
-                <span class="absolute bottom-0 left-0 w-0 h-px transition-all duration-300 bg-primary group-hover:w-full" />
-              </span>
-            </a>
+              :to="link.href"
+              :title="link.label"
+            />
           </div>
         </div>
       </div>
 
       <!-- Divider with gradient -->
       <div class="relative w-full h-px overflow-hidden bg-border/40">
-        <div class="absolute inset-0 bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
+        <div
+          class="absolute inset-0 bg-gradient-to-r from-transparent via-primary/20 to-transparent"
+        />
       </div>
 
       <!-- Bottom Bar -->
@@ -60,21 +61,20 @@
         class="flex flex-col items-center justify-between gap-6 text-center md:flex-row md:text-left"
       >
         <p class="text-sm text-muted-foreground">
-          © {{ new Date().getFullYear() }} 
-          <span class="font-medium text-foreground">{{ contactInfo?.siteName }}</span>
+          © {{ new Date().getFullYear() }}
+          <span class="font-medium text-foreground">{{
+            contactInfo?.siteName
+          }}</span>
           . All rights reserved.
         </p>
-        
+
         <div class="flex flex-wrap items-center justify-center gap-6">
-          <NuxtLink
-            v-for="(link, index) in links"
+          <AtomsStyledLink
+            v-for="(link, index) in links || []"
             :key="index"
             :to="link.href"
-            class="relative text-sm transition-all text-muted-foreground hover:text-primary group"
-          >
-            {{ link.label }}
-            <span class="absolute bottom-0 left-0 w-0 h-px transition-all duration-300 bg-primary group-hover:w-full" />
-          </NuxtLink>
+            :title="link.label"
+          />
         </div>
       </div>
 
@@ -105,7 +105,7 @@
 </template>
 
 <script setup lang="ts">
-import usePocketBaseCore from '@/composables/usePocketBaseCore';
+import usePocketBaseCore from "@/composables/usePocketBaseCore";
 
 interface FooterLink {
   label: string;
@@ -120,7 +120,7 @@ const props = defineProps<{
 }>();
 
 const { fetchCollection } = usePocketBaseCore();
-import type { ListResult, RecordModel } from 'pocketbase';
+import type { ListResult, RecordModel } from "pocketbase";
 
 const posts = ref<ListResult<RecordModel> | null>(null);
 
@@ -134,12 +134,12 @@ const localFooterColumns = ref<FooterColumn[]>([]);
 const scrollToTop = () => {
   window.scrollTo({
     top: 0,
-    behavior: 'smooth'
+    behavior: "smooth",
   });
 };
 
 onMounted(async () => {
-  const result = await fetchCollection(props.type, 1, 6, '', '-created', '');
+  const result = await fetchCollection(props.type, 1, 5, "", "-created", "");
   posts.value = result;
 
   if (result?.items?.length) {
@@ -148,7 +148,7 @@ onMounted(async () => {
 
     // Insert first 3 into "Recent Posts" column at index 1
     localFooterColumns.value.splice(1, 0, {
-      title: 'Recent Posts',
+      title: "Recent Posts",
       links: firstThree.map((post) => ({
         label: post.title,
         href: `/blog${post.slug}`,
@@ -158,7 +158,7 @@ onMounted(async () => {
     // If there are more posts, add them in a new column with no title
     if (lastTwo.length) {
       localFooterColumns.value.push({
-        title: 'More',
+        title: "More",
         links: lastTwo.map((post) => ({
           label: post.title,
           href: `/blog${post.slug}`,

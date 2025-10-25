@@ -3,18 +3,18 @@
     <template #main>
       <div class="grid w-full gap-4">
         <CardsBlogHorizontal
-        v-for="(post, index) in content"
-        :key="post.id"
-        :title="post.title"
-        :description="post.description"
-        :created="post.created"
-        :slug="post.slug"
-        :collection-id="post.collectionId"
-        :id="post.id"
-        :cover-image="post.cover_image"
-        :index="index"
-        :base-url="baseUrl"
-      />
+          v-for="(post, index) in content"
+          :key="post.id"
+          :title="post.title"
+          :description="post.description"
+          :created="post.created"
+          :slug="post.slug"
+          :collection-id="post.collectionId"
+          :id="post.id"
+          :cover-image="post.cover_image"
+          :index="index"
+          :base-url="baseUrl"
+        />
       </div>
     </template>
     <template #right>
@@ -34,21 +34,21 @@ const props = defineProps({
   },
   type: {
     type: String,
-    default: 'posts',
+    default: "posts",
   },
 });
 
 const { fetchCollection } = usePocketBaseCore();
-import type { ListResult, RecordModel } from 'pocketbase';
+import type { ListResult, RecordModel } from "pocketbase";
 
 const posts = ref<ListResult<RecordModel> | RecordModel[]>([]);
 
 const fetchPosts = async () => {
   try {
-    const result = await fetchCollection(props.type, 1, 6, '', '-created', '');
+    const result = await fetchCollection(props.type, 1, 5, "", "-created", "");
     return result;
   } catch (error) {
-    console.error('Error fetching posts:', error);
+    console.error("Error fetching posts:", error);
     return [];
   }
 };
