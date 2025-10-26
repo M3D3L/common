@@ -359,7 +359,6 @@ const handleSubmit = async () => {
       });
 
       if (result.success) {
-        // ⭐ UPDATED: On successful login, redirect to the determined path.
         await router.push(redirectPath.value);
       } else {
         generalError.value = result.message || "Invalid email or password";
