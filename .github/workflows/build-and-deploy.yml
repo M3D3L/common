@@ -19,7 +19,7 @@ jobs:
     strategy:
       matrix:
         site: [guillermomedel, relocatetosancarlos]
-    
+
     steps:
       - uses: actions/checkout@v4
         with:
@@ -29,7 +29,7 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
-          cache-dependency-path: './package-lock.json'
+          cache-dependency-path: "./package-lock.json"
 
       - name: Install dependencies
         run: npm ci
@@ -58,7 +58,7 @@ jobs:
         run: |
           SITE_PATH="${{ steps.vars.outputs.path }}"
           DEPLOY_DIR="deploy_${{ matrix.site }}"
-          
+
           # Look for build output directory
           if [ -d "$SITE_PATH/.output/public" ]; then
             BUILD_OUTPUT="$SITE_PATH/.output/public"
@@ -70,16 +70,16 @@ jobs:
             echo "Error: No build output found"
             exit 1
           fi
-          
+
           echo "Using build output: $BUILD_OUTPUT"
-          
+
           # Create deploy directory and copy files
           mkdir -p "$DEPLOY_DIR"
           cp -a "$BUILD_OUTPUT"/. "$DEPLOY_DIR"/
-          
+
           # Add CNAME file
           echo "${{ steps.vars.outputs.domain }}" > "$DEPLOY_DIR/CNAME"
-          
+
           # Debug output
           echo "Deploy folder contents:"
           ls -la "$DEPLOY_DIR"
