@@ -102,11 +102,11 @@
       leave-from-class="transform translate-y-0 opacity-100"
       leave-to-class="transform -translate-y-2 opacity-0"
     >
-      <div
+      <Card
         v-if="isMobileMenuOpen"
-        class="absolute w-full border-b shadow-lg border-border/40 bg-background/95 backdrop-blur md:hidden"
+        class="absolute w-full md:hidden !rounded-t-none"
       >
-        <div class="container flex flex-col gap-1 px-4 py-4">
+        <CardContent class="container flex flex-col gap-1 px-4 py-4">
           <!-- Main links -->
           <NuxtLink
             v-for="link in links"
@@ -134,7 +134,7 @@
               </NuxtLink>
               <NuxtLink
                 :to="getRegisterHref()"
-                class="px-4 py-3 text-sm font-semibold transition-all rounded-lg shadow-sm bg-primary text-primary-foreground hover:bg-primary/90 hover:translate-x-1 active:scale-95"
+                class="px-4 py-3 text-sm font-semibold transition-all rounded-lg shadow-sm bg-primary text-primary-foreground text-center hover:bg-primary/90 hover:translate-x-1 active:scale-95"
                 @click="isMobileMenuOpen = false"
               >
                 Register
@@ -155,8 +155,8 @@
               Logout
             </Button>
           </template>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
     </Transition>
   </header>
 </template>
@@ -164,6 +164,7 @@
 <script setup lang="ts">
 import useAuth from "@/composables/useAuth";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { Sun, Moon, ShoppingCart, Menu, X } from "lucide-vue-next";
 
 interface NavLink {
