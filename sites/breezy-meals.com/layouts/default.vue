@@ -4,7 +4,6 @@
       <span class="text-gray-600">[Advertisement]</span>
     </div> -->
     <the-navbar
-      v-if="!useSCDigital"
       :logo="business?.is_featured ? business?.logo : undefined"
       :links="businessMap"
       :show-auth-buttons="false"
@@ -42,33 +41,6 @@
       </template>
     </the-navbar>
 
-    <!-- Header -->
-    <header
-      v-else
-      class="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur"
-    >
-      <div class="container flex items-center justify-between h-16">
-        <a href="/" class="text-2xl font-bold tracking-tight">
-          SC<span class="text-primary">Digital</span>
-        </a>
-        <nav class="hidden space-x-6 text-sm font-medium md:flex">
-          <a href="#features" class="transition-colors hover:text-primary"
-            >Features</a
-          >
-          <a href="#pricing" class="transition-colors hover:text-primary"
-            >Pricing</a
-          >
-          <a href="#success" class="transition-colors hover:text-primary"
-            >Success Stories</a
-          >
-          <a href="#how" class="transition-colors hover:text-primary"
-            >How It Works</a
-          >
-          <a href="#faq" class="transition-colors hover:text-primary">FAQ</a>
-        </nav>
-        <Button size="sm">Start Free</Button>
-      </div>
-    </header>
     <Modal />
     <div>
       <main class="w-full">
