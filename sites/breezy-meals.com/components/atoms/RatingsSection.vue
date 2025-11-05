@@ -39,7 +39,7 @@
         </Card>
       </div>
     </div>
-  </section
+  </section>
 </template>
 
 <script lang="ts" setup>
@@ -56,27 +56,25 @@ const props = defineProps({
       review: string;
     }[],
     default: () => [
-  {
-    name: "Barbara & Tom",
-    role: "San Carlos Retirees",
-    rating: 5,
-    review: `"The pot roast tastes just like my grandmother used to make! Perfect portions and so convenient. We order the weekly package every time."`,
-  },
-  {
-    name: "Roberto M.",
-    role: "Long-time Customer",
-    rating: 5,
-    review: `"As a diabetic, I love that the meals are clearly labeled with nutritional info. The birria is absolutely delicious and fits my diet perfectly!"`,
-  },
-  {
-    name: "Susan & Mike",
-    role: "Winter Visitors",
-    rating: 5,
-    review: `"Finally! Gluten-free options that actually taste amazing. More time on the beach, less time cooking. Breezy Meals is a game-changer."`,
-  },
-],
+      {
+        name: "Barbara & Tom",
+        role: "San Carlos Retirees",
+        rating: 5,
+        review: `"The pot roast tastes just like my grandmother used to make! Perfect portions and so convenient. We order the weekly package every time."`,
+      },
+      {
+        name: "Roberto M.",
+        role: "Long-time Customer",
+        rating: 5,
+        review: `"As a diabetic, I love that the meals are clearly labeled with nutritional info. The birria is absolutely delicious and fits my diet perfectly!"`,
+      },
+      {
+        name: "Susan & Mike",
+        role: "Winter Visitors",
+        rating: 5,
+        review: `"Finally! Gluten-free options that actually taste amazing. More time on the beach, less time cooking. Breezy Meals is a game-changer."`,
+      },
+    ],
   },
 });
 </script>
-
-<style></style>
