@@ -1,13 +1,17 @@
 <template>
-  <Card class="group relative w-full aspect-[4/5] overflow-hidden border-0 shadow-lg hover:shadow-2xl transition-all duration-500">
+  <Card
+    class="group relative w-full aspect-[4/5] overflow-hidden border-0 shadow-lg hover:shadow-2xl transition-all duration-500"
+  >
     <!-- Background Image with Overlay -->
     <div class="absolute inset-0">
-      <img 
-        :src="imageUrl" 
+      <img
+        :src="imageUrl"
         :alt="platform"
         class="object-cover w-full h-full transition-transform duration-700 group-hover:scale-110"
       />
-      <div :class="`absolute inset-0 bg-gradient-to-br ${gradient} opacity-80 group-hover:opacity-70 transition-opacity duration-500`" />
+      <div
+        :class="`absolute inset-0 bg-gradient-to-br ${gradient} opacity-80 group-hover:opacity-70 transition-opacity duration-500`"
+      />
     </div>
 
     <!-- Content -->
@@ -33,8 +37,8 @@
             {{ description }}
           </p>
         </div>
-        
-        <Button 
+
+        <Button
           :class="`w-full ${buttonStyle} font-semibold py-6 text-base shadow-xl hover:scale-105 transition-transform duration-300`"
         >
           {{ ctaText }}
@@ -45,17 +49,18 @@
 </template>
 
 <script setup lang="ts">
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { 
-  InstagramIcon, 
-  FacebookIcon, 
-  MusicIcon, 
-  TwitterIcon 
-} from 'lucide-vue-next';
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import {
+  InstagramIcon,
+  FacebookIcon,
+  YoutubeIcon,
+  MusicIcon,
+  TwitterIcon,
+} from "lucide-vue-next";
 
 interface SocialCardProps {
-  platform?: 'Instagram' | 'Facebook' | 'TikTok' | 'Twitter';
+  platform?: "Instagram" | "Facebook" | "TikTok" | "Twitter";
   imageUrl?: string;
   handle?: string;
   tagline?: string;
@@ -64,39 +69,40 @@ interface SocialCardProps {
 }
 
 const props = withDefaults(defineProps<SocialCardProps>(), {
-  platform: 'Instagram',
-  imageUrl: 'https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=800&h=1000&fit=crop',
-  handle: '@RelocateToSanCarlos',
-  tagline: 'Follow Our Journey',
-  description: 'Daily updates from paradise 🌊☀️',
-  ctaText: 'Follow Us'
+  platform: "Instagram",
+  imageUrl:
+    "https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=800&h=1000&fit=crop",
+  handle: "@RelocateToSanCarlos",
+  tagline: "Follow Our Journey",
+  description: "Daily updates from paradise 🌊☀️",
+  ctaText: "Follow Us",
 });
 
 const platformConfig = {
   Instagram: {
     icon: InstagramIcon,
-    gradient: 'from-purple-600 via-pink-600 to-orange-500',
-    iconBg: 'bg-white/20',
-    buttonStyle: 'bg-white text-purple-600 hover:bg-white/90'
+    gradient: "from-purple-600 via-pink-600 to-orange-500",
+    iconBg: "bg-white/20",
+    buttonStyle: "bg-white text-purple-600 hover:bg-white/90",
   },
   Facebook: {
     icon: FacebookIcon,
-    gradient: 'from-blue-600 via-blue-700 to-blue-800',
-    iconBg: 'bg-white/20',
-    buttonStyle: 'bg-white text-blue-600 hover:bg-white/90'
+    gradient: "from-blue-600 via-blue-700 to-blue-800",
+    iconBg: "bg-white/20",
+    buttonStyle: "bg-white text-blue-600 hover:bg-white/90",
   },
   TikTok: {
     icon: MusicIcon,
-    gradient: 'from-black via-gray-900 to-pink-900',
-    iconBg: 'bg-white/20',
-    buttonStyle: 'bg-white text-black hover:bg-white/90'
+    gradient: "from-black via-gray-900 to-pink-900",
+    iconBg: "bg-white/20",
+    buttonStyle: "bg-white text-black hover:bg-white/90",
   },
-  Twitter: {
-    icon: TwitterIcon,
-    gradient: 'from-sky-400 via-blue-500 to-blue-600',
-    iconBg: 'bg-white/20',
-    buttonStyle: 'bg-white text-blue-500 hover:bg-white/90'
-  }
+  YouTube: {
+    icon: YoutubeIcon, // Assuming you have this imported
+    gradient: "from-red-600 via-red-700 to-red-800",
+    iconBg: "bg-white/20",
+    buttonStyle: "bg-white text-red-600 hover:bg-white/90",
+  },
 };
 
 const config = computed(() => platformConfig[props.platform]);

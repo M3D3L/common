@@ -7,19 +7,22 @@
     rel="noopener noreferrer"
     aria-label="Chat on WhatsApp"
   >
-    <button @click="()=> {}" size="lg" :variant class="w-full">
+    <button @click="() => {}" size="lg" :variant class="w-full">
       <div class="flex flex-row gap-2 bg-opacity-0">
         <p>
           {{ text }}
         </p>
-        <img src="/icons/whatsapp.svg" alt="WhatsApp Icon" :class="iconStyles" />
+        <img
+          src="/icons/whatsapp.svg"
+          alt="WhatsApp Icon"
+          :class="iconStyles"
+        />
       </div>
     </button>
   </a>
 </template>
 
 <script setup lang="ts">
-
 const props = defineProps({
   phone: {
     type: String,
@@ -42,7 +45,4 @@ const props = defineProps({
     default: "outline",
   },
 });
-
-// Destructure props for cleaner template usage
-const { phone, message } = props;
 </script>

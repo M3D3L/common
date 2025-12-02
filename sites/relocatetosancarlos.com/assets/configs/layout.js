@@ -1,10 +1,4 @@
-import {
-  TwitterLogoIcon,
-  GithubLogoIcon,
-  LinkedinLogoIcon,
-  InstagramLogoIcon,
-} from "@radix-icons/vue";
-import { Facebook, Music } from "lucide-vue-next";
+import { Facebook, Youtube, Instagram, Music } from "lucide-vue-next";
 
 export const seoDefaults = {
   home: {
@@ -20,8 +14,8 @@ export const seoDefaults = {
 export const contactInfo = {
   siteName: "RelocateToSanCarlos.com",
   slogan: "Invest in San Carlos, live like a local.",
-  email: "brenda@gmail.com",
-  phone: "+52 (644) 194-2391",
+  email: "brendaig_505@gmail.com",
+  phone: "+52(644)457-2193",
 };
 
 // Hero Section
@@ -65,12 +59,24 @@ export const socialsSection = {
     "Follow Brenda and RelocateToSanCarlos.com for the latest updates on San Carlos real estate, rental opportunities, and lifestyle tips.",
   socials: [
     {
+      platform: "TikTok",
+      handle: "@RelocateToSanCarlos",
+      tagline: "See San Carlos Come Alive",
+      description: "Behind-the-scenes tours & local tips 🎥",
+      ctaText: "Follow on TikTok",
+      link: "https://www.tiktok.com/@relocatetosancarlos?is_from_webapp=1&sender_device=pc",
+      imageUrl:
+        "https://images.unsplash.com/photo-1473496169904-658ba7c44d8a?w=800&h=1000&fit=crop",
+    },
+    {
       platform: "Instagram",
       handle: "@RelocateToSanCarlos",
       tagline: "Your San Carlos Journey Starts Here",
       description: "Daily updates from paradise 🌊🏡",
       ctaText: "Follow on Instagram",
-      imageUrl: "https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=800&h=1000&fit=crop",
+      link: "https://www.instagram.com/relocatetosancarlos?igsh=anVwYW95NTMwc3E%3D&utm_source=qr",
+      imageUrl:
+        "https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=800&h=1000&fit=crop",
     },
     {
       platform: "Facebook",
@@ -78,39 +84,20 @@ export const socialsSection = {
       tagline: "Join Our Community",
       description: "Connect with San Carlos locals & expats 🏖️",
       ctaText: "Like Our Page",
-      imageUrl: "https://images.unsplash.com/photo-1506929562872-bb421503ef21?w=800&h=1000&fit=crop",
+      // Using the Facebook link exactly as provided
+      link: "https://www.tiktok.com/@relocatetosancarlos?is_from_webapp=1&sender_device=pc",
+      imageUrl:
+        "https://images.unsplash.com/photo-1506929562872-bb421503ef21?w=800&h=1000&fit=crop",
     },
     {
-      platform: "TikTok",
-      handle: "@SanCarlosLife",
-      tagline: "See San Carlos Come Alive",
-      description: "Behind-the-scenes tours & local tips 🎥",
-      ctaText: "Follow on TikTok",
-      imageUrl: "https://images.unsplash.com/photo-1473496169904-658ba7c44d8a?w=800&h=1000&fit=crop",
-    },
-    {
-      platform: "Instagram",
-      handle: "@SanCarlosNomad",
-      tagline: "Work Remote, Live Better",
-      description: "Remote work paradise living 💻🌮",
-      ctaText: "Follow Us",
-      imageUrl: "https://images.unsplash.com/photo-1551244072-5d12893278ab?w=800&h=1000&fit=crop",
-    },
-    {
-      platform: "Facebook",
-      handle: "SanCarlosRealEstateExperts",
-      tagline: "Your Property Experts",
-      description: "Expert real estate guidance ☕🌅",
-      ctaText: "Connect With Us",
-      imageUrl: "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&h=1000&fit=crop",
-    },
-    {
-      platform: "TikTok",
-      handle: "@ExploreSanCarlos",
-      tagline: "Adventure Awaits",
-      description: "Discover hidden gems & activities 🚣‍♂️🔥",
-      ctaText: "Watch Now",
-      imageUrl: "https://images.unsplash.com/photo-1501594907352-04cda38ebc29?w=800&h=1000&fit=crop",
+      platform: "YouTube",
+      handle: "RelocateToSanCarlos",
+      tagline: "San Carlos in Motion",
+      description: "Tours, guides, and local insights 🎬",
+      ctaText: "Subscribe on YouTube",
+      link: "https://www.youtube.com/channel/UCc5E3eWOS19TF6ri4IpFGww",
+      imageUrl:
+        "https://images.unsplash.com/photo-1505682634904-d7c8d95cdc50?w=800&h=1000&fit=crop",
     },
   ],
 };
@@ -129,8 +116,8 @@ export const contactSection = {
   description: `Ready to start your move or invest in San Carlos real estate? 
 Reach out to Brenda for personalized advice, property tours, and relocation guidance.`,
   formAction: "https://formsubmit.co/7cbfcf8a8143c9f8708006416b2a0aae",
-  contactEmail: "brenda@gmail.com",
-  contactPhone: "+52 (644) 194-2391",
+  contactEmail: "brendaig_505@gmail.com",
+  contactPhone: "+52(644)457-2193",
   videoArray: [
     "https://www.pexels.com/download/video/33792753/",
     "https://www.pexels.com/download/video/32926637/",
@@ -141,10 +128,10 @@ Reach out to Brenda for personalized advice, property tours, and relocation guid
 };
 
 export const siteMap = [
-  { label: "Real Estate", href: "/real-estate" },
-  { label: "Rentals", href: "/real-estate/rentals" },
-  { label: "Homes for Sale", href: "/real-estate/properties" },
-  { label: "Available Lots", href: "/real-estate/lots" },
+  // { label: "Real Estate", href: "/real-estate" },
+  // { label: "Rentals", href: "/real-estate/rentals" },
+  // { label: "Homes for Sale", href: "/real-estate/properties" },
+  // { label: "Available Lots", href: "/real-estate/lots" },
   { label: "Relocation Blog", href: "/blog" },
   { label: "Contact Brenda", href: "/#contact" },
 ];
@@ -152,13 +139,25 @@ export const siteMap = [
 // Socials Icons
 export const socials = [
   {
-    icon: LinkedinLogoIcon,
-    label: "LinkedIn",
-    href: "https://www.linkedin.com/in/guillermo-medel-9a4465151/",
+    icon: Music,
+    label: "TikTok",
+    href: "https://www.tiktok.com/@relocatetosancarlos?is_from_webapp=1&sender_device=pc",
   },
-  { icon: GithubLogoIcon, label: "GitHub", href: "https://github.com/M3D3L" },
-  { icon: InstagramLogoIcon, label: "Instagram", href: "https://instagram.com" },
-  { icon: Facebook, label: "Facebook", href: "https://facebook.com" },
+  {
+    icon: Instagram,
+    label: "Instagram",
+    href: "https://www.instagram.com/relocatetosancarlos?igsh=anVwYW95NTMwc3E%3D&utm_source=qr",
+  },
+  {
+    icon: Facebook, // update to correct icon if needed
+    label: "Facebook",
+    href: "https://www.facebook.com/RelocateToSanCarlos",
+  },
+  {
+    icon: Youtube,
+    label: "YouTube",
+    href: "https://www.youtube.com/channel/UCc5E3eWOS19TF6ri4IpFGww",
+  },
 ];
 
 // Real Estate Hero Section

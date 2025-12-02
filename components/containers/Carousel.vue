@@ -15,10 +15,11 @@
 
     <Swiper
       :modules="[Autoplay, Navigation]"
-      :loop="true"
-      :centered-slides="true"
+      :loop="slides.length > 3"
+      :looped-slides="slides.length"
       :space-between="16"
-      :breakpoints
+      :slides-per-view="1.25"
+      :breakpoints="breakpoints"
       :autoplay="{ delay: 3000, disableOnInteraction: false }"
       @swiper="onSwiper"
     >
@@ -44,14 +45,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue"
-import { Swiper, SwiperSlide } from "swiper/vue"
-import { Autoplay, Navigation } from "swiper/modules"
-import "swiper/css"
+import { ref } from "vue";
+import { Swiper, SwiperSlide } from "swiper/vue";
+import { Autoplay, Navigation } from "swiper/modules";
+import "swiper/css";
 
-import { Card } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { ChevronLeftIcon, ChevronRightIcon } from "@radix-icons/vue"
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { ChevronLeftIcon, ChevronRightIcon } from "@radix-icons/vue";
 
 const props = defineProps({
   slides: {
@@ -62,45 +63,45 @@ const props = defineProps({
     type: Object as () => Record<string, any>,
     default: () => ({
       320: {
-        slidesPerView: 1.25,
+        slidesPerView: 1,
       },
       640: {
         slidesPerView: 1.5,
       },
       768: {
-        slidesPerView: 2.25,
+        slidesPerView: 2.5,
       },
       1024: {
-        slidesPerView: 3.25,
+        slidesPerView: 3,
       },
     }),
   },
-})
+});
 
-const emit = defineEmits(["selected-event"])
+const emit = defineEmits(["selected-event"]);
 
-const swiperInstance = ref<any>(null)
+const swiperInstance = ref<any>(null);
 
 const onSwiper = (swiper: any) => {
-  swiperInstance.value = swiper
-}
+  swiperInstance.value = swiper;
+};
 
 const handleSlideClick = (index: number) => {
-  swiperInstance.value?.slideToLoop(index)
-  emit("selected-event", index)
-}
+  swiperInstance.value?.slideToLoop(index);
+  emit("selected-event", index);
+};
 
 const slidePrev = () => {
-  if (!swiperInstance.value) return
-  swiperInstance.value.slidePrev()
-  swiperInstance.value.autoplay.start()
-}
+  if (!swiperInstance.value) return;
+  swiperInstance.value.slidePrev();
+  swiperInstance.value.autoplay.start();
+};
 
 const slideNext = () => {
-  if (!swiperInstance.value) return
-  swiperInstance.value.slideNext()
-  swiperInstance.value.autoplay.start()
-}
+  if (!swiperInstance.value) return;
+  swiperInstance.value.slideNext();
+  swiperInstance.value.autoplay.start();
+};
 </script>
 
 <style lang="css">
