@@ -1,69 +1,77 @@
 [
   {
     "type": "Retirees",
-    "description": "A user who migrates from one region to another based on the seasons.",
+    "description": "A user who is retired and considering making San Carlos a seasonal or permanent home.",
     "color": "bg-blue-100",
     "image": "/images/retirees.png",
     "questions": [
       {
         "questionType": "radio",
-        "question": "Do you need medical assistance at home?",
+        "question": "Are you planning for permanent retirement or seasonal 'snowbird' stays?",
         "min": "",
         "max": "",
         "options": [
           {
-            "value": "yes",
-            "label": "Yes"
+            "value": "permanent",
+            "label": "Permanent Residency"
           },
           {
-            "value": "no",
-            "label": "No"
+            "value": "seasonal",
+            "label": "Seasonal/Snowbird (staying less than 6 months per year)"
           }
         ]
       },
       {
         "questionType": "radio",
-        "question": "Are you looking to buy or rent a home?",
+        "question": "What is your primary housing goal?",
         "min": "",
         "max": "",
         "options": [
           {
-            "value": "buy",
-            "label": "Buy"
+            "value": "buy-home",
+            "label": "Buy a finished home or condo"
           },
           {
-            "value": "rent",
-            "label": "Rent"
+            "value": "rent-long",
+            "label": "Long-term rental (1 year +)"
+          },
+          {
+            "value": "buy-lot",
+            "label": "Buy a lot and build later"
           }
         ]
       },
       {
         "questionType": "radio",
-        "question": "Are you here for a short term or long term?",
+        "question": "Is access to local healthcare services a high priority for you?",
         "min": "",
         "max": "",
         "options": [
           {
-            "value": "short",
-            "label": "Short term (less than 6 months)"
+            "value": "high",
+            "label": "Yes, high priority"
           },
           {
-            "value": "long",
-            "label": "Long term (more than 6 months)"
+            "value": "medium",
+            "label": "Medium, I'll use it if needed"
+          },
+          {
+            "value": "low",
+            "label": "No, low priority"
           }
         ]
       },
       {
         "questionType": "slider",
-        "question": "What is your monthly budget?",
-        "min": "0",
+        "question": "What is your monthly living budget (excluding a mortgage/purchase)?",
+        "min": "1000",
         "max": "10000"
       },
       {
         "questionType": "number",
         "question": "How many people will be in the household?",
         "min": "1",
-        "max": "10"
+        "max": "4"
       }
     ]
   },
@@ -75,41 +83,65 @@
     "questions": [
       {
         "questionType": "radio",
-        "question": "Do you need to enroll kids in school?",
+        "question": "What is the age range of your children?",
         "min": "",
         "max": "",
         "options": [
           {
-            "value": "yes",
-            "label": "Yes"
+            "value": "preschool",
+            "label": "Ages 0-5"
           },
           {
-            "value": "no",
-            "label": "No"
+            "value": "school",
+            "label": "Ages 6-17 (School age)"
+          },
+          {
+            "value": "adult",
+            "label": "Adult children/No children under 18"
           }
         ]
       },
       {
         "questionType": "radio",
-        "question": "Are you here for a short term or long term?",
+        "question": "Do you need to enroll children in local schools (private or public)?",
         "min": "",
         "max": "",
         "options": [
           {
-            "value": "short",
-            "label": "Short term"
+            "value": "yes",
+            "label": "Yes, enrollment is needed"
           },
           {
-            "value": "long",
-            "label": "Long term"
+            "value": "no",
+            "label": "No, they are homeschooled or not school age"
+          }
+        ]
+      },
+      {
+        "questionType": "radio",
+        "question": "What type of housing are you seeking?",
+        "min": "",
+        "max": "",
+        "options": [
+          {
+            "value": "purchase",
+            "label": "Purchase (home or condo)"
+          },
+          {
+            "value": "long-rent",
+            "label": "Long-term rent (6 months+)"
+          },
+          {
+            "value": "short-rent",
+            "label": "Short-term rent (vacation)"
           }
         ]
       },
       {
         "questionType": "slider",
-        "question": "What is your monthly budget?",
-        "min": "0",
-        "max": "15000"
+        "question": "What is your desired number of bedrooms?",
+        "min": "1",
+        "max": "6"
       },
       {
         "questionType": "number",
@@ -121,111 +153,249 @@
   },
   {
     "type": "Digital Nomads",
-    "description": "A user who works remotely while traveling to different locations.",
+    "description": "A user who works remotely while traveling and requires reliable infrastructure.",
     "color": "bg-red-100",
     "image": "/images/digital-nomad.png",
     "questions": [
       {
-        "questionType": "number",
-        "question": "How many people are in your group?",
-        "min": "1",
-        "max": "10"
-      },
-      {
         "questionType": "radio",
-        "question": "Are you here for a short term or long term?",
+        "question": "What is the required duration of your stay?",
         "min": "",
         "max": "",
         "options": [
           {
-            "value": "short",
-            "label": "Short term"
+            "value": "1-3",
+            "label": "1 to 3 months"
           },
           {
-            "value": "long",
-            "label": "Long term"
+            "value": "3-6",
+            "label": "3 to 6 months"
+          },
+          {
+            "value": "6+",
+            "label": "More than 6 months"
           }
         ]
       },
       {
         "questionType": "radio",
-        "question": "Are you looking to buy or rent?",
+        "question": "What is your main priority for housing?",
         "min": "",
         "max": "",
         "options": [
           {
-            "value": "buy",
-            "label": "Buy"
+            "value": "wifi",
+            "label": "High-speed internet/reliable utilities"
           },
           {
-            "value": "rent",
-            "label": "Rent"
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "type": "SnowBirds",
-    "description": "A user who migrates from one region to another based on the seasons.",
-    "color": "bg-green-100",
-    "image": "/images/snow-birds.png",
-    "questions": [
-      {
-        "questionType": "radio",
-        "question": "Are you looking to buy or rent a home?",
-        "min": "",
-        "max": "",
-        "options": [
-          {
-            "value": "buy",
-            "label": "Buy"
+            "value": "community",
+            "label": "Access to local coworking space/expat community"
           },
           {
-            "value": "rent",
-            "label": "Rent"
-          }
-        ]
-      },
-      {
-        "questionType": "radio",
-        "question": "Are you here for a short term or long term?",
-        "min": "",
-        "max": "",
-        "options": [
-          {
-            "value": "short",
-            "label": "Short term (less than 6 months)"
-          },
-          {
-            "value": "long",
-            "label": "Long term (more than 6 months)"
+            "value": "budget",
+            "label": "Lowest cost housing"
           }
         ]
       },
       {
         "questionType": "slider",
-        "question": "What is your monthly budget?",
-        "min": "0",
-        "max": "10000"
+        "question": "What is your maximum monthly rental budget (USD)?",
+        "min": "500",
+        "max": "3500"
       },
       {
         "questionType": "number",
-        "question": "How many people will be in the household?",
+        "question": "How many adults are in your group?",
         "min": "1",
-        "max": "10"
+        "max": "5"
+      }
+    ]
+  },
+  {
+    "type": "SnowBirds",
+    "description": "A user who migrates from one region to another based on the seasons and requires short-to-mid-term rentals.",
+    "color": "bg-green-100",
+    "image": "/images/snow-birds.png",
+    "questions": [
+      {
+        "questionType": "radio",
+        "question": "Are you looking to rent annually or only for a few months (e.g., Nov-Mar)?",
+        "min": "",
+        "max": "",
+        "options": [
+          {
+            "value": "annual",
+            "label": "Annual lease (12 months)"
+          },
+          {
+            "value": "seasonal",
+            "label": "Seasonal rental (3-6 months)"
+          }
+        ]
+      },
+      {
+        "questionType": "radio",
+        "question": "Do you prefer a home with a private pool or easy access to the beach/marina?",
+        "min": "",
+        "max": "",
+        "options": [
+          {
+            "value": "pool",
+            "label": "Private pool"
+          },
+          {
+            "value": "beach",
+            "label": "Beach/Marina access"
+          },
+          {
+            "value": "neither",
+            "label": "Neither is a priority"
+          }
+        ]
+      },
+      {
+        "questionType": "slider",
+        "question": "What is your total budget for a 6-month seasonal rental (USD)?",
+        "min": "5000",
+        "max": "30000"
       },
       {
         "questionType": "number",
-        "question": "How many pets?",
-        "min": "0",
+        "question": "How many vehicles/trailers do you need parking for?",
+        "min": "1",
         "max": "3"
       },
       {
-        "questionType": "email",
-        "question": "What is your email?",
+        "questionType": "number",
+        "question": "How many pets (dogs/cats) will be traveling with you?",
+        "min": "0",
+        "max": "3"
+      }
+    ]
+  },
+  {
+    "type": "Investors",
+    "description": "A user looking to start a new business, purchase commercial property, or invest in rental real estate in the San Carlos area.",
+    "color": "bg-purple-100",
+    "image": "/images/investor.png",
+    "questions": [
+      {
+        "questionType": "radio",
+        "question": "What is your primary investment focus in San Carlos?",
         "min": "",
-        "max": ""
+        "max": "",
+        "options": [
+          {
+            "value": "commercial-buy",
+            "label": "Buying commercial property/space"
+          },
+          {
+            "value": "residential-rental",
+            "label": "Buying residential property for rental income"
+          },
+          {
+            "value": "business-start",
+            "label": "Starting a new local business"
+          }
+        ]
+      },
+      {
+        "questionType": "radio",
+        "question": "Do you require assistance with Mexican legal, tax, or corporate formation?",
+        "min": "",
+        "max": "",
+        "options": [
+          {
+            "value": "yes",
+            "label": "Yes, I need legal/tax guidance"
+          },
+          {
+            "value": "no",
+            "label": "No, I have this covered"
+          }
+        ]
+      },
+      {
+        "questionType": "slider",
+        "question": "What is your approximate total initial investment budget (USD)?",
+        "min": "25000",
+        "max": "1000000"
+      },
+      {
+        "questionType": "number",
+        "question": "What is your target time frame to begin operations or finalize purchase (in months)?",
+        "min": "1",
+        "max": "24"
+      }
+    ]
+  },
+  {
+    "type": "Future Builders",
+    "description": "A user who is interested in purchasing land/lots and requires services for new construction or property development.",
+    "color": "bg-orange-200",
+    "image": "/images/construction.png",
+    "questions": [
+      {
+        "questionType": "radio",
+        "question": "What type of land/lot are you primarily looking for?",
+        "min": "",
+        "max": "",
+        "options": [
+          {
+            "value": "single-family",
+            "label": "Single-family residential lot"
+          },
+          {
+            "value": "multi-unit",
+            "label": "Multi-unit/Condo development land"
+          },
+          {
+            "value": "commercial",
+            "label": "Commercial development land"
+          }
+        ]
+      },
+      {
+        "questionType": "radio",
+        "question": "At what stage is your project?",
+        "min": "",
+        "max": "",
+        "options": [
+          {
+            "value": "land-only",
+            "label": "Just looking for land to purchase"
+          },
+          {
+            "value": "plan",
+            "label": "Have land, need design/architectural plans"
+          },
+          {
+            "value": "build",
+            "label": "Ready to hire a builder/contractor"
+          }
+        ]
+      },
+      {
+        "questionType": "slider",
+        "question": "What is your estimated total construction and land budget (USD)?",
+        "min": "50000",
+        "max": "1500000"
+      },
+      {
+        "questionType": "radio",
+        "question": "Do you need referrals for local permitting and government processes?",
+        "min": "",
+        "max": "",
+        "options": [
+          {
+            "value": "yes",
+            "label": "Yes, I need guidance on permits"
+          },
+          {
+            "value": "no",
+            "label": "No, I am already familiar with the process"
+          }
+        ]
       }
     ]
   }
