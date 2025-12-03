@@ -3,7 +3,7 @@
     "type": "Retirees",
     "description": "A user who migrates from one region to another based on the seasons.",
     "color": "bg-blue-100",
-    "image": "retirees",
+    "image": "/images/retirees.png",
     "questions": [
       {
         "questionType": "radio",
@@ -71,7 +71,7 @@
     "type": "Family Adventurers",
     "description": "A user who frequently travels with family and seeks out family activities.",
     "color": "bg-yellow-100",
-    "image": "family",
+    "image": "/images/family.png",
     "questions": [
       {
         "questionType": "radio",
@@ -123,7 +123,7 @@
     "type": "Digital Nomads",
     "description": "A user who works remotely while traveling to different locations.",
     "color": "bg-red-100",
-    "image": "digital-nomad",
+    "image": "/images/digital-nomad.png",
     "questions": [
       {
         "questionType": "number",
@@ -169,7 +169,7 @@
     "type": "SnowBirds",
     "description": "A user who migrates from one region to another based on the seasons.",
     "color": "bg-green-100",
-    "image": "snow-birds",
+    "image": "/images/snow-birds.png",
     "questions": [
       {
         "questionType": "radio",
