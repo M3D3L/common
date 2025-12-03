@@ -3,14 +3,6 @@
     <!-- <div class="flex items-center justify-center w-full bg-gray-200 rounded-lg h-72">
       <span class="text-gray-600">[Advertisement]</span>
     </div> -->
-    <Button class="fixed z-50 w-48 bottom-4 right-4">
-      <WhatsappButton
-        phone="+526444572193"
-        message="Hello, I would like to schedule a call!"
-        text="Schedule a Call"
-        iconStyles="w-6 h-6"
-      />
-    </Button>
     <OrganismsHeader :links="siteMap" :siteName="contactInfo?.siteName" />
     <SectionsModal />
     <main class="w-full">
@@ -28,6 +20,14 @@
       :social-links="socials"
       v-bind="contactSection"
     />
+    <Button class="fixed z-50 w-48 bottom-4 right-4">
+      <WhatsappButton
+        phone="+526444572193"
+        message="Hello, I would like to schedule a call!"
+        text="Schedule a Call"
+        iconStyles="w-6 h-6"
+      />
+    </Button>
     <OrganismsBaseFooter :links="siteMap" :contactInfo :socials />
   </div>
 </template>
