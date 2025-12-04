@@ -1,88 +1,243 @@
-import { useRoute } from 'vue-router'
+interface CreateSeoObjectParams {
+  title: string;
+  summary?: string;
+  imageUri?: string;
+  pubDate?: string;
+  byline?: string;
+  tags?: string;
+  siteName?: string;
+  twitterSite?: string;
+  twitterCreator?: string;
+  ogUrl?: string;
+  page?: string | number;
+  hideSiteName?: boolean;
+  jsonLd?: Record<string, unknown> | string | null;
+}
+
+const DEFAULT_IMAGE_WIDTH = "1200";
+const DEFAULT_IMAGE_HEIGHT = "627";
+
+interface MetaTag {
+  hid: string;
+  name?: string;
+  property?: string;
+  content: string;
+}
+
+interface LinkTag {
+  rel: string;
+  href: string;
+}
+
+interface ScriptTag {
+  type: string;
+  children: string;
+}
+
+interface SeoObject {
+  title: string;
+  meta: MetaTag[];
+  link: LinkTag[];
+  script?: ScriptTag[];
+}
+
+// Helper to unwrap Vue refs or return value as-is
+function unref<T>(value: T): T extends { value: infer V } ? V : T {
+  return (
+    value && typeof value === "object" && "value" in value
+      ? (value as any).value
+      : value
+  ) as any;
+}
+
+function buildPageTitle(
+  title: string,
+  page: string,
+  siteName: string,
+  hideSiteName: boolean
+): string {
+  const pageNum = page !== "1" ? ` - Page ${page}` : "";
+  const siteNameSuffix = hideSiteName ? "" : ` | ${siteName}`;
+  return `${title}${pageNum}${siteNameSuffix}`;
+}
+
+function normalizeUrl(url: string, page: string): string {
+  try {
+    const urlObj = new URL(url);
+    const isPageOne = page === "1";
+
+    if (isPageOne) {
+      // Remove all query params for page 1
+      urlObj.search = "";
+    } else {
+      // Keep only page param for pagination
+      const pageValue = urlObj.searchParams.get("page");
+      urlObj.search = "";
+      if (pageValue) {
+        urlObj.searchParams.set("page", pageValue);
+      }
+    }
+
+    return urlObj.toString().replace("http:", "https:");
+  } catch {
+    // Fallback for invalid URLs
+    return url.split("?")[0].replace("http:", "https:");
+  }
+}
 
 export function createSeoObject({
   title,
-  summary,
+  summary = "",
   imageUri,
   pubDate,
   byline,
-  tags = [],
-  siteName = 'GuillermoMedel.com',
-  twitterSite = '@gmedel',
-  twitterCreator = '',
-  ogUrl = '',
-  page = '1',
-  titleLimit = true,
+  tags = "",
+  siteName = "RelocateToSanCarlos.com",
+  twitterSite = "@relocatetosc",
+  twitterCreator = "",
+  ogUrl = "",
+  page = "1",
   hideSiteName = false,
-  baseUrl = process.server
-    ? process.env.NUXT_PUBLIC_SITE_URL || 'https://guillermomedel.com'
-    : window.location.origin
-}) {
-  const route = useRoute()
+  jsonLd = null,
+}: CreateSeoObjectParams): SeoObject {
+  // Unwrap all Vue refs
+  const unwrappedTitle = unref(title);
+  const unwrappedSummary = unref(summary);
+  const unwrappedPage = unref(page)?.toString() || "1";
+  const unwrappedOgUrl = unref(ogUrl);
+  const unwrappedImageUri = unref(imageUri);
+  const unwrappedPubDate = unref(pubDate);
+  const unwrappedByline = unref(byline);
+  const unwrappedTags = unref(tags);
+  const unwrappedTwitterSite = unref(twitterSite);
+  const unwrappedTwitterCreator = unref(twitterCreator);
 
-  // Page suffix
-  const pageTitleSuffix = page && unref(page) !== '1' ? ` - Page ${unref(page)}` : ''
-  const siteNameAppendix = hideSiteName ? '' : ` | ${siteName}`
+  const finalTitle = buildPageTitle(
+    unwrappedTitle,
+    unwrappedPage,
+    siteName,
+    hideSiteName
+  );
 
-  // Title handling
-  const fullTitle = `${unref(title)}${pageTitleSuffix}${siteNameAppendix}`
-  const finalTitle =
-    unref(titleLimit) && fullTitle.length > 60
-      ? `${unref(title).substring(0, 60 - pageTitleSuffix.length - siteName.length - 3)}${pageTitleSuffix}${siteNameAppendix}`
-      : fullTitle
+  const rawUrl = unwrappedOgUrl || useRequestURL().href;
+  const canonicalUrl = normalizeUrl(rawUrl, unwrappedPage);
 
-  // Canonical URL
-  const cleanPath = route?.path.replace(/\/+/g, '/').replace(/([^/])$/, '$1/')
-  const rawUrl = ogUrl || `${baseUrl.replace(/\/$/, '')}${cleanPath}`
-  const canonicalUrl = rawUrl.split('?')[0].replace('http:', 'https:')
+  const meta: MetaTag[] = [
+    { hid: "description", name: "description", content: unwrappedSummary },
+    { hid: "og:title", property: "og:title", content: finalTitle },
+    {
+      hid: "og:image:alt",
+      property: "og:image:alt",
+      content: `An image related to ${unwrappedTitle}`,
+    },
+    {
+      hid: "og:description",
+      property: "og:description",
+      content: unwrappedSummary,
+    },
+    { hid: "og:site_name", property: "og:site_name", content: siteName },
+    { hid: "og:type", property: "og:type", content: "article" },
+    { hid: "og:url", property: "og:url", content: canonicalUrl },
+    { hid: "og:locale", property: "og:locale", content: "en_US" },
+    { hid: "twitter:title", name: "twitter:title", content: finalTitle },
+    {
+      hid: "twitter:description",
+      name: "twitter:description",
+      content: unwrappedSummary,
+    },
+    {
+      hid: "twitter:card",
+      name: "twitter:card",
+      content: "summary_large_image",
+    },
+    {
+      hid: "twitter:site",
+      name: "twitter:site",
+      content: unwrappedTwitterSite,
+    },
+    {
+      hid: "twitter:creator",
+      name: "twitter:creator",
+      content: unwrappedTwitterCreator || unwrappedTwitterSite,
+    },
+    { hid: "sailthru.title", name: "sailthru.title", content: finalTitle },
+    {
+      hid: "sailthru.description",
+      name: "sailthru.description",
+      content: unwrappedSummary,
+    },
+  ];
 
-  const meta = [
-    { hid: 'description', name: 'description', content: unref(summary) || '' },
-    { hid: 'og:title', property: 'og:title', content: finalTitle, prefix: 'og: http://ogp.me/ns#' },
-    { hid: 'og:description', property: 'og:description', content: unref(summary) || '', prefix: 'og: http://ogp.me/ns#' },
-    { hid: 'og:site_name', property: 'og:site_name', content: siteName, prefix: 'og: http://ogp.me/ns#' },
-    { hid: 'og:type', property: 'og:type', content: 'article' },
-    { hid: 'twitter:title', name: 'twitter:title', content: finalTitle },
-    { hid: 'twitter:description', name: 'twitter:description', content: unref(summary) || '' },
-    { hid: 'twitter:card', name: 'twitter:card', content: 'summary_large_image' },
-    { hid: 'twitter:site', name: 'twitter:site', content: unref(twitterSite) },
-    { hid: 'twitter:creator', name: 'twitter:creator', content: unref(twitterCreator) || unref(twitterSite) },
-    { hid: 'og:url', property: 'og:url', content: canonicalUrl, prefix: 'og: http://ogp.me/ns#' },
-    { hid: 'og:locale', property: 'og:locale', content: 'en_US' },
-    { hid: 'sailthru.title', name: 'sailthru.title', content: finalTitle },
-    { hid: 'sailthru.description', name: 'sailthru.description', content: unref(summary) || '' }
-  ]
-
-  // Images
-  if (imageUri) {
-    const imageUrl = unref(imageUri)
+  if (unwrappedImageUri) {
     meta.push(
-      { hid: 'og:image', property: 'og:image', content: imageUrl, prefix: 'og: http://ogp.me/ns#' },
-      { hid: 'og:image:width', property: 'og:image:width', content: '1200' },
-      { hid: 'og:image:height', property: 'og:image:height', content: '627' },
-      { hid: 'og:image:alt', property: 'og:image:alt', content: `An image related to ${unref(title)}` },
-      { hid: 'twitter:image', name: 'twitter:image', content: imageUrl },
-      { hid: 'sailthru.image.full', name: 'sailthru.image.full', content: imageUrl },
-      { hid: 'sailthru.image.thumb', name: 'sailthru.image.thumb', content: imageUrl }
-    )
+      { hid: "og:image", property: "og:image", content: unwrappedImageUri },
+      {
+        hid: "og:image:width",
+        property: "og:image:width",
+        content: DEFAULT_IMAGE_WIDTH,
+      },
+      {
+        hid: "og:image:height",
+        property: "og:image:height",
+        content: DEFAULT_IMAGE_HEIGHT,
+      },
+      {
+        hid: "twitter:image",
+        name: "twitter:image",
+        content: unwrappedImageUri,
+      },
+      {
+        hid: "sailthru.image.full",
+        name: "sailthru.image.full",
+        content: unwrappedImageUri,
+      },
+      {
+        hid: "sailthru.image.thumb",
+        name: "sailthru.image.thumb",
+        content: unwrappedImageUri,
+      }
+    );
   }
 
-  // Dates / Author / Tags
-  if (pubDate) {
-    meta.push({ hid: 'sailthru.date', name: 'sailthru.date', content: unref(pubDate) })
-  }
-  if (byline) {
-    meta.push({ hid: 'sailthru.author', name: 'sailthru.author', content: unref(byline) })
-  }
-  if (unref(tags)?.length > 0) {
-    meta.push({ hid: 'sailthru.tags', name: 'sailthru.tags', content: Array.isArray(unref(tags)) ? unref(tags).join(',') : unref(tags) })
+  if (unwrappedPubDate) {
+    meta.push({
+      hid: "sailthru.date",
+      name: "sailthru.date",
+      content: unwrappedPubDate,
+    });
   }
 
-  return {
+  if (unwrappedByline) {
+    meta.push({
+      hid: "sailthru.author",
+      name: "sailthru.author",
+      content: unwrappedByline,
+    });
+  }
+
+  if (unwrappedTags) {
+    meta.push({
+      hid: "sailthru.tags",
+      name: "sailthru.tags",
+      content: unwrappedTags,
+    });
+  }
+
+  const seoObject: SeoObject = {
     title: finalTitle,
     meta,
-    link: [
-      { rel: 'canonical', href: canonicalUrl }
-    ]
+    link: [{ rel: "canonical", href: canonicalUrl }],
+  };
+
+  if (jsonLd) {
+    seoObject.script = [
+      {
+        type: "application/ld+json",
+        children:
+          typeof jsonLd === "string" ? jsonLd : JSON.stringify(jsonLd, null, 2),
+      },
+    ];
   }
+
+  return seoObject;
 }

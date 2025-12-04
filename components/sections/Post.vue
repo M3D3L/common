@@ -2,7 +2,8 @@
   <section
     class="container relative z-10 min-h-screen px-4 pt-20 pb-24 mx-auto"
   >
-    <Seo :seoData="computedSeoData" />
+    <SeoMeta :seoData="computedSeoData" />
+
     <motion.div
       class="w-full"
       initial="hidden"
@@ -241,7 +242,7 @@ import {
   Card,
   CardContent,
   CardFooter,
-  CardHeader,
+  CardHeader, // Note: CardHeader is imported but not used in the template
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -254,6 +255,8 @@ import {
 import TooltipProvider from "@/components/ui/tooltip/TooltipProvider.vue";
 import { formatDate } from "@/composables/blogHelpers";
 import type { RecordModel } from "pocketbase";
+import { createSeoObject } from "@/composables/useSeo";
+import SeoMeta from "../SeoMeta.vue";
 
 const config = useRuntimeConfig();
 
@@ -312,24 +315,35 @@ const getInitials = (name: string) => {
 const computedSeoData = computed(() => {
   if (!post.value) {
     return createSeoObject({
-      title: "Blog Post",
-      summary: "A detailed blog post",
-      imageUri: undefined,
-      pubDate: undefined,
-      byline: "",
+      title: "RelocateToSanCarlos.com Blog",
+      summary:
+        "Find essential information about relocating and living in San Carlos, Mexico.",
     });
   }
 
+  const postData = post.value;
+  const authorUsername =
+    postData?.expand?.author?.username || postData.author || "";
+
+  const fullImageUri = postData.cover_image
+    ? `${config.public.pocketbaseUrl}api/files/${postData.collectionId}/${postData.id}/${postData.cover_image}`
+    : undefined;
+
+  // Format tags into a single string, checking if postData.tags is an array
+  const tagsString = Array.isArray(postData.tags)
+    ? postData.tags.join(", ")
+    : postData.tags || "";
+
   return createSeoObject({
-    title: post.value?.title,
-    summary: post.value?.description,
-    imageUri: post.value?.cover_image
-      ? `${config.public.pocketbaseUrl}api/files/${post.value.collectionId}/${post.value.id}/${post.value.cover_image}`
-      : undefined,
-    pubDate: post.value?.created,
-    byline: post.value?.expand?.author?.username || "",
-    tags: post.value?.tags || [],
-    siteName: "Blog",
+    title: postData.title,
+    summary: postData.description,
+    imageUri: fullImageUri,
+    pubDate: postData.created,
+    byline: authorUsername,
+    tags: tagsString,
+    // Use the route path for canonical URL generation
+    ogUrl: route.path,
+    twitterCreator: authorUsername,
   });
 });
 </script>

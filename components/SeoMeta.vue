@@ -1,13 +1,33 @@
-<template>
-  <div class="hidden"></div>
-</template>
-<script setup>
-const props = defineProps({
-  seoData: { type: Object, required: true }
+<script setup lang="ts">
+interface Props {
+  seoData?: Record<string, any>;
+  noIndex?: boolean;
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  seoData: undefined,
+  noIndex: false,
 });
 
-useHead(computed(() => ({
-  title: props.seoData?.title || 'San Carlos Insider',
-  ...props.seoData
-})));
+const headConfig = computed(() => {
+  const base = props.seoData || { meta: [], link: [], script: [] };
+
+  return {
+    title: base.title,
+    meta: [
+      ...base.meta,
+      ...(props.noIndex
+        ? [{ name: "robots", content: "noindex, follow" }]
+        : []),
+    ],
+    link: base.link,
+    script: base.script,
+  };
+});
+
+useHead(headConfig);
 </script>
+
+<template>
+  <slot />
+</template>
