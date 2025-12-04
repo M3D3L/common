@@ -48,12 +48,12 @@
             <!-- Hero Image -->
             <div
               v-if="post?.cover_image"
-              class="relative w-full aspect-[21/9] overflow-hidden"
+              class="relative w-full overflow-hidden"
             >
               <img
                 :src="`${config.public.pocketbaseUrl}api/files/${post.collectionId}/${post.id}/${post.cover_image}?token=`"
                 :alt="post.title"
-                class="object-cover w-full h-full"
+                class="object-center mx-auto h-full"
               />
               <div
                 class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"
