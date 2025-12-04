@@ -110,7 +110,9 @@
                   {{ calculateReadingTime(post.content) }}
                 </div>
 
-                <h1 class="mb-6 text-3xl font-bold md:text-4xl lg:text-5xl">
+                <h1
+                  class="mb-6 text-3xl w-full block font-bold md:text-4xl lg:text-5xl"
+                >
                   {{ post.title }}
                 </h1>
 
