@@ -59,6 +59,9 @@
             :index="index"
           />
         </template>
+        <nuxt-link to="/blog">
+          <Button size="lg" class="font-bold w-full"> View All Posts </Button>
+        </nuxt-link>
       </div>
     </div>
   </div>
@@ -96,7 +99,7 @@ const formAnswers = ref<any[]>([]);
 
 // Data fetching and SEO logic
 const { data: fetchedPosts, error } = await useAsyncData("posts", () =>
-  fetchCollection("posts", 1, 5, "", "-created")
+  fetchCollection("relocateBlog", 1, 3, "", "-created")
 );
 
 // helper: create inbox message
