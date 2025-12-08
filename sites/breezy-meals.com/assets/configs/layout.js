@@ -27,7 +27,7 @@ export const contactInfo = {
   siteName: "GuillermoMedel.com",
   // Slogan: Reinforces the expert development and remote status
   slogan: "Nuxt Specialist & Full-Stack Developer | Remote",
-  email: "guillermoantoniomedel@gmail.com",
+  email: "GuillermoMedel@GuillermoMedel.com",
   phone: "+52 (644) 194-2391",
 };
 
@@ -283,7 +283,7 @@ export const contactSection = {
   // Description: Clear pitch focusing on expertise
   description: `I’m a remote Nuxt Specialist fluent in English and Spanish. Let’s connect to discuss the technical delivery and modernization of your next project.`,
   formAction: "https://formsubmit.co/7cbfcf8a8143c9f8708006416b2a0aae",
-  contactEmail: "guillermoantoniomedel@gmail.com",
+  contactEmail: "GuillermoMedel@GuillermoMedel.com",
   contactPhone: "+52 (644) 194-2391",
   videoArray: [
     "https://www.pexels.com/download/video/33792753/",

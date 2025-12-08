@@ -15,7 +15,7 @@ export const contactInfo = {
   siteName: "RelocateToSanCarlos.com",
   slogan:
     "Your Expert Guide to Coastal Living and Real Estate Investment in San Carlos.",
-  email: "brendaig_505@gmail.com",
+  email: "Brenda@RelocateToSanCarlos.com",
   phone: "+52(644)457-2193",
 };
 
@@ -108,7 +108,7 @@ export const contactSection = {
   title: "Ready to Move? Contact Brenda, Your San Carlos Specialist",
   description: `Start your seamless move or real estate investment today. Reach out to Brenda for a personalized consultation, market insights, and full relocation guidance.`,
   formAction: "https://formsubmit.co/7cbfcf8a8143c9f8708006416b2a0aae",
-  contactEmail: "brendaig_505@gmail.com",
+  contactEmail: "Brenda@RelocateToSanCarlos.com",
   contactPhone: "+52(644)457-2193",
   videoArray: [
     "https://www.pexels.com/download/video/33792753/",
