@@ -341,6 +341,7 @@ const computedSeoData = computed(() => {
     summary: postData.description,
     imageUri: fullImageUri,
     pubDate: postData.created,
+    keywords: postData.keywords,
     byline: authorUsername,
     tags: tagsString,
     // Use the route path for canonical URL generation
