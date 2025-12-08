@@ -1,6 +1,6 @@
 <template>
   <div class="mt-8 md:pt-16">
-    <Seo :seoData="computedSeoData" />
+    <SeoMeta :seoData="computedSeoData" />
     <SectionsBlogColumn
       h1="true"
       :title

@@ -20,11 +20,15 @@ const headConfig = computed(() => {
         ? [{ name: "robots", content: "noindex, follow" }]
         : []),
     ],
-    link: base.link,
-    script: base.script,
+    link: [...(base.link || [])],
+    script: [
+      // JSON-LD from composable is injected here
+      ...(base.script || []),
+    ],
   };
 });
 
+// This registers all <title> <meta> <link> <script> into <head>
 useHead(headConfig);
 </script>
 

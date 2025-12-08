@@ -3,7 +3,7 @@
     v-if="currentType?.type"
     class="container relative content-center min-h-screen pt-10 pb-32"
   >
-    <Seo :seoData="computedSeoData" />
+    <SeoMeta :seoData="computedSeoData" />
     <TitleBlock
       class="mb-8"
       :title="currentType.type"
@@ -128,6 +128,14 @@ const computedSeoData = computed(() => {
     imageUri: "",
     pubDate: new Date().toISOString(),
     byline: "RelocateToSanCarlos",
+    siteName: "relocatetosancarlos.com",
+    // Optional for homepage JSON-LD customization
+    jsonLd: {
+      "@type": "WebSite",
+      url: "https://relocatetosancarlos.com",
+      name: pageTitle,
+      description: pageDescription,
+    },
   });
 });
 

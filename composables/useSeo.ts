@@ -5,6 +5,7 @@ interface CreateSeoObjectParams {
   pubDate?: string;
   byline?: string;
   tags?: string;
+  keywords?: string;
   siteName?: string;
   twitterSite?: string;
   twitterCreator?: string;
@@ -41,7 +42,7 @@ interface SeoObject {
   script?: ScriptTag[];
 }
 
-// Helper to unwrap Vue refs or return value as-is
+// Helper to unwrap Vue refs
 function unref<T>(value: T): T extends { value: infer V } ? V : T {
   return (
     value && typeof value === "object" && "value" in value
@@ -67,10 +68,8 @@ function normalizeUrl(url: string, page: string): string {
     const isPageOne = page === "1";
 
     if (isPageOne) {
-      // Remove all query params for page 1
       urlObj.search = "";
     } else {
-      // Keep only page param for pagination
       const pageValue = urlObj.searchParams.get("page");
       urlObj.search = "";
       if (pageValue) {
@@ -80,7 +79,6 @@ function normalizeUrl(url: string, page: string): string {
 
     return urlObj.toString().replace("http:", "https:");
   } catch {
-    // Fallback for invalid URLs
     return url.split("?")[0].replace("http:", "https:");
   }
 }
@@ -92,6 +90,7 @@ export function createSeoObject({
   pubDate,
   byline,
   tags = "",
+  keywords = "",
   siteName = "RelocateToSanCarlos.com",
   twitterSite = "@relocatetosc",
   twitterCreator = "",
@@ -100,7 +99,7 @@ export function createSeoObject({
   hideSiteName = false,
   jsonLd = null,
 }: CreateSeoObjectParams): SeoObject {
-  // Unwrap all Vue refs
+  // Unwrap everything
   const unwrappedTitle = unref(title);
   const unwrappedSummary = unref(summary);
   const unwrappedPage = unref(page)?.toString() || "1";
@@ -109,6 +108,7 @@ export function createSeoObject({
   const unwrappedPubDate = unref(pubDate);
   const unwrappedByline = unref(byline);
   const unwrappedTags = unref(tags);
+  const unwrappedKeywords = unref(keywords);
   const unwrappedTwitterSite = unref(twitterSite);
   const unwrappedTwitterCreator = unref(twitterCreator);
 
@@ -124,6 +124,17 @@ export function createSeoObject({
 
   const meta: MetaTag[] = [
     { hid: "description", name: "description", content: unwrappedSummary },
+
+    ...(unwrappedKeywords
+      ? [
+          {
+            hid: "keywords",
+            name: "keywords",
+            content: unwrappedKeywords,
+          },
+        ]
+      : []),
+
     { hid: "og:title", property: "og:title", content: finalTitle },
     {
       hid: "og:image:alt",
@@ -139,6 +150,7 @@ export function createSeoObject({
     { hid: "og:type", property: "og:type", content: "article" },
     { hid: "og:url", property: "og:url", content: canonicalUrl },
     { hid: "og:locale", property: "og:locale", content: "en_US" },
+
     { hid: "twitter:title", name: "twitter:title", content: finalTitle },
     {
       hid: "twitter:description",
@@ -160,6 +172,7 @@ export function createSeoObject({
       name: "twitter:creator",
       content: unwrappedTwitterCreator || unwrappedTwitterSite,
     },
+
     { hid: "sailthru.title", name: "sailthru.title", content: finalTitle },
     {
       hid: "sailthru.description",

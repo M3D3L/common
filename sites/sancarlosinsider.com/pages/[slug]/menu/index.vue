@@ -2,7 +2,7 @@
   <div
     class="container relative w-full py-10 md:py-16 font-body bg-background text-foreground"
   >
-    <Seo :seoData="computedSeoData" />
+    <SeoMeta :seoData="computedSeoData" />
 
     <div v-if="pending" class="py-16 text-center text-muted-foreground">
       Loading menu...
@@ -31,7 +31,7 @@
           <ContainersSocialsIcons
             v-if="business?.socials?.length && business?.is_featured"
             :socials="business.socials"
-          :columnOnMobile="true"
+            :columnOnMobile="true"
           />
         </div>
 

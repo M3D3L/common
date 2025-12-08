@@ -34,7 +34,7 @@
               <img
                 :src="imageSrc"
                 :alt="imageAlt"
-                class="object-cover w-4/5 md:hidden"
+                class="object-cover w-4/5 md:hidden mx-auto"
               />
 
               <CardDescription
@@ -102,7 +102,5 @@ const {
   titleLine1,
   titleHighlight,
   description,
-  propertiesLink,
-  propertiesText,
 } = props;
 </script>
