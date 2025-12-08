@@ -7,7 +7,7 @@ export const seoDefaults = {
     description: `Brenda is your trusted Relocation Specialist and Real Estate Agent for San Carlos, Sonora, Mexico. We provide expert, bilingual guidance for U.S. and Canadian expats, retirees, and investors looking to move, buy, or secure long-term rentals along the Sea of Cortez. Get personalized property tours and a complete guide to living in coastal Mexico.`,
     keywords:
       "San Carlos real estate agent, San Carlos relocation specialist, move to San Carlos Mexico, San Carlos Sonora expats, buy property San Carlos, San Carlos rentals long term, Mexico coastal real estate, retire in San Carlos Sonora",
-    image: "/images/brenda.png",
+    image: "/images/brenda.webp",
   },
 };
 
@@ -25,7 +25,7 @@ export const heroSection = {
   padding: "",
   video: "/videos/intro.mp4",
   headerId: "header",
-  imageSrc: "/images/brenda.png",
+  imageSrc: "/images/brenda.webp",
   imageAlt: "Brenda - San Carlos Relocation Specialist and Real Estate Agent",
   titleLine1: "San Carlos, Sonora:",
   titleHighlight: "Relocation & Real Estate Expert",
@@ -161,7 +161,7 @@ export const realEstateHeroSection = {
   padding: "",
   video: "/videos/intro.mp4",
   headerId: "header",
-  imageSrc: "/images/brenda.png",
+  imageSrc: "/images/brenda.webp",
   imageAlt:
     "Brenda - San Carlos Real Estate Expert for U.S. and Canadian Expats",
   titleLine1: "Expert Realty & Relocation for",
