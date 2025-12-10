@@ -20,14 +20,25 @@
       :social-links="socials"
       v-bind="contactSection"
     />
-    <Button class="fixed z-50 w-48 bottom-4 right-4">
+
+    <a
+      href="https://calendly.com/brendaaigsc/30min"
+      target="_blank"
+      rel="noopener noreferrer"
+      class="fixed z-50 bottom-4 px-4 py-2 right-4 flex gap-4 items-center bg-primary text-white rounded-lg whitespace-nowrap shadow-lg"
+    >
+      <p>Schedule a Call</p>
+
+      <!-- <CalendlyButton
+        class="hover:scale-125 transition-all duration-150 transform"
+        link="https://calendly.com/brendaaigsc/30min"
+      />
       <WhatsappButton
+        class="hover:scale-125 transition-all duration-150 transform"
         phone="+526444572193"
         message="Hello, I would like to schedule a call!"
-        text="Schedule a Call"
-        iconStyles="w-6 h-6"
-      />
-    </Button>
+      /> -->
+    </a>
     <OrganismsBaseFooter :links="siteMap" :contactInfo :socials />
   </div>
 </template>
@@ -41,7 +52,7 @@ import {
   socials,
 } from "~/assets/configs/layout";
 import WhatsappButton from "@common/components/molecules/WhatsappButton.vue";
-import { Button } from "@common/components/ui/button";
+import CalendlyButton from "@common/components/molecules/CalendlyButton.vue";
 
 const route = useRoute();
 

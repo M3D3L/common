@@ -7,18 +7,7 @@
     rel="noopener noreferrer"
     aria-label="Chat on WhatsApp"
   >
-    <button @click="() => {}" size="lg" :variant class="w-full">
-      <div class="flex flex-row gap-2 bg-opacity-0">
-        <p>
-          {{ text }}
-        </p>
-        <img
-          src="/icons/whatsapp.svg"
-          alt="WhatsApp Icon"
-          :class="iconStyles"
-        />
-      </div>
-    </button>
+    <img src="/icons/whatsapp.svg" alt="WhatsApp Icon" :class="iconStyles" />
   </a>
 </template>
 
@@ -32,13 +21,9 @@ const props = defineProps({
     type: String,
     default: "Hello, I would like to schedule a call!",
   },
-  text: {
-    type: String,
-    default: "Schedule a Call",
-  },
   iconStyles: {
     type: String,
-    default: "w-6 h-6",
+    default: "w-8 h-8",
   },
   variant: {
     type: String,
