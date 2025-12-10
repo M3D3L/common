@@ -2,11 +2,10 @@ import { Facebook, Youtube, Instagram, Music } from "lucide-vue-next";
 
 export const seoDefaults = {
   home: {
-    title:
-      "Brenda: San Carlos, Sonora Relocation Specialist & Real Estate Agent | Expats & Investors",
-    description: `Brenda is your trusted Relocation Specialist and Real Estate Agent for San Carlos, Sonora, Mexico. We provide expert, bilingual guidance for U.S. and Canadian expats, retirees, and investors looking to relocate to San Carlos, move, buy, or secure long-term rentals along the Sea of Cortez. Get personalized property tours and a complete guide to living in coastal Mexico.`,
+    title: "Relocate to San Carlos Sonora, Mexico: Real Estate & Expat Guide",
+    description: `Your trusted guide to Relocate to Mexico: San Carlos, Sonora Real Estate for US/Canadian Expats, Retirees, and Investors. Get expert, bilingual help finding long-term rentals & property for sale in coastal Mexico. Brenda is your specialist.`,
     keywords:
-      "relocate to San Carlos, San Carlos real estate agent, San Carlos relocation specialist, move to San Carlos Mexico, San Carlos Sonora expats, buy property San Carlos, San Carlos rentals long term, Mexico coastal real estate, retire in San Carlos Sonora",
+      "relocate to San Carlos, San Carlos real estate agent, San Carlos relocation specialist, move to San Carlos Mexico, San Carlos Sonora expats, buy property San Carlos, San Carlos rentals long term, Mexico coastal real estate, retire in San Carlos Sonora, relocate to mexico, move to sonora mexico, real estate in san carlos, mexico expats guide, retire in mexico",
     image: "/images/brenda.webp",
   },
 };
@@ -14,7 +13,7 @@ export const seoDefaults = {
 export const contactInfo = {
   siteName: "RelocateToSanCarlos.com",
   slogan:
-    "Your Expert Guide to Coastal Living and Real Estate Investment in San Carlos.",
+    "Your Expert Guide to Coastal Living and Mexico Real Estate Investment in San Carlos.",
   email: "Brenda@RelocateToSanCarlos.com",
   phone: "+52(644)457-2193",
 };
@@ -27,9 +26,9 @@ export const heroSection = {
   headerId: "header",
   imageSrc: "/images/brenda.webp",
   imageAlt: "Brenda - San Carlos Relocation Specialist and Real Estate Agent",
-  titleLine1: "San Carlos, Sonora:",
+  titleLine1: "San Carlos, Sonora, Mexico:",
   titleHighlight: "Relocation & Real Estate Expert",
-  description: `As a dedicated Real Estate Agent and Relocation Specialist, Brenda offers seamless, bilingual support for expats, retirees, and investors moving to San Carlos, Sonora. From finding the perfect home or rental to navigating local logistics, we make your transition to the Sea of Cortez simple and stress-free.`,
+  description: `As a dedicated Real Estate Agent and Relocation Specialist, Brenda offers seamless, bilingual support for expats, retirees, and investors moving to San Carlos, Sonora, Mexico. From finding the perfect home or rental to navigating local logistics, we make your transition to the Sea of Cortez simple and stress-free.`,
   buttons: [
     {
       link: "/blog/",
@@ -44,8 +43,9 @@ export const heroSection = {
 
 // Services Section
 export const servicesSection = {
-  title: "Brenda: Real Estate and Relocation Services for Expats in San Carlos",
-  description: `Our comprehensive services cover every detail of your move to San Carlos, Sonora. We provide expert market analysis for buyers and investors, personalized property search, long-term rental assistance, and essential guidance on residency, local services, and community integration.`,
+  title:
+    "Relocate to San Carlos, Sonora: Comprehensive Real Estate and Moving Services for Expats in Mexico",
+  description: `Our comprehensive services cover every detail of your move to San Carlos, Sonora, Mexico. We provide expert market analysis for buyers and investors in Mexico Real Estate, personalized property search, long-term rental assistance, and essential guidance on residency, local services, and community integration.`,
 };
 
 export const socialsSection = {
@@ -78,8 +78,7 @@ export const socialsSection = {
       handle: "RelocateToSanCarlos",
       tagline: "Join Our San Carlos Expat Community",
       description: "Connect with San Carlos locals & expats 🏖️",
-      ctaText: "Like Our Page",
-      // Corrected Facebook link, assuming the intent was the Facebook page name
+      ctaText: "Like Our Page", // Corrected Facebook link, assuming the intent was the Facebook page name
       link: "https://www.facebook.com/RelocateToSanCarlos",
       imageUrl:
         "https://images.unsplash.com/photo-1506929562872-bb421503ef21?w=800&h=1000&fit=crop",
@@ -99,8 +98,9 @@ export const socialsSection = {
 
 // Blog Section
 export const blogSection = {
-  title: "San Carlos Relocation & Real Estate Blog: Insider Tips for Expats",
-  description: `Learn everything about retiring, investing, and moving to San Carlos, Sonora with Brenda's expert blog. We cover real estate investment strategies, long-term rental tips, essential residency documents, and hidden local gems to help newcomers make informed decisions about coastal living in Mexico.`,
+  title:
+    "Relocate to Mexico Blog: San Carlos Real Estate & Insider Tips for Expats",
+  description: `Learn everything about retiring, investing, and moving to San Carlos, Sonora, Mexico with Brenda's expert blog. We cover real estate investment strategies in Mexico, long-term rental tips, essential residency documents, and hidden local gems to help newcomers make informed decisions about coastal living.`,
 };
 
 // Contact Section
@@ -166,7 +166,7 @@ export const realEstateHeroSection = {
     "Brenda - San Carlos Real Estate Expert for U.S. and Canadian Expats",
   titleLine1: "Expert Realty & Relocation for",
   titleHighlight: "San Carlos, Sonora Expats",
-  description: `Brenda at RelocateToSanCarlos.com offers trusted, bilingual realty services and relocation support to U.S. and Canadian clients. We specialize in long-term rentals, homes for sale, and investment lots along the Sea of Cortez. Get personalized guidance to secure your coastal future.`,
+  description: `Brenda at RelocateToSanCarlos.com offers trusted, bilingual realty services and relocation support to U.S. and Canadian clients. We specialize in long-term rentals, homes for sale, and investment lots along the Sea of Cortez. Get personalized guidance to secure your coastal future in Mexico.`,
   propertiesLink: "/#contact",
   propertiesText: "Get Personalized Property Info",
 };
@@ -176,7 +176,7 @@ const categoryConfigs = {
     title: "Secure Your Long-Term Rental in San Carlos",
     sectionSubTitle: "Enjoy Affordable Coastal Living",
     sectionTitle:
-      "Long-Term Rental Assistance for Expats in San Carlos, Sonora",
+      "Long-Term Rental Assistance for Expats Relocating to San Carlos, Sonora, Mexico",
     type: "rentals",
     subTitle:
       "Brenda provides personalized assistance to secure the perfect long-term rental, ensuring a smooth start to your San Carlos lifestyle.",
@@ -184,7 +184,7 @@ const categoryConfigs = {
       "San Carlos isn't just a destination, it's a lifestyle you can start now.",
     benefits: [
       {
-        title: "Lower Cost of Living",
+        title: "Lower Cost of Living in Mexico",
         description:
           "Enjoy affordable rent, groceries, and services compared to U.S. cities.",
       },
@@ -206,7 +206,7 @@ const categoryConfigs = {
     title: "Invest in Your San Carlos Paradise Today",
     subTitle:
       "Purchasing property in San Carlos is a smart investment and your gateway to an ideal coastal lifestyle. We guide you step-by-step.",
-    sectionTitle: "Expert Real Estate Investment in San Carlos, Sonora",
+    sectionTitle: "Expert Real Estate Investment in San Carlos, Sonora, Mexico",
     sectionSubTitle: "Secure Your Dream Coastal Home",
     type: "properties",
     footerText:
@@ -218,7 +218,7 @@ const categoryConfigs = {
           "Property values in this thriving coastal community continue to rise.",
       },
       {
-        title: "Trusted Guidance",
+        title: "Trusted Guidance in Mexico",
         description:
           "Bilingual support through the entire legal and closing process.",
       },
@@ -235,7 +235,7 @@ const categoryConfigs = {
     title: "Secure Your Prime Coastal Land",
     subTitle:
       "Buying land in San Carlos gives you the freedom to design your ideal home on the perfect canvas with expert construction referral support.",
-    sectionTitle: "Build Your Dream Home in San Carlos, Sonora",
+    sectionTitle: "Build Your Dream Home in San Carlos, Sonora, Mexico",
     sectionSubTitle: "Prime Coastal Land Available Now",
     type: "lots",
     footerText:

@@ -3,64 +3,93 @@
     <template #video-container-content>
       <section
         :id="headerId"
-        class="relative flex flex-col min-h-screen items-center justify-center w-full py-16 overflow-hidden placeholder md:flex-row md:py-0"
+        class="flex flex-col min-h-screen items-center justify-center w-full py-16 md:flex-row md:py-0"
       >
-        <!-- Left: Image -->
         <div
-          class="relative flex flex-col md:bg-white/85 lg:bg-transparent rounded-lg items-center justify-center w-full overflow-hidden placeholder md:flex-row md:py-0"
+          class="flex flex-col rounded-lg items-center justify-center w-full overflow-hidden md:flex-row md:py-0"
         >
           <div
-            class="relative flex items-end justify-center w-full md:w-1/2 lg:w-1/2 lg:min-h-screen"
+            class="flex items-end justify-center w-full md:w-1/2 lg:w-1/2 xl:w-2/3 md:min-h-screen"
           >
             <img
               :src="imageSrc"
               :alt="imageAlt"
-              class="hidden object-cover w-full lg:w-4/5 transform md:block"
+              class="hidden w-full lg:w-2/3 md:block ml-auto"
             />
           </div>
 
-          <!-- Right: Text content -->
-          <Card class="md:w-1/2">
-            <CardHeader class="p-6 space-y-6 lg:p-8">
-              <CardTitle
-                class="text-3xl font-bold tracking-tight text-center md:text-4xl lg:text-5xl lg:text-left"
+          ">
+          <section
+            :id="headerId"
+            class="relative md:w-1/2 z-10 flex h-full bg-black bg-opacity-5 rounded-lg overflow-hidden flex-col items-center justify-center text-center p-6"
+          >
+            <div class="w-full space-y-6">
+              <h1
+                class="text-2xl font-extralight uppercase tracking-[0.3em] text-white sm:text-3xl lg:text-4xl"
               >
                 {{ titleLine1 }}
-                <span class="block mt-2 text-primary md:text-4xl text-3xl">
+                <span
+                  class="mt-2 font-bold leading-tight text-primary text-xl sm:text-2xl"
+                >
                   {{ titleHighlight }}
                 </span>
-              </CardTitle>
+              </h1>
 
               <img
                 :src="imageSrc"
                 :alt="imageAlt"
-                class="object-cover w-4/5 md:hidden mx-auto"
+                class="md:hidden w-2/3 mx-auto"
               />
 
-              <CardDescription
-                class="max-w-2xl mx-auto text-lg lg:mx-0 lg:text-left"
+              <p
+                class="mx-auto max-w-xl text-white/90 sm:text-base font-light leading-tight"
               >
                 {{ description }}
-              </CardDescription>
-            </CardHeader>
+              </p>
 
-            <CardContent
-              class="flex flex-col gap-4 px-6 lg:flex-row sm:justify-center lg:justify-start lg:px-8"
-            >
-              <Button
-                v-for="(button, index) in buttons"
-                :key="button.title"
-                asChild
-                size="lg"
-                :variant="index === 0 ? 'default' : 'outline'"
-                class="font-semibold"
+              <div
+                class="flex flex-col gap-4 pt-8 lg:flex-row sm:justify-center"
               >
-                <NuxtLink :to="button.link">
-                  {{ button.title }}
-                </NuxtLink>
-              </Button>
-            </CardContent>
-          </Card>
+                <Button
+                  v-for="(button, index) in buttons"
+                  :key="button.title"
+                  asChild
+                  size="lg"
+                  :variant="index === 0 ? 'default' : 'outline-white'"
+                  class="min-w-56 font-semibold uppercase tracking-wider transition-all duration-300 transform hover:scale-[1.03]"
+                >
+                  <NuxtLink :to="button.link">
+                    {{ button.title }}
+                  </NuxtLink>
+                </Button>
+              </div>
+            </div>
+          </section>
+
+          <nuxt-link
+            to="/#about"
+            class="absolute hidden md:block bottom-24 cursor-pointer transition-opacity duration-500 hover:opacity-100"
+          >
+            <p
+              class="text-xl uppercase tracking-widest text-white/70 font-light"
+            >
+              Discover San Carlos
+            </p>
+            <svg
+              class="mx-auto mt-2 h-6 w-6 text-white animate-bounce"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.5"
+                d="M19 9l-7 7-7-7"
+              ></path>
+            </svg>
+          </nuxt-link>
         </div>
       </section>
     </template>
@@ -68,13 +97,6 @@
 </template>
 
 <script setup lang="ts">
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent,
-} from "@common/components/ui/card";
 import { Button } from "@common/components/ui/button";
 
 interface Props {
