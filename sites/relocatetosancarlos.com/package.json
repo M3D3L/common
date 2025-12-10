@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "build": "nuxt build",
-    "dev": "cross-env SHEET_ID=2PACX-1vRetljTxAEaD4k6LEJfOHSbBTFyXJsdbUiyuPa8dW_TBmY9WeVMcqxw1SF8X14U2GDVVNidpSt7YrHx node scripts/convertSheetToJson.mjs && nuxt dev",
+    "dev": "nuxt dev",
     "dev:windows": "set \"sheetId=2PACX-1vRetljTxAEaD4k6LEJfOHSbBTFyXJsdbUiyuPa8dW_TBmY9WeVMcqxw1SF8X14U2GDVVNidpSt7YrHx\" && npm run dev",
     "dev:unix": "SHEET_ID=2PACX-1vRetljTxAEaD4k6LEJfOHSbBTFyXJsdbUiyuPa8dW_TBmY9WeVMcqxw1SF8X14U2GDVVNidpSt7YrHx npm run dev",
     "generate": "nuxt generate",
