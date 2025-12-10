@@ -9,7 +9,7 @@
           class="flex flex-col rounded-lg items-center justify-center w-full overflow-hidden md:flex-row md:py-0"
         >
           <div
-            class="flex items-end justify-center w-full md:w-1/2 lg:w-1/2 xl:w-2/3 md:min-h-screen"
+            class="flex items-end justify-center w-full md:w-1/2 lg:w-1/2 xl:w-2/3"
           >
             <img
               :src="imageSrc"
@@ -18,10 +18,11 @@
             />
           </div>
 
-          ">
           <section
+            ref="parallaxContainer"
+            :style="{ transform: `translateY(${parallaxOffset}px)` }"
             :id="headerId"
-            class="relative md:w-1/2 z-10 flex h-full bg-black bg-opacity-5 rounded-lg overflow-hidden flex-col items-center justify-center text-center p-6"
+            class="md:w-1/2 z-10 flex h-full bg-black bg-opacity-5 rounded-lg overflow-hidden flex-col items-center justify-center text-center p-6 transition-transform duration-100 ease-out"
           >
             <div class="w-full space-y-6">
               <h1
@@ -98,6 +99,7 @@
 
 <script setup lang="ts">
 import { Button } from "@common/components/ui/button";
+import { ref, onMounted, onUnmounted } from "vue";
 
 interface Props {
   id: string;
@@ -125,4 +127,27 @@ const {
   titleHighlight,
   description,
 } = props;
+
+// Parallax effect
+const parallaxContainer = ref<HTMLElement | null>(null);
+const parallaxOffset = ref(0);
+
+const handleScroll = () => {
+  if (parallaxContainer.value) {
+    const scrolled = window.scrollY;
+    // Adjust the multiplier (0.3) to control parallax intensity
+    // Positive value moves down when scrolling down
+    // Negative value moves up when scrolling down
+    parallaxOffset.value = scrolled * -0.3;
+  }
+};
+
+onMounted(() => {
+  window.addEventListener("scroll", handleScroll);
+  handleScroll(); // Initialize on mount
+});
+
+onUnmounted(() => {
+  window.removeEventListener("scroll", handleScroll);
+});
 </script>
