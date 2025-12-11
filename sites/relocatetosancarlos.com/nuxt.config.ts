@@ -19,9 +19,7 @@ export default defineNuxtConfig({
   googleFonts: {
     families: {
       Montserrat: { wght: [300, 400, 500, 700] },
-      "Playfair Display": { wght: [400, 500, 700] },
-      "Alegreya Sans SC": { wght: [400, 500, 700] },
-      "Cormorant Garamond": { wght: [400, 500, 600, 700] },
+      Roboto: { wght: [400, 500, 700] },
     },
     display: "swap",
     preload: true,

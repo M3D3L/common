@@ -6,11 +6,10 @@
 @layer base {
   :root {
     /* Font families */
-    --font-body: "Alegreya Sans SC", sans-serif;
+    --font-body: "Roboto", sans-serif;
     --font-heading: "Montserrat", sans-serif;
-    --font-logo: "Playfair Display", serif;
-    --font-sans: "Cormorant Garamond", serif;
-
+    --font-logo: "Montserrat", sans-serif;
+    --font-sans: "Roboto", sans-serif;
     /* Colors */
     --background: hsl(190 60% 97%);
     --foreground: hsl(200 45% 20%);
