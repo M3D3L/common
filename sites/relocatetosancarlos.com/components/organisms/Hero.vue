@@ -22,7 +22,7 @@
             ref="parallaxContainer"
             :style="{ transform: `translateY(${parallaxOffset}px)` }"
             :id="headerId"
-            class="md:w-1/2 z-10 flex h-full bg-black bg-opacity-5 rounded-lg overflow-hidden flex-col items-center justify-center text-center p-6 transition-transform duration-100 ease-out"
+            class="md:w-1/2 z-10 flex h-full bg-black bg-opacity-50 rounded-lg overflow-hidden flex-col items-center justify-center text-center p-6 transition-transform duration-100 ease-out"
           >
             <div class="w-full space-y-6">
               <h1
@@ -57,7 +57,7 @@
                   asChild
                   size="lg"
                   :variant="index === 0 ? 'default' : 'outline-white'"
-                  class="min-w-56 font-semibold uppercase tracking-wider transition-all duration-300 transform hover:scale-[1.03]"
+                  class="min-w-56 font-semibold text-sm uppercase px-4 tracking-wider transition-all duration-300 transform hover:scale-[1.03]"
                 >
                   <NuxtLink :to="button.link">
                     {{ button.title }}

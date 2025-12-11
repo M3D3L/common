@@ -32,7 +32,7 @@ export const heroSection = {
   buttons: [
     {
       link: "/blog/",
-      title: "Essential Relocation Blog",
+      title: "Relocation Blog",
     },
     {
       link: "/#contact",
