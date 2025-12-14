@@ -10,6 +10,8 @@ export default defineNuxtConfig({
     "motion-v/nuxt",
     "@nuxtjs/google-fonts",
     "nuxt-swiper",
+    "@nuxtjs/robots",
+    "@nuxtjs/sitemap",
   ],
   shadcn: {
     prefix: "",
