@@ -25,7 +25,7 @@
       href="https://calendly.com/brendaaigsc/30min"
       target="_blank"
       rel="noopener noreferrer"
-      class="fixed z-50 bottom-4 px-4 py-2 right-4 flex gap-4 items-center bg-primary text-white rounded-lg whitespace-nowrap shadow-lg"
+      class="fixed z-50 bottom-4 px-4 py-2 right-4 flex gap-4 items-center bg-primary text-primary-foreground rounded-lg whitespace-nowrap shadow-lg"
     >
       <p>Schedule a Call</p>
 
