@@ -10,12 +10,13 @@
     --font-heading: "Montserrat", sans-serif;
     --font-logo: "Montserrat", sans-serif;
     --font-sans: "Roboto", sans-serif;
-    /* Colors */
-    --background: hsl(190 60% 97%);
-    --foreground: hsl(200 45% 20%);
 
-    --muted: hsl(190 40% 92%);
-    --muted-foreground: hsl(200 25% 45%);
+    /* --- Light Mode Colors (Original Palette) --- */
+    --background: hsl(190 60% 97%); /* Very light, icy blue */
+    --foreground: hsl(200 45% 20%); /* Deep, dark cyan-blue text */
+
+    --muted: hsl(190 40% 92%); /* Light blue-gray for accents */
+    --muted-foreground: hsl(200 25% 45%); /* Muted dark text */
 
     --popover: hsl(190 60% 97%);
     --popover-foreground: hsl(200 45% 20%);
@@ -26,20 +27,54 @@
     --border: hsl(195 25% 80%);
     --input: hsl(195 25% 80%);
 
-    --primary: hsl(185 80% 45%);
-    --primary-foreground: hsl(0 0% 100%);
+    --primary: hsl(185 80% 45%); /* Bright Cyan/Turquoise */
+    --primary-foreground: hsl(0 0% 100%); /* White text on primary */
 
-    --secondary: hsl(25 45% 60%);
+    --secondary: hsl(25 45% 60%); /* Muted warm orange/brown */
     --secondary-foreground: hsl(0 0% 100%);
 
-    --accent: hsl(155 80% 45%);
+    --accent: hsl(155 80% 45%); /* Bright Green */
     --accent-foreground: hsl(0 0% 100%);
 
-    --destructive: hsl(5 75% 50%);
+    --destructive: hsl(5 75% 50%); /* Red */
     --destructive-foreground: hsl(0 0% 100%);
 
     --ring: hsl(185 80% 45%);
     --radius: 0.5rem;
+  }
+
+  .dark {
+    /* --- Dark Mode Colors (Inverted and Adjusted Palette) --- */
+    --background: hsl(200 40% 15%); /* Very dark blue-gray background */
+    --foreground: hsl(190 60% 95%); /* Very light text color */
+
+    --muted: hsl(200 35% 25%); /* Darker blue-gray for accents */
+    --muted-foreground: hsl(190 40% 75%); /* Lighter muted text */
+
+    --popover: hsl(200 40% 20%);
+    --popover-foreground: hsl(190 60% 95%);
+
+    --card: hsl(200 40% 20%);
+    --card-foreground: hsl(190 60% 95%);
+
+    --border: hsl(200 35% 30%);
+    --input: hsl(200 35% 30%);
+
+    --primary: hsl(185 70% 55%); /* Slightly lighter Cyan for visibility */
+    --primary-foreground: hsl(200 45% 20%); /* Deep dark text on primary */
+
+    --secondary: hsl(
+      25 45% 70%
+    ); /* Muted warm orange/brown (slightly lighter) */
+    --secondary-foreground: hsl(200 40% 15%); /* Dark text on secondary */
+
+    --accent: hsl(155 70% 55%); /* Slightly lighter Green for visibility */
+    --accent-foreground: hsl(200 40% 15%);
+
+    --destructive: hsl(5 75% 60%); /* Slightly lighter Red */
+    --destructive-foreground: hsl(200 40% 15%);
+
+    --ring: hsl(185 70% 55%);
   }
 
   html {
@@ -168,6 +203,12 @@
     @apply bg-muted text-muted-foreground;
   }
 
+  /* Dark mode video filter for contrast */
+  .dark video {
+    filter: brightness(0.8) saturate(1) !important;
+  }
+
+  /* Light mode video filter */
   video {
     filter: brightness(1) saturate(1.5) !important;
   }
