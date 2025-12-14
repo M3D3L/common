@@ -3,7 +3,7 @@
     <!-- <div class="flex items-center justify-center w-full bg-gray-200 rounded-lg h-72">
       <span class="text-gray-600">[Advertisement]</span>
     </div> -->
-    <OrganismsHeader :links="siteMap" :siteName="contactInfo?.siteName" />
+    <TheNavbar :links="siteMap" :siteName="contactInfo?.siteName" />
     <SectionsModal />
     <main class="w-full">
       <slot />

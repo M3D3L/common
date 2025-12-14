@@ -1,4 +1,4 @@
-import { defineStore } from 'pinia';
+import { defineStore } from "pinia";
 interface User {
   id: string;
   name?: string;
@@ -6,7 +6,7 @@ interface User {
   [key: string]: any; // optional extra fields
 }
 
-export const useAuthStore = defineStore('auth', {
+export const useAuthStore = defineStore("auth", {
   state: () => ({
     user: null as User | null,
     token: null as string | null,

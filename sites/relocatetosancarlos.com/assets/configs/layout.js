@@ -127,8 +127,6 @@ export const siteMap = [
   // { label: "Available Lots", href: "/real-estate/lots" },
   { label: "Relocation Blog", href: "/blog" },
   { label: "Contact Brenda", href: "/#contact" },
-  { label: "Login", href: "/login" },
-  { label: "Sign Up", href: "/register" },
 ];
 
 // Socials Icons
