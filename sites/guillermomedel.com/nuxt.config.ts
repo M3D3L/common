@@ -14,7 +14,7 @@ export default defineNuxtConfig({
   extends: ["../../nuxt.config.ts"],
   css: ["@/assets/css/tailwind.css"],
 
-  modules: [],
+  modules: ["@nuxtjs/sitemap", "@nuxtjs/robots"],
 
   googleFonts: {
     families: {
@@ -42,6 +42,22 @@ export default defineNuxtConfig({
 
   alias: {
     "@common": path.resolve(__dirname, "../../"),
+  },
+
+  site: {
+    url: "https://guillermomedel.com",
+    name: "Guillermo Medel",
+  },
+
+  robots: {
+    rules: [
+      {
+        userAgent: "*",
+        allow: "/",
+        disallow: ["/api", "/_nuxt"],
+      },
+    ],
+    sitemap: "https://guillermomedel.com/sitemap.xml",
   },
 
   runtimeConfig: {
