@@ -14,7 +14,7 @@ export default defineNuxtConfig({
   extends: ["../../nuxt.config.ts"],
   css: ["@/assets/css/tailwind.css"],
 
-  modules: [],
+  modules: ["@nuxtjs/sitemap", "@nuxtjs/robots"],
 
   googleFonts: {
     families: {
@@ -32,6 +32,22 @@ export default defineNuxtConfig({
 
   alias: {
     "@common": path.resolve(__dirname, "../../"),
+  },
+
+  site: {
+    url: "https://relocatetosancarlos.com",
+    name: "Relocate to San Carlos",
+  },
+
+  robots: {
+    rules: [
+      {
+        userAgent: "*",
+        allow: "/",
+        disallow: ["/api", "/_nuxt"],
+      },
+    ],
+    sitemap: "https://relocatetosancarlos.com/sitemap.xml",
   },
 
   runtimeConfig: {
