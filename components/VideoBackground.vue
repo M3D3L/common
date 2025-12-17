@@ -1,29 +1,27 @@
 <template>
   <client-only>
-    <div class="absolute inset-0 z-0 overflow-hidden bg-black">
+    <div class="absolute inset-0 z-0 overflow-hidden">
       <motion.div
         class="w-full h-full will-change-transform"
-        :initial="{ y: 100, opacity: 0 }"
+        :initial="{ y: 200, opacity: 0 }"
         :animate="videoControls"
+        :viewport="{ amount: 0.4, once: false }"
       >
         <video
           ref="videoRef"
-          :src="shouldLoadVideo ? video : ''"
-          preload="none"
+          loading="lazy"
           muted
           loop
           playsinline
-          class="object-cover w-full h-full transition-opacity duration-700"
-          :class="{ 'opacity-0': !isVideoActive, 'opacity-100': isVideoActive }"
+          role="presentation"
+          class="object-cover w-full h-full transition-opacity duration-500"
+          :src="video"
+          :class="{ 'opacity-0': !isVideoActive }"
         />
-
         <div
-          v-if="!isVideoActive"
-          class="absolute inset-0 bg-cover bg-center"
-          :style="{ backgroundImage: `url(${poster})` }"
+          class="absolute inset-0 transition-opacity duration-500 bg-black/40"
+          :class="{ 'opacity-0': !isVideoActive }"
         />
-
-        <div class="absolute inset-0 bg-black/40 transition-opacity" />
       </motion.div>
     </div>
   </client-only>
@@ -33,19 +31,20 @@
 import { motion } from "motion-v";
 
 const props = defineProps({
-  video: { type: String, required: true },
-  // Recommended for "Low Power" fallback
-  poster: { type: String, default: "" },
-  observeElement: { type: Object as () => HTMLElement | null, default: null },
+  video: {
+    type: String,
+    required: true,
+  },
+  observeElement: {
+    type: Object as () => HTMLElement | null,
+    default: null,
+  },
 });
 
 const emit = defineEmits(["video-active"]);
 
 const videoRef = ref<HTMLVideoElement | null>(null);
 const isVideoActive = ref(false);
-// Flag to prevent network requests early
-const shouldLoadVideo = ref(false);
-
 const videoControls = reactive({
   y: 0,
   opacity: 1,
@@ -53,102 +52,63 @@ const videoControls = reactive({
 
 let observer: IntersectionObserver | null = null;
 
-/**
- * Smart Check: Detects if the device is on a slow connection,
- * data saver mode, or prefers reduced motion.
- */
-const checkPerformanceMode = () => {
-  if (typeof window === "undefined" || !navigator) return false;
-
-  const conn = (navigator as any).connection;
-  const isDataSaver = conn?.saveData;
-  const isSlowConnection = ["slow-2g", "2g", "3g"].includes(
-    conn?.effectiveType || ""
-  );
-  const prefersReducedMotion = window.matchMedia(
-    "(prefers-reduced-motion: reduce)"
-  ).matches;
-
-  return isDataSaver || isSlowConnection || prefersReducedMotion;
-};
-
-const handleIntersection = async (entries: IntersectionObserverEntry[]) => {
-  for (const entry of entries) {
+const handleIntersection = (entries: IntersectionObserverEntry[]) => {
+  entries.forEach((entry) => {
     if (entry.isIntersecting) {
-      // 1. Mark as active to trigger CSS/Motion transitions
       isVideoActive.value = true;
       videoControls.y = 0;
       videoControls.opacity = 1;
-
-      // 2. Start the actual video load
-      if (videoRef.value) {
-        try {
-          // Trigger the network request manually
-          if (videoRef.value.readyState < 2) videoRef.value.load();
-          await videoRef.value.play();
-        } catch (e) {
-          console.warn(
-            "Autoplay blocked (likely Low Power Mode or user pref):",
-            e
-          );
-          isVideoActive.value = false;
-        }
-      }
+      videoRef.value
+        ?.play()
+        .catch((e) => console.log("Autoplay prevented:", e));
     } else {
       isVideoActive.value = false;
-      // Subtle move away
-      videoControls.y = -50;
+      videoControls.y = -200;
       videoControls.opacity = 0;
       videoRef.value?.pause();
     }
     emit("video-active", isVideoActive.value);
-  }
+  });
 };
 
 const setupIntersectionObserver = () => {
-  if (observer) observer.disconnect();
-
-  // If the device is in a restricted state, we simply never set up the video logic
-  if (checkPerformanceMode()) {
-    console.info("Lite Mode: Video background disabled for performance.");
-    return;
+  if (observer) {
+    observer.disconnect();
   }
 
-  shouldLoadVideo.value = true;
-
   const elementToObserve =
-    props.observeElement || videoRef.value?.parentElement;
+    props.observeElement || videoRef.value?.parentElement?.parentElement;
+
   if (elementToObserve) {
     observer = new IntersectionObserver(handleIntersection, {
-      threshold: 0.1,
-      // Load slightly before it scrolls into view
-      rootMargin: "100px",
+      threshold: 0.15,
+      rootMargin: "0px 0px -100px 0px",
     });
     observer.observe(elementToObserve);
   }
 };
 
 onMounted(() => {
-  // Use nextTick to ensure Vue has finished DOM updates
-  nextTick(() => {
-    // Wait for the browser to be idle (or a 200ms timeout for Safari)
-    const idleCallback =
-      (window as any).requestIdleCallback || ((cb: any) => setTimeout(cb, 200));
-
-    idleCallback(() => {
-      setupIntersectionObserver();
-    });
-  });
+  setupIntersectionObserver();
 });
 
+watch(
+  () => props.observeElement,
+  () => {
+    setupIntersectionObserver();
+  },
+  { immediate: true }
+);
+
 onBeforeUnmount(() => {
-  if (observer) observer.disconnect();
+  if (observer) {
+    observer.disconnect();
+  }
 });
 </script>
 
 <style scoped>
-/* Optimize for smooth GPU rendering */
-.will-change-transform {
-  will-change: transform, opacity;
+video {
+  transition: opacity 0.75s ease-in-out;
 }
 </style>
