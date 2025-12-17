@@ -56,7 +56,7 @@ const computedSeoData = computed(() => {
     imageUri: seoDefaults?.image || "",
     pubDate: "",
     byline: "Guillermo Medel - Full Stack Developer",
-    siteName: "guillermomedel.com",
+    siteName: "GuillermoMedel.com",
     // Optional for homepage JSON-LD customization
     jsonLd: {
       "@type": "WebSite",

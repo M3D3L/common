@@ -259,6 +259,7 @@ import { formatDate } from "@/composables/blogHelpers";
 import type { RecordModel } from "pocketbase";
 import { createSeoObject } from "@/composables/useSeo";
 import SeoMeta from "../SeoMeta.vue";
+import { seoDefaults } from "~/assets/configs/layout.js";
 
 const config = useRuntimeConfig();
 
@@ -342,6 +343,8 @@ const computedSeoData = computed(() => {
     imageUri: fullImageUri,
     pubDate: postData.created,
     keywords: postData.keywords,
+    siteName: (config.public.siteName as string) || "RelocateToSanCarlos.com",
+    twitterSite: (config.public.twitterSite as string) || "@relocatetosc",
     byline: authorUsername,
     tags: tagsString,
     // Use the route path for canonical URL generation
