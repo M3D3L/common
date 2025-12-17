@@ -57,6 +57,7 @@ export default defineNuxtConfig({
       whatsappNumber: process.env.WHATSAPP_NUMBER || "6444444444",
       siteName: "RelocateToSanCarlos.com",
       twitterSite: "@relocatetosc",
+      blogType: "relocateBlog",
     },
   },
 });

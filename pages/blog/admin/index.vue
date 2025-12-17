@@ -118,7 +118,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-// You'll need to make sure this component is globally available or imported
 import ContainersHtml from "@/components/containers/Html.vue";
 
 // Import your custom PocketBase composable
@@ -141,7 +140,7 @@ const saveMessage = ref<string>("");
 const saveSuccess = ref(false);
 
 // --- Constants ---
-const COLLECTION_NAME = "posts"; // Your PocketBase collection name for blog posts
+const COLLECTION_NAME = "posts";
 
 // --- Computed Properties ---
 
@@ -160,11 +159,11 @@ const fetchPostList = async () => {
     const response = await fetchCollection(
       COLLECTION_NAME,
       1,
-      50, // Fetch up to 50 posts in the dropdown
+      50,
       "",
       "-created",
       null,
-      ["id", "title"] // Only fetch necessary fields
+      ["id", "title"]
     );
     postList.value = response.items as { id: string; title: string }[];
   } catch (error) {

@@ -65,6 +65,9 @@ export default defineNuxtConfig({
       pocketbaseUrl:
         process.env.POCKETBASE_URL || "https://api.sancarlosinsider.com/",
       whatsappNumber: process.env.WHATSAPP_NUMBER || "6444444444",
+      siteName: "GuillermoMedel.com",
+      twitterSite: "@GM3D3L",
+      blogType: "posts",
     },
   },
 });

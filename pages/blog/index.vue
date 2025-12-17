@@ -2,10 +2,10 @@
   <div class="mt-8 md:pt-16">
     <SeoMeta :seoData="computedSeoData" />
     <SectionsBlogColumn
-      h1="true"
+      :h1="true"
       :title
       :description
-      :type
+      :type="(config.public.blogType as string)"
       :imgSrc
       :showMore="false"
       :showPagination="true"
@@ -25,10 +25,6 @@ const props = defineProps({
     default:
       "I'm passsionate about sharing knowledge and helping others grow. Explore my blog for insights, tutorials, and tips on web development, drone photography, and more.",
   },
-  type: {
-    type: String,
-    default: "posts",
-  },
 });
 
 const computedSeoData = computed(() =>
@@ -40,4 +36,6 @@ const computedSeoData = computed(() =>
     byline: "",
   })
 );
+
+const config = useRuntimeConfig();
 </script>

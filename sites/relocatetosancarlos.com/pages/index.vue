@@ -18,6 +18,8 @@ import {
   socialsSection,
 } from "~/assets/configs/layout";
 
+const config = useRuntimeConfig();
+
 const computedSeoData = computed(() => {
   return createSeoObject({
     title: seoDefaults.home.title,
@@ -26,14 +28,19 @@ const computedSeoData = computed(() => {
     imageUri: seoDefaults.home.image,
     pubDate: "",
     byline: "Brenda – San Carlos Relocation Specialist",
-    siteName: "RelocateToSanCarlos.com",
+    siteName: config.public.siteName || seoDefaults.siteName,
+    twitterSite: config.public.twitterSite || seoDefaults?.twitterSite,
 
     // Optional for homepage JSON-LD customization
     jsonLd: {
       "@type": "WebSite",
-      url: "https://relocatetosancarlos.com",
+      url: config.public.siteUrl || seoDefaults.siteUrl,
       name: seoDefaults.home.title,
       description: seoDefaults.home.description,
+      publisher: {
+        "@type": "Organization",
+        name: config.public.siteName || seoDefaults.siteName,
+      },
     },
   });
 });
