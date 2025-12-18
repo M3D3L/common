@@ -3,7 +3,7 @@
     :to="to"
     :aria-label="ariaLabel || title"
     :aria-current="isActive ? 'page' : undefined"
-    class="text-sm transition-all text-muted-foreground hover:text-primary hover:translate-x-1 w-fit group relative focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-sm"
+    class="text-xs transition-all text-muted-foreground hover:text-primary hover:translate-x-1 w-fit group relative focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-sm"
     active-class="font-semibold text-primary"
     role="link"
   >

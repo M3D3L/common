@@ -121,11 +121,10 @@ export const contactSection = {
 
 // Site Map - Listings are commented out as requested
 export const siteMap = [
-  { label: "Home", href: "/" },
-  { label: "View All Real Estate", href: "/real-estate" },
-  { label: "Homes for Sale", href: "/real-estate/properties" },
+  { label: "View All", href: "/real-estate" },
+  { label: "For Sale", href: "/real-estate/properties" },
   { label: "Rentals", href: "/real-estate/rentals" },
-  { label: "Land & Lots", href: "/real-estate/lots" },
+  { label: "Lots", href: "/real-estate/lots" },
   { label: "Relocation Guide", href: "/blog" },
   { label: "Contact", href: "/#contact" },
 ];

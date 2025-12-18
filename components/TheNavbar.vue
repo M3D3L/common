@@ -26,7 +26,9 @@
       <!-- Right side buttons -->
       <div class="flex items-center gap-2 md:gap-4">
         <!-- Desktop nav -->
-        <nav class="items-center hidden gap-8 md:flex">
+        <nav
+          class="items-center pl-4 gap-4 hidden justify-between w-full md:flex"
+        >
           <!-- Main links -->
           <AtomsStyledLink
             v-for="(link, linkIndex) in links"
