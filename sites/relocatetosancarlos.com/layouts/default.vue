@@ -51,8 +51,6 @@ import {
   contactSection,
   socials,
 } from "~/assets/configs/layout";
-import WhatsappButton from "@common/components/molecules/WhatsappButton.vue";
-import CalendlyButton from "@common/components/molecules/CalendlyButton.vue";
 
 const route = useRoute();
 
