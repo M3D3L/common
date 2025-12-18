@@ -2,6 +2,7 @@
   <nav
     v-if="showPagination && totalPages > 1"
     class="flex items-center justify-center my-6"
+    aria-label="Pagination"
   >
     <ul class="flex items-center gap-2">
       <!-- Previous Button -->
@@ -12,43 +13,37 @@
           :disabled="currentPage === 1"
           @click="goToPage(currentPage - 1)"
           class="transition-all duration-200 hover:scale-105 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100"
+          aria-label="Previous page"
         >
           <ChevronLeft class="w-4 h-4" />
-          <span class="sr-only">Previous page</span>
         </Button>
       </li>
 
-      <!-- First Page (with ellipsis if needed) -->
+      <!-- First Page -->
       <li v-if="showFirstPage">
         <Button
           variant="outline"
           size="sm"
-          :class="
-            currentPage === 1
-              ? 'bg-primary text-primary-foreground border-primary'
-              : 'hover:bg-accent'
-          "
+          :disabled="currentPage === 1"
+          :aria-current="currentPage === 1 ? 'page' : undefined"
+          :class="pageButtonClass(1)"
           @click="goToPage(1)"
-          class="transition-colors duration-200"
         >
           1
         </Button>
       </li>
 
-      <li v-if="showLeftEllipsis" class="px-2 text-muted-foreground">...</li>
+      <li v-if="showLeftEllipsis" class="px-2 text-muted-foreground">…</li>
 
-      <!-- Page Numbers -->
+      <!-- Visible Pages -->
       <template v-for="page in visiblePages" :key="page">
         <li>
           <Button
             variant="outline"
             size="sm"
-            :class="[
-              'transition-all duration-200 font-medium',
-              currentPage === page
-                ? 'bg-primary text-primary-foreground border-primary shadow-md scale-105'
-                : 'hover:bg-accent hover:border-accent-foreground/20 hover:shadow-sm',
-            ]"
+            :disabled="currentPage === page"
+            :aria-current="currentPage === page ? 'page' : undefined"
+            :class="pageButtonClass(page)"
             @click="goToPage(page)"
           >
             {{ page }}
@@ -56,20 +51,17 @@
         </li>
       </template>
 
-      <li v-if="showRightEllipsis" class="px-2 text-muted-foreground">...</li>
+      <li v-if="showRightEllipsis" class="px-2 text-muted-foreground">…</li>
 
-      <!-- Last Page (with ellipsis if needed) -->
+      <!-- Last Page -->
       <li v-if="showLastPage">
         <Button
           variant="outline"
           size="sm"
-          :class="
-            currentPage === totalPages
-              ? 'bg-primary text-primary-foreground border-primary'
-              : 'hover:bg-accent'
-          "
+          :disabled="currentPage === totalPages"
+          :aria-current="currentPage === totalPages ? 'page' : undefined"
+          :class="pageButtonClass(totalPages)"
           @click="goToPage(totalPages)"
-          class="transition-colors duration-200"
         >
           {{ totalPages }}
         </Button>
@@ -83,9 +75,9 @@
           :disabled="currentPage === totalPages"
           @click="goToPage(currentPage + 1)"
           class="transition-all duration-200 hover:scale-105 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100"
+          aria-label="Next page"
         >
           <ChevronRight class="w-4 h-4" />
-          <span class="sr-only">Next page</span>
         </Button>
       </li>
     </ul>
@@ -97,81 +89,66 @@ import { ChevronLeft, ChevronRight } from "lucide-vue-next";
 import { Button } from "@/components/ui/button";
 
 const props = defineProps({
-  totalPages: {
-    type: Number,
-    required: true,
-  },
-  maxVisiblePages: {
-    type: Number,
-    default: 5,
-  },
-  showPagination: {
-    type: Boolean,
-    default: false,
-  },
+  totalPages: { type: Number, required: true },
+  maxVisiblePages: { type: Number, default: 5 },
+  showPagination: { type: Boolean, default: false },
 });
 
 const route = useRoute();
 const router = useRouter();
-const currentPage = computed(() => parseInt(route.query.page) || 1);
+
+const currentPage = computed(() => Number(route.query.page) || 1);
+
+/* ---------- Pagination Logic ---------- */
 
 const visiblePages = computed(() => {
   const pages = [];
-  let startPage = 1;
-  let endPage = props.totalPages;
+  let start = 1;
+  let end = props.totalPages;
 
   if (props.totalPages > props.maxVisiblePages) {
-    const maxPagesBeforeCurrent = Math.floor(props.maxVisiblePages / 2);
-    const maxPagesAfterCurrent = Math.ceil(props.maxVisiblePages / 2) - 1;
+    const half = Math.floor(props.maxVisiblePages / 2);
 
-    if (currentPage.value <= maxPagesBeforeCurrent) {
-      endPage = props.maxVisiblePages;
-    } else if (currentPage.value + maxPagesAfterCurrent >= props.totalPages) {
-      startPage = props.totalPages - props.maxVisiblePages + 1;
+    if (currentPage.value <= half + 1) {
+      end = props.maxVisiblePages;
+    } else if (currentPage.value >= props.totalPages - half) {
+      start = props.totalPages - props.maxVisiblePages + 1;
     } else {
-      startPage = currentPage.value - maxPagesBeforeCurrent;
-      endPage = currentPage.value + maxPagesAfterCurrent;
+      start = currentPage.value - half;
+      end = currentPage.value + half;
     }
   }
 
-  for (let i = startPage; i <= endPage; i++) {
-    pages.push(i);
-  }
-
+  for (let i = start; i <= end; i++) pages.push(i);
   return pages;
 });
 
-// Computed properties for ellipsis logic
-const showFirstPage = computed(() => {
-  return (
-    props.totalPages > props.maxVisiblePages &&
-    currentPage.value > Math.floor(props.maxVisiblePages / 2) + 1
-  );
-});
+const showFirstPage = computed(
+  () =>
+    props.totalPages > props.maxVisiblePages && !visiblePages.value.includes(1)
+);
 
-const showLastPage = computed(() => {
-  return (
+const showLastPage = computed(
+  () =>
     props.totalPages > props.maxVisiblePages &&
-    currentPage.value < props.totalPages - Math.floor(props.maxVisiblePages / 2)
-  );
-});
+    !visiblePages.value.includes(props.totalPages)
+);
 
-const showLeftEllipsis = computed(() => {
-  return (
-    props.totalPages > props.maxVisiblePages &&
-    currentPage.value > Math.floor(props.maxVisiblePages / 2) + 1
-  );
-});
+const showLeftEllipsis = computed(() => showFirstPage.value);
 
-const showRightEllipsis = computed(() => {
-  return (
-    props.totalPages > props.maxVisiblePages &&
-    currentPage.value < props.totalPages - Math.floor(props.maxVisiblePages / 2)
-  );
-});
+const showRightEllipsis = computed(() => showLastPage.value);
+
+/* ---------- Helpers ---------- */
+
+const pageButtonClass = (page) => [
+  "font-medium transition-all duration-200",
+  currentPage.value === page
+    ? "bg-primary text-primary-foreground border-primary shadow-md cursor-default pointer-events-none"
+    : "hover:bg-accent hover:border-accent-foreground/20 hover:shadow-sm hover:scale-105",
+];
 
 const goToPage = (page) => {
-  if (page < 1 || page > props.totalPages) return;
+  if (page < 1 || page > props.totalPages || page === currentPage.value) return;
 
   router.push({
     query: {
