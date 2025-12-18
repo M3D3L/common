@@ -2,27 +2,30 @@
   <div
     class="container relative w-full p-6 font-body bg-background text-foreground md:py-10"
   >
-  
     <section
       id="video"
       class="w-full"
       aria-labelledby="video-heading aspect-video"
     >
-
       <TitleBlock
-        :title="property?.address || 'Property Details'"
-        :description="property?.description || 'Detailed information about the property.'"
+        :title="property?.title || 'Property Details'"
+        :description="
+          property?.description || 'Detailed information about the property.'
+        "
         type="h1"
         class="mb-6"
       />
 
       <PageTitle
         :title="property?.title || 'Property Details'"
-        :description="property?.description || 'Detailed information about the property.'"
+        :description="
+          property?.description || 'Detailed information about the property.'
+        "
         class="mb-6"
       />
 
       <Card
+        v-if="property?.video"
         class="relative w-full h-full mb-4 overflow-hidden rounded-lg aspect-video"
         role="region"
         aria-label="Property Video Walkthrough"
@@ -30,7 +33,7 @@
         <div class="aspect-video" ref="propertyHeroRef">
           <video
             class="absolute inset-0 object-cover w-full h-full rounded-lg"
-            src="https://videos.pexels.com/video-files/3410663/3410663-uhd_2562_1440_30fps.mp4"
+            :src="property?.video"
             autoplay
             muted
             loop
@@ -104,10 +107,30 @@
               <dt class="text-sm text-gray-500 uppercase col-span-full">
                 Amenities
               </dt>
-              <dd class="text-lg col-span-full">
-                {{ property.amenities.join(", ") }}
-              </dd>
-            </template>
+              <!-- List all the amenities here with an icon -->
+              <dd class="col-span-full">
+                <ul
+                  class="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4"
+                >
+                  <li
+                    v-for="(amenity, amenityIndex) in property.amenities"
+                    :key="amenityIndex"
+                    class="flex flex-col text-center items-start gap-3 rounded-md px-3 py-2 transition-colors hover:bg-muted/60"
+                  >
+                    <span
+                      class="flex justify-center h-5 w-5 items-center mx-auto rounded-full bg-green-500/10 text-green-600 dark:text-green-400"
+                      aria-hidden="true"
+                    >
+                      <Check class="w-3 h-3" />
+                    </span>
+
+                    <span class="text-sm font-medium text-foreground/90">
+                      {{ amenity?.name }}
+                    </span>
+                  </li>
+                </ul>
+              </dd></template
+            >
           </dl>
 
           <div class="pt-6 mt-8 border-t border-gray-300">
@@ -141,6 +164,7 @@
           aria-label="Property Location Map"
         >
           <iframe
+            v-if="mapSrc"
             class="absolute inset-0 w-full h-full rounded-lg"
             :src="mapSrc"
             style="border: 0"
@@ -213,6 +237,7 @@ import {
   Github,
   Facebook,
   Instagram,
+  Check,
 } from "lucide-vue-next";
 
 const config = useRuntimeConfig();
@@ -222,11 +247,6 @@ const fetchedProperty = ref<any>(null);
 const fetchedProperties = ref<any>(null);
 const slides = ref<any[]>([]);
 const propertyHeroRef = ref<HTMLElement | null>(null);
-
-const lat = 27.9513;
-const lng = -111.025;
-const zoom = 14;
-const mapSrc = `https://maps.google.com/maps?q=${lat},${lng}&z=${zoom}&output=embed`;
 
 const route = useRoute();
 
@@ -249,6 +269,16 @@ const formattedPropertyType = computed(() => {
 });
 
 const property = computed(() => fetchedProperty.value?.items?.[0] || {});
+
+const zoom = 14;
+const mapSrc = computed(() => {
+  const lat = property.value?.lat;
+  const long = property.value?.long;
+
+  if (lat == null || long == null) return "";
+
+  return `https://maps.google.com/maps?q=${lat},${long}&z=${zoom}&output=embed`;
+});
 
 const fetchPropertiesBySlug = async (slug: string) => {
   return await fetchCollection(
