@@ -40,14 +40,9 @@
               baseUrl="/real-estate"
               :removeSpacing="true"
               :content="item"
-              :buttonText="category.name"
+              buttonText="Check it Out!"
             >
-              <template #extraButton>
-                <MoleculesWhatsappButton
-                  text="Send"
-                  :message="`Hello, I would like more information on this ${item?.type} : https://www.RelocateToSanCarlos.com/real-estate${item.slug}`"
-                />
-              </template>
+              <template #extraButton> </template>
             </CardsBaseCard>
           </template>
           <div
