@@ -1,7 +1,7 @@
 <template>
   <ul class="pt-16 pb-32 space-y-32 lg:pt-24">
     <TextSectionTitle
-      class="container pt-12 pb-16"
+      class="container pt-12"
       title="Relocate to San Carlos"
       description="Your trusted partner for finding the perfect property in San Carlos, Mexico. From expert guidance and personalized service to comprehensive support throughout your relocation journey, we're here to make your move seamless and stress-free."
       :h1="true"
@@ -11,24 +11,32 @@
 
     <li v-for="(category, index) in categories" :key="category.name">
       <TextSectionTitle
-        class="container pt-12 pb-16"
+        :class="{ 'pt-12': index !== 0 }"
+        class="container"
         :title="category.title"
         :description="category.sectionSubTitle"
         :h1="false"
       />
       <div
         :class="index % 2 ? 'lg:flex-row-reverse' : 'lg:flex-row'"
-        class="container flex flex-col gap-8"
+        class="container flex flex-col gap-8 mt-6"
       >
-        <div class="grid w-full grid-cols-1 gap-8 md:grid-cols-2 lg:w-2/3">
-          <!-- Display properties for each category -->
+        <div
+          class="grid w-full items-center grid-cols-1 gap-8 md:grid-cols-2 lg:w-2/3"
+        >
           <template
-            v-for="(item, itemIndex) in category?.properties?.items"
-            :key="`${index}-${itemIndex}`"
+            v-if="!category?.properties?.items?.length"
+            :key="`no-items-${index}`"
           >
+            <p class="col-span-2 text-center text-muted-foreground italic">
+              No results available right now. Please check back soon.
+            </p>
+          </template>
+
+          <template v-else>
             <CardsBaseCard
-              v-if="item"
-              :key="itemIndex"
+              v-for="(item, itemIndex) in category?.properties?.items"
+              :key="`${index}-${itemIndex}`"
               baseUrl="/real-estate"
               :removeSpacing="true"
               :content="item"
@@ -42,7 +50,10 @@
               </template>
             </CardsBaseCard>
           </template>
-          <div class="flex justify-center md:col-span-2">
+          <div
+            v-if="category?.properties?.totalPages > 1"
+            class="flex justify-center md:col-span-2"
+          >
             <nuxt-link
               :to="`/real-estate/${category?.type}/`"
               class="text-sm font-medium underline capitalize transition-colors hover:text-primary underline-offset-4"

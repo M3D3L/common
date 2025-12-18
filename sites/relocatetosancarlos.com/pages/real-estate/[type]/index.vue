@@ -1,7 +1,17 @@
 <template>
   <div class="w-full">
     <ul class="container pb-32 space-y-32">
-      <li v-if="currentCategory?.properties?.items?.length > 0">
+      <template
+        v-if="currentCategory?.properties?.items?.length === 0"
+        :key="`no-items-${index}`"
+      >
+        <p
+          class="w-full h-[80vh] grid content-center text-center text-muted-foreground italic"
+        >
+          No results available right now. Please check back soon.
+        </p>
+      </template>
+      <li v-else>
         <TextSectionTitle
           class="pt-12 pb-16"
           :title="currentCategory.title"
@@ -10,7 +20,7 @@
         />
 
         <div class="flex flex-col gap-6 lg:flex-row">
-          <div class="grid w-full gap-6 md:grid-cols-2 lg:w-2/3">
+          <div class="grid content-center w-full gap-6 md:grid-cols-2 lg:w-2/3">
             <!-- Display properties -->
             <CardsBaseCard
               v-for="(item, itemIndex) in currentCategory?.properties?.items"
@@ -83,23 +93,25 @@ const currentCategory = computed(() => {
   return null;
 });
 
-const { data: properties, pending, error, refresh } = await useAsyncData(
-  `properties-${type.value}-${page.value}`,
-  async () => {
-    if (typeMap[type.value]) {
-      const { query } = typeMap[type.value];
-      return await fetchCollection(
-        "properties",
-        page.value,
-        perPage,
-        `type="${query}"`,
-        "-created",
-        ""
-      );
-    }
-    return null;
+const {
+  data: properties,
+  pending,
+  error,
+  refresh,
+} = await useAsyncData(`properties-${type.value}-${page.value}`, async () => {
+  if (typeMap[type.value]) {
+    const { query } = typeMap[type.value];
+    return await fetchCollection(
+      "properties",
+      page.value,
+      perPage,
+      `type="${query}"`,
+      "-created",
+      ""
+    );
   }
-);
+  return null;
+});
 
 // Update the category's properties reactive value when the async data is fetched
 watch(
