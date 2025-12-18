@@ -3,7 +3,7 @@
     "type": "Retirees",
     "description": "A user who is retired and considering making San Carlos a seasonal or permanent home.",
     "color": "bg-blue-100",
-    "image": "/images/retirees.png",
+    "image": "/images/retirees.webp",
     "questions": [
       {
         "questionType": "radio",
@@ -155,7 +155,7 @@
     "type": "Family Adventurers",
     "description": "A user who frequently travels with family and seeks out family activities.",
     "color": "bg-yellow-100",
-    "image": "/images/family.png",
+    "image": "/images/family.webp",
     "questions": [
       {
         "questionType": "radio",
@@ -307,7 +307,7 @@
     "type": "Digital Nomads",
     "description": "A user who works remotely while traveling and requires reliable infrastructure.",
     "color": "bg-red-100",
-    "image": "/images/digital-nomad.png",
+    "image": "/images/digital-nomad.webp",
     "questions": [
       {
         "questionType": "radio",
@@ -453,7 +453,7 @@
     "type": "SnowBirds",
     "description": "A user who migrates from one region to another based on the seasons and requires short-to-mid-term rentals.",
     "color": "bg-green-100",
-    "image": "/images/snow-birds.png",
+    "image": "/images/snow-birds.webp",
     "questions": [
       {
         "questionType": "radio",
@@ -601,7 +601,7 @@
     "type": "Investors",
     "description": "A user looking to start a new business, purchase commercial property, or invest in rental real estate in the San Carlos area.",
     "color": "bg-purple-100",
-    "image": "/images/investor.png",
+    "image": "/images/investor.webp",
     "questions": [
       {
         "questionType": "radio",
@@ -735,7 +735,7 @@
     "type": "Future Builders",
     "description": "A user who is interested in purchasing land/lots and requires services for new construction or property development.",
     "color": "bg-orange-200",
-    "image": "/images/construction.png",
+    "image": "/images/builders.webp",
     "questions": [
       {
         "questionType": "radio",
