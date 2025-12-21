@@ -309,6 +309,7 @@
             />
 
             <ImageGalleryUploader
+              :key="formData?.gallery?.length || 0"
               label="Gallery Images"
               :collection-id="formData?.collectionId"
               :record-id="formData?.id"

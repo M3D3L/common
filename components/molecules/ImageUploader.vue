@@ -6,18 +6,18 @@
       }}</Label>
 
       <Button
-        v-if="localPreviewUrl"
+        v-if="localPreviewUrl || isUnsavedFile"
         variant="ghost"
         size="sm"
         class="h-8 text-xs gap-1"
         @click="resetLocalPreview"
       >
         <RotateCcw class="h-3 w-3" />
-        Reset Changes
+        Discard Changes
       </Button>
     </div>
 
-    <Card class="overflow-hidden border-dashed border-muted/60">
+    <Card class="overflow-hidden border-dashed border-muted/60 relative">
       <div
         class="relative h-64 w-full cursor-pointer bg-muted/50 hover:bg-muted/70 transition-colors flex items-center justify-center group"
         @click="openFileDialog"
@@ -36,6 +36,13 @@
             alt="Upload preview"
             class="absolute inset-0 h-full w-full object-cover"
           />
+
+          <div
+            v-if="localPreviewUrl || isUnsavedFile"
+            class="absolute top-2 left-2 bg-amber-500 text-white px-2 py-0.5 rounded text-[10px] font-bold uppercase z-20 shadow-sm"
+          >
+            Unsaved
+          </div>
 
           <div
             class="absolute inset-0 bg-black/50 flex items-center justify-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity"
@@ -131,7 +138,7 @@ const config = useRuntimeConfig();
 
 const props = withDefaults(
   defineProps<{
-    image?: string | null;
+    image?: string | File | any | null;
     collectionId: string;
     id: string;
     label?: string;
@@ -157,32 +164,52 @@ const showDeleteDialog = ref(false);
 const localPreviewUrl = ref<string | null>(null);
 const processing = ref(false);
 
-// Construct the Server URL
-const serverImageUrl = computed(() => {
-  if (!props.image || !props.id || !props.collectionId) return null;
-  return `${config.public.pocketbaseUrl}api/files/${props.collectionId}/${props.id}/${props.image}`;
+/**
+ * Check if the current image prop is an unsaved File/Blob
+ */
+const isUnsavedFile = computed(
+  () => props.image instanceof File || props.image instanceof Blob
+);
+
+/**
+ * Resolve the image source based on whether it's a DB string or a File object
+ */
+const resolvedImagePropUrl = computed(() => {
+  if (!props.image) return null;
+
+  // Case 1: Existing filename from PocketBase
+  if (typeof props.image === "string") {
+    if (!props.id || !props.collectionId) return null;
+    return `${config.public.pocketbaseUrl}api/files/${props.collectionId}/${props.id}/${props.image}`;
+  }
+
+  // Case 2: File object passed back from parent (the [object File] scenario)
+  if (isUnsavedFile.value) {
+    return URL.createObjectURL(props.image as Blob);
+  }
+
+  return null;
 });
 
-// Prioritize Local Preview over Server Image
-const displaySource = computed(
-  () => localPreviewUrl.value || serverImageUrl.value
-);
+/**
+ * SOURCE SELECTOR
+ * Prioritize local immediate selection (localPreviewUrl)
+ * over the resolved prop URL.
+ */
+const displaySource = computed(() => {
+  return localPreviewUrl.value || resolvedImagePropUrl.value;
+});
 
 const openFileDialog = () => {
   fileInput.value?.click();
 };
 
-/**
- * Optimized Image Processing using Browser Image Compression
- */
 const compressImage = async (file: File): Promise<File> => {
   processing.value = true;
-
-  // Determine the target MIME type
   const targetType = `image/${props.format === "jpeg" ? "jpeg" : props.format}`;
 
   const options = {
-    maxSizeMB: 1, // You can adjust this based on your needs
+    maxSizeMB: 1,
     maxWidthOrHeight: props.width || props.height || 1920,
     useWebWorker: true,
     initialQuality: props.quality / 100,
@@ -191,13 +218,11 @@ const compressImage = async (file: File): Promise<File> => {
 
   try {
     const compressedBlob = await imageCompression(file, options);
-
-    // Create a new File from the Blob to maintain name and extension
     const fileName = `${file.name.split(".")[0]}.${props.format}`;
     return new File([compressedBlob], fileName, { type: targetType });
   } catch (error) {
     console.error("Image compression failed:", error);
-    return file; // Fallback to original file
+    return file;
   } finally {
     processing.value = false;
   }
@@ -208,14 +233,10 @@ const handleFileChange = async (event: Event) => {
   if (target.files && target.files.length > 0) {
     const file = target.files[0];
 
-    // 1. Create instant local preview with original file for UX
     if (localPreviewUrl.value) URL.revokeObjectURL(localPreviewUrl.value);
     localPreviewUrl.value = URL.createObjectURL(file);
 
-    // 2. Process/Compress the file
     const processedFile = await compressImage(file);
-
-    // 3. Emit the optimized file for upload
     emit("upload", processedFile);
   }
   target.value = "";
@@ -234,15 +255,19 @@ const onConfirmDelete = () => {
   showDeleteDialog.value = false;
 };
 
-// Clean up memory when image prop changes (meaning save was successful)
+/**
+ * Clear the local preview state only when the prop transitions
+ * from a File object back to a database string (indicating a save).
+ */
 watch(
   () => props.image,
-  () => {
-    resetLocalPreview();
+  (newVal, oldVal) => {
+    if (typeof newVal === "string" && typeof oldVal !== "string") {
+      resetLocalPreview();
+    }
   }
 );
 
-// Clean up memory when component is destroyed
 onBeforeUnmount(() => {
   resetLocalPreview();
 });

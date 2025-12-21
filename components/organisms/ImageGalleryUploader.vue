@@ -7,7 +7,7 @@
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       <div v-for="(img, index) in images" :key="index" class="relative">
         <ImageUploader
-          :image="typeof img === 'string' ? img : null"
+          :image="img"
           :id="recordId"
           :collection-id="collectionId"
           :format="format"
@@ -15,8 +15,10 @@
           :width="width"
           :height="height"
           @remove="removeImage(index)"
+          @upload="(file) => updateExistingImage(index, file)"
         />
       </div>
+
       <ImageUploader
         :key="images.length"
         :collection-id="collectionId"
@@ -25,7 +27,7 @@
         :quality="quality"
         :width="width"
         :height="height"
-        @upload="setImages"
+        @upload="addNewImage"
       />
     </div>
   </div>
@@ -52,25 +54,29 @@ const props = withDefaults(defineProps<Props>(), {
   quality: 80,
 });
 
-const tempImage = ref<File | null>(null);
-
 const emit = defineEmits<{
   "update:images": [(string | File)[]];
 }>();
 
-const setImages = (file: File) => {
-  tempImage.value = file;
-  saveImage();
+/**
+ * Adds a new file to the array.
+ * Because we pass the File object back down, the Child
+ * will use its internal localPreviewUrl to show it instantly.
+ */
+const addNewImage = (file: File) => {
+  const updatedImages = [...props.images, file];
+  emit("update:images", updatedImages);
+  // reset file input in child component
 };
 
-const saveImage = () => {
-  if (tempImage.value) {
-    // Append the new file to the existing array
-    const updatedImages = [...props.images, tempImage.value];
-    emit("update:images", updatedImages);
-    // Clear the temp state so the button disappears and uploader resets
-    tempImage.value = null;
-  }
+/**
+ * Updates an existing slot if the user edits an image
+ * that was already in the list.
+ */
+const updateExistingImage = (index: number, file: File) => {
+  const updatedImages = [...props.images];
+  updatedImages[index] = file;
+  emit("update:images", updatedImages);
 };
 
 const removeImage = (index: number) => {
