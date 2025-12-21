@@ -145,9 +145,9 @@
         class="sm:max-w-[800px] h-[90vh] flex flex-col p-0 overflow-hidden"
       >
         <DialogHeader class="p-6 pb-0">
-          <DialogTitle class="text-2xl font-bold">
-            {{ isEditing ? "Edit Listing" : "Create Listing" }}
-          </DialogTitle>
+          <DialogTitle class="text-2xl font-bold">{{
+            isEditing ? "Edit Listing" : "Create Listing"
+          }}</DialogTitle>
           <DialogDescription>
             Update the property details and specifications below.
           </DialogDescription>
@@ -166,20 +166,6 @@
                 placeholder="e.g. Modern Beachfront Villa"
                 required
               />
-              <div
-                v-if="formData.title"
-                class="flex items-center gap-2 text-xs text-muted-foreground mt-1 bg-muted/50 p-2 rounded border border-dashed"
-              >
-                <Globe class="w-3 h-3" />
-                <span>URL Preview:</span>
-                <span class="font-mono text-primary font-bold">
-                  {{
-                    isEditing && formData.slug
-                      ? formData.slug
-                      : generateDynamicSlug()
-                  }}
-                </span>
-              </div>
             </div>
 
             <div class="col-span-2 space-y-2">
@@ -192,7 +178,7 @@
               />
             </div>
 
-            <div class="space-y-2">
+            <div class="md:col-span-1 col-span-2 space-y-2">
               <Label>Listing Type *</Label>
               <Select v-model="formData.type">
                 <SelectTrigger>
@@ -206,7 +192,7 @@
               </Select>
             </div>
 
-            <div class="space-y-2">
+            <div class="space-y-2 md:col-span-1 col-span-2">
               <Label for="price">Price (USD)</Label>
               <Input
                 id="price"
@@ -216,7 +202,7 @@
               />
             </div>
 
-            <div class="space-y-2">
+            <div class="space-y-2 col-span-2">
               <Label>Price Type</Label>
               <Select v-model="formData.pricingType">
                 <SelectTrigger>
@@ -229,8 +215,8 @@
               </Select>
             </div>
 
-            <div class="grid grid-cols-2 gap-4">
-              <div class="space-y-2">
+            <div class="col-span-2 flex md:flex-row flex-col gap-4">
+              <div class="space-y-2 w-full">
                 <Label for="beds">Bedrooms</Label>
                 <Input
                   id="beds"
@@ -238,7 +224,7 @@
                   v-model.number="formData.bedrooms"
                 />
               </div>
-              <div class="space-y-2">
+              <div class="space-y-2 w-full">
                 <Label for="baths">Bathrooms</Label>
                 <Input
                   id="baths"
@@ -290,21 +276,26 @@
 
           <div class="space-y-4">
             <Label class="text-base">Amenities & Features</Label>
+
             <div class="flex flex-wrap gap-2 w-full">
               <Button
-                v-for="(amenity, index) in amenitiesList"
-                :key="index"
+                v-for="(amenity, amenityIndex) in amenitiesList"
+                :key="amenityIndex"
                 type="button"
                 variant="secondary"
                 size="sm"
-                @click="addAmenity({ name: amenity })"
+                @click="
+                  addAmenity({
+                    name: amenity,
+                  })
+                "
               >
                 <Plus class="w-3 h-3 mr-2" /> {{ amenity }}
               </Button>
             </div>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div
-                v-for="(amenity, index) in formData.amenities"
+                v-for="(amenity, index) in formData?.amenities"
                 :key="index"
                 class="flex gap-2"
               >
@@ -327,9 +318,9 @@
               type="button"
               variant="secondary"
               size="sm"
-              @click="addAmenity()"
+              @click="addAmenity"
             >
-              <Plus class="w-3 h-3 mr-2" /> Add Custom Amenity
+              <Plus class="w-3 h-3 mr-2" /> Add Amenity
             </Button>
           </div>
 
@@ -340,6 +331,7 @@
               v-model="formData.content"
               rows="6"
               class="font-mono text-xs"
+              placeholder="<p>Full property details...</p>"
             />
           </div>
 
@@ -353,7 +345,11 @@
               @upload="(filename) => (formData.cover_image = filename)"
               @remove="formData.cover_image = ''"
               format="webp"
+              :width="800"
+              :height="600"
+              :quality="85"
             />
+
             <ImageGalleryUploader
               :key="formData?.gallery?.length || 0"
               label="Gallery Images"
@@ -364,6 +360,9 @@
               @update:images="(imgs) => (formData.gallery = imgs)"
               @remove="(imgs) => (formData.gallery = imgs)"
               format="webp"
+              :width="1200"
+              :height="800"
+              :quality="80"
             />
           </div>
         </form>
@@ -389,7 +388,8 @@
             Are you sure you want to delete
             <span class="font-bold text-foreground"
               >"{{ propertyToDelete?.title }}"</span
-            >?
+            >? This action will remove all data from our servers and cannot be
+            undone.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
@@ -407,7 +407,7 @@
 </template>
 
 <script setup lang="ts">
-import { Plus, Edit, Trash2, X, Save, Globe } from "lucide-vue-next";
+import { Plus, Edit, Trash2, X, Save } from "lucide-vue-next";
 
 // Shadcn Components
 import { Button } from "@common/components/ui/button";
@@ -462,15 +462,8 @@ const {
   invalidateCollectionCache,
 } = usePocketBaseCore();
 
-// --- Pluralization Mapping ---
-const typePathMap: Record<string, string> = {
-  property: "properties",
-  rental: "rentals",
-  lot: "lots",
-};
-
 // --- State ---
-const properties = ref({ items: [] });
+const properties = ref([]);
 const loading = ref(true);
 const activeFilter = ref("all");
 const showModal = ref(false);
@@ -485,7 +478,7 @@ const formData = ref({
   title: "",
   slug: "",
   description: "",
-  type: "property",
+  type: "",
   price: 0,
   pricingType: "",
   bedrooms: 0,
@@ -540,25 +533,7 @@ const amenitiesList = [
   "Water Softener System",
 ];
 
-// --- Utilities ---
-const slugify = (text: string) => {
-  return text
-    .toString()
-    .toLowerCase()
-    .trim()
-    .replace(/\s+/g, "-")
-    .replace(/[^\w\-]+/g, "")
-    .replace(/\-\-+/g, "-")
-    .replace(/^-+/, "")
-    .replace(/-+$/, "");
-};
-
-const generateDynamicSlug = () => {
-  if (!formData.value.title) return "";
-  const folder = typePathMap[formData.value.type] || "properties";
-  return `/${folder}/${slugify(formData.value.title)}`;
-};
-
+// --- Logic ---
 const getBadgeVariant = (type: string) => {
   if (type === "rental") return "secondary";
   if (type === "lot") return "outline";
@@ -566,17 +541,10 @@ const getBadgeVariant = (type: string) => {
 };
 
 const filteredProperties = computed(() => {
-  if (activeFilter.value === "all") return properties.value?.items || [];
-  return (
-    properties.value?.items.filter((p) => p.type === activeFilter.value) || []
-  );
+  if (activeFilter.value === "all") return properties.value?.items;
+  return properties.value?.items.filter((p) => p.type === activeFilter.value);
 });
 
-const getImageUrl = (property: any) => {
-  return property.cover_image ? getFileUrl(property, property.cover_image) : "";
-};
-
-// --- Actions ---
 const loadProperties = async (ignoreCache = false) => {
   loading.value = true;
   try {
@@ -591,10 +559,14 @@ const loadProperties = async (ignoreCache = false) => {
       ignoreCache
     );
   } catch (error) {
-    console.error("Error loading properties:", error);
+    console.error("Error:", error);
   } finally {
     loading.value = false;
   }
+};
+
+const getImageUrl = (property: any) => {
+  return property.cover_image ? getFileUrl(property, property.cover_image) : "";
 };
 
 const openAddModal = () => {
@@ -645,14 +617,24 @@ const saveProperty = async () => {
   saving.value = true;
 
   try {
-    const finalSlug =
-      isEditing.value && formData.value.slug
-        ? formData.value.slug
-        : generateDynamicSlug();
+    // 1. DYNAMIC SLUG LOGIC
+    const typePathMap: Record<string, string> = {
+      property: "properties",
+      rental: "rentals",
+      lot: "lots",
+    };
+
+    const folder = typePathMap[formData.value.type] || "properties";
+    const titleSlug = formData.value.title
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "");
+
+    const generatedSlug = `/${folder}/${titleSlug}`;
 
     const payload: any = {
       title: formData.value.title,
-      slug: finalSlug,
       description: formData.value.description || "",
       type: formData.value.type,
       content: formData.value.content || "",
@@ -668,6 +650,16 @@ const saveProperty = async () => {
       amenities: formData.value.amenities
         .filter((a: any) => a.name && a.name.trim())
         .map((a: any) => ({ name: a.name.trim() })),
+
+      // Update slug if it's new OR if the slug doesn't start with the correct folder
+      slug:
+        !isEditing.value || !formData.value.slug.startsWith(`/${folder}/`)
+          ? generatedSlug
+          : formData.value.slug,
+
+      sub_title: formData.value.sub_title || "",
+      tags: formData.value.tags || null,
+      video: formData.value.video || "",
       cover_image: formData.value.cover_image || "",
       gallery: formData.value.gallery || [],
     };
@@ -683,7 +675,7 @@ const saveProperty = async () => {
     showModal.value = false;
   } catch (error) {
     console.error("Save failed:", error);
-    alert(`Failed to save: ${error.message}`);
+    alert(`Failed to save property: ${error.message || "Unknown error"}`);
   } finally {
     saving.value = false;
   }
@@ -706,23 +698,15 @@ const deleteProperty = async () => {
   }
 };
 
-// watch the type property?.filter and rewrite the property?slug if it changes
-watch(
-  () => formData.value.type,
-  (newType, oldType) => {
-    if (formData.value.title) {
-      formData.value.slug = generateDynamicSlug();
-    }
-  }
-);
-
-onMounted(() => loadProperties());
+onMounted(async () => await loadProperties());
 
 definePageMeta({
   layout: "admin",
   middleware: defineNuxtRouteMiddleware((to) => {
     const { isUserVerified } = usePocketBaseCore();
-    if (!isUserVerified()) return navigateTo("/");
+    if (!isUserVerified()) {
+      return navigateTo("/");
+    }
   }),
 });
 </script>

@@ -4,7 +4,6 @@
     <main class="w-full">
       <slot />
     </main>
-    <OrganismsBaseFooter :links="siteMap" :contactInfo :socials />
   </div>
 </template>
 
