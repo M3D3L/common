@@ -141,6 +141,7 @@ const props = withDefaults(
     image?: string | File | any | null;
     collectionId: string;
     id: string;
+    name: string;
     label?: string;
     loading?: boolean;
     format?: "webp" | "jpeg" | "png";
@@ -164,26 +165,18 @@ const showDeleteDialog = ref(false);
 const localPreviewUrl = ref<string | null>(null);
 const processing = ref(false);
 
-/**
- * Check if the current image prop is an unsaved File/Blob
- */
 const isUnsavedFile = computed(
   () => props.image instanceof File || props.image instanceof Blob
 );
 
-/**
- * Resolve the image source based on whether it's a DB string or a File object
- */
 const resolvedImagePropUrl = computed(() => {
   if (!props.image) return null;
 
-  // Case 1: Existing filename from PocketBase
   if (typeof props.image === "string") {
     if (!props.id || !props.collectionId) return null;
     return `${config.public.pocketbaseUrl}api/files/${props.collectionId}/${props.id}/${props.image}`;
   }
 
-  // Case 2: File object passed back from parent (the [object File] scenario)
   if (isUnsavedFile.value) {
     return URL.createObjectURL(props.image as Blob);
   }
@@ -191,11 +184,6 @@ const resolvedImagePropUrl = computed(() => {
   return null;
 });
 
-/**
- * SOURCE SELECTOR
- * Prioritize local immediate selection (localPreviewUrl)
- * over the resolved prop URL.
- */
 const displaySource = computed(() => {
   return localPreviewUrl.value || resolvedImagePropUrl.value;
 });
@@ -218,7 +206,18 @@ const compressImage = async (file: File): Promise<File> => {
 
   try {
     const compressedBlob = await imageCompression(file, options);
-    const fileName = `${file.name.split(".")[0]}.${props.format}`;
+
+    // 1. Clean the name prop: lowercase, replace spaces/specials with hyphens
+    const cleanName = props.name
+      ? props.name
+          .toLowerCase()
+          .replace(/[^a-z0-9]/g, "-")
+          .replace(/-+/g, "-")
+      : file.name.split(".")[0];
+
+    // 2. Append the target format extension
+    const fileName = `${cleanName}.${props.format}`;
+
     return new File([compressedBlob], fileName, { type: targetType });
   } catch (error) {
     console.error("Image compression failed:", error);
@@ -255,10 +254,6 @@ const onConfirmDelete = () => {
   showDeleteDialog.value = false;
 };
 
-/**
- * Clear the local preview state only when the prop transitions
- * from a File object back to a database string (indicating a save).
- */
 watch(
   () => props.image,
   (newVal, oldVal) => {

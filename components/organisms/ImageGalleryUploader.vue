@@ -27,6 +27,7 @@
         :quality="quality"
         :width="width"
         :height="height"
+        :name="`${cleanName(name)}-gallery-${images.length + 1}`"
         @upload="addNewImage"
       />
     </div>
@@ -42,6 +43,7 @@ interface Props {
   collectionId: string;
   recordId: string;
   label?: string;
+  name: string;
   format?: "webp" | "jpeg" | "png";
   width?: number;
   height?: number;
@@ -57,6 +59,13 @@ const props = withDefaults(defineProps<Props>(), {
 const emit = defineEmits<{
   "update:images": [(string | File)[]];
 }>();
+
+const cleanName = (name: string) => {
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)+/g, "");
+};
 
 /**
  * Adds a new file to the array.
