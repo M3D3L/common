@@ -7,6 +7,8 @@
       class="w-full"
       aria-labelledby="video-heading aspect-video"
     >
+      <SeoMeta :seoData="computedSeoData" />
+
       <TitleBlock
         :title="property?.title || 'Property Details'"
         :description="
@@ -42,6 +44,13 @@
           ></video>
         </div>
       </Card>
+
+      <img
+        v-else-if="imgSrc"
+        :src="imgSrc"
+        :alt="`${property?.title} Cover Image`"
+        class="w-full h-auto mt-10 rounded-lg shadow-md"
+      />
     </section>
 
     <section
@@ -56,6 +65,8 @@
         :propertyId="fetchedProperty?.items?.[0]?.id"
       />
     </section>
+
+    <div v-html="property?.content" type="h1" class="mb-6"></div>
 
     <section
       id="details"
@@ -110,12 +121,12 @@
               <!-- List all the amenities here with an icon -->
               <dd class="col-span-full">
                 <ul
-                  class="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4"
+                  class="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-3"
                 >
                   <li
                     v-for="(amenity, amenityIndex) in property.amenities"
                     :key="amenityIndex"
-                    class="flex flex-col text-center items-start gap-3 rounded-md px-3 py-2 transition-colors hover:bg-muted/60"
+                    class="flex flex-col justify-center text-center items-start gap-3 rounded-md px-3 py-2 transition-colors hover:bg-muted/60"
                   >
                     <span
                       class="flex justify-center h-5 w-5 items-center mx-auto rounded-full bg-green-500/10 text-green-600 dark:text-green-400"
@@ -124,9 +135,11 @@
                       <Check class="w-3 h-3" />
                     </span>
 
-                    <span class="text-sm font-medium text-foreground/90">
+                    <p
+                      class="text-sm font-medium block mx-auto text-foreground/90"
+                    >
                       {{ amenity?.name }}
-                    </span>
+                    </p>
                   </li>
                 </ul>
               </dd></template
@@ -280,6 +293,11 @@ const mapSrc = computed(() => {
   return `https://maps.google.com/maps?q=${lat},${long}&z=${zoom}&output=embed`;
 });
 
+const imgSrc = computed(
+  () =>
+    `${config.public.pocketbaseUrl}api/files/${property.value?.collectionId}/${property.value?.id}/${property.value?.cover_image}?token=`
+);
+
 const fetchPropertiesBySlug = async (slug: string) => {
   return await fetchCollection(
     "properties",
@@ -318,6 +336,17 @@ const computedSocialLinks = computed(() => {
   });
 });
 
+const computedSeoData = computed(() =>
+  createSeoObject({
+    title: property.value?.title || "Property Details",
+    summary:
+      property.value?.description || "Detailed information about the property.",
+    imageUri: imgSrc.value || "",
+    pubDate: "",
+    byline: "",
+    siteName: "RelocateToSanCarlos.com",
+  })
+);
 // **UPDATED LOGIC**
 onMounted(async () => {
   // 1. Fetch the single property first
