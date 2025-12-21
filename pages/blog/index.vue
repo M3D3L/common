@@ -3,8 +3,8 @@
     <SeoMeta :seoData="computedSeoData" />
     <SectionsBlogColumn
       :h1="true"
-      :title
-      :description
+      :title="blogSection?.title"
+      :description="blogSection?.description"
       :type="(config.public.blogType as string)"
       :imgSrc
       :showMore="false"
@@ -14,28 +14,33 @@
 </template>
 
 <script setup lang="ts">
-const props = defineProps({
-  imgSrc: String,
-  title: {
-    type: String,
-    default: "Learn Web Development, Drone Photography, and More",
-  },
-  description: {
-    type: String,
-    default:
-      "I'm passsionate about sharing knowledge and helping others grow. Explore my blog for insights, tutorials, and tips on web development, drone photography, and more.",
-  },
-});
+import { blogSection } from "~/assets/configs/layout";
+import { createSeoObject } from "~/composables/useSeo";
+
+const config = useRuntimeConfig();
 
 const computedSeoData = computed(() =>
   createSeoObject({
-    title: props.title,
-    summary: props.description,
-    imageUri: props.imgSrc || "",
+    title: blogSection.title,
+    summary: blogSection.description,
+    keywords: blogSection.keywords,
+    imageUri: blogSection.imgSrc,
     pubDate: "",
-    byline: "",
+    byline: blogSection.byline,
+    siteName: config.public.siteName,
+    twitterSite: config.public.twitterSite,
+
+    // Optional for homepage JSON-LD customization
+    jsonLd: {
+      "@type": "WebSite",
+      url: config.public.siteUrl,
+      name: blogSection.title,
+      description: blogSection.description,
+      publisher: {
+        "@type": "Organization",
+        name: config.public.siteName,
+      },
+    },
   })
 );
-
-const config = useRuntimeConfig();
 </script>
