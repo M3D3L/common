@@ -94,6 +94,7 @@
             </TableCell>
             <TableCell class="font-medium">
               {{ property.price ? `$${property.price.toLocaleString()}` : "—" }}
+              {{ property.pricingType ? property.pricingType : "" }}
             </TableCell>
             <TableCell>
               <div class="flex flex-col text-xs text-muted-foreground">
@@ -189,6 +190,19 @@
                 step="0.01"
                 v-model.number="formData.price"
               />
+            </div>
+
+            <div class="space-y-2">
+              <Label>Price Type</Label>
+              <Select v-model="formData.pricingType">
+                <SelectTrigger>
+                  <SelectValue placeholder="Select price type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="per/night">Per Night</SelectItem>
+                  <SelectItem value="per/month">Per Month</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             <div class="grid grid-cols-2 gap-4">
@@ -456,6 +470,7 @@ const formData = ref({
   description: "",
   type: "property",
   price: 0,
+  pricingType: "",
   bedrooms: 0,
   bathrooms: 0,
   area: 0,
@@ -550,6 +565,7 @@ const openAddModal = () => {
     description: "",
     type: "property",
     price: 0,
+    pricingType: "",
     bedrooms: 0,
     bathrooms: 0,
     area: 0,
@@ -595,6 +611,7 @@ const saveProperty = async () => {
 
       // Convert numbers - use 0 as default, or null if PocketBase expects it
       price: formData.value.price || 0,
+      pricingType: formData.value.pricingType || "",
       bedrooms: formData.value.bedrooms || 0,
       bathrooms: formData.value.bathrooms || 0,
       area: formData.value.area || 0,

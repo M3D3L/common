@@ -86,6 +86,7 @@
               <dt class="text-sm text-gray-500 uppercase">Price</dt>
               <dd class="text-lg font-bold">
                 ${{ property.price.toLocaleString() }}
+                {{ property.pricingType ? property.pricingType : "" }}
               </dd>
             </template>
 
