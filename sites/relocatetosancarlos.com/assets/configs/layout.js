@@ -36,8 +36,8 @@ export const heroSection = {
       title: "Relocation Blog",
     },
     {
-      link: "/#contact",
-      title: "Book a Consultation",
+      link: "/real-estate/",
+      title: "View Properties",
     },
   ],
 };
