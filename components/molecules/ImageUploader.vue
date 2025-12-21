@@ -144,7 +144,7 @@ const props = withDefaults(
     name: string;
     label?: string;
     loading?: boolean;
-    format?: "webp" | "jpeg" | "png";
+    format?: "webp" | "jpeg" | "png" | "heic";
     width?: number;
     height?: number;
     quality?: number;
