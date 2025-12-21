@@ -308,10 +308,6 @@
               :quality="85"
             />
 
-            <pre>
-              {{ formData }}
-            </pre>
-
             <ImageGalleryUploader
               label="Gallery Images"
               :collection-id="formData?.collectionId"
