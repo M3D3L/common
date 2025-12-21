@@ -97,6 +97,16 @@ export const socialsSection = {
   ],
 };
 
+// Properties Section
+export const propertiesSection = {
+  title: "Explore San Carlos Real Estate: Homes, Rentals & Investment Lots",
+  description: `Discover a curated selection of San Carlos, Sonora properties for sale and long-term rentals. Whether you're seeking a coastal home, investment lot, or rental property, Brenda provides expert guidance to help you find the perfect fit for your Mexico lifestyle.`,
+  imgSrc: "/images/san-carlos-real-estate.webp",
+  byline: "San Carlos Real Estate Opportunities for Expats",
+  keywords:
+    "san carlos real estate, san carlos homes for sale, san carlos long term rentals, san carlos lots for sale, mexico coastal properties, expat real estate san carlos, relocate to san carlos properties, invest in san carlos mexico, retire in san carlos sonora, san carlos property market",
+};
+
 // Blog Section
 export const blogSection = {
   title:

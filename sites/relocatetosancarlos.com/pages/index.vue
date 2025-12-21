@@ -5,20 +5,64 @@
     <!-- Layout Sections -->
     <OrganismsHero v-bind="heroSection" />
     <SectionsIntro v-bind="servicesSection" />
+    <div class="container">
+      <Card class="border-muted/60">
+        <TextSectionTitle
+          class="pt-12 pb-16"
+          :title="propertiesSection.title"
+          :description="propertiesSection.description"
+          :h1="false"
+        />
+        <AtomsPropertyTable
+          :properties="properties?.items"
+          :loading="loading"
+          @edit="openEditModal"
+          @delete="confirmDelete"
+          :hide-edit="true"
+          img-mode="large"
+        />
+      </Card>
+    </div>
     <SectionsSocialsCarousel v-bind="socialsSection" />
   </div>
 </template>
 
 <script setup>
 import { createSeoObject } from "@common/composables/useSeo";
+
 import {
   seoDefaults,
   heroSection,
   servicesSection,
   socialsSection,
+  propertiesSection,
 } from "~/assets/configs/layout";
 
+const { fetchCollection } = usePocketBaseCore();
 const config = useRuntimeConfig();
+
+const loading = ref(false);
+const properties = ref([]);
+
+const loadProperties = async (ignoreCache = false) => {
+  loading.value = true;
+  try {
+    properties.value = await fetchCollection(
+      "properties",
+      1,
+      5,
+      "",
+      "-created",
+      null,
+      null,
+      ignoreCache
+    );
+  } catch (error) {
+    console.error("Error:", error);
+  } finally {
+    loading.value = false;
+  }
+};
 
 const computedSeoData = computed(() =>
   createSeoObject({
@@ -44,6 +88,11 @@ const computedSeoData = computed(() =>
     },
   })
 );
+
+// Initial load
+onMounted(() => {
+  loadProperties();
+});
 </script>
 
 <style lang="postcss" scoped>
