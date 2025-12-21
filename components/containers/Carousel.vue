@@ -27,7 +27,7 @@
         v-for="(slide, index) in slides"
         :key="`slide-${index}`"
         @click="handleSlideClick(index)"
-        class="w-full h-full py-6"
+        class="w-full h-full py-6 grid content-center my-auto"
       >
         <slot name="slide" class="w-full h-full" :slide="slide" :index="index">
           <Card class="w-full h-full overflow-hidden cursor-pointer">
