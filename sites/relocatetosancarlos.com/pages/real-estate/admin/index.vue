@@ -252,9 +252,26 @@
 
           <div class="space-y-4">
             <Label class="text-base">Amenities & Features</Label>
+
+            <div class="flex flex-wrap gap-2 w-full">
+              <Button
+                v-for="(amenity, amenityIndex) in amenitiesList"
+                :key="amenityIndex"
+                type="button"
+                variant="secondary"
+                size="sm"
+                @click="
+                  addAmenity({
+                    name: amenity,
+                  })
+                "
+              >
+                <Plus class="w-3 h-3 mr-2" /> {{ amenity }}
+              </Button>
+            </div>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div
-                v-for="(amenity, index) in formData.amenities"
+                v-for="(amenity, index) in formData?.amenities"
                 :key="index"
                 class="flex gap-2"
               >
@@ -448,6 +465,44 @@ const formData = ref({
   cover_image: "",
 });
 
+const amenitiesList = [
+  "Swimming Pool",
+  "High-Speed Wi-Fi",
+  "Private Parking",
+  "Central Air Conditioning",
+  "Fully Equipped Fitness Center",
+  "Landscaped Garden",
+  "Private Balcony or Terrace",
+  "Indoor Fireplace",
+  "24/7 Security",
+  "Smart TV",
+  "Fully Equipped Kitchen",
+  "In-Unit Washer & Dryer",
+  "Pet-Friendly",
+  "Outdoor Seating Area",
+  "Backup Power Generator",
+  "Reverse Osmosis Water System",
+  "Rooftop Sunset Deck",
+  "Large Water Cistern (Pila)",
+  "Palapa-Shaded Patio",
+  "Views of Cerro Tetakawi",
+  "Outdoor Shower",
+  "Hurricane Shutters",
+  "Built-in BBQ Grill",
+  "Boat or Trailer Parking",
+  "Heated Pool or Jacuzzi",
+  "Starlink Satellite Internet",
+  "Keyless Smart Locks",
+  "Beach Gear & Kayaks",
+  "Outdoor Misting System",
+  "Solar Power Panels",
+  "Fish Cleaning Station",
+  "Dedicated Workspace",
+  "Mini-Split A/C Units",
+  "EV Charging Station",
+  "Water Softener System",
+];
+
 // --- Logic ---
 const getBadgeVariant = (type: string) => {
   if (type === "rental") return "secondary";
@@ -515,9 +570,13 @@ const openEditModal = (property: any) => {
   showModal.value = true;
 };
 
-const addAmenity = () => formData.value.amenities.push({ name: "" });
-const removeAmenity = (index: number) =>
+const addAmenity = (item = { name: "" }) => {
+  formData.value.amenities.push({ ...item });
+};
+
+const removeAmenity = (index: number) => {
   formData.value.amenities.splice(index, 1);
+};
 
 const saveProperty = async () => {
   if (!formData.value.title) return;
