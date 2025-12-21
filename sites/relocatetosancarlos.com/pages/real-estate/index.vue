@@ -46,7 +46,7 @@
           </template>
 
           <template v-else>
-            <CardsBaseCard
+            <CardsPropertyCard
               v-for="(item, itemIndex) in category?.properties?.items"
               :key="`${index}-${itemIndex}`"
               baseUrl="/real-estate"
@@ -55,7 +55,7 @@
               buttonText="Check it Out!"
             >
               <template #extraButton> </template>
-            </CardsBaseCard>
+            </CardsPropertyCard>
           </template>
           <div
             v-if="category?.properties?.totalPages > 1"

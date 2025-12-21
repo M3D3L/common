@@ -24,16 +24,11 @@
         <div class="flex flex-col gap-6 lg:flex-row">
           <div class="grid content-center w-full gap-6 md:grid-cols-2 lg:w-2/3">
             <!-- Display properties -->
-            <CardsBaseCard
+            <CardsPropertyCard
               v-for="(item, itemIndex) in currentCategory?.properties?.items"
-              :key="itemIndex"
-              baseUrl="/real-estate"
-              :removeSpacing="true"
+              :key="`property-${itemIndex}`"
               :content="item"
-              buttonText="Check it Out!"
-            >
-              <template #extraButton> </template>
-            </CardsBaseCard>
+            />
 
             <div
               class="flex justify-center w-full mt-8 md:col-span-2"
