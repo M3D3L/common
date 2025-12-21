@@ -3,7 +3,7 @@
     <CardHeader class="p-0 border-b border-muted">
       <nuxt-link
         v-if="content?.slug"
-        :to="baseUrl + content.slug"
+        :to="`/real-estate${content.slug}`"
         class="w-full"
       >
         <div class="relative w-full h-auto aspect-[4/3]">
@@ -29,7 +29,7 @@
         <div>
           <nuxt-link
             v-if="content?.slug"
-            :to="baseUrl + content.slug"
+            :to="`/real-estate${content.slug}`"
             class="w-full transition-colors hover:text-primary"
           >
             <h3 class="text-xl font-bold line-clamp-1">{{ content.title }}</h3>
@@ -93,7 +93,7 @@
         <div class="mt-6">
           <nuxt-link
             v-if="content?.slug"
-            :to="baseUrl + content.slug"
+            :to="`/real-estate${content.slug}`"
             class="w-full"
           >
             <Button class="w-full text-xs">{{
@@ -144,7 +144,6 @@ interface Props {
 
 const props = withDefaults(defineProps<Props>(), {
   maxAmenities: 3,
-  baseUrl: "/properties",
 });
 
 const createImgUrl = (content: PropertyContent) => {
