@@ -308,13 +308,17 @@
               :quality="85"
             />
 
+            <pre>
+              {{ formData }}
+            </pre>
+
             <ImageGalleryUploader
               label="Gallery Images"
-              :collection-id="'properties'"
-              :record-id="formData.id || 'new'"
-              :images="formData.gallery || []"
-              @update:images="formData.gallery = $event"
-              @save="handleGallerySave"
+              :collection-id="formData?.collectionId"
+              :record-id="formData?.id"
+              :images="formData?.gallery || []"
+              @update:images="(imgs) => (formData.gallery = imgs)"
+              @remove="(imgs) => (formData.gallery = imgs)"
               format="webp"
               :width="1200"
               :height="800"
@@ -408,6 +412,7 @@ import {
 } from "@common/components/ui/alert-dialog";
 import ImageUploader from "@common/components/molecules/ImageUploader.vue";
 import ImageGalleryUploader from "@common/components/organisms/ImageGalleryUploader.vue";
+
 const {
   fetchCollection,
   createItem,
@@ -457,17 +462,6 @@ const filteredProperties = computed(() => {
   if (activeFilter.value === "all") return properties.value?.items;
   return properties.value?.items.filter((p) => p.type === activeFilter.value);
 });
-
-const handleGallerySave = async () => {
-  if (!formData.value.id) {
-    alert("Please save the property first before adding gallery images.");
-    return;
-  }
-
-  // The formData.gallery already contains the updated images from the @update:images event
-  // Now we just need to save the property with the new gallery
-  await saveProperty();
-};
 
 const loadProperties = async (ignoreCache = false) => {
   loading.value = true;
@@ -533,114 +527,66 @@ const saveProperty = async () => {
   saving.value = true;
 
   try {
-    // Prepare FormData if we have File objects in gallery
-    const hasFileUploads = formData.value.gallery.some(
-      (img) => img instanceof File
-    );
+    // Clean and format the data to match PocketBase schema
+    const payload: any = {
+      title: formData.value.title,
+      description: formData.value.description || "",
+      type: formData.value.type,
+      content: formData.value.content || "",
 
-    let payload: any;
+      // Convert numbers - use 0 as default, or null if PocketBase expects it
+      price: formData.value.price || 0,
+      bedrooms: formData.value.bedrooms || 0,
+      bathrooms: formData.value.bathrooms || 0,
+      area: formData.value.area || 0,
+      lotSize: formData.value.lotSize || 0,
 
-    if (hasFileUploads) {
-      // Use FormData for file uploads
-      const formDataPayload = new FormData();
+      // Convert empty strings to empty string (or null if needed)
+      address: formData.value.address || "",
+      lat: formData.value.lat || "",
+      long: formData.value.long || "",
 
-      // Add all text fields
-      formDataPayload.append("title", formData.value.title);
-      formDataPayload.append("description", formData.value.description || "");
-      formDataPayload.append("type", formData.value.type);
-      formDataPayload.append("content", formData.value.content || "");
-      formDataPayload.append("price", String(formData.value.price || 0));
-      formDataPayload.append("bedrooms", String(formData.value.bedrooms || 0));
-      formDataPayload.append(
-        "bathrooms",
-        String(formData.value.bathrooms || 0)
-      );
-      formDataPayload.append("area", String(formData.value.area || 0));
-      formDataPayload.append("lotSize", String(formData.value.lotSize || 0));
-      formDataPayload.append("address", formData.value.address || "");
-      formDataPayload.append("lat", formData.value.lat || "");
-      formDataPayload.append("long", formData.value.long || "");
-      formDataPayload.append("sub_title", formData.value.sub_title || "");
-      formDataPayload.append("video", formData.value.video || "");
-
-      // Add cover image if it's a File
-      if (formData.value.cover_image instanceof File) {
-        formDataPayload.append("cover_image", formData.value.cover_image);
-      }
-
-      // Add amenities as JSON
-      const cleanAmenities = formData.value.amenities
+      // Filter and clean amenities - remove empty ones
+      amenities: formData.value.amenities
         .filter((a: any) => a.name && a.name.trim())
-        .map((a: any) => ({ name: a.name.trim() }));
-      formDataPayload.append("amenities", JSON.stringify(cleanAmenities));
+        .map((a: any) => ({ name: a.name.trim() })),
 
-      // Add gallery files
-      formData.value.gallery.forEach((img: string | File) => {
-        if (img instanceof File) {
-          formDataPayload.append("gallery", img);
-        } else if (typeof img === "string" && img) {
-          // Keep existing filenames - append as string
-          formDataPayload.append("gallery", img);
-        }
-      });
-
-      // Generate slug
-      const slug =
+      // Auto-generate slug from title if creating new
+      slug:
         formData.value.slug ||
         `/${formData.value.type}s/${formData.value.title
           .toLowerCase()
           .replace(/[^a-z0-9]+/g, "-")
-          .replace(/^-|-$/g, "")}`;
-      formDataPayload.append("slug", slug);
+          .replace(/^-|-$/g, "")}`,
 
-      payload = formDataPayload;
-    } else {
-      // Use regular JSON payload if no file uploads
-      payload = {
-        title: formData.value.title,
-        description: formData.value.description || "",
-        type: formData.value.type,
-        content: formData.value.content || "",
-        price: formData.value.price || 0,
-        bedrooms: formData.value.bedrooms || 0,
-        bathrooms: formData.value.bathrooms || 0,
-        area: formData.value.area || 0,
-        lotSize: formData.value.lotSize || 0,
-        address: formData.value.address || "",
-        lat: formData.value.lat || "",
-        long: formData.value.long || "",
-        amenities: formData.value.amenities
-          .filter((a: any) => a.name && a.name.trim())
-          .map((a: any) => ({ name: a.name.trim() })),
-        slug:
-          formData.value.slug ||
-          `/${formData.value.type}s/${formData.value.title
-            .toLowerCase()
-            .replace(/[^a-z0-9]+/g, "-")
-            .replace(/^-|-$/g, "")}`,
-        sub_title: formData.value.sub_title || "",
-        tags: formData.value.tags || null,
-        video: formData.value.video || "",
-        cover_image: formData.value.cover_image || "",
-        gallery: formData.value.gallery || [],
-      };
+      // Keep existing values for fields not in form
+      sub_title: formData.value.sub_title || "",
+      tags: formData.value.tags || null,
+      video: formData.value.video || "",
+      cover_image: formData.value.cover_image || "",
+      gallery: formData.value.gallery || [],
+    };
+
+    // Only include author field when creating (not updating)
+    if (!isEditing.value) {
+      // If you have the current user ID, use it:
+      // payload.author = currentUserId;
+      // Otherwise, you might need to set a default or let PocketBase handle it
     }
 
     if (isEditing.value) {
       await updateItem("properties", formData.value.id, payload);
     } else {
-      const newRecord = await createItem("properties", payload);
-      // Update formData with the new record ID so gallery uploads work
-      formData.value.id = newRecord.id;
+      await createItem("properties", payload);
     }
 
     invalidateCollectionCache("properties");
-    await loadProperties(true);
 
-    // Don't close modal if we're just saving gallery
-    // showModal.value = false;
+    await loadProperties(true);
+    showModal.value = false;
   } catch (error) {
     console.error("Save failed:", error);
+    // Log the full error to see what PocketBase is complaining about
     if (error.response) {
       console.error("Error details:", error.response);
     }

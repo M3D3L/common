@@ -136,7 +136,7 @@ const props = withDefaults(
     id: string;
     label?: string;
     loading?: boolean;
-    format?: "webp" | "jpeg" | "png"; // browser-image-compression support for AVIF is limited by browser canvas support
+    format?: "webp" | "jpeg" | "png";
     width?: number;
     height?: number;
     quality?: number;
