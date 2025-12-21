@@ -17,7 +17,7 @@
       </Button>
     </div>
 
-    <Card class="overflow-hidden border-muted/60">
+    <Card class="overflow-hidden border-dashed border-muted/60">
       <div
         class="relative h-64 w-full cursor-pointer bg-muted/50 hover:bg-muted/70 transition-colors flex items-center justify-center group"
         @click="openFileDialog"
@@ -67,14 +67,16 @@
         </template>
 
         <div
-          v-if="loading"
+          v-if="loading || processing"
           class="absolute inset-0 bg-black/40 backdrop-blur-[2px] flex items-center justify-center z-10"
         >
           <div class="flex flex-col items-center gap-2 text-white">
             <div
               class="animate-spin rounded-full h-8 w-8 border-b-2 border-white"
             ></div>
-            <span class="text-xs font-medium">Uploading...</span>
+            <span class="text-xs font-medium">
+              {{ processing ? "Optimizing..." : "Uploading..." }}
+            </span>
           </div>
         </div>
       </div>
@@ -110,20 +112,40 @@
 
 <script lang="ts" setup>
 import { Plus, Edit, Trash2, RotateCcw } from "lucide-vue-next";
+import imageCompression from "browser-image-compression";
 import { Button } from "~/components/ui/button";
 import { Card } from "~/components/ui/card";
 import { Label } from "~/components/ui/label";
-// ... other imports
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "~/components/ui/alert-dialog";
 
 const config = useRuntimeConfig();
 
-const props = defineProps<{
-  image?: string | null;
-  collectionId: string;
-  id: string;
-  label?: string;
-  loading?: boolean;
-}>();
+const props = withDefaults(
+  defineProps<{
+    image?: string | null;
+    collectionId: string;
+    id: string;
+    label?: string;
+    loading?: boolean;
+    format?: "webp" | "jpeg" | "png"; // browser-image-compression support for AVIF is limited by browser canvas support
+    width?: number;
+    height?: number;
+    quality?: number;
+  }>(),
+  {
+    format: "webp",
+    quality: 80,
+  }
+);
 
 const emit = defineEmits<{
   upload: [file: File];
@@ -133,14 +155,15 @@ const emit = defineEmits<{
 const fileInput = ref<HTMLInputElement | null>(null);
 const showDeleteDialog = ref(false);
 const localPreviewUrl = ref<string | null>(null);
+const processing = ref(false);
 
-// 1. Construct the Server URL
+// Construct the Server URL
 const serverImageUrl = computed(() => {
   if (!props.image || !props.id || !props.collectionId) return null;
   return `${config.public.pocketbaseUrl}api/files/${props.collectionId}/${props.id}/${props.image}`;
 });
 
-// 2. Prioritize Local Preview over Server Image
+// Prioritize Local Preview over Server Image
 const displaySource = computed(
   () => localPreviewUrl.value || serverImageUrl.value
 );
@@ -149,16 +172,51 @@ const openFileDialog = () => {
   fileInput.value?.click();
 };
 
-const handleFileChange = (event: Event) => {
+/**
+ * Optimized Image Processing using Browser Image Compression
+ */
+const compressImage = async (file: File): Promise<File> => {
+  processing.value = true;
+
+  // Determine the target MIME type
+  const targetType = `image/${props.format === "jpeg" ? "jpeg" : props.format}`;
+
+  const options = {
+    maxSizeMB: 1, // You can adjust this based on your needs
+    maxWidthOrHeight: props.width || props.height || 1920,
+    useWebWorker: true,
+    initialQuality: props.quality / 100,
+    fileType: targetType,
+  };
+
+  try {
+    const compressedBlob = await imageCompression(file, options);
+
+    // Create a new File from the Blob to maintain name and extension
+    const fileName = `${file.name.split(".")[0]}.${props.format}`;
+    return new File([compressedBlob], fileName, { type: targetType });
+  } catch (error) {
+    console.error("Image compression failed:", error);
+    return file; // Fallback to original file
+  } finally {
+    processing.value = false;
+  }
+};
+
+const handleFileChange = async (event: Event) => {
   const target = event.target as HTMLInputElement;
   if (target.files && target.files.length > 0) {
     const file = target.files[0];
 
-    // Create instant local preview
+    // 1. Create instant local preview with original file for UX
     if (localPreviewUrl.value) URL.revokeObjectURL(localPreviewUrl.value);
     localPreviewUrl.value = URL.createObjectURL(file);
 
-    emit("upload", file);
+    // 2. Process/Compress the file
+    const processedFile = await compressImage(file);
+
+    // 3. Emit the optimized file for upload
+    emit("upload", processedFile);
   }
   target.value = "";
 };
@@ -176,8 +234,7 @@ const onConfirmDelete = () => {
   showDeleteDialog.value = false;
 };
 
-// Clean up memory if the image prop changes (meaning save was successful)
-// or when the component is destroyed
+// Clean up memory when image prop changes (meaning save was successful)
 watch(
   () => props.image,
   () => {
@@ -185,6 +242,7 @@ watch(
   }
 );
 
+// Clean up memory when component is destroyed
 onBeforeUnmount(() => {
   resetLocalPreview();
 });
