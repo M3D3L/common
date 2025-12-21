@@ -434,6 +434,7 @@ const {
   deleteItem,
   getFileUrl,
   invalidateCollectionCache,
+  isUserVerified,
 } = usePocketBaseCore();
 
 // --- State ---
@@ -673,6 +674,13 @@ onMounted(async () => await loadProperties());
 
 definePageMeta({
   layout: "admin",
-  middleware: "auth",
+  middleware: defineNuxtRouteMiddleware((to) => {
+    // Call it INSIDE the function
+    const { isUserVerified } = usePocketBaseCore();
+
+    if (!isUserVerified()) {
+      return navigateTo("/");
+    }
+  }),
 });
 </script>
