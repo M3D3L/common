@@ -2,6 +2,21 @@
   <div
     class="container relative w-full p-6 font-body bg-background text-foreground md:py-10"
   >
+    <div class="flex flex-wrap items-center gap-2 mb-3">
+      <span
+        v-if="property?.type"
+        class="py-1 text-xs font-semibold uppercase rounded-full bg-primary/10 text-primary"
+      >
+        {{ property.type }}
+      </span>
+      <span v-if="property?.bedrooms" class="text-sm text-muted-foreground">
+        {{ property.bedrooms }} Bed • {{ property.bathrooms }} Bath
+      </span>
+      <span v-if="property?.area" class="text-sm text-muted-foreground">
+        • {{ property.area }} sq ft
+      </span>
+    </div>
+
     <section
       id="video"
       class="w-full"
@@ -58,15 +73,15 @@
       class="w-full scroll-mt-24"
       aria-labelledby="gallery-heading"
     >
+      <!-- Section Title -->
+      <h2 class="mt-8 mb-4">Gallery</h2>
+
       <ModalCarousel
-        class="mt-10"
         :slides="slides"
         :collectionId="fetchedProperty?.items?.[0]?.collectionId"
         :propertyId="fetchedProperty?.items?.[0]?.id"
       />
     </section>
-
-    <div v-html="property?.content" type="h1" class="mb-6"></div>
 
     <section
       id="details"
@@ -74,13 +89,13 @@
       aria-labelledby="details-heading"
     >
       <div class="flex flex-col gap-6 mt-10 mb-6 md:flex-row">
-        <Card class="w-full p-8 rounded-lg shadow-md md:w-1/2">
+        <Card class="w-full p-8 rounded-lg shadow-md">
           <h3 class="pb-2 mb-6 text-2xl font-semibold border-b border-gray-300">
             Property Specifics
           </h3>
 
           <dl
-            class="grid grid-cols-1 gap-y-3 gap-x-6 sm:grid-cols-2 text-foreground"
+            class="grid grid-cols-1 items-center gap-y-3 gap-x-6 sm:grid-cols-2 text-foreground"
           >
             <template v-if="property?.price">
               <dt class="text-sm text-gray-500 uppercase">Price</dt>
@@ -166,19 +181,19 @@
               This is a <b>lot</b> with <b>{{ property.lotSize }}</b> acres.
             </p>
             <p class="mt-4 text-sm italic text-gray-500">
-              More specific details will appear here based on the property's
-              type.
+              <!-- Add more details -->
+              *Please note that all property details are subject to change.
+              Contact the realtor for the most up-to-date information.
             </p>
           </div>
         </Card>
-
         <Card
-          class="relative w-full min-h-[300px] rounded-lg shadow-md md:w-1/2 scroll-mt-40"
+          v-if="mapSrc !== 'https://maps.google.com/maps?q=,&z=14&output=embed'"
+          class="relative w-full md:min-w-[50%] min-h-[300px] rounded-lg shadow-md md:w-1/2 scroll-mt-40"
           role="region"
           aria-label="Property Location Map"
         >
           <iframe
-            v-if="mapSrc"
             class="absolute inset-0 w-full h-full rounded-lg"
             :src="mapSrc"
             style="border: 0"
@@ -189,6 +204,7 @@
           ></iframe>
         </Card>
       </div>
+      <div v-html="property?.content" type="p" class="mb-6 pt-6"></div>
     </section>
 
     <section id="realtor" class="py-12 scroll-mt-40" ref="setSectionRef">
