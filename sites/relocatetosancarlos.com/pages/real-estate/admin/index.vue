@@ -319,14 +319,6 @@ import { Label } from "@common/components/ui/label";
 import { Textarea } from "@common/components/ui/textarea";
 import { Separator } from "@common/components/ui/separator";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@common/components/ui/table";
-import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -565,16 +557,28 @@ const saveProperty = async () => {
       gallery: formData.value.gallery || [],
     };
 
+    // 2. PERSISTENCE
+    // updateItem and createItem already call invalidateCollectionCache internally
     if (isEditing.value) {
       await updateItem("properties", formData.value.id, payload);
     } else {
       await createItem("properties", payload);
     }
 
+    // 3. CROSS-COLLECTION INVALIDATION (Optional)
+    // If saving a 'property' affects 'rentals' or 'lots' views,
+    // clear those patterns manually here:
+    invalidateCollectionCache("rentals");
+    invalidateCollectionCache("lots");
     invalidateCollectionCache("properties");
+
+    // 4. REFRESH UI
+    // Pass 'true' to loadProperties if it supports an 'ignoreCache' flag
+    // to ensure the fetchCollection call hits the server, not the local cache.
     await loadProperties(true);
+
     showModal.value = false;
-  } catch (error) {
+  } catch (error: any) {
     console.error("Save failed:", error);
     alert(`Failed to save property: ${error.message || "Unknown error"}`);
   } finally {

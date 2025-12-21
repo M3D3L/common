@@ -209,10 +209,14 @@ export default function usePocketBaseCore() {
    */
   const invalidateCollectionCache = (collection: string) => {
     if (typeof clearCachePattern === "function") {
-      // Match any cache key containing the collection name
-      clearCachePattern(`fetchCollection.*"${collection}"`);
-    } else {
-      console.warn("clearCachePattern not available, consider implementing it");
+      // We search for the collection name specifically.
+      // Since getCacheKey uses JSON.stringify, 'properties' becomes '"properties"'
+      // Using just the string name is usually safer for .includes()
+      clearCachePattern(collection);
+
+      if (import.meta.env.DEV) {
+        console.log(`Invalidating all cache entries containing: ${collection}`);
+      }
     }
   };
 
