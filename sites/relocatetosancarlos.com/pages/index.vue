@@ -13,14 +13,22 @@
           :description="propertiesSection.description"
           :h1="false"
         />
-        <AtomsPropertyTable
-          :properties="properties?.items"
-          :loading="loading"
-          @edit="openEditModal"
-          @delete="confirmDelete"
-          :hide-edit="true"
-          img-mode="large"
-        />
+        <div class="grid md:grid-cols-3 gap-6">
+          <CardsPropertyCard
+            v-for="(item, itemIndex) in properties?.items"
+            :key="`property-home-${itemIndex}`"
+            :content="item"
+            class="mt-8"
+          />
+        </div>
+
+        <div class="w-full flex justify-end">
+          <nuxt-link to="/real-estate/" class="mt-16">
+            <Button size="lg" class="font-bold w-full">
+              View More Properties
+            </Button>
+          </nuxt-link>
+        </div>
       </Card>
     </div>
     <SectionsSocialsCarousel v-bind="socialsSection" />
@@ -50,7 +58,7 @@ const loadProperties = async (ignoreCache = false) => {
     properties.value = await fetchCollection(
       "properties",
       1,
-      5,
+      3,
       "",
       "-created",
       null,
