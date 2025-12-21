@@ -1,5 +1,7 @@
 <template>
   <div class="w-full">
+    <SeoMeta :seoData="computedSeoData" />
+
     <ul class="container pb-32 space-y-32">
       <template
         v-if="currentCategory?.properties?.items?.length === 0"
@@ -66,9 +68,12 @@
 
 <script lang="ts" setup>
 import { categories } from "~/assets/configs/layout.js";
+import { createSeoObject } from "~/composables/useSeo";
 
 const { fetchCollection } = usePocketBaseCore();
+const config = useRuntimeConfig();
 const route = useRoute();
+
 const page = computed(() => Number(route.query.page) || 1);
 const perPage = 10;
 const type = computed(
@@ -107,6 +112,30 @@ const {
   }
   return null;
 });
+
+const computedSeoData = computed(() =>
+  createSeoObject({
+    title: currentCategory.value.title,
+    summary: currentCategory.value.subTitle,
+    keywords: currentCategory.value.keywords,
+    pubDate: "",
+    byline: currentCategory.value.cta,
+    siteName: config.public.siteName,
+    twitterSite: config.public.twitterSite,
+
+    // Optional for homepage JSON-LD customization
+    jsonLd: {
+      "@type": "WebSite",
+      url: config.public.siteUrl,
+      name: currentCategory.value.title,
+      description: currentCategory.value.subTitle,
+      publisher: {
+        "@type": "Organization",
+        name: config.public.siteName,
+      },
+    },
+  })
+);
 
 // Update the category's properties reactive value when the async data is fetched
 watch(

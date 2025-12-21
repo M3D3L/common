@@ -1,5 +1,7 @@
 <template>
   <ul class="pt-16 pb-32 container space-y-32 lg:pt-24">
+    <!-- SeoMeta component for SEO metadata -->
+    <SeoMeta :seoData="computedSeoData" />
     <div class="flex flex-col md:flex-row justify-between gap-4">
       <TextSectionTitle
         title="Relocate to San Carlos"
@@ -90,6 +92,9 @@ import Button from "@common/components/ui/button/Button.vue";
 import usePocketBaseCore from "@common/composables/usePocketBaseCore";
 import { realEstateHeroSection, categories } from "~/assets/configs/layout.js";
 import { Edit } from "lucide-vue-next";
+import { createSeoObject } from "@common/composables/useSeo";
+
+const config = useRuntimeConfig();
 
 const { fetchCollection, isUserVerified } = usePocketBaseCore();
 
@@ -114,4 +119,35 @@ const fetchPropertiesByType = async (type: string) => {
 categories[0].properties = (await fetchPropertiesByType("property")) || [];
 categories[1].properties = (await fetchPropertiesByType("rental")) || [];
 categories[2].properties = (await fetchPropertiesByType("lot")) || [];
+
+const computedSeoData = computed(() => {
+  return createSeoObject({
+    title:
+      realEstateHeroSection.titleLine1 +
+      " " +
+      realEstateHeroSection.titleHighlight,
+    summary: realEstateHeroSection.description,
+    keywords: realEstateHeroSection.keywords,
+    imageUri: realEstateHeroSection.imageSrc,
+    pubDate: "",
+    byline: "Brenda – San Carlos Relocation Specialist",
+    siteName: config.public.siteName,
+    twitterSite: config.public.twitterSite,
+
+    // Optional for homepage JSON-LD customization
+    jsonLd: {
+      "@type": "WebSite",
+      url: config.public.siteUrl,
+      name:
+        realEstateHeroSection.titleLine1 +
+        " " +
+        realEstateHeroSection.titleHighlight,
+      description: realEstateHeroSection.description,
+      publisher: {
+        "@type": "Organization",
+        name: config.public.siteName,
+      },
+    },
+  });
+});
 </script>

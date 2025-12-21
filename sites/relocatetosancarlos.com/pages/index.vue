@@ -20,30 +20,30 @@ import {
 
 const config = useRuntimeConfig();
 
-const computedSeoData = computed(() => {
-  return createSeoObject({
+const computedSeoData = computed(() =>
+  createSeoObject({
     title: seoDefaults.home.title,
     summary: seoDefaults.home.description,
     keywords: seoDefaults.home.keywords,
     imageUri: seoDefaults.home.image,
     pubDate: "",
-    byline: "Brenda – San Carlos Relocation Specialist",
-    siteName: config.public.siteName || seoDefaults.siteName,
-    twitterSite: config.public.twitterSite || seoDefaults?.twitterSite,
+    byline: seoDefaults.home.byline,
+    siteName: config.public.siteName,
+    twitterSite: config.public.twitterSite,
 
     // Optional for homepage JSON-LD customization
     jsonLd: {
       "@type": "WebSite",
-      url: config.public.siteUrl || seoDefaults.siteUrl,
+      url: config.public.siteUrl,
       name: seoDefaults.home.title,
       description: seoDefaults.home.description,
       publisher: {
         "@type": "Organization",
-        name: config.public.siteName || seoDefaults.siteName,
+        name: config.public.siteName,
       },
     },
-  });
-});
+  })
+);
 </script>
 
 <style lang="postcss" scoped>

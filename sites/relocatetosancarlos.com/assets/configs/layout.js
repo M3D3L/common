@@ -7,6 +7,7 @@ export const seoDefaults = {
     keywords:
       "relocate to San Carlos, San Carlos real estate agent, San Carlos relocation specialist, move to San Carlos Mexico, San Carlos Sonora expats, buy property San Carlos, San Carlos rentals long term, Mexico coastal real estate, retire in San Carlos Sonora, relocate to mexico, move to sonora mexico, real estate in san carlos, mexico expats guide, retire in mexico",
     image: "/images/brenda.webp",
+    byline: "San Carlos, Sonora, Mexico Relocation & Real Estate Expert",
   },
 };
 
@@ -101,6 +102,10 @@ export const blogSection = {
   title:
     "Relocate to Mexico Blog: San Carlos Real Estate & Insider Tips for Expats",
   description: `Learn everything about retiring, investing, and moving to San Carlos, Sonora, Mexico with Brenda's expert blog. We cover real estate investment strategies in Mexico, long-term rental tips, essential residency documents, and hidden local gems to help newcomers make informed decisions about coastal living.`,
+  imgSrc: "/images/brenda.webp",
+  byline: "San Carlos Relocation & Real Estate Insights",
+  keywords:
+    "relocate to mexico blog, san carlos real estate tips, expat guide san carlos, mexico relocation advice, san carlos sonora living, mexico property investment, retire in san carlos blog, moving to mexico tips, san carlos rental guide, coastal living mexico",
 };
 
 // Contact Section
@@ -166,10 +171,12 @@ export const realEstateHeroSection = {
   titleHighlight: "San Carlos, Sonora Expats",
   description: `Brenda at RelocateToSanCarlos.com offers trusted, bilingual realty services and relocation support to U.S. and Canadian clients. We specialize in long-term rentals, homes for sale, and investment lots along the Sea of Cortez. Get personalized guidance to secure your coastal future in Mexico.`,
   propertiesLink: "/#contact",
+  keywords:
+    "san carlos real estate, relocate to san carlos, san carlos rentals, san carlos homes for sale, san carlos lots for sale, mexico real estate agent, expat relocation mexico, buy property san carlos, invest in san carlos mexico, retire in san carlos sonora",
   propertiesText: "Get Personalized Property Info",
 };
 
-const categoryConfigs = {
+export const categoryConfigs = {
   rentals: {
     title: "Secure Your Long-Term Rental in San Carlos",
     sectionSubTitle: "Enjoy Affordable Coastal Living",
@@ -199,6 +206,8 @@ const categoryConfigs = {
     ],
     mode: "rental",
     cta: "Contact Brenda for long-term rental opportunities",
+    keywords:
+      "san carlos long term rentals, san carlos rental assistance, expat rentals san carlos, relocate to san carlos rentals, mexico rental guide, affordable coastal living mexico, san carlos rental market, bilingual rental support san carlos, mexico expat housing, san carlos sonora rentals",
   },
   properties: {
     title: "Invest in Your San Carlos Paradise Today",
@@ -228,6 +237,8 @@ const categoryConfigs = {
     ],
     mode: "property",
     cta: "Schedule a consultation for home buying in San Carlos",
+    keywords:
+      "san carlos real estate for sale, buy property san carlos, san carlos homes for sale, invest in san carlos mexico, relocate to san carlos real estate, mexico coastal properties, expat home buying san carlos, bilingual real estate agent mexico, retire in san carlos sonora, san carlos property market",
   },
   lots: {
     title: "Secure Your Prime Coastal Land",
@@ -257,6 +268,8 @@ const categoryConfigs = {
     ],
     mode: "lot",
     cta: "Inquire about available land and construction guidance",
+    keywords:
+      "san carlos lots for sale, buy land san carlos, san carlos land investment, relocate to san carlos lots, mexico coastal land, expat land purchase san carlos, build home san carlos, mexico construction guide, san carlos property development, san carlos sonora lots",
   },
 };
 
