@@ -673,5 +673,6 @@ onMounted(async () => await loadProperties());
 
 definePageMeta({
   layout: "admin",
+  middleware: ["auth"],
 });
 </script>

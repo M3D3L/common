@@ -11,6 +11,10 @@ import type { ListResult, RecordModel } from "pocketbase";
 export default function usePocketBaseCore() {
   const pb = usePocketBase();
 
+  const isUserVerified = (): boolean => {
+    return pb.authStore.isValid && pb.authStore.model?.verified === true;
+  };
+
   /**
    * Fetch list of records
    */
@@ -223,5 +227,7 @@ export default function usePocketBaseCore() {
     getCacheKey,
     toggleEmailVisibility,
     invalidateCollectionCache,
+    isUserVerified,
+    currentUser: pb.authStore.model,
   };
 }
