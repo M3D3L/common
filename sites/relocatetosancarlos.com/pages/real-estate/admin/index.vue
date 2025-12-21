@@ -9,10 +9,16 @@
           Manage, edit, and track your real estate listings.
         </p>
       </div>
-      <Button @click="openAddModal" class="gap-2 shadow-sm">
-        <Plus class="w-4 h-4" />
-        Add Property
-      </Button>
+      <div class="flex gap-2">
+        <Button @click="loadProperties(true)" class="gap-2 shadow-sm">
+          <RefreshCw class="w-4 h-4" />
+          Reset Listings
+        </Button>
+        <Button @click="openAddModal" class="gap-2 shadow-sm">
+          <Plus class="w-4 h-4" />
+          Add Property
+        </Button>
+      </div>
     </div>
 
     <Tabs v-model="activeFilter" class="mb-6">
@@ -407,7 +413,7 @@
 </template>
 
 <script setup lang="ts">
-import { Plus, Edit, Trash2, X, Save } from "lucide-vue-next";
+import { Plus, Edit, Trash2, X, Save, RefreshCw } from "lucide-vue-next";
 
 // Shadcn Components
 import { Button } from "@common/components/ui/button";
