@@ -177,6 +177,37 @@ export const realEstateHeroSection = {
 };
 
 export const categoryConfigs = {
+  properties: {
+    title: "Invest in Your San Carlos Paradise Today",
+    subTitle:
+      "Purchasing property in San Carlos is a smart investment and your gateway to an ideal coastal lifestyle. We guide you step-by-step.",
+    sectionTitle: "Expert Real Estate Investment in San Carlos, Sonora, Mexico",
+    sectionSubTitle: "Secure Your Dream Coastal Home",
+    type: "properties",
+    footerText:
+      "San Carlos real estate offers both beauty and long-term value growth.",
+    benefits: [
+      {
+        title: "Strong Investment Potential",
+        description:
+          "Property values in this thriving coastal community continue to rise.",
+      },
+      {
+        title: "Trusted Guidance in Mexico",
+        description:
+          "Bilingual support through the entire legal and closing process.",
+      },
+      {
+        title: "Retirement Security",
+        description:
+          "Own a permanent vacation home or a property for year-round coastal living.",
+      },
+    ],
+    mode: "property",
+    cta: "Schedule a consultation for home buying in San Carlos",
+    keywords:
+      "san carlos real estate for sale, buy property san carlos, san carlos homes for sale, invest in san carlos mexico, relocate to san carlos real estate, mexico coastal properties, expat home buying san carlos, bilingual real estate agent mexico, retire in san carlos sonora, san carlos property market",
+  },
   rentals: {
     title: "Secure Your Long-Term Rental in San Carlos",
     sectionSubTitle: "Enjoy Affordable Coastal Living",
@@ -208,37 +239,6 @@ export const categoryConfigs = {
     cta: "Contact Brenda for long-term rental opportunities",
     keywords:
       "san carlos long term rentals, san carlos rental assistance, expat rentals san carlos, relocate to san carlos rentals, mexico rental guide, affordable coastal living mexico, san carlos rental market, bilingual rental support san carlos, mexico expat housing, san carlos sonora rentals",
-  },
-  properties: {
-    title: "Invest in Your San Carlos Paradise Today",
-    subTitle:
-      "Purchasing property in San Carlos is a smart investment and your gateway to an ideal coastal lifestyle. We guide you step-by-step.",
-    sectionTitle: "Expert Real Estate Investment in San Carlos, Sonora, Mexico",
-    sectionSubTitle: "Secure Your Dream Coastal Home",
-    type: "properties",
-    footerText:
-      "San Carlos real estate offers both beauty and long-term value growth.",
-    benefits: [
-      {
-        title: "Strong Investment Potential",
-        description:
-          "Property values in this thriving coastal community continue to rise.",
-      },
-      {
-        title: "Trusted Guidance in Mexico",
-        description:
-          "Bilingual support through the entire legal and closing process.",
-      },
-      {
-        title: "Retirement Security",
-        description:
-          "Own a permanent vacation home or a property for year-round coastal living.",
-      },
-    ],
-    mode: "property",
-    cta: "Schedule a consultation for home buying in San Carlos",
-    keywords:
-      "san carlos real estate for sale, buy property san carlos, san carlos homes for sale, invest in san carlos mexico, relocate to san carlos real estate, mexico coastal properties, expat home buying san carlos, bilingual real estate agent mexico, retire in san carlos sonora, san carlos property market",
   },
   lots: {
     title: "Secure Your Prime Coastal Land",
