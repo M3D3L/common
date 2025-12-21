@@ -3,7 +3,7 @@
     class="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60"
   >
     <div
-      class="container relative flex items-center justify-between h-16 px-4 mx-auto lg:px-6"
+      class="container relative flex items-center justify-between h-16 mx-auto"
     >
       <!-- Logo -->
       <nuxt-link
