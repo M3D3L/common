@@ -7,6 +7,8 @@
     :video="videoArray[randomIndex]"
   >
     <template #video-container-content>
+      <!-- SeoMeta component for SEO metadata -->
+      <SeoMeta :seoData="computedSeoData" />
       <ClientOnly>
         <Card class="max-w-2xl mx-auto">
           <CardContent class="p-6">
@@ -194,6 +196,9 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { createSeoObject } from "@common/composables/useSeo";
+
+const config = useRuntimeConfig();
 
 const auth = useAuth();
 const route = useRoute();
@@ -383,4 +388,41 @@ const handleSubmit = async () => {
     isSubmitting.value = false;
   }
 };
+
+const computedSeoData = computed(() => {
+  return createSeoObject({
+    title: `${isRegister.value ? "Register" : "Login"} - ${
+      config.public.siteName
+    }`,
+    summary: `${
+      isRegister.value ? "Create a new account" : "Access your account"
+    } on ${config.public.siteName}.`,
+    keywords: isRegister.value
+      ? "register, sign up, create account, new user, join"
+      : "login, sign in, access account, returning user",
+    imageUri: "",
+    pubDate: "",
+    byline: isRegister.value
+      ? "Register for a new account"
+      : "Login to your account",
+    siteName: config.public.siteName,
+    twitterSite: config.public.twitterSite,
+
+    // Optional for homepage JSON-LD customization
+    jsonLd: {
+      "@type": "WebSite",
+      url: config.public.siteUrl,
+      name: `${isRegister.value ? "Register" : "Login"} - ${
+        config.public.siteName
+      }`,
+      description: `${
+        isRegister.value ? "Create a new account" : "Access your account"
+      } on ${config.public.siteName}.`,
+      publisher: {
+        "@type": "Organization",
+        name: config.public.siteName,
+      },
+    },
+  });
+});
 </script>
