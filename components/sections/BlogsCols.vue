@@ -64,10 +64,11 @@
           class="z-50 flex flex-row justify-end w-full cursor-pointer lg:pr-16 lg:w-2/3"
         >
           <div class="mt-4 ml-auto">
-            <nuxt-link to="/blog">
-              <Button size="lg" class="font-bold">
-                View All Posts
-              </Button>
+            <nuxt-link
+              to="/blog"
+              class="font-bold w-full transition-all hover:opacity-90 text-primary hover:underline pb-2"
+            >
+              View All Posts
             </nuxt-link>
           </div>
         </nuxt-link>
@@ -88,8 +89,7 @@ import { Button } from "../ui/button";
 import BlockMe5 from "/images/block-me-5.webp";
 import BlogHorizontal from "../cards/BlogHorizontal.vue";
 
-const video =
-  "";
+const video = "";
 
 const props = defineProps({
   title: {

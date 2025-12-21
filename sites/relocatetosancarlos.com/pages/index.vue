@@ -23,11 +23,14 @@
         </div>
 
         <div class="w-full flex justify-end">
-          <nuxt-link to="/real-estate/" class="mt-16">
-            <Button size="lg" class="font-bold w-full">
+          <div class="mt-16">
+            <nuxt-link
+              to="/real-estate/"
+              class="font-bold w-full transition-all hover:opacity-90 text-primary hover:underline pb-2"
+            >
               View More Properties
-            </Button>
-          </nuxt-link>
+            </nuxt-link>
+          </div>
         </div>
       </Card>
     </div>

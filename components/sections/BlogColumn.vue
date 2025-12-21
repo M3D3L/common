@@ -16,13 +16,15 @@
     />
 
     <div class="flex justify-center w-full mr-auto -mt-12 lg:-mt-20 lg:w-2/3">
-      <nuxt-link
-        v-if="showMore"
-        to="/blog/"
-        class="text-foreground hover:text-primary"
-      >
-        View All Posts
-      </nuxt-link>
+      <div>
+        <nuxt-link
+          v-if="showMore"
+          to="/blog/"
+          class="font-bold w-full transition-all hover:opacity-90 text-primary hover:underline pb-2"
+        >
+          View All Posts
+        </nuxt-link>
+      </div>
       <Pagination
         v-if="posts?.totalPages > 1 && showPagination"
         :total-pages="posts?.totalPages"

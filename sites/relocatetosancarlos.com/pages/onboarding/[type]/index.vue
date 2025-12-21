@@ -59,9 +59,16 @@
             :index="index"
           />
         </template>
-        <nuxt-link to="/blog">
-          <Button size="lg" class="font-bold w-full"> View All Posts </Button>
-        </nuxt-link>
+        <div class="w-full flex justify-end">
+          <div>
+            <nuxt-link
+              to="/blog"
+              class="font-bold w-full transition-all hover:opacity-90 text-primary hover:underline pb-2"
+            >
+              View All Posts
+            </nuxt-link>
+          </div>
+        </div>
       </div>
     </div>
   </div>
