@@ -44,7 +44,7 @@ export default defineNuxtConfig({
       {
         userAgent: "*",
         allow: "/",
-        disallow: ["/api", "/_nuxt", "/blog/admin"],
+        disallow: ["/api", "/_nuxt", "/blog/admin", "/real-estate/admin"],
       },
     ],
     sitemap: "https://relocatetosancarlos.com/sitemap.xml",
