@@ -172,6 +172,7 @@ const showDeleteDialog = ref(false);
 const localPreviewUrl = ref<string | null>(null);
 const processing = ref(false);
 const isDragging = ref(false);
+const hasProcessedInitialImage = ref(false);
 
 const isUnsavedFile = computed(
   () => props.image instanceof File || props.image instanceof Blob
@@ -289,8 +290,18 @@ watch(
   (newVal, oldVal) => {
     if (typeof newVal === "string" && typeof oldVal !== "string") {
       resetLocalPreview();
+      hasProcessedInitialImage.value = false;
     }
-  }
+    // If a File is passed in and we haven't processed it yet, process it
+    if (
+      (newVal instanceof File || newVal instanceof Blob) &&
+      !hasProcessedInitialImage.value
+    ) {
+      hasProcessedInitialImage.value = true;
+      processFile(newVal as File);
+    }
+  },
+  { immediate: true }
 );
 
 onBeforeUnmount(() => {

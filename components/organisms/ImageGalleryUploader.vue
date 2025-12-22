@@ -143,18 +143,8 @@ const onGalleryDrop = async (event: DragEvent) => {
     return;
   }
 
-  // Rename files to match the naming convention
-  const renamedFiles = imageFiles.map((file, idx) => {
-    const currentIndex = props.images.length + idx + 1;
-    const cleanedName = cleanName(props.name);
-    const extension = file.name.split(".").pop() || "jpg";
-    const newFileName = `${cleanedName}-gallery-${currentIndex}.${extension}`;
-
-    return new File([file], newFileName, { type: file.type });
-  });
-
-  // Add all renamed images to the gallery
-  const updatedImages = [...props.images, ...renamedFiles];
+  // Add all images to the gallery - each ImageUploader will process them
+  const updatedImages = [...props.images, ...imageFiles];
   emit("update:images", updatedImages);
 };
 </script>
