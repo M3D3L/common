@@ -9,7 +9,7 @@
           Manage, edit, and track your real estate listings.
         </p>
       </div>
-      <div class="flex gap-2">
+      <div class="flex gap-2 flex-wrap">
         <Button
           @click="loadProperties(true)"
           variant="outline"
@@ -31,7 +31,7 @@
             class="mr-2"
           />
           <label for="disable-ai-checkbox" class="select-none">
-            Disable AI Enrichment
+            Disable AI
           </label>
         </Button>
       </div>
