@@ -20,7 +20,11 @@
     <Card class="overflow-hidden border-dashed border-muted/60 relative">
       <div
         class="relative h-64 w-full cursor-pointer bg-muted/50 hover:bg-muted/70 transition-colors flex items-center justify-center group"
+        :class="{ 'ring-2 ring-primary ring-offset-2': isDragging }"
         @click="openFileDialog"
+        @dragover.prevent="onDragOver"
+        @dragleave.prevent="onDragLeave"
+        @drop.prevent="onDrop"
       >
         <input
           type="file"
@@ -69,7 +73,10 @@
         <template v-else>
           <div class="flex flex-col items-center text-muted-foreground">
             <Plus class="mb-2 h-8 w-8" />
-            <span class="text-sm">Upload Image</span>
+            <span class="text-sm">{{
+              isDragging ? "Drop image here" : "Upload Image"
+            }}</span>
+            <span class="text-xs mt-1 opacity-70">Click or drag to upload</span>
           </div>
         </template>
 
@@ -164,6 +171,7 @@ const fileInput = ref<HTMLInputElement | null>(null);
 const showDeleteDialog = ref(false);
 const localPreviewUrl = ref<string | null>(null);
 const processing = ref(false);
+const isDragging = ref(false);
 
 const isUnsavedFile = computed(
   () => props.image instanceof File || props.image instanceof Blob
@@ -207,7 +215,6 @@ const compressImage = async (file: File): Promise<File> => {
   try {
     const compressedBlob = await imageCompression(file, options);
 
-    // 1. Clean the name prop: lowercase, replace spaces/specials with hyphens
     const cleanName = props.name
       ? props.name
           .toLowerCase()
@@ -215,7 +222,6 @@ const compressImage = async (file: File): Promise<File> => {
           .replace(/-+/g, "-")
       : file.name.split(".")[0];
 
-    // 2. Append the target format extension
     const fileName = `${cleanName}.${props.format}`;
 
     return new File([compressedBlob], fileName, { type: targetType });
@@ -227,18 +233,42 @@ const compressImage = async (file: File): Promise<File> => {
   }
 };
 
+const processFile = async (file: File) => {
+  if (!file.type.startsWith("image/")) {
+    console.error("Only image files are allowed");
+    return;
+  }
+
+  if (localPreviewUrl.value) URL.revokeObjectURL(localPreviewUrl.value);
+  localPreviewUrl.value = URL.createObjectURL(file);
+
+  const processedFile = await compressImage(file);
+  emit("upload", processedFile);
+};
+
 const handleFileChange = async (event: Event) => {
   const target = event.target as HTMLInputElement;
   if (target.files && target.files.length > 0) {
-    const file = target.files[0];
-
-    if (localPreviewUrl.value) URL.revokeObjectURL(localPreviewUrl.value);
-    localPreviewUrl.value = URL.createObjectURL(file);
-
-    const processedFile = await compressImage(file);
-    emit("upload", processedFile);
+    await processFile(target.files[0]);
   }
   target.value = "";
+};
+
+const onDragOver = (event: DragEvent) => {
+  isDragging.value = true;
+};
+
+const onDragLeave = (event: DragEvent) => {
+  isDragging.value = false;
+};
+
+const onDrop = async (event: DragEvent) => {
+  isDragging.value = false;
+
+  const files = event.dataTransfer?.files;
+  if (files && files.length > 0) {
+    await processFile(files[0]);
+  }
 };
 
 const resetLocalPreview = () => {
