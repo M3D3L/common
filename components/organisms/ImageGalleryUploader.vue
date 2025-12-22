@@ -66,8 +66,8 @@ import ImageUploader from "~/components/molecules/ImageUploader.vue";
 
 interface Props {
   images?: (string | File)[];
-  collectionId: string;
-  recordId: string;
+  collectionId: string | null;
+  recordId: string | null;
   label?: string;
   name: string;
   format?: "webp" | "jpeg" | "png";

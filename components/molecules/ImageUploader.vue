@@ -146,8 +146,8 @@ const config = useRuntimeConfig();
 const props = withDefaults(
   defineProps<{
     image?: string | File | any | null;
-    collectionId: string;
-    id: string;
+    collectionId: string | null;
+    id: string | null;
     name: string;
     label?: string;
     loading?: boolean;

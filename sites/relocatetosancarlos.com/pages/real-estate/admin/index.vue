@@ -22,6 +22,18 @@
           <Plus class="w-4 h-4" />
           Add Property
         </Button>
+
+        <Button variant="outline" class="gap-2 shadow-sm">
+          <input
+            type="checkbox"
+            v-model="disableAi"
+            id="disable-ai-checkbox"
+            class="mr-2"
+          />
+          <label for="disable-ai-checkbox" class="select-none">
+            Disable AI Enrichment
+          </label>
+        </Button>
       </div>
     </div>
 
@@ -78,11 +90,12 @@
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Delete Property Listing?</AlertDialogTitle>
+
           <AlertDialogDescription>
             Are you sure you want to delete
-            <span class="font-bold text-foreground"
-              >"{{ propertyToDelete?.title }}"</span
-            >? This action cannot be undone.
+            <span class="font-bold text-foreground">
+              "{{ propertyToDelete?.title }}" </span
+            >?
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
@@ -102,8 +115,9 @@
 <script setup lang="ts">
 import { Plus, Save, RefreshCw } from "lucide-vue-next";
 import useAuth from "@common/composables/useAuth";
+import { useChatGPT } from "@common/composables/useChatGPT";
 
-// Shadcn Components
+// Shadcn
 import { Button } from "@common/components/ui/button";
 import { Card } from "@common/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@common/components/ui/tabs";
@@ -131,11 +145,14 @@ const {
   updateItem,
   deleteItem,
   invalidateCollectionCache,
+  isUserVerified,
 } = usePocketBaseCore();
 
 const { user } = useAuth();
+const { run: runChatGPT } = useChatGPT();
 
-// --- State Management ---
+/* ---------------- State ---------------- */
+
 const properties = ref({ items: [] });
 const loading = ref(true);
 const activeFilter = ref("all");
@@ -144,13 +161,16 @@ const showDeleteModal = ref(false);
 const isEditing = ref(false);
 const saving = ref(false);
 const deleting = ref(false);
-const propertyToDelete = ref(null);
+const propertyToDelete = ref<any>(null);
+const disableAi = ref(true);
 
 const getInitialFormData = () => ({
   id: null,
   title: "",
   slug: "",
+  sub_title: "",
   description: "",
+  content: "",
   type: "property",
   price: 0,
   pricingType: "usd",
@@ -162,19 +182,21 @@ const getInitialFormData = () => ({
   lat: "",
   long: "",
   amenities: [],
-  content: "",
   cover_image: "",
-  collectionId: "",
   gallery: [],
+  collectionId: "",
   author: user.value?.id || null,
 });
 
 const formData = ref(getInitialFormData());
 
-// --- Computed & Helpers ---
+/* ---------------- Helpers ---------------- */
+
 const filteredProperties = computed(() => {
-  if (activeFilter.value === "all") return properties.value?.items || [];
-  return properties.value?.items.filter((p) => p.type === activeFilter.value);
+  if (activeFilter.value === "all") return properties.value.items || [];
+  return properties.value.items.filter(
+    (p: any) => p.type === activeFilter.value
+  );
 });
 
 const getAuthorDisplay = () => {
@@ -186,10 +208,19 @@ const getAuthorDisplay = () => {
       "Unknown Author"
     );
   }
-  return "Author ID: " + formData.value.author;
+  return `Author ID: ${formData.value.author}`;
 };
 
-// --- Actions ---
+const needsAIEnrichment = (data: any) => {
+  return (
+    !data.description?.trim() ||
+    !data.content?.trim() ||
+    !data.sub_title?.trim()
+  );
+};
+
+/* ---------------- Actions ---------------- */
+
 const loadProperties = async (ignoreCache = false) => {
   loading.value = true;
   try {
@@ -203,8 +234,6 @@ const loadProperties = async (ignoreCache = false) => {
       null,
       ignoreCache
     );
-  } catch (error) {
-    console.error("Fetch error:", error);
   } finally {
     loading.value = false;
   }
@@ -218,7 +247,6 @@ const openAddModal = () => {
 
 const openEditModal = (property: any) => {
   isEditing.value = true;
-  // Use a spread to create a fresh object so we don't mutate the list directly
   formData.value = {
     ...property,
     amenities: Array.isArray(property.amenities) ? [...property.amenities] : [],
@@ -231,51 +259,113 @@ const saveProperty = async () => {
   saving.value = true;
 
   try {
-    // 1. Slug Logic
-    const typePathMap: Record<string, string> = {
+    /* ---- AI enrichment (NON-BLOCKING) ---- */
+    if (needsAIEnrichment(formData.value) && !disableAi.value) {
+      try {
+        // 1. Sanitize: Create a lightweight object with ONLY text data
+        // This prevents sending massive image strings/blobs to OpenAI which cause 429 errors
+        const aiContext = {
+          title: formData.value.title,
+          type: formData.value.type,
+          price: formData.value.price,
+          bedrooms: formData.value.bedrooms,
+          bathrooms: formData.value.bathrooms,
+          area: formData.value.area,
+          address: formData.value.address,
+          amenities: formData.value.amenities
+            .filter((a: any) => a?.name?.trim())
+            .map((a: any) => a.name.trim()),
+        };
+
+        const instruction =
+          "You are a real estate copywriter. Based on the property data provided, generate ONLY a JSON object with 'sub_title' (short), 'description' (medium), and 'content' (long). Do not include any other text.";
+
+        console.log("AI enrichment started with sanitized data...");
+
+        const aiPromise = runChatGPT(instruction, aiContext);
+        const timeoutPromise = new Promise<string>((_, reject) =>
+          setTimeout(() => reject(new Error("AI timeout")), 8000)
+        );
+
+        const aiResult = await Promise.race([aiPromise, timeoutPromise]);
+
+        if (aiResult) {
+          // Robust JSON Parsing (Strips markdown blocks if present)
+          const cleanJsonString = aiResult.replace(/```json|```/gi, "").trim();
+          const parsed = JSON.parse(cleanJsonString);
+
+          // Update missing fields locally in formData
+          if (!formData.value.sub_title && parsed.sub_title) {
+            formData.value.sub_title = parsed.sub_title.slice(0, 120);
+          }
+          if (!formData.value.description && parsed.description) {
+            formData.value.description = parsed.description.slice(0, 300);
+          }
+          if (!formData.value.content && parsed.content) {
+            formData.value.content = parsed.content;
+          }
+        }
+      } catch (err: any) {
+        // SILENT FAIL — continue saving with manual data if AI service fails or 429 occurs
+        if (err.message?.includes("429")) {
+          console.warn(
+            "AI Rate limit reached (429). Saving without enrichment."
+          );
+        } else {
+          console.warn("AI enrichment skipped or failed:", err.message);
+        }
+      }
+    }
+
+    /* ---- Slug and Payload Logic ---- */
+    const folderMap: Record<string, string> = {
       property: "properties",
       rental: "rentals",
       lot: "lots",
     };
-    const folder = typePathMap[formData.value.type] || "properties";
+
+    const folder = folderMap[formData.value.type] || "properties";
+
+    // Generate slug from title
     const titleSlug = formData.value.title
       .toLowerCase()
       .trim()
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/^-|-$/g, "");
-    const generatedSlug = `/${folder}/${titleSlug}`;
 
-    // 2. Prepare Payload
-    const authorId =
-      typeof formData.value.author === "object"
-        ? formData.value.author?.id
-        : formData.value.author;
+    const slug = `/${folder}/${titleSlug}`;
 
     const payload = {
       ...formData.value,
-      author: authorId || user.value?.id,
+      // Update slug if it's new or the type changed
       slug:
-        !isEditing.value || !formData.value.slug.startsWith(`/${folder}/`)
-          ? generatedSlug
+        !isEditing.value || !formData.value.slug?.startsWith(`/${folder}/`)
+          ? slug
           : formData.value.slug,
+      // Ensure author is just an ID
+      author:
+        typeof formData.value.author === "object"
+          ? formData.value.author?.id
+          : formData.value.author || user.value?.id,
+      // Final cleanup of amenities list
       amenities: formData.value.amenities
-        .filter((a: any) => a.name?.trim())
+        .filter((a: any) => a?.name?.trim())
         .map((a: any) => ({ name: a.name.trim() })),
     };
 
-    // 3. Persist
+    /* ---- Persist to Database ---- */
     if (isEditing.value) {
       await updateItem("properties", formData.value.id, payload);
     } else {
       await createItem("properties", payload);
     }
 
-    // 4. Cleanup & Refresh
-    ["rentals", "lots", "properties"].forEach(invalidateCollectionCache);
+    // Refresh data and UI
+    ["properties", "rentals", "lots"].forEach(invalidateCollectionCache);
     await loadProperties(true);
     showModal.value = false;
-  } catch (error: any) {
-    alert(`Error: ${error.message || "Save failed"}`);
+  } catch (err: any) {
+    alert(err.message || "Save failed");
   } finally {
     saving.value = false;
   }

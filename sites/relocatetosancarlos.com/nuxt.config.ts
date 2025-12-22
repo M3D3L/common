@@ -58,6 +58,8 @@ export default defineNuxtConfig({
       siteName: "RelocateToSanCarlos.com",
       twitterSite: "@relocatetosc",
       blogType: "relocateBlog",
+      chatgptProxyUrl:
+        "https://chatgpt-proxy.guillermoantoniomedel.workers.dev",
     },
   },
 });

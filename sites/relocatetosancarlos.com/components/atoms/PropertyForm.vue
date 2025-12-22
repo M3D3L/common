@@ -1,5 +1,8 @@
 <template>
-  <form @submit.prevent class="flex-1 overflow-y-auto p-6 space-y-8">
+  <form
+    @submit.prevent="$emit('save')"
+    class="flex-1 overflow-y-auto p-6 space-y-8"
+  >
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
       <div class="col-span-2 space-y-2">
         <Label for="title">Property Title *</Label>
@@ -44,6 +47,69 @@
           v-model.number="modelValue.price"
         />
       </div>
+
+      <div class="space-y-2 col-span-2">
+        <Label>Price Type</Label>
+        <Select v-model="modelValue.pricingType">
+          <SelectTrigger
+            ><SelectValue placeholder="Select price type"
+          /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="per/night">Per Night</SelectItem>
+            <SelectItem value="per/month">Per Month</SelectItem>
+            <SelectItem value="usd">usd</SelectItem>
+            <SelectItem value="mxn">mxn</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div class="col-span-2 flex md:flex-row flex-col gap-4">
+        <div class="space-y-2 w-full">
+          <Label for="beds">Bedrooms</Label>
+          <Input id="beds" type="number" v-model.number="modelValue.bedrooms" />
+        </div>
+        <div class="space-y-2 w-full">
+          <Label for="baths">Bathrooms</Label>
+          <Input
+            id="baths"
+            type="number"
+            step="0.5"
+            v-model.number="modelValue.bathrooms"
+          />
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-4">
+        <div class="space-y-2">
+          <Label for="area">Area (m²)</Label>
+          <Input id="area" type="number" v-model.number="modelValue.area" />
+        </div>
+        <div class="space-y-2">
+          <Label for="lot">Lot Size (m²)</Label>
+          <Input id="lot" type="number" v-model.number="modelValue.lotSize" />
+        </div>
+      </div>
+    </div>
+
+    <Separator />
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div class="md:col-span-3 space-y-2">
+        <Label for="address">Full Address</Label>
+        <Input
+          id="address"
+          v-model="modelValue.address"
+          placeholder="123 Street..."
+        />
+      </div>
+      <div class="space-y-2">
+        <Label for="lat">Latitude</Label>
+        <Input id="lat" v-model="modelValue.lat" placeholder="0.0000" />
+      </div>
+      <div class="space-y-2">
+        <Label for="long">Longitude</Label>
+        <Input id="long" v-model="modelValue.long" placeholder="0.0000" />
+      </div>
     </div>
 
     <Separator />
@@ -57,19 +123,18 @@
           type="button"
           variant="secondary"
           size="sm"
-          @click="addAmenity(amenity)"
+          @click="addAmenity({ name: amenity })"
         >
           <Plus class="w-3 h-3 mr-2" /> {{ amenity }}
         </Button>
       </div>
-
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div
-          v-for="(item, index) in modelValue.amenities"
+          v-for="(amenity, index) in modelValue.amenities"
           :key="index"
           class="flex gap-2"
         >
-          <Input v-model="item.name" placeholder="Amenity name..." />
+          <Input v-model="amenity.name" placeholder="Amenity name..." />
           <Button
             type="button"
             variant="outline"
@@ -81,9 +146,10 @@
           </Button>
         </div>
       </div>
+      <Button type="button" variant="secondary" size="sm" @click="addAmenity()">
+        <Plus class="w-3 h-3 mr-2" /> Add Amenity
+      </Button>
     </div>
-
-    <Separator />
 
     <div class="space-y-2">
       <Label for="content">Detailed Content (HTML)</Label>
@@ -143,6 +209,7 @@ import {
 } from "@common/components/ui/select";
 import ImageUploader from "@common/components/molecules/ImageUploader.vue";
 import ImageGalleryUploader from "@common/components/organisms/ImageGalleryUploader.vue";
+import { amenitiesList } from "~/assets/configs/amenities";
 
 const props = defineProps({
   modelValue: {
@@ -153,50 +220,13 @@ const props = defineProps({
   authorDisplay: { type: String, default: "" },
 });
 
-const emit = defineEmits(["update:modelValue"]);
+const emit = defineEmits(["update:modelValue", "save"]);
 
-const amenitiesList = [
-  "Swimming Pool",
-  "High-Speed Wi-Fi",
-  "Private Parking",
-  "Central Air Conditioning",
-  "Fully Equipped Fitness Center",
-  "Landscaped Garden",
-  "Private Balcony or Terrace",
-  "Indoor Fireplace",
-  "24/7 Security",
-  "Smart TV",
-  "Fully Equipped Kitchen",
-  "In-Unit Washer & Dryer",
-  "Pet-Friendly",
-  "Outdoor Seating Area",
-  "Backup Power Generator",
-  "Reverse Osmosis Water System",
-  "Rooftop Sunset Deck",
-  "Large Water Cistern (Pila)",
-  "Palapa-Shaded Patio",
-  "Views of Cerro Tetakawi",
-  "Outdoor Shower",
-  "Hurricane Shutters",
-  "Built-in BBQ Grill",
-  "Boat or Trailer Parking",
-  "Heated Pool or Jacuzzi",
-  "Starlink Satellite Internet",
-  "Keyless Smart Locks",
-  "Beach Gear & Kayaks",
-  "Outdoor Misting System",
-  "Solar Power Panels",
-  "Fish Cleaning Station",
-  "Dedicated Workspace",
-  "Mini-Split A/C Units",
-  "EV Charging Station",
-  "Water Softener System",
-];
-
-const addAmenity = (name: string) => {
-  // We mutate the object property directly since modelValue is an object.
-  // Vue 3's reactive system will track this change.
-  props.modelValue.amenities.push({ name });
+const addAmenity = (payload?: { name: string }) => {
+  // If a payload with a name is passed (from the buttons), use it.
+  // Otherwise (from the "Add Amenity" button), use an empty string.
+  const amenityName = payload?.name || "";
+  props.modelValue.amenities.push({ name: amenityName });
 };
 
 const removeAmenity = (index: number) => {
