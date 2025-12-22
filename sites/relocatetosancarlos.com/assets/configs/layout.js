@@ -29,7 +29,7 @@ export const heroSection = {
   imageAlt: "Brenda - San Carlos Relocation Specialist and Real Estate Agent",
   titleLine1: "San Carlos, Sonora, Mexico:",
   titleHighlight: "Relocation & Real Estate Expert",
-  description: `As a dedicated Real Estate Agent and Relocation Specialist, Brenda offers seamless, bilingual support for expats, retirees, and investors moving to San Carlos, Sonora, Mexico. From finding the perfect home or rental to navigating local logistics, we make your transition to the Sea of Cortez simple and stress-free.`,
+  description: `As a dedicated Real Estate Agent and Relocation Specialist, Brenda offers seamless, bilingual support for expats, retirees, and investors moving to San Carlos, Sonora, Mexico. From finding the perfect home or rental to navigating local logistics, we make your transition to the Sea of Cortez stress-free.`,
   buttons: [
     {
       link: "/blog/",

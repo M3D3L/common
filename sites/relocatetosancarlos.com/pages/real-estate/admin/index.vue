@@ -10,7 +10,11 @@
         </p>
       </div>
       <div class="flex gap-2">
-        <Button @click="loadProperties(true)" class="gap-2 shadow-sm">
+        <Button
+          @click="loadProperties(true)"
+          variant="outline"
+          class="gap-2 shadow-sm"
+        >
           <RefreshCw class="w-4 h-4" />
           Reset Listings
         </Button>
@@ -44,235 +48,18 @@
         class="sm:max-w-[800px] h-[90vh] flex flex-col p-0 overflow-hidden"
       >
         <DialogHeader class="p-6 pb-0">
-          <DialogTitle class="text-2xl font-bold">{{
-            isEditing ? "Edit Listing" : "Create Listing"
-          }}</DialogTitle>
+          <DialogTitle class="text-2xl font-bold">
+            {{ isEditing ? "Edit Listing" : "Create Listing" }}
+          </DialogTitle>
           <DialogDescription>
             Update the property details and specifications below.
           </DialogDescription>
         </DialogHeader>
 
-        <form
-          @submit.prevent="saveProperty"
-          class="flex-1 overflow-y-auto p-6 space-y-8"
-        >
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div class="col-span-2 space-y-2">
-              <Label for="title">Property Title *</Label>
-              <Input
-                id="title"
-                v-model="formData.title"
-                placeholder="e.g. Modern Beachfront Villa"
-                required
-              />
-            </div>
-
-            <div class="col-span-2 space-y-2">
-              <Label for="description">Short Description *</Label>
-              <Textarea
-                id="description"
-                v-model="formData.description"
-                placeholder="A brief summary of the property..."
-                required
-              />
-            </div>
-
-            <div class="md:col-span-1 col-span-2 space-y-2">
-              <Label>Listing Type *</Label>
-              <Select v-model="formData.type">
-                <SelectTrigger>
-                  <SelectValue placeholder="Select type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="property">Sale (Properties)</SelectItem>
-                  <SelectItem value="rental">Rental (Rentals)</SelectItem>
-                  <SelectItem value="lot">Land Lot (Lots)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div class="space-y-2 md:col-span-1 col-span-2">
-              <Label for="price">Price (USD)</Label>
-              <Input
-                id="price"
-                type="number"
-                step="0.01"
-                v-model.number="formData.price"
-              />
-            </div>
-
-            <div class="space-y-2 col-span-2">
-              <Label>Price Type</Label>
-              <Select v-model="formData.pricingType">
-                <SelectTrigger>
-                  <SelectValue placeholder="Select price type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="per/night">Per Night</SelectItem>
-                  <SelectItem value="per/month">Per Month</SelectItem>
-                  <SelectItem value="usd">usd</SelectItem>
-                  <SelectItem value="mxn">mxn</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div class="col-span-2 flex md:flex-row flex-col gap-4">
-              <div class="space-y-2 w-full">
-                <Label for="beds">Bedrooms</Label>
-                <Input
-                  id="beds"
-                  type="number"
-                  v-model.number="formData.bedrooms"
-                />
-              </div>
-              <div class="space-y-2 w-full">
-                <Label for="baths">Bathrooms</Label>
-                <Input
-                  id="baths"
-                  type="number"
-                  step="0.5"
-                  v-model.number="formData.bathrooms"
-                />
-              </div>
-            </div>
-
-            <div class="grid grid-cols-2 gap-4">
-              <div class="space-y-2">
-                <Label for="area">Area (m²)</Label>
-                <Input id="area" type="number" v-model.number="formData.area" />
-              </div>
-              <div class="space-y-2">
-                <Label for="lot">Lot Size (m²)</Label>
-                <Input
-                  id="lot"
-                  type="number"
-                  v-model.number="formData.lotSize"
-                />
-              </div>
-            </div>
-
-            <!-- Author Display (Read-only) -->
-            <div class="col-span-2 space-y-2">
-              <Label>Author</Label>
-              <Input :value="getAuthorDisplay()" disabled class="bg-muted" />
-            </div>
-          </div>
-
-          <Separator />
-
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div class="md:col-span-3 space-y-2">
-              <Label for="address">Full Address</Label>
-              <Input
-                id="address"
-                v-model="formData.address"
-                placeholder="123 Street, City, Country"
-              />
-            </div>
-            <div class="space-y-2">
-              <Label for="lat">Latitude</Label>
-              <Input id="lat" v-model="formData.lat" placeholder="0.0000" />
-            </div>
-            <div class="space-y-2">
-              <Label for="long">Longitude</Label>
-              <Input id="long" v-model="formData.long" placeholder="0.0000" />
-            </div>
-          </div>
-
-          <Separator />
-
-          <div class="space-y-4">
-            <Label class="text-base">Amenities & Features</Label>
-
-            <div class="flex flex-wrap gap-2 w-full">
-              <Button
-                v-for="(amenity, amenityIndex) in amenitiesList"
-                :key="amenityIndex"
-                type="button"
-                variant="secondary"
-                size="sm"
-                @click="
-                  addAmenity({
-                    name: amenity,
-                  })
-                "
-              >
-                <Plus class="w-3 h-3 mr-2" /> {{ amenity }}
-              </Button>
-            </div>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div
-                v-for="(amenity, index) in formData?.amenities"
-                :key="index"
-                class="flex gap-2"
-              >
-                <Input
-                  v-model="amenity.name"
-                  placeholder="Pool, WiFi, Parking..."
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  @click="removeAmenity(index)"
-                  class="shrink-0"
-                >
-                  <X class="w-4 h-4" />
-                </Button>
-              </div>
-            </div>
-            <Button
-              type="button"
-              variant="secondary"
-              size="sm"
-              @click="addAmenity"
-            >
-              <Plus class="w-3 h-3 mr-2" /> Add Amenity
-            </Button>
-          </div>
-
-          <div class="space-y-2">
-            <Label for="content">Detailed Content (HTML)</Label>
-            <Textarea
-              id="content"
-              v-model="formData.content"
-              rows="6"
-              class="font-mono text-xs"
-              placeholder="<p>Full property details...</p>"
-            />
-          </div>
-
-          <div class="space-y-2">
-            <ImageUploader
-              label="Cover Image"
-              :id="formData?.id"
-              :collection-id="formData?.collectionId"
-              :image="formData?.cover_image"
-              :name="`${formData?.title || 'cover_image'}-cover`"
-              @upload="(filename) => (formData.cover_image = filename)"
-              @remove="formData.cover_image = ''"
-              format="webp"
-              :width="800"
-              :height="600"
-              :quality="85"
-            />
-
-            <ImageGalleryUploader
-              :key="formData?.gallery?.length || 0"
-              label="Gallery Images"
-              :collection-id="formData?.collectionId"
-              :record-id="formData?.id"
-              :images="formData?.gallery || []"
-              :name="formData?.title || 'gallery_image'"
-              @update:images="(imgs) => (formData.gallery = imgs)"
-              @remove="(imgs) => (formData.gallery = imgs)"
-              format="webp"
-              :width="1200"
-              :height="800"
-              :quality="80"
-            />
-          </div>
-        </form>
+        <AtomsPropertyForm
+          v-model="formData"
+          :author-display="getAuthorDisplay()"
+        />
 
         <div class="p-6 border-t bg-muted/20 flex justify-end gap-3">
           <Button variant="outline" @click="showModal = false">Cancel</Button>
@@ -295,8 +82,7 @@
             Are you sure you want to delete
             <span class="font-bold text-foreground"
               >"{{ propertyToDelete?.title }}"</span
-            >? This action will remove all data from our servers and cannot be
-            undone.
+            >? This action cannot be undone.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
@@ -314,17 +100,13 @@
 </template>
 
 <script setup lang="ts">
-import { Plus, Edit, Trash2, X, Save, RefreshCw } from "lucide-vue-next";
-import useAuth from "@/composables/useAuth";
+import { Plus, Save, RefreshCw } from "lucide-vue-next";
+import useAuth from "@common/composables/useAuth";
 
 // Shadcn Components
 import { Button } from "@common/components/ui/button";
-import { Badge } from "@common/components/ui/badge";
 import { Card } from "@common/components/ui/card";
-import { Input } from "@common/components/ui/input";
-import { Label } from "@common/components/ui/label";
-import { Textarea } from "@common/components/ui/textarea";
-import { Separator } from "@common/components/ui/separator";
+import { Tabs, TabsList, TabsTrigger } from "@common/components/ui/tabs";
 import {
   Dialog,
   DialogContent,
@@ -332,14 +114,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@common/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@common/components/ui/select";
-import { Tabs, TabsList, TabsTrigger } from "@common/components/ui/tabs";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -350,23 +124,19 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@common/components/ui/alert-dialog";
-import ImageUploader from "@common/components/molecules/ImageUploader.vue";
-import ImageGalleryUploader from "@common/components/organisms/ImageGalleryUploader.vue";
 
 const {
   fetchCollection,
   createItem,
   updateItem,
   deleteItem,
-  getFileUrl,
   invalidateCollectionCache,
 } = usePocketBaseCore();
 
-// Get current user from auth
 const { user } = useAuth();
 
-// --- State ---
-const properties = ref([]);
+// --- State Management ---
+const properties = ref({ items: [] });
 const loading = ref(true);
 const activeFilter = ref("all");
 const showModal = ref(false);
@@ -376,14 +146,14 @@ const saving = ref(false);
 const deleting = ref(false);
 const propertyToDelete = ref(null);
 
-const formData = ref({
+const getInitialFormData = () => ({
   id: null,
   title: "",
   slug: "",
   description: "",
-  type: "",
+  type: "property",
   price: 0,
-  pricingType: "",
+  pricingType: "usd",
   bedrooms: 0,
   bathrooms: 0,
   area: 0,
@@ -396,90 +166,19 @@ const formData = ref({
   cover_image: "",
   collectionId: "",
   gallery: [],
-  author: null, // Will store author ID or expanded author object
+  author: user.value?.id || null,
 });
 
-const amenitiesList = [
-  "Swimming Pool",
-  "High-Speed Wi-Fi",
-  "Private Parking",
-  "Central Air Conditioning",
-  "Fully Equipped Fitness Center",
-  "Landscaped Garden",
-  "Private Balcony or Terrace",
-  "Indoor Fireplace",
-  "24/7 Security",
-  "Smart TV",
-  "Fully Equipped Kitchen",
-  "In-Unit Washer & Dryer",
-  "Pet-Friendly",
-  "Outdoor Seating Area",
-  "Backup Power Generator",
-  "Reverse Osmosis Water System",
-  "Rooftop Sunset Deck",
-  "Large Water Cistern (Pila)",
-  "Palapa-Shaded Patio",
-  "Views of Cerro Tetakawi",
-  "Outdoor Shower",
-  "Hurricane Shutters",
-  "Built-in BBQ Grill",
-  "Boat or Trailer Parking",
-  "Heated Pool or Jacuzzi",
-  "Starlink Satellite Internet",
-  "Keyless Smart Locks",
-  "Beach Gear & Kayaks",
-  "Outdoor Misting System",
-  "Solar Power Panels",
-  "Fish Cleaning Station",
-  "Dedicated Workspace",
-  "Mini-Split A/C Units",
-  "EV Charging Station",
-  "Water Softener System",
-];
+const formData = ref(getInitialFormData());
 
-// --- Logic ---
-const getBadgeVariant = (type: string) => {
-  if (type === "rental") return "secondary";
-  if (type === "lot") return "outline";
-  return "default";
-};
-
+// --- Computed & Helpers ---
 const filteredProperties = computed(() => {
-  if (activeFilter.value === "all") return properties.value?.items;
+  if (activeFilter.value === "all") return properties.value?.items || [];
   return properties.value?.items.filter((p) => p.type === activeFilter.value);
 });
 
-const loadProperties = async (ignoreCache = false) => {
-  loading.value = true;
-  try {
-    // Expand the author field to get author details
-    properties.value = await fetchCollection(
-      "properties",
-      1,
-      100,
-      "",
-      "-created",
-      "author", // Expand author field
-      null,
-      ignoreCache
-    );
-  } catch (error) {
-    console.error("Error:", error);
-  } finally {
-    loading.value = false;
-  }
-};
-
-const getImageUrl = (property: any) => {
-  return property.cover_image ? getFileUrl(property, property.cover_image) : "";
-};
-
 const getAuthorDisplay = () => {
-  if (!formData.value.author) {
-    return user.value?.username || user.value?.email || "Current User";
-  }
-
-  // If author is expanded (object)
+  if (!formData.value.author) return user.value?.username || "Current User";
   if (typeof formData.value.author === "object") {
     return (
       formData.value.author.username ||
@@ -487,54 +186,44 @@ const getAuthorDisplay = () => {
       "Unknown Author"
     );
   }
-
-  // If author is just an ID
   return "Author ID: " + formData.value.author;
+};
+
+// --- Actions ---
+const loadProperties = async (ignoreCache = false) => {
+  loading.value = true;
+  try {
+    properties.value = await fetchCollection(
+      "properties",
+      1,
+      100,
+      "",
+      "-created",
+      "author",
+      null,
+      ignoreCache
+    );
+  } catch (error) {
+    console.error("Fetch error:", error);
+  } finally {
+    loading.value = false;
+  }
 };
 
 const openAddModal = () => {
   isEditing.value = false;
-  formData.value = {
-    id: null,
-    title: "",
-    slug: "",
-    description: "",
-    type: "property",
-    price: 0,
-    pricingType: "",
-    bedrooms: 0,
-    bathrooms: 0,
-    area: 0,
-    lotSize: 0,
-    address: "",
-    lat: "",
-    long: "",
-    amenities: [],
-    content: "",
-    cover_image: "",
-    collectionId: "",
-    gallery: [],
-    author: user.value?.id || null, // Set to current user ID
-  };
+  formData.value = getInitialFormData();
   showModal.value = true;
 };
 
 const openEditModal = (property: any) => {
   isEditing.value = true;
+  // Use a spread to create a fresh object so we don't mutate the list directly
   formData.value = {
     ...property,
     amenities: Array.isArray(property.amenities) ? [...property.amenities] : [],
-    author: property.author, // Keep existing author (can be ID or expanded object)
   };
   showModal.value = true;
-};
-
-const addAmenity = (item = { name: "" }) => {
-  formData.value.amenities.push({ ...item });
-};
-
-const removeAmenity = (index: number) => {
-  formData.value.amenities.splice(index, 1);
 };
 
 const saveProperty = async () => {
@@ -542,81 +231,51 @@ const saveProperty = async () => {
   saving.value = true;
 
   try {
-    // 1. DYNAMIC SLUG LOGIC
+    // 1. Slug Logic
     const typePathMap: Record<string, string> = {
       property: "properties",
       rental: "rentals",
       lot: "lots",
     };
-
     const folder = typePathMap[formData.value.type] || "properties";
     const titleSlug = formData.value.title
       .toLowerCase()
       .trim()
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/^-|-$/g, "");
-
     const generatedSlug = `/${folder}/${titleSlug}`;
 
-    // Prepare author value - if it's an expanded object, extract the ID
+    // 2. Prepare Payload
     const authorId =
       typeof formData.value.author === "object"
         ? formData.value.author?.id
-        : formData.value.author || user.value?.id;
+        : formData.value.author;
 
-    const payload: any = {
-      title: formData.value.title,
-      description: formData.value.description || "",
-      type: formData.value.type,
-      content: formData.value.content || "",
-      price: formData.value.price || 0,
-      pricingType: formData.value.pricingType || "",
-      bedrooms: formData.value.bedrooms || 0,
-      bathrooms: formData.value.bathrooms || 0,
-      area: formData.value.area || 0,
-      lotSize: formData.value.lotSize || 0,
-      address: formData.value.address || "",
-      lat: formData.value.lat || "",
-      long: formData.value.long || "",
-      amenities: formData.value.amenities
-        .filter((a: any) => a.name && a.name.trim())
-        .map((a: any) => ({ name: a.name.trim() })),
-
-      // Update slug if it's new OR if the slug doesn't start with the correct folder
+    const payload = {
+      ...formData.value,
+      author: authorId || user.value?.id,
       slug:
         !isEditing.value || !formData.value.slug.startsWith(`/${folder}/`)
           ? generatedSlug
           : formData.value.slug,
-
-      sub_title: formData.value.sub_title || "",
-      tags: formData.value.tags || null,
-      video: formData.value.video || "",
-      cover_image: formData.value.cover_image || "",
-      gallery: formData.value.gallery || [],
-
-      // Set author - use extracted ID for new items, keep existing for edits
-      author: authorId,
+      amenities: formData.value.amenities
+        .filter((a: any) => a.name?.trim())
+        .map((a: any) => ({ name: a.name.trim() })),
     };
 
-    // 2. PERSISTENCE
+    // 3. Persist
     if (isEditing.value) {
       await updateItem("properties", formData.value.id, payload);
     } else {
       await createItem("properties", payload);
     }
 
-    // 3. CROSS-COLLECTION INVALIDATION
-    invalidateCollectionCache("rentals");
-    invalidateCollectionCache("lots");
-    invalidateCollectionCache("properties");
-
-    // 4. REFRESH UI
+    // 4. Cleanup & Refresh
+    ["rentals", "lots", "properties"].forEach(invalidateCollectionCache);
     await loadProperties(true);
-
     showModal.value = false;
   } catch (error: any) {
-    console.error("Save failed:", error);
-    alert(`Failed to save property: ${error.message || "Unknown error"}`);
+    alert(`Error: ${error.message || "Save failed"}`);
   } finally {
     saving.value = false;
   }
@@ -639,15 +298,13 @@ const deleteProperty = async () => {
   }
 };
 
-onMounted(async () => await loadProperties());
+onMounted(loadProperties);
 
 definePageMeta({
   layout: "admin",
-  middleware: defineNuxtRouteMiddleware((to) => {
+  middleware: defineNuxtRouteMiddleware(() => {
     const { isUserVerified } = usePocketBaseCore();
-    if (!isUserVerified()) {
-      return navigateTo("/");
-    }
+    if (!isUserVerified()) return navigateTo("/");
   }),
 });
 </script>
