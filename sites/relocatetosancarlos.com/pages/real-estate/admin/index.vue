@@ -150,6 +150,12 @@
                 />
               </div>
             </div>
+
+            <!-- Author Display (Read-only) -->
+            <div class="col-span-2 space-y-2">
+              <Label>Author</Label>
+              <Input :value="getAuthorDisplay()" disabled class="bg-muted" />
+            </div>
           </div>
 
           <Separator />
@@ -309,6 +315,7 @@
 
 <script setup lang="ts">
 import { Plus, Edit, Trash2, X, Save, RefreshCw } from "lucide-vue-next";
+import useAuth from "@/composables/useAuth";
 
 // Shadcn Components
 import { Button } from "@common/components/ui/button";
@@ -355,6 +362,9 @@ const {
   invalidateCollectionCache,
 } = usePocketBaseCore();
 
+// Get current user from auth
+const { user } = useAuth();
+
 // --- State ---
 const properties = ref([]);
 const loading = ref(true);
@@ -386,6 +396,7 @@ const formData = ref({
   cover_image: "",
   collectionId: "",
   gallery: [],
+  author: null, // Will store author ID or expanded author object
 });
 
 const amenitiesList = [
@@ -441,13 +452,14 @@ const filteredProperties = computed(() => {
 const loadProperties = async (ignoreCache = false) => {
   loading.value = true;
   try {
+    // Expand the author field to get author details
     properties.value = await fetchCollection(
       "properties",
       1,
       100,
       "",
       "-created",
-      null,
+      "author", // Expand author field
       null,
       ignoreCache
     );
@@ -460,6 +472,24 @@ const loadProperties = async (ignoreCache = false) => {
 
 const getImageUrl = (property: any) => {
   return property.cover_image ? getFileUrl(property, property.cover_image) : "";
+};
+
+const getAuthorDisplay = () => {
+  if (!formData.value.author) {
+    return user.value?.username || user.value?.email || "Current User";
+  }
+
+  // If author is expanded (object)
+  if (typeof formData.value.author === "object") {
+    return (
+      formData.value.author.username ||
+      formData.value.author.email ||
+      "Unknown Author"
+    );
+  }
+
+  // If author is just an ID
+  return "Author ID: " + formData.value.author;
 };
 
 const openAddModal = () => {
@@ -484,6 +514,7 @@ const openAddModal = () => {
     cover_image: "",
     collectionId: "",
     gallery: [],
+    author: user.value?.id || null, // Set to current user ID
   };
   showModal.value = true;
 };
@@ -493,6 +524,7 @@ const openEditModal = (property: any) => {
   formData.value = {
     ...property,
     amenities: Array.isArray(property.amenities) ? [...property.amenities] : [],
+    author: property.author, // Keep existing author (can be ID or expanded object)
   };
   showModal.value = true;
 };
@@ -526,6 +558,12 @@ const saveProperty = async () => {
 
     const generatedSlug = `/${folder}/${titleSlug}`;
 
+    // Prepare author value - if it's an expanded object, extract the ID
+    const authorId =
+      typeof formData.value.author === "object"
+        ? formData.value.author?.id
+        : formData.value.author || user.value?.id;
+
     const payload: any = {
       title: formData.value.title,
       description: formData.value.description || "",
@@ -555,26 +593,24 @@ const saveProperty = async () => {
       video: formData.value.video || "",
       cover_image: formData.value.cover_image || "",
       gallery: formData.value.gallery || [],
+
+      // Set author - use extracted ID for new items, keep existing for edits
+      author: authorId,
     };
 
     // 2. PERSISTENCE
-    // updateItem and createItem already call invalidateCollectionCache internally
     if (isEditing.value) {
       await updateItem("properties", formData.value.id, payload);
     } else {
       await createItem("properties", payload);
     }
 
-    // 3. CROSS-COLLECTION INVALIDATION (Optional)
-    // If saving a 'property' affects 'rentals' or 'lots' views,
-    // clear those patterns manually here:
+    // 3. CROSS-COLLECTION INVALIDATION
     invalidateCollectionCache("rentals");
     invalidateCollectionCache("lots");
     invalidateCollectionCache("properties");
 
     // 4. REFRESH UI
-    // Pass 'true' to loadProperties if it supports an 'ignoreCache' flag
-    // to ensure the fetchCollection call hits the server, not the local cache.
     await loadProperties(true);
 
     showModal.value = false;
