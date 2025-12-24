@@ -1,104 +1,110 @@
 <template>
-  <Card v-if="content" class="h-full overflow-hidden group">
-    <CardHeader class="p-0 border-b border-muted">
+  <Card
+    v-if="content"
+    class="h-full overflow-hidden transition-shadow duration-300 group hover:shadow-md"
+  >
+    <CardHeader class="p-0">
       <nuxt-link
         v-if="content?.slug"
         :to="`/real-estate${content.slug}`"
-        class="w-full"
+        class="block w-full"
       >
-        <div class="relative w-full h-auto aspect-[4/3]">
+        <div class="relative w-full aspect-[4/3] overflow-hidden bg-muted">
           <img
             :src="createImgUrl(content)"
             :alt="content.title"
-            class="absolute top-0 bottom-0 left-0 right-0 object-cover w-full h-full transition-transform duration-300 group-hover:scale-105"
+            class="object-cover w-full h-full transition-transform duration-500 group-hover:scale-105"
           />
-          <div class="absolute top-3 right-3 z-10">
-            <span
-              class="px-3 py-1 text-sm font-semibold rounded-full bg-background/90 text-foreground backdrop-blur-sm"
-            >
-              {{ formattedPrice }}
-            </span>
-          </div>
         </div>
       </nuxt-link>
     </CardHeader>
 
-    <CardContent class="p-6 lg:p-8">
+    <CardContent class="p-6">
       <div class="flex flex-col h-full">
-        <!-- Title and Address -->
-        <div>
+        <div class="mb-2">
+          <span class="text-xl font-bold text-foreground">
+            {{ formattedPrice }}
+          </span>
+        </div>
+
+        <div class="space-y-1">
           <nuxt-link
             v-if="content?.slug"
             :to="`/real-estate${content.slug}`"
-            class="w-full transition-colors hover:text-primary"
+            class="transition-colors text-primary hover:underline"
           >
-            <h3 class="text-xl font-bold line-clamp-1">{{ content.title }}</h3>
+            <h3 class="text-lg font-bold leading-snug line-clamp-1">
+              {{ content.title }}
+            </h3>
           </nuxt-link>
 
           <div
             v-if="content.address"
-            class="flex items-center gap-1 mt-2 text-sm text-muted-foreground"
+            class="flex items-center gap-1 text-sm text-muted-foreground"
           >
-            <MapPin :size="16" />
-            <span>{{ content.address }}</span>
+            <MapPin :size="14" class="shrink-0" />
+            <span class="truncate">{{ content.address }}</span>
           </div>
         </div>
 
-        <!-- Property Stats -->
-        <div class="flex items-center gap-4 mt-4 text-sm text-muted-foreground">
-          <div v-if="content.bedrooms" class="flex items-center gap-1">
+        <div
+          class="flex items-center gap-4 py-4 mt-4 border-t border-muted/50 text-muted-foreground"
+        >
+          <div v-if="content.bedrooms" class="flex items-center gap-1.5">
             <Bed :size="16" />
-            <span class="font-medium">{{ content.bedrooms }}</span> bed
+            <span class="text-sm font-medium text-foreground">{{
+              content.bedrooms
+            }}</span>
           </div>
-          <div v-if="content.bathrooms" class="flex items-center gap-1">
+          <div v-if="content.bathrooms" class="flex items-center gap-1.5">
             <Bath :size="16" />
-            <span class="font-medium">{{ content.bathrooms }}</span> bath
+            <span class="text-sm font-medium text-foreground">{{
+              content.bathrooms
+            }}</span>
           </div>
-          <div v-if="content.area" class="flex items-center gap-1">
+          <div v-if="content.area" class="flex items-center gap-1.5">
             <Square :size="16" />
-            <span class="font-medium">{{ content.area }}</span> m²
+            <span class="text-sm font-medium text-foreground"
+              >{{ content.area }} m²</span
+            >
           </div>
         </div>
 
-        <!-- Description -->
-        <p v-if="content.description" class="mt-4 text-sm line-clamp-2">
+        <p
+          v-if="content.description"
+          class="text-sm leading-relaxed line-clamp-2 text-muted-foreground"
+        >
           {{ content.description }}
         </p>
 
-        <!-- Amenities -->
-        <div v-if="displayAmenities.length > 0" class="mt-4 h-full mb-auto">
-          <p class="mb-2 text-xs font-semibold uppercase text-muted-foreground">
-            Amenities
-          </p>
-          <div class="flex flex-wrap gap-2">
+        <div v-if="displayAmenities.length > 0" class="mt-4 mb-6">
+          <div class="flex flex-wrap gap-1.5">
             <Badge
               v-for="(amenity, index) in displayAmenities"
               :key="index"
-              variant="outline"
-              class="text-xs"
+              variant="secondary"
+              class="text-[10px] font-medium px-2 py-0"
             >
               {{ amenity }}
             </Badge>
-            <Badge
+            <span
               v-if="remainingAmenities > 0"
-              variant="outline"
-              class="text-xs font-semibold"
+              class="text-[10px] text-muted-foreground self-center"
             >
               +{{ remainingAmenities }} more
-            </Badge>
+            </span>
           </div>
         </div>
 
-        <!-- CTA Button -->
-        <div class="mt-6">
+        <div class="mt-auto">
           <nuxt-link
             v-if="content?.slug"
             :to="`/real-estate${content.slug}`"
             class="w-full"
           >
-            <Button class="w-full text-xs">{{
-              buttonText || "View Details"
-            }}</Button>
+            <Button class="w-full font-semibold">
+              {{ buttonText || "View Listing" }}
+            </Button>
           </nuxt-link>
         </div>
       </div>
