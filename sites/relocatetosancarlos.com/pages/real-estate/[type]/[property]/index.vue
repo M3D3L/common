@@ -15,11 +15,11 @@
           >
             {{ property.type }}
           </span>
-          <span v-if="property?.bedrooms" class="text-sm text-muted-foreground">
-            {{ property.bedrooms }} Bed • {{ property.bathrooms }} Bath
-          </span>
-          <span v-if="property?.area" class="text-sm text-muted-foreground">
-            • {{ property.area }} sq ft
+          <span
+            v-if="property?.address"
+            class="text-sm text-muted-foreground items-center flex"
+          >
+            {{ property.address }}
           </span>
         </div>
 
@@ -232,6 +232,10 @@ import {
   Facebook,
   Instagram,
   Check,
+  MapPin,
+  Bed,
+  Bath,
+  Square,
 } from "lucide-vue-next";
 
 const config = useRuntimeConfig();
