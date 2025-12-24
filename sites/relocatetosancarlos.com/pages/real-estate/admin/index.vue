@@ -116,7 +116,6 @@
 import { Plus, Save, RefreshCw } from "lucide-vue-next";
 import useAuth from "@common/composables/useAuth";
 import { useChatGPT } from "@common/composables/useChatGPT";
-
 // Shadcn
 import { Button } from "@common/components/ui/button";
 import { Card } from "@common/components/ui/card";
@@ -145,7 +144,6 @@ const {
   updateItem,
   deleteItem,
   invalidateCollectionCache,
-  isUserVerified,
 } = usePocketBaseCore();
 
 const { user } = useAuth();
@@ -277,8 +275,7 @@ const saveProperty = async () => {
             .map((a: any) => a.name.trim()),
         };
 
-        const instruction =
-          "You are a real estate copywriter. Based on the property data provided, generate ONLY a JSON object with 'sub_title' (short), 'description' (medium), and 'content' (long). Do not include any other text.";
+        const instruction = `Act as a real estate copywriter: using the provided data, return ONLY a JSON object with a catchy "sub_title" (max 120 chars), an informative "description" (max 300 chars), and engaging "content," using empty strings for missing data and omitting all other text. These homes are in San Carlos, Mexico. Respond in this exact JSON format:`;
 
         console.log("AI enrichment started with sanitized data...");
 

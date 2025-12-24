@@ -2,80 +2,166 @@
   <div
     class="container relative w-full p-6 font-body bg-background text-foreground md:py-10"
   >
-    <div class="flex flex-wrap items-center gap-2 mb-3">
-      <span
-        v-if="property?.type"
-        class="py-1 text-xs font-semibold uppercase rounded-full bg-primary/10 text-primary"
-      >
-        {{ property.type }}
-      </span>
-      <span v-if="property?.bedrooms" class="text-sm text-muted-foreground">
-        {{ property.bedrooms }} Bed • {{ property.bathrooms }} Bath
-      </span>
-      <span v-if="property?.area" class="text-sm text-muted-foreground">
-        • {{ property.area }} sq ft
-      </span>
+    <SeoMeta :seoData="computedSeoData" />
+
+    <div
+      class="flex flex-col gap-6 mb-8 md:flex-row md:items-start md:justify-between"
+    >
+      <div class="space-y-2">
+        <div class="flex flex-wrap items-center gap-2 mb-3">
+          <span
+            v-if="property?.type"
+            class="py-1 text-xs font-semibold uppercase rounded-full bg-primary/10 text-primary"
+          >
+            {{ property.type }}
+          </span>
+          <span v-if="property?.bedrooms" class="text-sm text-muted-foreground">
+            {{ property.bedrooms }} Bed • {{ property.bathrooms }} Bath
+          </span>
+          <span v-if="property?.area" class="text-sm text-muted-foreground">
+            • {{ property.area }} sq ft
+          </span>
+        </div>
+
+        <h1
+          class="text-3xl text-primary font-extrabold tracking-tight md:text-5xl"
+        >
+          {{ property?.title || "Property Details" }}
+        </h1>
+
+        <div class="flex items-center gap-4 text-sm font-medium md:text-base">
+          <span v-if="property?.bedrooms" class="flex items-center gap-1.5">
+            <Bed :size="18" class="text-muted-foreground" />
+            {{ property.bedrooms }} Bed
+          </span>
+          <span v-if="property?.bathrooms" class="flex items-center gap-1.5">
+            <Bath :size="18" class="text-muted-foreground" />
+            {{ property.bathrooms }} Bath
+          </span>
+          <span v-if="property?.area" class="flex items-center gap-1.5">
+            <Square :size="18" class="text-muted-foreground" />
+            {{ property.area }} sq ft
+          </span>
+        </div>
+
+        <p>
+          {{ property?.description }}
+        </p>
+      </div>
+
+      <div class="flex flex-row items-center gap-2 my-auto">
+        <div
+          v-if="property?.price"
+          class="text-3xl font-bold md:text-4xl text-primary"
+        >
+          ${{ property.price.toLocaleString() }}
+        </div>
+        <div
+          v-if="property?.pricingType"
+          class="text-sm font-medium text-muted-foreground"
+        >
+          {{ property.pricingType }}
+        </div>
+      </div>
     </div>
 
-    <section
-      id="video"
-      class="w-full"
-      aria-labelledby="video-heading aspect-video"
-    >
-      <SeoMeta :seoData="computedSeoData" />
-
-      <TitleBlock
-        :title="property?.title || 'Property Details'"
-        :description="
-          property?.description || 'Detailed information about the property.'
-        "
-        type="h1"
-        class="mb-6"
-      />
-
-      <PageTitle
-        :title="property?.title || 'Property Details'"
-        :description="
-          property?.description || 'Detailed information about the property.'
-        "
-        class="mb-6"
-      />
-
+    <section id="hero" class="w-full mb-10">
       <Card
         v-if="property?.video"
-        class="relative w-full h-full mb-4 overflow-hidden rounded-lg aspect-video"
-        role="region"
-        aria-label="Property Video Walkthrough"
+        class="relative w-full overflow-hidden rounded-xl aspect-video shadow-xl"
       >
-        <div class="aspect-video" ref="propertyHeroRef">
-          <video
-            class="absolute inset-0 object-cover w-full h-full rounded-lg"
-            :src="property?.video"
-            autoplay
-            muted
-            loop
-            playsinline
-            controls
-          ></video>
-        </div>
+        <video
+          class="absolute inset-0 object-cover w-full h-full"
+          :src="property?.video"
+          autoplay
+          muted
+          loop
+          playsinline
+          controls
+        ></video>
       </Card>
 
       <img
         v-else-if="imgSrc"
         :src="imgSrc"
-        :alt="`${property?.title} Cover Image`"
-        class="w-full h-auto mt-10 rounded-lg shadow-md"
+        :alt="property?.title"
+        class="w-full h-auto max-h-[600px] object-cover rounded-xl shadow-lg"
       />
     </section>
 
     <section
-      id="gallery"
-      class="w-full scroll-mt-24"
-      aria-labelledby="gallery-heading"
+      id="details"
+      class="grid grid-cols-1 gap-8 lg:grid-cols-3 scroll-mt-24"
     >
-      <!-- Section Title -->
-      <h2 class="mt-8 mb-4">Gallery</h2>
+      <div class="lg:col-span-2 space-y-10">
+        <div
+          class="prose prose-slate max-w-none"
+          v-html="property?.content"
+        ></div>
 
+        <Card class="p-6 md:p-8">
+          <h3 class="mb-6 text-xl font-bold border-b pb-4">
+            Property Specifics
+          </h3>
+
+          <dl class="grid grid-cols-1 gap-y-6 gap-x-12 sm:grid-cols-2">
+            <div v-if="property?.lotSize">
+              <dt
+                class="text-xs font-semibold text-muted-foreground uppercase tracking-wider"
+              >
+                Lot Size
+              </dt>
+              <dd class="text-lg font-medium">{{ property.lotSize }} acres</dd>
+            </div>
+            <div v-if="property?.type">
+              <dt
+                class="text-xs font-semibold text-muted-foreground uppercase tracking-wider"
+              >
+                Property Type
+              </dt>
+              <dd class="text-lg font-medium capitalize">
+                {{ property.type }}
+              </dd>
+            </div>
+          </dl>
+
+          <div v-if="property?.amenities?.length" class="mt-10">
+            <h4
+              class="mb-4 text-sm font-semibold text-muted-foreground uppercase"
+            >
+              Key Amenities
+            </h4>
+            <div class="grid grid-cols-2 gap-3 sm:grid-cols-3">
+              <div
+                v-for="(amenity, index) in property.amenities"
+                :key="index"
+                class="flex items-center gap-2 p-3 rounded-lg bg-muted/40"
+              >
+                <Check :size="16" class="text-green-600" />
+                <span class="text-sm font-medium">{{ amenity?.name }}</span>
+              </div>
+            </div>
+          </div>
+        </Card>
+      </div>
+
+      <Card
+        v-if="mapSrc !== 'https://maps.google.com/maps?q=,&z=14&output=embed'"
+        class="relative my-auto w-full h-[400px] bg-primary overflow-hidden rounded-xl shadow-md"
+      >
+        <iframe
+          class="inset-0 w-full h-full object-cover"
+          :src="mapSrc"
+          style="border: 0"
+          allowfullscreen
+          loading="lazy"
+          title="Property Location"
+        ></iframe>
+      </Card>
+    </section>
+
+    <section id="gallery" class="w-full lg:mt-0 mt-16 scroll-mt-24">
+      <h2 class="text-2xl font-bold">Photo Gallery</h2>
       <ModalCarousel
         :slides="slides"
         :collectionId="fetchedProperty?.items?.[0]?.collectionId"
@@ -83,135 +169,13 @@
       />
     </section>
 
-    <section
-      id="details"
-      class="w-full scroll-mt-24"
-      aria-labelledby="details-heading"
-    >
-      <div class="flex flex-col gap-6 mt-10 mb-6 md:flex-row">
-        <Card class="w-full p-8 rounded-lg shadow-md">
-          <h3 class="pb-2 mb-6 text-2xl font-semibold border-b border-gray-300">
-            Property Specifics
-          </h3>
-
-          <dl
-            class="grid grid-cols-1 items-center gap-y-3 gap-x-6 sm:grid-cols-2 text-foreground"
-          >
-            <template v-if="property?.price">
-              <dt class="text-sm text-gray-500 uppercase">Price</dt>
-              <dd class="text-lg font-bold">
-                ${{ property.price.toLocaleString() }}
-                {{ property.pricingType ? property.pricingType : "" }}
-              </dd>
-            </template>
-
-            <template v-if="property?.address">
-              <dt class="text-sm text-gray-500 uppercase">Address</dt>
-              <dd class="text-lg">{{ property.address }}</dd>
-            </template>
-
-            <template v-if="property?.bedrooms">
-              <dt class="text-sm text-gray-500 uppercase">Bedrooms</dt>
-              <dd class="text-lg">{{ property.bedrooms }}</dd>
-            </template>
-
-            <template v-if="property?.bathrooms">
-              <dt class="text-sm text-gray-500 uppercase">Bathrooms</dt>
-              <dd class="text-lg">{{ property.bathrooms }}</dd>
-            </template>
-
-            <template v-if="property?.area">
-              <dt class="text-sm text-gray-500 uppercase">Area</dt>
-              <dd class="text-lg">{{ property.area }} sq ft</dd>
-            </template>
-
-            <template v-if="property?.lotSize">
-              <dt class="text-sm text-gray-500 uppercase">Lot Size</dt>
-              <dd class="text-lg">{{ property.lotSize }} acres</dd>
-            </template>
-
-            <template v-if="property?.amenities?.length">
-              <dt class="text-sm text-gray-500 uppercase col-span-full">
-                Amenities
-              </dt>
-              <!-- List all the amenities here with an icon -->
-              <dd class="col-span-full">
-                <ul
-                  class="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-3"
-                >
-                  <li
-                    v-for="(amenity, amenityIndex) in property.amenities"
-                    :key="amenityIndex"
-                    class="flex flex-col justify-center text-center items-start gap-3 rounded-md px-3 py-2 transition-colors hover:bg-muted/60"
-                  >
-                    <span
-                      class="flex justify-center h-5 w-5 items-center mx-auto rounded-full bg-green-500/10 text-green-600 dark:text-green-400"
-                      aria-hidden="true"
-                    >
-                      <Check class="w-3 h-3" />
-                    </span>
-
-                    <p
-                      class="text-sm font-medium block mx-auto text-foreground/90"
-                    >
-                      {{ amenity?.name }}
-                    </p>
-                  </li>
-                </ul>
-              </dd></template
-            >
-          </dl>
-
-          <div class="pt-6 mt-8 border-t border-gray-300">
-            <p
-              v-if="
-                property?.type === 'rental' || property?.type === 'property'
-              "
-              class="leading-relaxed text-gray-700"
-            >
-              This is a <b>{{ property.type }}</b> with
-              <b>{{ property.bedrooms }}</b> bedrooms and
-              <b>{{ property.bathrooms }}</b> bathrooms. Total area:
-              <b>{{ property.area }}</b> sq ft.
-            </p>
-            <p
-              v-else-if="property?.type === 'lot'"
-              class="leading-relaxed text-gray-700"
-            >
-              This is a <b>lot</b> with <b>{{ property.lotSize }}</b> acres.
-            </p>
-            <p class="mt-4 text-sm italic text-gray-500">
-              <!-- Add more details -->
-              *Please note that all property details are subject to change.
-              Contact the realtor for the most up-to-date information.
-            </p>
-          </div>
-        </Card>
-        <Card
-          v-if="mapSrc !== 'https://maps.google.com/maps?q=,&z=14&output=embed'"
-          class="relative w-full md:min-w-[50%] min-h-[300px] rounded-lg shadow-md md:w-1/2 scroll-mt-40"
-          role="region"
-          aria-label="Property Location Map"
-        >
-          <iframe
-            class="absolute inset-0 w-full h-full rounded-lg"
-            :src="mapSrc"
-            style="border: 0"
-            allowfullscreen
-            loading="lazy"
-            referrerpolicy="no-referrer-when-downgrade"
-            title="Map showing the property location"
-          ></iframe>
-        </Card>
-      </div>
-      <div v-html="property?.content" type="p" class="mb-6 pt-6"></div>
-    </section>
-
     <section id="realtor" class="py-12 scroll-mt-40" ref="setSectionRef">
       <h2 class="mb-8 text-3xl font-bold sm:text-4xl font-heading text-primary">
         Realtor
       </h2>
-      <Card class="flex flex-col gap-6 py-6 md:flex-row md:gap-8">
+      <Card
+        class="flex flex-col gap-6 rounded-lg md:flex-row md:gap-8 border overflow-hidden shadow-md"
+      >
         <div class="flex-shrink-0 w-full md:w-1/3">
           <img
             :src="authorImageUrl"
@@ -220,9 +184,9 @@
           />
         </div>
 
-        <div class="flex flex-col justify-between w-full space-y-6 md:w-2/3">
+        <div class="grid w-full items-center md:w-2/3 lg:p-0 px-6 pb-6">
           <div>
-            <h3 class="text-2xl font-bold text-primary">
+            <h3 class="text-2xl font-bold text-primary md:mt-4 lg:mt-0">
               {{ property?.expand?.author?.name }}
             </h3>
             <p class="text-lg text-muted-foreground">
@@ -236,13 +200,13 @@
           <div class="flex flex-col gap-2 text-sm">
             <a
               :href="`mailto:${property?.expand?.author?.email}`"
-              class="flex items-center gap-2 hover:underline"
+              class="flex items-center gap-2 hover:underline hover:text-primary transition-colors"
             >
               <Mail class="w-4 h-4" /> {{ property?.expand?.author?.email }}
             </a>
             <a
               :href="`tel:${property?.expand?.author?.phone}`"
-              class="flex items-center gap-2 hover:underline"
+              class="flex items-center gap-2 hover:underline hover:text-primary transition-colors"
             >
               <Phone class="w-4 h-4" /> {{ property?.expand?.author?.phone }}
             </a>
