@@ -179,7 +179,7 @@
       <ImageGalleryUploader
         :key="modelValue.gallery?.length || 0"
         label="Gallery Images"
-        :name="`${modelValue?.title || 'gallery'}-gallery`"
+        :name="modelValue?.title || 'gallery'"
         :record-id="modelValue.id"
         :collection-id="modelValue.collectionId"
         :images="modelValue.gallery || []"
