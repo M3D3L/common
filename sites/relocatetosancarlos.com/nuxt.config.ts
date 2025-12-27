@@ -14,7 +14,11 @@ export default defineNuxtConfig({
   extends: ["../../nuxt.config.ts"],
   css: ["@/assets/css/tailwind.css"],
 
-  modules: ["@nuxtjs/sitemap", "@nuxtjs/robots"],
+  modules: ["@nuxtjs/sitemap", "@nuxtjs/robots", "nuxt-svgo"],
+  svgo: {
+    autoImportPath: "public/icons",
+    componentPrefix: "i",
+  },
 
   googleFonts: {
     families: {
