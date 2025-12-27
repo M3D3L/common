@@ -35,7 +35,7 @@
     "pinia-plugin-persistedstate": "^4.2.0",
     "pocketbase": "^0.26.0",
     "radix-vue": "^1.9.12",
-    "reka-ui": "^2.4.1",
+    "reka-ui": "^2.7.0",
     "shadcn-nuxt": "^0.11.3",
     "tailwind-merge": "^2.6.0",
     "tailwindcss-animate": "^1.0.7",

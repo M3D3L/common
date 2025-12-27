@@ -4,29 +4,40 @@
 
     <ul class="container pb-32 space-y-32">
       <template
-        v-if="currentCategory?.properties?.items?.length === 0"
-        :key="`no-items-${index}`"
+        v-if="
+          !pending &&
+          !currentCategory?.featuredProperty &&
+          currentCategory?.properties?.items?.length === 0
+        "
       >
-        <p
-          class="w-full h-[80vh] grid content-center text-center text-muted-foreground italic"
-        >
-          No results available right now. Please check back soon.
-        </p>
+        <li>
+          <p
+            class="w-full h-[80vh] grid content-center text-center text-muted-foreground italic"
+          >
+            No results available right now. Please check back soon.
+          </p>
+        </li>
       </template>
+
       <li v-else>
         <TextSectionTitle
-          class="pt-12 pb-16"
-          :title="currentCategory.title"
-          :description="currentCategory.sectionSubTitle"
+          class="pt-12 pb-6"
+          :title="currentCategory?.title"
+          :description="currentCategory?.sectionSubTitle"
           :h1="true"
+        />
+
+        <MoleculesFeaturedProperty
+          v-if="currentCategory?.featuredProperty"
+          :content="currentCategory.featuredProperty"
+          class="mb-6"
         />
 
         <div class="flex flex-col gap-6 lg:flex-row">
           <div class="grid content-center w-full gap-6 md:grid-cols-2 lg:w-2/3">
-            <!-- Display properties -->
             <CardsPropertyCard
               v-for="(item, itemIndex) in currentCategory?.properties?.items"
-              :key="`property-${itemIndex}`"
+              :key="item.id || `property-${itemIndex}`"
               :content="item"
             />
 
@@ -89,62 +100,68 @@ const currentCategory = computed(() => {
 });
 
 const {
-  data: properties,
+  data: propertyData,
   pending,
-  error,
   refresh,
-} = await useAsyncData(`properties-${type.value}-${page.value}`, async () => {
-  if (typeMap[type.value]) {
+} = await useAsyncData(
+  `properties-split-${type.value}-${page.value}`,
+  async () => {
+    if (!typeMap[type.value]) return null;
     const { query } = typeMap[type.value];
-    return await fetchCollection(
+
+    // 1. Fetch exactly one featured item for this type
+    const featuredRes = await fetchCollection(
+      "properties",
+      1,
+      1,
+      `type="${query}" && featured=true`,
+      "-created"
+    );
+
+    // 2. Fetch standard items (where featured is false)
+    const standardRes = await fetchCollection(
       "properties",
       page.value,
       perPage,
-      `type="${query}"`,
-      "-created",
-      ""
+      `type="${query}" && featured=false`,
+      "-created"
     );
+
+    return {
+      featured: featuredRes.items[0] || null,
+      standard: standardRes,
+    };
   }
-  return null;
-});
-
-const computedSeoData = computed(() =>
-  createSeoObject({
-    title: currentCategory.value.title,
-    summary: currentCategory.value.subTitle,
-    keywords: currentCategory.value.keywords,
-    pubDate: "",
-    byline: currentCategory.value.cta,
-    siteName: config.public.siteName,
-    twitterSite: config.public.twitterSite,
-
-    // Optional for homepage JSON-LD customization
-    jsonLd: {
-      "@type": "WebSite",
-      url: config.public.siteUrl,
-      name: currentCategory.value.title,
-      description: currentCategory.value.subTitle,
-      publisher: {
-        "@type": "Organization",
-        name: config.public.siteName,
-      },
-    },
-  })
 );
 
-// Update the category's properties reactive value when the async data is fetched
+// Sync both standard list and featured item to your category object
 watch(
-  properties,
-  (newProperties) => {
-    if (currentCategory.value) {
-      currentCategory.value.properties = newProperties;
+  propertyData,
+  (newData) => {
+    if (currentCategory.value && newData) {
+      currentCategory.value.properties = newData.standard;
+      currentCategory.value.featuredProperty = newData.featured;
     }
   },
   { immediate: true }
 );
 
-// Watch for changes in route parameters and manually refresh data
 watch([type, page], () => {
   refresh();
 });
+
+const computedSeoData = computed(() =>
+  createSeoObject({
+    title: currentCategory.value?.title || "",
+    summary: currentCategory.value?.subTitle || "",
+    keywords: currentCategory.value?.keywords || [],
+    siteName: config.public.siteName,
+    twitterSite: config.public.twitterSite,
+    jsonLd: {
+      "@type": "WebSite",
+      url: config.public.siteUrl,
+      name: currentCategory.value?.title,
+    },
+  })
+);
 </script>
