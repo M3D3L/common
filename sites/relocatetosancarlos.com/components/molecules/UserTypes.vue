@@ -14,12 +14,7 @@
           <CardContent class="flex flex-col h-full p-8">
             <div class="flex items-start justify-between">
               <!-- icon wrapper -->
-              <div
-                :class="[
-                  ' group-hover:scale-110 group-hover:rotate-3 -mt-8',
-                  getColorTheme(index).softBg,
-                ]"
-              >
+              <div class="group-hover:scale-110 group-hover:rotate-3 -mt-8">
                 <!-- SVG COMPONENT (NOT <img>) -->
                 <i-tetakawi
                   class="text-8xl h-auto transition-colors duration-300"
