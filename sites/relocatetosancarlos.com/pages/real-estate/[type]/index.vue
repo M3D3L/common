@@ -74,7 +74,7 @@
 
 <script lang="ts" setup>
 import { categories } from "~/assets/configs/layout.js";
-import { createSeoObject } from "~/composables/useSeo";
+import { createSeoObject } from "@common/composables/useSeo";
 
 const { fetchCollection } = usePocketBaseCore();
 const config = useRuntimeConfig();
