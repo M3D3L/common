@@ -23,22 +23,35 @@ export default defineNuxtConfig({
   modules: ["@nuxtjs/sitemap", "@nuxtjs/robots", "nuxt-svgo"],
 
   /* -----------------------------
-   * SITEMAP (THIS FIXES YOUR ISSUE)
+   * SITEMAP (EXPLICIT + AUTO)
    * ----------------------------- */
   sitemap: {
+    urls: [
+      { loc: "/" },
+      { loc: "/blog" },
+      { loc: "/real-estate" },
+
+      // REAL ESTATE SECTIONS
+      { loc: "/real-estate/lots" },
+      { loc: "/real-estate/rentals" },
+      { loc: "/real-estate/properties" },
+
+      // Login Pages
+      { loc: "/login" },
+      { loc: "/register" },
+    ],
+
     exclude: [
       "/api/**",
       "/_nuxt/**",
-      "/blog/admin",
       "/blog/admin/**",
-      "/real-estate/admin",
       "/real-estate/admin/**",
     ],
   },
 
-  /* --------------------------------
-   * ROUTE RULES (EXTRA SAFETY)
-   * -------------------------------- */
+  /* -----------------------------
+   * ROUTE RULES (NO INDEX)
+   * ----------------------------- */
   routeRules: {
     "/blog/admin/**": { index: false },
     "/real-estate/admin/**": { index: false },
@@ -47,37 +60,24 @@ export default defineNuxtConfig({
   },
 
   /* -----------------------------
-   * ROBOTS.TXT (CRAWLER CONTROL)
+   * ROBOTS
    * ----------------------------- */
   robots: {
     rules: [
       {
         userAgent: "*",
         allow: "/",
-        disallow: [
-          "/api",
-          "/_nuxt",
-          "/blog/admin",
-          "/blog/admin/",
-          "/real-estate/admin",
-          "/real-estate/admin/",
-        ],
+        disallow: ["/api", "/_nuxt", "/blog/admin", "/real-estate/admin"],
       },
     ],
     sitemap: "https://relocatetosancarlos.com/sitemap.xml",
   },
 
-  /* -----------------------------
-   * SVGO
-   * ----------------------------- */
   svgo: {
     autoImportPath: "public/icons",
     componentPrefix: "i",
   },
 
-  /* -----------------------------
-   * GOOGLE FONTS
-   * ----------------------------- */
   googleFonts: {
     families: {
       Montserrat: { wght: [300, 400, 500, 700] },
