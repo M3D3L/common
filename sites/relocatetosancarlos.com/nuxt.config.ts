@@ -2,24 +2,82 @@ import path from "path";
 
 export default defineNuxtConfig({
   compatibilityDate: "2025-08-30",
+
   nitro: {
     preset: "github-pages",
   },
+
   app: {
     baseURL: "/",
     buildAssetsDir: "/_nuxt/",
   },
+
   ssr: false,
+
   devtools: { enabled: true },
+
   extends: ["../../nuxt.config.ts"],
+
   css: ["@/assets/css/tailwind.css"],
 
   modules: ["@nuxtjs/sitemap", "@nuxtjs/robots", "nuxt-svgo"],
+
+  /* -----------------------------
+   * SITEMAP (THIS FIXES YOUR ISSUE)
+   * ----------------------------- */
+  sitemap: {
+    exclude: [
+      "/api/**",
+      "/_nuxt/**",
+      "/blog/admin",
+      "/blog/admin/**",
+      "/real-estate/admin",
+      "/real-estate/admin/**",
+    ],
+  },
+
+  /* --------------------------------
+   * ROUTE RULES (EXTRA SAFETY)
+   * -------------------------------- */
+  routeRules: {
+    "/blog/admin/**": { index: false },
+    "/real-estate/admin/**": { index: false },
+    "/api/**": { index: false },
+    "/_nuxt/**": { index: false },
+  },
+
+  /* -----------------------------
+   * ROBOTS.TXT (CRAWLER CONTROL)
+   * ----------------------------- */
+  robots: {
+    rules: [
+      {
+        userAgent: "*",
+        allow: "/",
+        disallow: [
+          "/api",
+          "/_nuxt",
+          "/blog/admin",
+          "/blog/admin/",
+          "/real-estate/admin",
+          "/real-estate/admin/",
+        ],
+      },
+    ],
+    sitemap: "https://relocatetosancarlos.com/sitemap.xml",
+  },
+
+  /* -----------------------------
+   * SVGO
+   * ----------------------------- */
   svgo: {
     autoImportPath: "public/icons",
     componentPrefix: "i",
   },
 
+  /* -----------------------------
+   * GOOGLE FONTS
+   * ----------------------------- */
   googleFonts: {
     families: {
       Montserrat: { wght: [300, 400, 500, 700] },
@@ -41,17 +99,6 @@ export default defineNuxtConfig({
   site: {
     url: "https://relocatetosancarlos.com",
     name: "Relocate to San Carlos",
-  },
-
-  robots: {
-    rules: [
-      {
-        userAgent: "*",
-        allow: "/",
-        disallow: ["/api", "/_nuxt", "/blog/admin", "/real-estate/admin"],
-      },
-    ],
-    sitemap: "https://relocatetosancarlos.com/sitemap.xml",
   },
 
   runtimeConfig: {
