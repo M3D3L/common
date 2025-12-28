@@ -26,7 +26,16 @@ export default defineNuxtConfig({
   modules: ["@nuxtjs/sitemap", "@nuxtjs/robots", "nuxt-svgo"],
 
   /* -----------------------------
-   * SITEMAP (SAFE TO KEEP)
+   * ROUTING
+   * ----------------------------- */
+  router: {
+    options: {
+      trailingSlash: true,
+    },
+  },
+
+  /* -----------------------------
+   * SITEMAP
    * ----------------------------- */
   sitemap: {
     urls: [
