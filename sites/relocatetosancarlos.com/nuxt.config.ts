@@ -3,6 +3,9 @@ import path from "path";
 export default defineNuxtConfig({
   compatibilityDate: "2025-08-30",
 
+  /* -----------------------------
+   * DEPLOYMENT
+   * ----------------------------- */
   nitro: {
     preset: "github-pages",
   },
@@ -23,52 +26,41 @@ export default defineNuxtConfig({
   modules: ["@nuxtjs/sitemap", "@nuxtjs/robots", "nuxt-svgo"],
 
   /* -----------------------------
-   * SITEMAP (THIS FIXES YOUR ISSUE)
+   * SITEMAP (SAFE TO KEEP)
    * ----------------------------- */
   sitemap: {
+    urls: [
+      { loc: "/" },
+      { loc: "/blog" },
+      { loc: "/real-estate" },
+      { loc: "/real-estate/lots" },
+      { loc: "/real-estate/rentals" },
+      { loc: "/real-estate/properties" },
+    ],
     exclude: [
       "/api/**",
       "/_nuxt/**",
-      "/blog/admin",
       "/blog/admin/**",
-      "/real-estate/admin",
       "/real-estate/admin/**",
     ],
   },
 
-  /* --------------------------------
-   * ROUTE RULES (EXTRA SAFETY)
-   * -------------------------------- */
-  routeRules: {
-    "/blog/admin/**": { index: false },
-    "/real-estate/admin/**": { index: false },
-    "/api/**": { index: false },
-    "/_nuxt/**": { index: false },
-  },
-
   /* -----------------------------
-   * ROBOTS.TXT (CRAWLER CONTROL)
+   * ROBOTS.TXT (CRAWL CONTROL ONLY)
    * ----------------------------- */
   robots: {
     rules: [
       {
         userAgent: "*",
         allow: "/",
-        disallow: [
-          "/api",
-          "/_nuxt",
-          "/blog/admin",
-          "/blog/admin/",
-          "/real-estate/admin",
-          "/real-estate/admin/",
-        ],
+        disallow: ["/api", "/_nuxt", "/blog/admin", "/real-estate/admin"],
       },
     ],
     sitemap: "https://relocatetosancarlos.com/sitemap.xml",
   },
 
   /* -----------------------------
-   * SVGO
+   * SVG
    * ----------------------------- */
   svgo: {
     autoImportPath: "public/icons",
@@ -76,7 +68,7 @@ export default defineNuxtConfig({
   },
 
   /* -----------------------------
-   * GOOGLE FONTS
+   * FONTS
    * ----------------------------- */
   googleFonts: {
     families: {
@@ -88,19 +80,31 @@ export default defineNuxtConfig({
     download: true,
   },
 
+  /* -----------------------------
+   * BUILD
+   * ----------------------------- */
   build: {
     transpile: ["vueuc"],
   },
 
+  /* -----------------------------
+   * ALIASES
+   * ----------------------------- */
   alias: {
     "@common": path.resolve(__dirname, "../../"),
   },
 
+  /* -----------------------------
+   * SITE META
+   * ----------------------------- */
   site: {
     url: "https://relocatetosancarlos.com",
     name: "Relocate to San Carlos",
   },
 
+  /* -----------------------------
+   * RUNTIME CONFIG
+   * ----------------------------- */
   runtimeConfig: {
     public: {
       pocketbaseUrl:
