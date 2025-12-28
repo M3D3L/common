@@ -16,9 +16,9 @@ const headConfig = computed(() => {
     title: base.title,
     meta: [
       ...base.meta,
-      ...(props.noIndex
-        ? [{ name: "robots", content: "noindex, follow" }]
-        : []),
+      // ...(props.noIndex
+      //   ? [{ name: "robots", content: "noindex, follow" }]
+      //   : []),
     ],
     link: [...(base.link || [])],
     script: [
