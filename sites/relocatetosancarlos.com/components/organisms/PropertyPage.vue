@@ -76,16 +76,16 @@
 import { categories } from "~/assets/configs/layout.js";
 import { createSeoObject } from "@common/composables/useSeo";
 
+const props = defineProps<{
+  type: string;
+}>();
+
 const { fetchCollection } = usePocketBaseCore();
 const config = useRuntimeConfig();
 const route = useRoute();
 
 const page = computed(() => Number(route.query.page) || 1);
 const perPage = 10;
-const type = computed(
-  () => (route.params.type as string | undefined)?.toLowerCase() ?? ""
-);
-
 const typeMap: Record<string, { index: number; query: string }> = {
   properties: { index: 0, query: "property" },
   rentals: { index: 1, query: "rental" },
@@ -93,8 +93,8 @@ const typeMap: Record<string, { index: number; query: string }> = {
 };
 
 const currentCategory = computed(() => {
-  if (typeMap[type.value]) {
-    return categories[typeMap[type.value].index];
+  if (typeMap[props?.type]) {
+    return categories[typeMap[props.type].index];
   }
   return null;
 });
@@ -104,10 +104,10 @@ const {
   pending,
   refresh,
 } = await useAsyncData(
-  `properties-split-${type.value}-${page.value}`,
+  `properties-split-${props.type}-${page.value}`,
   async () => {
-    if (!typeMap[type.value]) return null;
-    const { query } = typeMap[type.value];
+    if (!typeMap[props.type]) return null;
+    const { query } = typeMap[props.type];
 
     // 1. Fetch exactly one featured item for this type
     const featuredRes = await fetchCollection(
@@ -146,7 +146,7 @@ watch(
   { immediate: true }
 );
 
-watch([type, page], () => {
+watch([props.type, page], () => {
   refresh();
 });
 
