@@ -68,10 +68,26 @@
           </DialogDescription>
         </DialogHeader>
 
-        <AtomsPropertyForm
-          v-model="formData"
-          :author-display="getAuthorDisplay()"
-        />
+        <div class="px-6 py-4 space-y-4 overflow-y-auto">
+          <AtomsPropertyForm
+            v-model="formData"
+            :author-display="getAuthorDisplay()"
+          />
+
+          <div class="space-y-2 pb-6">
+            <Label for="keywords" class="text-sm font-medium"
+              >Keywords (SEO)</Label
+            >
+            <Input
+              id="keywords"
+              v-model="formData.keywords"
+              placeholder="ocean view, luxury, beachfront..."
+            />
+            <p class="text-[10px] text-muted-foreground italic">
+              AI will generate these if left empty.
+            </p>
+          </div>
+        </div>
 
         <div class="p-6 border-t bg-muted/20 flex justify-end gap-3">
           <Button variant="outline" @click="showModal = false">Cancel</Button>
@@ -118,6 +134,8 @@ import useAuth from "@common/composables/useAuth";
 import { useChatGPT } from "@common/composables/useChatGPT";
 // Shadcn
 import { Button } from "@common/components/ui/button";
+import { Input } from "@common/components/ui/input";
+import { Label } from "@common/components/ui/label";
 import { Card } from "@common/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@common/components/ui/tabs";
 import {
@@ -160,7 +178,14 @@ const isEditing = ref(false);
 const saving = ref(false);
 const deleting = ref(false);
 const propertyToDelete = ref<any>(null);
-const disableAi = ref(true);
+
+// PERSISTENCE: Initialize from localStorage or default to true (meaning AI is disabled by default)
+const disableAi = ref(localStorage.getItem("property_ai_disabled") !== "false");
+
+// Watch for changes to save state to localStorage
+watch(disableAi, (newVal) => {
+  localStorage.setItem("property_ai_disabled", newVal.toString());
+});
 
 const getInitialFormData = () => ({
   id: null,
@@ -169,6 +194,7 @@ const getInitialFormData = () => ({
   sub_title: "",
   description: "",
   content: "",
+  keywords: "", // Added Keywords field
   type: "property",
   price: 0,
   pricingType: "usd",
@@ -213,7 +239,8 @@ const needsAIEnrichment = (data: any) => {
   return (
     !data.description?.trim() ||
     !data.content?.trim() ||
-    !data.sub_title?.trim()
+    !data.sub_title?.trim() ||
+    !data.keywords?.trim() // Also check if keywords are missing
   );
 };
 
@@ -248,6 +275,7 @@ const openEditModal = (property: any) => {
   formData.value = {
     ...property,
     amenities: Array.isArray(property.amenities) ? [...property.amenities] : [],
+    keywords: property.keywords || "", // Ensure keywords are loaded
   };
   showModal.value = true;
 };
@@ -260,8 +288,6 @@ const saveProperty = async () => {
     /* ---- AI enrichment (NON-BLOCKING) ---- */
     if (needsAIEnrichment(formData.value) && !disableAi.value) {
       try {
-        // 1. Sanitize: Create a lightweight object with ONLY text data
-        // This prevents sending massive image strings/blobs to OpenAI which cause 429 errors
         const aiContext = {
           title: formData.value.title,
           type: formData.value.type,
@@ -275,19 +301,19 @@ const saveProperty = async () => {
             .map((a: any) => a.name.trim()),
         };
 
-        const instruction = `Act as a senior Real Estate SEO Copywriter. Using the provided property data, generate a high-conversion, SEO-optimized JSON object, ONLY USE KEYWORDS BASED OFF THE data that is available. DO NOT MAKE ANY UP.
-
+        const instruction = `Act as a senior Real Estate SEO Copywriter. Using the provided property data, generate a high-conversion, SEO-optimized JSON object. 
+        
 Strategy:
-1. sub_title: Use high-intent keywords (e.g., "Ocean View," "Near Marina," "Modern Villa"). Max 120 chars.
-2. description: Craft a Meta Description style summary. Include "San Carlos, Mexico" and primary features. Max 300 chars.
-3. content: Use semantic HTML (h2, p, strong) within the string. Focus on the "San Carlos Lifestyle"—mention the Sea of Cortez, proximity to beaches, or Tetakawi peaks. 
-4. SEO: Incorporate local keywords naturally to rank for "San Carlos Sonora real estate" and "homes for sale in San Carlos Mexico. Base it off the type of property and amenities."
+1. sub_title: High-intent keywords. Max 120 chars.
+2. description: Meta Description style summary. Max 300 chars.
+3. content: Semantic HTML (h2, p, strong). Focus on San Carlos Lifestyle.
+4. keywords: Generate a comma-separated string of 8-12 relevant SEO keywords. ONLY USE KEYWORDS BASED OFF THE data available (type, location, amenities, features).
 
 Return ONLY a JSON object with empty strings for missing data. Omit all other text. 
 
-Format:`;
+Format: { "sub_title": "...", "description": "...", "content": "...", "keywords": "..." }`;
 
-        console.log("AI enrichment started with sanitized data...");
+        console.log("AI enrichment started with keywords extraction...");
 
         const aiPromise = runChatGPT(instruction, aiContext);
         const timeoutPromise = new Promise<string>((_, reject) =>
@@ -297,11 +323,10 @@ Format:`;
         const aiResult = await Promise.race([aiPromise, timeoutPromise]);
 
         if (aiResult) {
-          // Robust JSON Parsing (Strips markdown blocks if present)
           const cleanJsonString = aiResult.replace(/```json|```/gi, "").trim();
           const parsed = JSON.parse(cleanJsonString);
 
-          // Update missing fields locally in formData
+          // Update missing fields locally
           if (!formData.value.sub_title && parsed.sub_title) {
             formData.value.sub_title = parsed.sub_title.slice(0, 120);
           }
@@ -311,16 +336,12 @@ Format:`;
           if (!formData.value.content && parsed.content) {
             formData.value.content = parsed.content;
           }
+          if (!formData.value.keywords && parsed.keywords) {
+            formData.value.keywords = parsed.keywords;
+          }
         }
       } catch (err: any) {
-        // SILENT FAIL — continue saving with manual data if AI service fails or 429 occurs
-        if (err.message?.includes("429")) {
-          console.warn(
-            "AI Rate limit reached (429). Saving without enrichment."
-          );
-        } else {
-          console.warn("AI enrichment skipped or failed:", err.message);
-        }
+        console.warn("AI enrichment failed:", err.message);
       }
     }
 
@@ -332,8 +353,6 @@ Format:`;
     };
 
     const folder = folderMap[formData.value.type] || "properties";
-
-    // Generate slug from title
     const titleSlug = formData.value.title
       .toLowerCase()
       .trim()
@@ -344,17 +363,14 @@ Format:`;
 
     const payload = {
       ...formData.value,
-      // Update slug if it's new or the type changed
       slug:
         !isEditing.value || !formData.value.slug?.startsWith(`/${folder}/`)
           ? slug
           : formData.value.slug,
-      // Ensure author is just an ID
       author:
         typeof formData.value.author === "object"
           ? formData.value.author?.id
           : formData.value.author || user.value?.id,
-      // Final cleanup of amenities list
       amenities: formData.value.amenities
         .filter((a: any) => a?.name?.trim())
         .map((a: any) => ({ name: a.name.trim() })),
@@ -367,7 +383,6 @@ Format:`;
       await createItem("properties", payload);
     }
 
-    // Refresh data and UI
     ["properties", "rentals", "lots"].forEach(invalidateCollectionCache);
     await loadProperties(true);
     showModal.value = false;

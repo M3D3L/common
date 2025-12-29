@@ -313,7 +313,7 @@ const computedSeoData = computed(() => {
     imageUri: imgSrc.value,
     pubDate: property.value.created,
     byline: property.value.expand?.author?.name || "",
-    keywords: `${property.value.type}, real estate, ${property.value.address}`,
+    keywords: `${property.value.keywords}`,
   });
 });
 
