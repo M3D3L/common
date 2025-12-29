@@ -27,8 +27,6 @@ const computedSeoData = computed(() =>
     imageUri: blogSection.imgSrc,
     pubDate: "",
     byline: blogSection.byline,
-    siteName: config.public.siteName,
-    twitterSite: config.public.twitterSite,
 
     // Optional for homepage JSON-LD customization
     jsonLd: {

@@ -132,7 +132,6 @@
                   v-html="post.description"
                   class="text-xl leading-relaxed text-muted-foreground"
                 ></p>
-
                 <ContainersHtml v-if="post.content" :content="post?.content" />
               </article>
 
@@ -239,13 +238,17 @@
 </template>
 
 <script setup lang="ts">
+import { useRoute, useRuntimeConfig, useAsyncData } from "#app";
 import { motion } from "motion-v";
 import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader, // Note: CardHeader is imported but not used in the template
-} from "@/components/ui/card";
+  Calendar,
+  Clock,
+  MessageSquare,
+  Heart,
+  Share2,
+  ArrowLeft,
+} from "lucide-vue-next";
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -255,132 +258,109 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import TooltipProvider from "@/components/ui/tooltip/TooltipProvider.vue";
+
 import { formatDate } from "@/composables/blogHelpers";
-import type { RecordModel } from "pocketbase";
 import { createSeoObject } from "@/composables/useSeo";
 import SeoMeta from "@/components/SeoMeta.vue";
 import { seoDefaults } from "~/assets/configs/layout.js";
 
 const config = useRuntimeConfig();
-
-const { fetchPostBySlug } = usePosts();
 const route = useRoute();
+const { fetchPostBySlug } = usePosts();
 
-const post = ref<RecordModel | null>(null);
+// 1. DATA FETCHING (SSR)
+const { data: fetchedPost } = await useAsyncData(
+  `blog-${route.path}`,
+  async () => {
+    const fullSlug = route.path.replace("/blog", "");
+    return await fetchPostBySlug(fullSlug, config.public.blogType as string);
+  }
+);
+
+// Reactivity
+const post = computed(() => fetchedPost.value || null);
 const isLiked = ref(false);
 
-const props = defineProps({
-  type: {
-    type: String,
-    default: "posts",
-  },
-});
-
-onMounted(async () => {
-  try {
-    // Extract the slug from the route
-    const fullSlug = route.path.replace("/blog", "");
-    post.value = await fetchPostBySlug(
-      fullSlug,
-      config.public.blogType as string
-    );
-  } catch (error) {
-    console.error("Error fetching post:", error);
-  }
-});
-
-const likePost = () => {
-  isLiked.value = !isLiked.value;
-  if (post.value) {
-    if (isLiked.value) {
-      post.value.likes = (post.value.likes || 0) + 1;
-    } else {
-      post.value.likes = Math.max(0, (post.value.likes || 1) - 1);
-    }
-  }
-};
-
-const calculateReadingTime = (html: string) => {
-  if (!html) return "0 min read";
-  const textContent = html?.replace(/<[^>]*>/g, " ") || "";
-  const wordCount = textContent?.trim().split(/\s+/).length;
-  const readingTime = Math.ceil(wordCount / 200); // 200 words per minute
-  return `${readingTime} min read`;
-};
-
-const scrollToComments = () => {
-  const commentsSection = document.getElementById("comments-section");
-  if (commentsSection) {
-    commentsSection.scrollIntoView({ behavior: "smooth" });
-  }
-};
-
-const navigateToTag = (tag: string) => {
-  const encodedTag = encodeURIComponent(tag);
-  window.location.href = `/blog/tag/${encodedTag}`;
-};
-
-const getInitials = (name: string) => {
-  return (
-    name
-      ?.split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase() || ""
-  );
-};
-
+// 2. SEO LOGIC
 const computedSeoData = computed(() => {
   if (!post.value) {
     return createSeoObject({
-      title: `${config.public.siteName as string} Blog`,
-      summary: `Find essential information about ${
-        config.public.siteName as string
-      }`,
+      title: `${config.public.siteName} Blog`,
+      summary: `Find essential information about our services.`,
     });
   }
 
-  const postData = post.value;
-  const authorUsername =
-    postData?.expand?.author?.username || postData.author || "";
-
-  const fullImageUri = postData.cover_image
-    ? `${config.public.pocketbaseUrl}api/files/${postData.collectionId}/${postData.id}/${postData.cover_image}`
+  const p = post.value;
+  const author = p.expand?.author?.username || p.author || "Admin";
+  const image = p.cover_image
+    ? `${config.public.pocketbaseUrl}api/files/${p.collectionId}/${p.id}/${p.cover_image}`
     : undefined;
 
-  // Format tags into a single string, checking if postData.tags is an array
-  const tagsString = Array.isArray(postData.tags)
-    ? postData.tags.join(", ")
-    : postData.tags || "";
+  // Cleanup description for SEO (no HTML tags)
+  const cleanDescription =
+    p.description?.replace(/<[^>]*>/g, "").substring(0, 160) || "";
 
   return createSeoObject({
-    title: postData.title,
-    summary: postData.description,
-    imageUri: fullImageUri,
-    pubDate: postData.created,
-    keywords: postData.keywords,
-    siteName: (config.public.siteName as string) || seoDefaults.siteName,
-    twitterSite:
-      (config.public.twitterSite as string) || seoDefaults?.twitterSite,
-    byline: authorUsername,
-    tags: tagsString,
-    // Use the route path for canonical URL generation
-    ogUrl: route.path,
-    twitterCreator: authorUsername,
-
-    // Optional for homepage JSON-LD customization
+    title: p.title,
+    summary: cleanDescription,
+    imageUri: image,
+    pubDate: p.created,
+    keywords: Array.isArray(p.tags) ? p.tags.join(", ") : p.keywords,
+    byline: author,
+    tags: Array.isArray(p.tags) ? p.tags.join(", ") : "",
+    twitterCreator: author,
     jsonLd: {
-      "@type": "WebSite",
-      url: config.public.siteUrl || seoDefaults.siteUrl,
-      name: seoDefaults.home.title,
-      description: seoDefaults.home.description,
-      publisher: {
-        "@type": "Organization",
-        name: config.public.siteName || seoDefaults.siteName,
-      },
+      "@context": "https://schema.org",
+      "@type": "BlogPosting",
+      headline: p.title,
+      image: image,
+      author: { "@type": "Person", name: author },
+      datePublished: p.created,
+      description: cleanDescription,
     },
   });
 });
+
+// 3. ACTION LOGIC
+const likePost = () => {
+  if (!post.value) return;
+  isLiked.value = !isLiked.value;
+  if (isLiked.value) {
+    post.value.likes = (post.value.likes || 0) + 1;
+  } else {
+    post.value.likes = Math.max(0, (post.value.likes || 1) - 1);
+  }
+  // Optional: Call your API here to persist the like
+};
+
+const calculateReadingTime = (html: string) => {
+  if (!html) return "1 min read";
+  const words = html
+    .replace(/<[^>]*>/g, " ")
+    .trim()
+    .split(/\s+/).length;
+  return `${Math.ceil(words / 200)} min read`;
+};
+
+const getInitials = (name: string) => {
+  if (!name) return "A";
+  return name
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase()
+    .substring(0, 2);
+};
+
+const scrollToComments = () => {
+  document
+    .getElementById("comments-section")
+    ?.scrollIntoView({ behavior: "smooth" });
+};
+
+const navigateToTag = (tag: string) => {
+  window.location.href = `/blog/tag/${encodeURIComponent(tag)}`;
+};
 </script>
 
 <style>

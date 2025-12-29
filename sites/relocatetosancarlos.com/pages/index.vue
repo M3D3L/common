@@ -83,9 +83,6 @@ const computedSeoData = computed(() =>
     imageUri: seoDefaults.home.image,
     pubDate: "",
     byline: seoDefaults.home.byline,
-    siteName: config.public.siteName,
-    twitterSite: config.public.twitterSite,
-
     // Optional for homepage JSON-LD customization
     jsonLd: {
       "@type": "WebSite",

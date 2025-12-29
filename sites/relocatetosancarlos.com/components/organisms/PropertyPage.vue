@@ -155,8 +155,6 @@ const computedSeoData = computed(() =>
     title: currentCategory.value?.title || "",
     summary: currentCategory.value?.subTitle || "",
     keywords: currentCategory.value?.keywords || [],
-    siteName: config.public.siteName,
-    twitterSite: config.public.twitterSite,
     jsonLd: {
       "@type": "WebSite",
       url: config.public.siteUrl,

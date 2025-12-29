@@ -6,7 +6,6 @@ interface CreateSeoObjectParams {
   byline?: string;
   tags?: string;
   keywords?: string;
-  twitterSite?: string;
   twitterCreator?: string;
   page?: string | number;
   hideSiteName?: boolean;
@@ -63,18 +62,17 @@ function buildPageTitle(
 function normalizeUrl(url: string, page: string): string {
   if (!url) return "";
   try {
-    const urlObj = new URL(url);
+    // Remove trailing slashes for consistency before creating URL object
+    const sanitizedBase = url.replace(/\/$/, "");
+    const urlObj = new URL(sanitizedBase);
     const isPageOne = page === "1";
 
     if (isPageOne) {
       urlObj.search = "";
     } else {
-      const pageValue = urlObj.searchParams.get("page");
-      urlObj.search = "";
-      if (pageValue) {
-        urlObj.searchParams.set("page", pageValue);
-      }
+      urlObj.searchParams.set("page", page);
     }
+
     return urlObj.toString().replace("http:", "https:");
   } catch {
     return url.split("?")[0].replace("http:", "https:");
@@ -89,19 +87,21 @@ export function createSeoObject({
   byline,
   tags = "",
   keywords = "",
-  twitterSite = "@relocatetosc",
   twitterCreator = "",
   page = "1",
   hideSiteName = false,
   jsonLd = null,
 }: CreateSeoObjectParams): SeoObject {
-  // Accessing config inside the function
+  // 1. Get Nuxt context (must be inside the function)
   const config = useRuntimeConfig();
+  const route = useRoute();
 
-  // These must match the keys in your nuxt.config.ts
-  const siteName = config.public.siteName || "Default Site Name";
-  const siteUrl = config.public.siteUrl || "";
+  // 2. Get site settings from config
+  const siteName = config.public.siteName || "";
+  const baseSiteUrl = config.public.siteUrl || "";
+  const twitterSite = config.public.twitterSite;
 
+  // 3. Unwrap inputs
   const unwrappedTitle = unref(title);
   const unwrappedSummary = unref(summary);
   const unwrappedPage = unref(page)?.toString() || "1";
@@ -113,6 +113,7 @@ export function createSeoObject({
   const unwrappedTwitterSite = unref(twitterSite);
   const unwrappedTwitterCreator = unref(twitterCreator);
 
+  // 4. Construct the Title
   const finalTitle = buildPageTitle(
     unwrappedTitle,
     unwrappedPage,
@@ -120,14 +121,19 @@ export function createSeoObject({
     hideSiteName
   );
 
-  // Use the config value for the canonical and og:url
-  const canonicalUrl = normalizeUrl(siteUrl, unwrappedPage);
+  // 5. Construct the URL (Config Domain + Current Path)
+  // baseSiteUrl: https://relocatetosancarlos.com
+  // route.path: /neighborhoods/san-carlos
+  const fullUrlWithDomain = `${baseSiteUrl.replace(/\/$/, "")}${route.path}`;
+  const canonicalUrl = normalizeUrl(fullUrlWithDomain, unwrappedPage);
 
   const meta: MetaTag[] = [
     { hid: "description", name: "description", content: unwrappedSummary },
+
     ...(unwrappedKeywords
       ? [{ hid: "keywords", name: "keywords", content: unwrappedKeywords }]
       : []),
+
     { hid: "og:title", property: "og:title", content: finalTitle },
     {
       hid: "og:image:alt",
@@ -143,6 +149,7 @@ export function createSeoObject({
     { hid: "og:type", property: "og:type", content: "article" },
     { hid: "og:url", property: "og:url", content: canonicalUrl },
     { hid: "og:locale", property: "og:locale", content: "en_US" },
+
     { hid: "twitter:title", name: "twitter:title", content: finalTitle },
     {
       hid: "twitter:description",
@@ -164,6 +171,7 @@ export function createSeoObject({
       name: "twitter:creator",
       content: unwrappedTwitterCreator || unwrappedTwitterSite,
     },
+
     { hid: "sailthru.title", name: "sailthru.title", content: finalTitle },
     {
       hid: "sailthru.description",

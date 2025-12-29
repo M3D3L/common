@@ -2,7 +2,7 @@
   <div
     class="container relative w-full p-6 font-body bg-background text-foreground md:py-10"
   >
-    <SeoMeta :seoData="computedSeoData" />
+    <SeoMeta v-if="property?.id" :seoData="computedSeoData" />
 
     <div
       class="flex flex-col gap-6 mb-8 md:flex-row md:items-start md:justify-between"
@@ -11,7 +11,7 @@
         <div class="flex flex-wrap items-center gap-2 mb-3">
           <span
             v-if="property?.type"
-            class="py-1 text-xs font-semibold uppercase rounded-full bg-primary/10 text-primary"
+            class="py-1 text-xs font-semibold uppercase rounded-full bg-primary/10 text-primary px-3"
           >
             {{ property.type }}
           </span>
@@ -19,7 +19,7 @@
             v-if="property?.address"
             class="text-sm text-muted-foreground items-center flex"
           >
-            {{ property.address }}
+            <MapPin :size="14" class="mr-1" /> {{ property.address }}
           </span>
         </div>
 
@@ -44,7 +44,7 @@
           </span>
         </div>
 
-        <p>
+        <p class="text-muted-foreground leading-relaxed max-w-2xl">
           {{ property?.description }}
         </p>
       </div>
@@ -103,7 +103,6 @@
           <h3 class="mb-6 text-xl font-bold border-b pb-4">
             Property Specifics
           </h3>
-
           <dl class="grid grid-cols-1 gap-y-6 gap-x-12 sm:grid-cols-2">
             <div v-if="property?.lotSize">
               <dt
@@ -146,7 +145,7 @@
       </div>
 
       <Card
-        v-if="mapSrc !== 'https://maps.google.com/maps?q=,&z=14&output=embed'"
+        v-if="mapSrc"
         class="relative my-auto w-full h-[400px] bg-primary overflow-hidden rounded-xl shadow-md"
       >
         <iframe
@@ -161,15 +160,16 @@
     </section>
 
     <section id="gallery" class="w-full lg:mt-0 mt-16 scroll-mt-24">
-      <h2 class="text-2xl font-bold">Photo Gallery</h2>
+      <h2 class="text-2xl font-bold mb-4">Photo Gallery</h2>
       <ModalCarousel
-        :slides="slides"
-        :collectionId="fetchedProperty?.items?.[0]?.collectionId"
-        :propertyId="fetchedProperty?.items?.[0]?.id"
+        v-if="property?.id"
+        :slides="property.gallery || []"
+        :collectionId="property.collectionId"
+        :propertyId="property.id"
       />
     </section>
 
-    <section id="realtor" class="py-12 scroll-mt-40" ref="setSectionRef">
+    <section id="realtor" class="py-12 scroll-mt-40">
       <h2 class="mb-8 text-3xl font-bold sm:text-4xl font-heading text-primary">
         Realtor
       </h2>
@@ -178,6 +178,7 @@
       >
         <div class="flex-shrink-0 w-full md:w-1/3">
           <img
+            v-if="authorImageUrl"
             :src="authorImageUrl"
             :alt="property?.expand?.author?.name"
             class="object-cover w-full h-64 rounded-lg shadow-md md:h-full"
@@ -197,16 +198,16 @@
             </p>
           </div>
 
-          <div class="flex flex-col gap-2 text-sm">
+          <div class="flex flex-col gap-2 text-sm mt-4">
             <a
               :href="`mailto:${property?.expand?.author?.email}`"
-              class="flex items-center gap-2 hover:underline hover:text-primary transition-colors"
+              class="flex items-center gap-2 hover:underline text-primary"
             >
               <Mail class="w-4 h-4" /> {{ property?.expand?.author?.email }}
             </a>
             <a
               :href="`tel:${property?.expand?.author?.phone}`"
-              class="flex items-center gap-2 hover:underline hover:text-primary transition-colors"
+              class="flex items-center gap-2 hover:underline text-primary"
             >
               <Phone class="w-4 h-4" /> {{ property?.expand?.author?.phone }}
             </a>
@@ -214,6 +215,7 @@
           <ContainersSocials
             :socialLinks="computedSocialLinks"
             :columnOnMobile="false"
+            class="mt-4"
           />
         </div>
       </Card>
@@ -222,15 +224,14 @@
 </template>
 
 <script lang="ts" setup>
+import { computed } from "vue";
+import { useRoute, useRuntimeConfig, useAsyncData } from "#app";
 import usePocketBaseCore from "@common/composables/usePocketBaseCore";
-import ModalCarousel from "@common/components/ui/modal/ModalCarousel.vue";
 import {
   Mail,
   Phone,
   Linkedin,
   Github,
-  Facebook,
-  Instagram,
   Check,
   MapPin,
   Bed,
@@ -239,116 +240,87 @@ import {
 } from "lucide-vue-next";
 
 const config = useRuntimeConfig();
-const { fetchCollection, toggleEmailVisibility } = usePocketBaseCore();
-
-const fetchedProperty = ref<any>(null);
-const fetchedProperties = ref<any>(null);
-const slides = ref<any[]>([]);
-const propertyHeroRef = ref<HTMLElement | null>(null);
-
 const route = useRoute();
+const { fetchCollection } = usePocketBaseCore();
 
-const formattedPropertyType = computed(() => {
+// 1. FORMAT ROUTE DATA
+const formattedRoute = computed(() => {
   let type = route.params.type as string;
-  let property = route.params.property as string;
-  const slug = `/${type}/${property}`;
+  const propertySlug = route.params.property as string;
+  const fullSlug = `/${type}/${propertySlug}`;
 
   if (type === "rentals") type = "rental";
   else if (type === "properties") type = "property";
   else if (type === "lots") type = "lot";
 
-  if (property) {
-    property = property
-      .replace(/-/g, " ")
-      .replace(/\b\w/g, (char) => char.toUpperCase());
-  }
-
-  return [type, property, slug];
+  return { type, propertySlug, fullSlug };
 });
 
-const property = computed(() => fetchedProperty.value?.items?.[0] || {});
+// 2. FETCH DATA (SSR COMPATIBLE)
+// useAsyncData ensures the property is loaded before the SEO components render.
+const { data: pageData } = await useAsyncData(
+  `property-${route.params.property}`,
+  async () => {
+    const { fullSlug, type } = formattedRoute.value;
 
-const zoom = 14;
+    const propertyRes = await fetchCollection(
+      "properties",
+      1,
+      1,
+      `slug="${fullSlug}"`,
+      "-created",
+      "author"
+    );
+
+    return {
+      property: propertyRes?.items?.[0] || null,
+    };
+  }
+);
+
+// 3. REACTIVE STATE
+const property = computed(() => pageData.value?.property || {});
+
+// 4. COMPUTED ASSETS
+const imgSrc = computed(() => {
+  if (!property.value?.id) return "";
+  return `${config.public.pocketbaseUrl}api/files/${property.value.collectionId}/${property.value.id}/${property.value.cover_image}`;
+});
+
+const authorImageUrl = computed(() => {
+  const author = property.value?.expand?.author;
+  if (!author?.id) return "";
+  return `${config.public.pocketbaseUrl}api/files/${author.collectionId}/${author.id}/${author.avatar}`;
+});
+
 const mapSrc = computed(() => {
   const lat = property.value?.lat;
   const long = property.value?.long;
-
-  if (lat == null || long == null) return "";
-
-  return `https://maps.google.com/maps?q=${lat},${long}&z=${zoom}&output=embed`;
+  if (!lat || !long) return "";
+  return `https://maps.google.com/maps?q=${lat},${long}&z=14&output=embed`;
 });
 
-const imgSrc = computed(
-  () =>
-    `${config.public.pocketbaseUrl}api/files/${property.value?.collectionId}/${property.value?.id}/${property.value?.cover_image}?token=`
-);
+// 5. SEO DATA (The fix for undefined property in SEO)
+const computedSeoData = computed(() => {
+  if (!property.value?.id) return null;
 
-const fetchPropertiesBySlug = async (slug: string) => {
-  return await fetchCollection(
-    "properties",
-    1,
-    1,
-    `slug="${slug}"`,
-    "-created",
-    "author"
-  );
-};
-
-const fetchPropertiesByType = async (type: string) => {
-  return await fetchCollection("properties", 1, 6, `type="${type}"`);
-};
-
-const authorImageUrl = computed(
-  () =>
-    `${config.public.pocketbaseUrl}api/files/${property.value?.expand?.author?.collectionId}/${property.value?.expand?.author?.id}/${property.value?.expand?.author?.avatar}`
-);
-
-const computedSocialLinks = computed(() => {
-  // check the label to get the social media icon
-  const socials = property.value?.expand?.author?.socials?.socials || [];
-  return socials.map((social: any) => {
-    let iconComponent = null;
-    if (social.label.toLowerCase().includes("linkedin")) {
-      iconComponent = Linkedin;
-    } else if (social.label.toLowerCase().includes("github")) {
-      iconComponent = Github;
-    }
-    return {
-      icon: iconComponent,
-      href: social.href,
-      label: social.label,
-    };
+  return createSeoObject({
+    title: property.value.title || "Property Details",
+    summary: property.value.description || "View details for this property.",
+    imageUri: imgSrc.value,
+    pubDate: property.value.created,
+    byline: property.value.expand?.author?.name || "",
+    keywords: `${property.value.type}, real estate, ${property.value.address}`,
   });
 });
 
-const computedSeoData = computed(() =>
-  createSeoObject({
-    title: property.value?.title || "Property Details",
-    summary:
-      property.value?.description || "Detailed information about the property.",
-    imageUri: imgSrc.value || "",
-    pubDate: "",
-    byline: "",
-    siteName: "RelocateToSanCarlos.com",
-  })
-);
-// **UPDATED LOGIC**
-onMounted(async () => {
-  // 1. Fetch the single property first
-  const propertySlug = formattedPropertyType.value?.[2];
-  const propertyType = formattedPropertyType.value?.[0];
-
-  if (propertySlug) {
-    fetchedProperty.value = await fetchPropertiesBySlug(propertySlug);
-    slides.value = fetchedProperty.value?.items?.[0]?.gallery || [];
-  }
-
-  // 2. Conditionally fetch other properties of the same type
-  //    This prevents the second, unnecessary call if the primary one fails or if we're on a page
-  //    where related properties aren't needed.
-  if (propertyType) {
-    fetchedProperties.value = await fetchPropertiesByType(propertyType);
-  }
+const computedSocialLinks = computed(() => {
+  const socials = property.value?.expand?.author?.socials?.socials || [];
+  return socials.map((social: any) => ({
+    icon: social.label.toLowerCase().includes("linkedin") ? Linkedin : Github,
+    href: social.href,
+    label: social.label,
+  }));
 });
 </script>
 

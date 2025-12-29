@@ -405,8 +405,6 @@ const computedSeoData = computed(() => {
     byline: isRegister.value
       ? "Register for a new account"
       : "Login to your account",
-    siteName: config.public.siteName,
-    twitterSite: config.public.twitterSite,
 
     // Optional for homepage JSON-LD customization
     jsonLd: {

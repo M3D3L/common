@@ -5,14 +5,13 @@
     <div
       class="container relative flex items-center justify-between h-16 mx-auto"
     >
-      <!-- Logo -->
-      <nuxt-link
+      <NuxtLink
         v-if="logo"
         to="/"
         class="flex items-center gap-2 transition-opacity hover:opacity-80"
       >
         <img :src="logo" alt="Logo" class="h-10 md:h-12" />
-      </nuxt-link>
+      </NuxtLink>
       <NuxtLink
         v-else
         to="/"
@@ -23,13 +22,10 @@
         </span>
       </NuxtLink>
 
-      <!-- Right side buttons -->
       <div class="flex items-center gap-2 md:gap-4">
-        <!-- Desktop nav -->
         <nav
           class="items-center pl-4 gap-4 hidden justify-between w-full md:flex"
         >
-          <!-- Main links -->
           <AtomsStyledLink
             v-for="(link, linkIndex) in links"
             :key="linkIndex"
@@ -39,25 +35,28 @@
 
           <slot name="extra-links" />
 
-          <!-- Auth buttons for desktop -->
-          <template v-if="showAuthButtons">
-            <template v-if="!auth.isAuthenticated.value">
-              <AtomsStyledLink :to="getLoginHref()" title="Login" />
-              <AtomsStyledLink :to="getRegisterHref()" title="Register" />
+          <ClientOnly>
+            <template v-if="showAuthButtons">
+              <template v-if="!auth.isAuthenticated.value">
+                <AtomsStyledLink :to="getLoginHref()" title="Login" />
+                <AtomsStyledLink :to="getRegisterHref()" title="Register" />
+              </template>
+              <Button
+                v-else
+                class="text-sm font-medium shadow-sm hover:shadow-md"
+                @click="auth.logout()"
+                variant="default"
+                size="sm"
+              >
+                Logout
+              </Button>
             </template>
-            <Button
-              v-else
-              class="text-sm font-medium shadow-sm hover:shadow-md"
-              @click="auth.logout()"
-              variant="default"
-              size="sm"
-            >
-              Logout
-            </Button>
-          </template>
+            <template #fallback>
+              <div class="w-20 h-8 animate-pulse bg-muted rounded-md"></div>
+            </template>
+          </ClientOnly>
         </nav>
 
-        <!-- Dark mode toggle -->
         <ClientOnly>
           <button
             @click="toggleDark()"
@@ -73,11 +72,8 @@
               class="w-5 h-5 transition-transform duration-300 rotate-0 hover:rotate-12"
             />
           </button>
-
-          <!-- <CheckoutView v-if="checkoutToggled" class="fixed right-0 top-32" /> -->
         </ClientOnly>
 
-        <!-- Mobile menu button -->
         <button
           @click="isMobileMenuOpen = !isMobileMenuOpen"
           class="p-2.5 transition-all rounded-lg hover:bg-accent/50 md:hidden hover:scale-110 active:scale-95"
@@ -95,7 +91,6 @@
       </div>
     </div>
 
-    <!-- Mobile menu -->
     <Transition
       enter-active-class="transition duration-300 ease-out"
       enter-from-class="transform -translate-y-2 opacity-0"
@@ -109,7 +104,6 @@
         class="absolute w-full md:hidden !rounded-t-none"
       >
         <CardContent class="container flex flex-col gap-1 px-4 py-4">
-          <!-- Main links -->
           <NuxtLink
             v-for="link in links"
             :key="link.href"
@@ -121,42 +115,39 @@
             {{ link.label }}
           </NuxtLink>
 
-          <!-- Divider -->
           <div v-if="showAuthButtons" class="h-px my-2 bg-border/40" />
 
-          <!-- Auth buttons included in mobile list -->
-          <template v-if="showAuthButtons">
-            <template v-if="!auth.isAuthenticated.value">
-              <NuxtLink
-                :to="getLoginHref()"
-                class="px-4 py-3 text-sm font-medium transition-all rounded-lg hover:bg-accent/50 hover:translate-x-1 active:scale-95"
-                @click="isMobileMenuOpen = false"
+          <ClientOnly>
+            <template v-if="showAuthButtons">
+              <template v-if="!auth.isAuthenticated.value">
+                <NuxtLink
+                  :to="getLoginHref()"
+                  class="px-4 py-3 text-sm font-medium"
+                  @click="isMobileMenuOpen = false"
+                  >Login</NuxtLink
+                >
+                <NuxtLink
+                  :to="getRegisterHref()"
+                  class="px-4 py-3 text-sm font-semibold bg-primary text-primary-foreground text-center rounded-lg"
+                  @click="isMobileMenuOpen = false"
+                  >Register</NuxtLink
+                >
+              </template>
+              <Button
+                v-else
+                class="w-full"
+                @click="
+                  () => {
+                    auth.logout();
+                    isMobileMenuOpen = false;
+                  }
+                "
+                variant="default"
+                size="sm"
+                >Logout</Button
               >
-                Login
-              </NuxtLink>
-              <NuxtLink
-                :to="getRegisterHref()"
-                class="px-4 py-3 text-sm font-semibold transition-all rounded-lg shadow-sm bg-primary text-primary-foreground text-center hover:bg-primary/90 hover:translate-x-1 active:scale-95"
-                @click="isMobileMenuOpen = false"
-              >
-                Register
-              </NuxtLink>
             </template>
-            <Button
-              v-else
-              class="w-full text-sm font-medium shadow-sm"
-              @click="
-                () => {
-                  auth.logout();
-                  isMobileMenuOpen = false;
-                }
-              "
-              variant="default"
-              size="sm"
-            >
-              Logout
-            </Button>
-          </template>
+          </ClientOnly>
         </CardContent>
       </Card>
     </Transition>

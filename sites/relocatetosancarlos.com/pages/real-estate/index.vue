@@ -131,8 +131,6 @@ const computedSeoData = computed(() => {
     imageUri: realEstateHeroSection.imageSrc,
     pubDate: "",
     byline: "Brenda – San Carlos Relocation Specialist",
-    siteName: config.public.siteName,
-    twitterSite: config.public.twitterSite,
 
     // Optional for homepage JSON-LD customization
     jsonLd: {
