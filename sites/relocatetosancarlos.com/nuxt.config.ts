@@ -6,16 +6,16 @@ export default defineNuxtConfig({
   /* -----------------------------
    * DEPLOYMENT
    * ----------------------------- */
+  ssr: true,
+
   nitro: {
-    preset: "github-pages",
+    preset: "cloudflare-pages",
   },
 
   app: {
     baseURL: "/",
     buildAssetsDir: "/_nuxt/",
   },
-
-  ssr: false,
 
   devtools: { enabled: true },
 
