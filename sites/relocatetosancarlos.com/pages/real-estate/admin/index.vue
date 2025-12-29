@@ -240,7 +240,7 @@ const needsAIEnrichment = (data: any) => {
     !data.description?.trim() ||
     !data.content?.trim() ||
     !data.sub_title?.trim() ||
-    !data.keywords?.trim() // Also check if keywords are missing
+    !data.keywords?.trim()
   );
 };
 
@@ -275,7 +275,7 @@ const openEditModal = (property: any) => {
   formData.value = {
     ...property,
     amenities: Array.isArray(property.amenities) ? [...property.amenities] : [],
-    keywords: property.keywords || "", // Ensure keywords are loaded
+    keywords: property.keywords || "",
   };
   showModal.value = true;
 };
@@ -286,6 +286,7 @@ const saveProperty = async () => {
 
   try {
     /* ---- AI enrichment (NON-BLOCKING) ---- */
+    // disableAi.value should be synced with your localStorage preference
     if (needsAIEnrichment(formData.value) && !disableAi.value) {
       try {
         const aiContext = {
@@ -309,39 +310,44 @@ Strategy:
 3. content: Semantic HTML (h2, p, strong). Focus on San Carlos Lifestyle.
 4. keywords: Generate a comma-separated string of 8-12 relevant SEO keywords. ONLY USE KEYWORDS BASED OFF THE data available (type, location, amenities, features).
 
-Return ONLY a JSON object with empty strings for missing data. Omit all other text. 
+Return ONLY a JSON object. Omit all other text. 
 
 Format: { "sub_title": "...", "description": "...", "content": "...", "keywords": "..." }`;
 
-        console.log("AI enrichment started with keywords extraction...");
+        console.log("AI enrichment started...");
 
         const aiPromise = runChatGPT(instruction, aiContext);
         const timeoutPromise = new Promise<string>((_, reject) =>
-          setTimeout(() => reject(new Error("AI timeout")), 8000)
+          setTimeout(() => reject(new Error("AI timeout")), 20000)
         );
 
         const aiResult = await Promise.race([aiPromise, timeoutPromise]);
 
         if (aiResult) {
-          const cleanJsonString = aiResult.replace(/```json|```/gi, "").trim();
-          const parsed = JSON.parse(cleanJsonString);
+          // Extract JSON using regex in case the AI includes markdown or preamble
+          const jsonMatch = aiResult.match(/\{[\s\S]*\}/);
+          if (jsonMatch) {
+            const parsed = JSON.parse(jsonMatch[0]);
 
-          // Update missing fields locally
-          if (!formData.value.sub_title && parsed.sub_title) {
-            formData.value.sub_title = parsed.sub_title.slice(0, 120);
-          }
-          if (!formData.value.description && parsed.description) {
-            formData.value.description = parsed.description.slice(0, 300);
-          }
-          if (!formData.value.content && parsed.content) {
-            formData.value.content = parsed.content;
-          }
-          if (!formData.value.keywords && parsed.keywords) {
-            formData.value.keywords = parsed.keywords;
+            // Update fields only if they are currently empty or just whitespace
+            if (!formData.value.sub_title?.trim() && parsed.sub_title) {
+              formData.value.sub_title = parsed.sub_title.slice(0, 120);
+            }
+            if (!formData.value.description?.trim() && parsed.description) {
+              formData.value.description = parsed.description.slice(0, 300);
+            }
+            if (!formData.value.content?.trim() && parsed.content) {
+              formData.value.content = parsed.content;
+            }
+            // Fix for inconsistent keywords: Ensure we check .trim()
+            if (!formData.value.keywords?.trim() && parsed.keywords) {
+              formData.value.keywords = parsed.keywords;
+              console.log("Keywords enriched:", parsed.keywords);
+            }
           }
         }
       } catch (err: any) {
-        console.warn("AI enrichment failed:", err.message);
+        console.warn("AI enrichment skipped or failed:", err.message);
       }
     }
 
