@@ -1,7 +1,7 @@
 <template>
   <div>
     <ContainersCarousel
-      :breakpoints="breakpoints"
+      :breakpoints
       :slides="normalizedSlides.map((slide) => slide.url)"
       @selected-event="openModalWithImage"
     />

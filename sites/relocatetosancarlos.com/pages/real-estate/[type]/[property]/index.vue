@@ -93,6 +93,16 @@
       id="details"
       class="grid grid-cols-1 gap-8 lg:grid-cols-3 scroll-mt-24"
     >
+      <div class="lg:col-span-3 flex w-full p-0 -mt-4 -mb-4">
+        <TooltipProvider class="p-0 m-0">
+          <ShareTools
+            :title="property?.title"
+            :description="property?.description"
+            class="ml-auto"
+          />
+        </TooltipProvider>
+      </div>
+
       <div class="lg:col-span-2 space-y-10">
         <div
           class="prose prose-slate max-w-none"
@@ -241,6 +251,8 @@ import {
 } from "lucide-vue-next";
 import ModalCarousel from "@common/components/ui/modal/ModalCarousel.vue";
 import { Card } from "@common/components/ui/card";
+import ShareTools from "@common/components/sections/ShareTools.vue";
+import TooltipProvider from "@common/components/ui/tooltip/TooltipProvider.vue";
 
 const config = useRuntimeConfig();
 const route = useRoute();
