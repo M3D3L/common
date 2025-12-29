@@ -93,9 +93,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ShieldCheck, Lock } from "lucide-vue-next";
-import usePocketBaseCore from "~/composables/usePocketBaseCore";
-import Modal from "~/components/ui/modal/Modal.vue";
-import { privacyConfig } from "~/assets/configs/privacy.js";
+import usePocketBaseCore from "@/composables/usePocketBaseCore";
+import Modal from "@/components/ui/modal/Modal.vue";
+import { privacyConfig } from "@/assets/configs/privacy.js";
 
 // Animation variants
 const fadeUp = {

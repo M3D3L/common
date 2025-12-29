@@ -48,7 +48,7 @@ import {
   socialsSection,
   propertiesSection,
 } from "~/assets/configs/layout";
-import { Card } from "~/components/ui/card";
+import { Card } from "@common/components/ui/card";
 
 const { fetchCollection } = usePocketBaseCore();
 const config = useRuntimeConfig();

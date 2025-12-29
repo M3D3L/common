@@ -261,8 +261,6 @@ import TooltipProvider from "@/components/ui/tooltip/TooltipProvider.vue";
 
 import { formatDate } from "@/composables/blogHelpers";
 import { createSeoObject } from "@/composables/useSeo";
-import SeoMeta from "@/components/SeoMeta.vue";
-import { seoDefaults } from "~/assets/configs/layout.js";
 
 const config = useRuntimeConfig();
 const route = useRoute();

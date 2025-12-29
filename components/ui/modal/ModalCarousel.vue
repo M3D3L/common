@@ -86,7 +86,6 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, computed, watch } from "vue";
 import { ChevronLeft, ChevronRight, X, MapPin } from "lucide-vue-next";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";

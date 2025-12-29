@@ -166,6 +166,11 @@
         :slides="property.gallery || []"
         :collectionId="property.collectionId"
         :propertyId="property.id"
+        :breakpoints="{
+          '640': { slidesPerView: 1 },
+          '768': { slidesPerView: 2 },
+          '1024': { slidesPerView: 3 },
+        }"
       />
     </section>
 
@@ -224,7 +229,6 @@
 </template>
 
 <script lang="ts" setup>
-import { computed } from "vue";
 import { useRoute, useRuntimeConfig, useAsyncData } from "#app";
 import usePocketBaseCore from "@common/composables/usePocketBaseCore";
 import {
@@ -238,6 +242,8 @@ import {
   Bath,
   Square,
 } from "lucide-vue-next";
+import ModalCarousel from "@common/components/ui/modal/ModalCarousel.vue";
+import { Card } from "@common/components/ui/card";
 
 const config = useRuntimeConfig();
 const route = useRoute();
