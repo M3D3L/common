@@ -13,40 +13,41 @@
         <Card
           class="relative h-full transition-all duration-300 hover:-translate-y-1"
         >
-          <CardContent class="flex flex-col h-full p-8">
-            <div class="flex items-start justify-between">
-              <div class="group-hover:scale-110 group-hover:rotate-3 -mt-8">
-                <ITetakawi
-                  class="text-8xl h-auto transition-colors duration-300"
-                  :class="getThemeClass(index)"
-                />
+          <CardContent
+            class="flex flex-col items-center justify-center h-full p-8 relative"
+          >
+            <i-tetakawi
+              class="text-[20rem] h-auto absolute opacity-10 group-hover:opacity-20 transition-all duration-300"
+              :class="getThemeClass(index)"
+            />
+            <div class="p-6 rounded-lg relative z-10 flex flex-col h-full">
+              <div class="flex flex-col flex-1">
+                <div class="flex flex-row gap-6 w-full justify-between">
+                  <CardTitle
+                    class="mb-3 text-xl font-bold tracking-tight text-slate-900 transition-colors group-hover:text-primary"
+                  >
+                    {{ item.type }}
+                  </CardTitle>
+
+                  <ArrowUpRight
+                    class="w-5 h-5 opacity-20 transition-all duration-300 group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+                  />
+                </div>
+
+                <p class="text-sm leading-relaxed text-slate-600 line-clamp-3">
+                  {{ item.description }}
+                </p>
               </div>
 
-              <ArrowUpRight
-                class="w-5 h-5 opacity-20 transition-all duration-300 group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
-              />
-            </div>
-
-            <div class="flex flex-col flex-1">
-              <CardTitle
-                class="mb-3 text-xl font-bold tracking-tight text-slate-900 transition-colors group-hover:text-primary"
-              >
-                {{ item.type }}
-              </CardTitle>
-
-              <p class="text-sm leading-relaxed text-slate-600 line-clamp-3">
-                {{ item.description }}
-              </p>
-            </div>
-
-            <div class="pt-6 mt-auto">
-              <div
-                class="flex items-center gap-2 text-xs font-bold tracking-wider uppercase transition-colors text-slate-400 group-hover:text-primary"
-              >
-                Get Started
-                <ChevronRight
-                  class="w-4 h-4 transition-transform group-hover:translate-x-1"
-                />
+              <div class="pt-6 mt-auto">
+                <div
+                  class="flex items-center gap-2 text-xs font-bold tracking-wider uppercase transition-colors text-slate-400 group-hover:text-primary"
+                >
+                  Get Started
+                  <ChevronRight
+                    class="w-4 h-4 transition-transform group-hover:translate-x-1"
+                  />
+                </div>
               </div>
             </div>
           </CardContent>
