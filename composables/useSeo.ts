@@ -6,10 +6,8 @@ interface CreateSeoObjectParams {
   byline?: string;
   tags?: string;
   keywords?: string;
-  siteName?: string;
   twitterSite?: string;
   twitterCreator?: string;
-  ogUrl?: string;
   page?: string | number;
   hideSiteName?: boolean;
   jsonLd?: Record<string, unknown> | string | null;
@@ -63,6 +61,7 @@ function buildPageTitle(
 }
 
 function normalizeUrl(url: string, page: string): string {
+  if (!url) return "";
   try {
     const urlObj = new URL(url);
     const isPageOne = page === "1";
@@ -76,7 +75,6 @@ function normalizeUrl(url: string, page: string): string {
         urlObj.searchParams.set("page", pageValue);
       }
     }
-
     return urlObj.toString().replace("http:", "https:");
   } catch {
     return url.split("?")[0].replace("http:", "https:");
@@ -91,19 +89,22 @@ export function createSeoObject({
   byline,
   tags = "",
   keywords = "",
-  siteName = "RelocateToSanCarlos.com",
   twitterSite = "@relocatetosc",
   twitterCreator = "",
-  ogUrl = "",
   page = "1",
   hideSiteName = false,
   jsonLd = null,
 }: CreateSeoObjectParams): SeoObject {
-  // Unwrap everything
+  // Accessing config inside the function
+  const config = useRuntimeConfig();
+
+  // These must match the keys in your nuxt.config.ts
+  const siteName = config.public.siteName || "Default Site Name";
+  const siteUrl = config.public.siteUrl || "";
+
   const unwrappedTitle = unref(title);
   const unwrappedSummary = unref(summary);
   const unwrappedPage = unref(page)?.toString() || "1";
-  const unwrappedOgUrl = unref(ogUrl);
   const unwrappedImageUri = unref(imageUri);
   const unwrappedPubDate = unref(pubDate);
   const unwrappedByline = unref(byline);
@@ -119,22 +120,14 @@ export function createSeoObject({
     hideSiteName
   );
 
-  const rawUrl = unwrappedOgUrl || useRequestURL().href;
-  const canonicalUrl = normalizeUrl(rawUrl, unwrappedPage);
+  // Use the config value for the canonical and og:url
+  const canonicalUrl = normalizeUrl(siteUrl, unwrappedPage);
 
   const meta: MetaTag[] = [
     { hid: "description", name: "description", content: unwrappedSummary },
-
     ...(unwrappedKeywords
-      ? [
-          {
-            hid: "keywords",
-            name: "keywords",
-            content: unwrappedKeywords,
-          },
-        ]
+      ? [{ hid: "keywords", name: "keywords", content: unwrappedKeywords }]
       : []),
-
     { hid: "og:title", property: "og:title", content: finalTitle },
     {
       hid: "og:image:alt",
@@ -150,7 +143,6 @@ export function createSeoObject({
     { hid: "og:type", property: "og:type", content: "article" },
     { hid: "og:url", property: "og:url", content: canonicalUrl },
     { hid: "og:locale", property: "og:locale", content: "en_US" },
-
     { hid: "twitter:title", name: "twitter:title", content: finalTitle },
     {
       hid: "twitter:description",
@@ -172,7 +164,6 @@ export function createSeoObject({
       name: "twitter:creator",
       content: unwrappedTwitterCreator || unwrappedTwitterSite,
     },
-
     { hid: "sailthru.title", name: "sailthru.title", content: finalTitle },
     {
       hid: "sailthru.description",

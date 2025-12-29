@@ -120,6 +120,7 @@ export default defineNuxtConfig({
         process.env.POCKETBASE_URL || "https://api.sancarlosinsider.com/",
       whatsappNumber: process.env.WHATSAPP_NUMBER || "6444444444",
       siteName: "RelocateToSanCarlos.com",
+      siteUrl: "https://www.relocatetosancarlos.com",
       twitterSite: "@relocatetosc",
       blogType: "relocateBlog",
       chatgptProxyUrl:
