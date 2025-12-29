@@ -159,18 +159,15 @@
       </Card>
     </section>
 
-    <section id="gallery" class="w-full lg:mt-0 mt-16 scroll-mt-24">
-      <h2 class="text-2xl font-bold mb-4">Photo Gallery</h2>
+    <section id="gallery">
+      <h2 class="text-2xl font-bold mb-4 w-full mt-16 scroll-mt-24">
+        Photo Gallery
+      </h2>
       <ModalCarousel
         v-if="property?.id"
         :slides="property.gallery || []"
         :collectionId="property.collectionId"
         :propertyId="property.id"
-        :breakpoints="{
-          '640': { slidesPerView: 1 },
-          '768': { slidesPerView: 2 },
-          '1024': { slidesPerView: 3 },
-        }"
       />
     </section>
 
