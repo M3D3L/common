@@ -155,8 +155,8 @@
 </template>
 
 <script setup lang="ts">
-import useAuth from "@/composables/useAuth";
-import { Button } from "@/components/ui/button";
+import useAuth from "~/composables/useAuth";
+import { Button } from "~/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Sun, Moon, ShoppingCart, Menu, X } from "lucide-vue-next";
 

@@ -1,7 +1,11 @@
 <template>
   <ul class="grid gap-8 mx-auto md:grid-cols-2 lg:grid-cols-3">
-    <li v-for="(item, index) in userData" :key="index" class="h-full">
-      <nuxt-link
+    <li
+      v-for="(item, index) in userData"
+      :key="item.type || index"
+      class="h-full"
+    >
+      <NuxtLink
         v-if="item?.type"
         :to="`/onboarding/${item.type.toLowerCase().replace(/\s+/g, '-')}`"
         class="block h-full group"
@@ -9,16 +13,12 @@
         <Card
           class="relative h-full transition-all duration-300 hover:-translate-y-1"
         >
-          <!-- top accent bar -->
-
           <CardContent class="flex flex-col h-full p-8">
             <div class="flex items-start justify-between">
-              <!-- icon wrapper -->
               <div class="group-hover:scale-110 group-hover:rotate-3 -mt-8">
-                <!-- SVG COMPONENT (NOT <img>) -->
-                <i-tetakawi
+                <ITetakawi
                   class="text-8xl h-auto transition-colors duration-300"
-                  :class="getColorTheme(index).text"
+                  :class="getThemeClass(index)"
                 />
               </div>
 
@@ -51,15 +51,15 @@
             </div>
           </CardContent>
         </Card>
-      </nuxt-link>
+      </NuxtLink>
     </li>
   </ul>
 </template>
 
 <script setup lang="ts">
 import { ArrowUpRight, ChevronRight } from "lucide-vue-next";
-import userData from "../../data/user-data.json";
 import { Card, CardContent, CardTitle } from "@common/components/ui/card";
+import userData from "../../data/user-data.json";
 
 interface ServiceItem {
   type?: string;
@@ -70,18 +70,26 @@ interface Props {
   userData: ServiceItem[];
 }
 
-defineProps<Props>();
-
-const getColorTheme = (index: number) => {
+// 2. Pure function to determine theme based on index.
+// This is deterministic, so it won't cause hydration errors.
+const getThemeClass = (index: number) => {
   const themes = [
-    { text: "text-blue-600" },
-    { text: "text-purple-600" },
-    { text: "text-emerald-600" },
-    { text: "text-orange-600" },
-    { text: "text-rose-600" },
-    { text: "text-indigo-600" },
+    "text-blue-600",
+    "text-purple-600",
+    "text-emerald-600",
+    "text-orange-600",
+    "text-rose-600",
+    "text-indigo-600",
   ];
 
   return themes[index % themes.length];
 };
 </script>
+
+<style scoped>
+/* Ensure the SVG scales smoothly without layout shifts */
+.logo-icon {
+  backface-visibility: hidden;
+  transform: translateZ(0);
+}
+</style>

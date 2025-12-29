@@ -30,6 +30,7 @@
         <div class="space-y-1">
           <nuxt-link
             v-if="content?.slug"
+            useChat
             :to="`/real-estate${content.slug}`"
             class="transition-colors text-primary hover:underline"
           >
@@ -113,7 +114,7 @@
 </template>
 
 <script setup lang="ts">
-import { Card, CardHeader, CardContent } from "~/components/ui/card";
+import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { Button } from "~/components/ui/button";
 import { Badge } from "~/components/ui/badge";
 import { MapPin, Bed, Bath, Square } from "lucide-vue-next";

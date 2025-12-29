@@ -18,17 +18,19 @@
     :aria-live="isVideoComponentActive ? 'polite' : 'off'"
   >
     <!-- Fade wrapper -->
-    <motion.div
-      class="absolute top-0 left-0 bottom-0 w-full h-full overflow-hidden"
-      initial="{ opacity: 0 }"
-      :animate="{ opacity: videoOpacity }"
-    >
-      <VideoBackground
-        :video="props.video || ''"
-        :observe-element="heroRef"
-        @video-active="handleVideoComponentActive"
-      />
-    </motion.div>
+    <client-only>
+      <motion.div
+        class="absolute top-0 left-0 bottom-0 w-full h-full overflow-hidden"
+        initial="{ opacity: 0 }"
+        :animate="{ opacity: videoOpacity }"
+      >
+        <VideoBackground
+          :video="props.video || ''"
+          :observe-element="heroRef"
+          @video-active="handleVideoComponentActive"
+        />
+      </motion.div>
+    </client-only>
 
     <!-- Hero content overlay -->
     <motion.div

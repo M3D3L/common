@@ -19,7 +19,9 @@
           class="flex items-start gap-4"
         >
           <div>
-            <span class="flex items-center justify-center w-8 h-8 font-semibold rounded-full text-background bg-foreground">
+            <span
+              class="flex items-center justify-center w-8 h-8 font-semibold rounded-full text-background bg-foreground"
+            >
               {{ index + 1 }}
             </span>
           </div>
@@ -38,7 +40,13 @@
 </template>
 
 <script setup lang="ts">
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '~/components/ui/card'
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+} from "@/components/ui/card";
 
 export interface BenefitItem {
   title: string;

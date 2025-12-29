@@ -1,51 +1,57 @@
 <template>
-  <div class="relative w-full overflow-hidden">
-    <Button
-      @click="slidePrev"
-      class="absolute left-0 z-10 p-2 m-2 rounded-full top-1/2"
-    >
-      <ChevronLeftIcon class="w-5 h-5" />
-    </Button>
-    <Button
-      @click="slideNext"
-      class="absolute right-0 z-10 p-2 m-2 rounded-full top-1/2"
-    >
-      <ChevronRightIcon class="w-5 h-5" />
-    </Button>
-
-    <Swiper
-      :modules="[Autoplay, Navigation]"
-      :loop="slides.length > 3"
-      :looped-slides="slides.length"
-      :space-between="16"
-      :slides-per-view="1.25"
-      :breakpoints="breakpoints"
-      :autoplay="{ delay: 3000, disableOnInteraction: false }"
-      @swiper="onSwiper"
-    >
-      <SwiperSlide
-        v-for="(slide, index) in slides"
-        :key="`slide-${index}`"
-        @click="handleSlideClick(index)"
-        class="w-full h-full py-6 grid content-center my-auto"
+  <client-only>
+    <div class="relative w-full overflow-hidden">
+      <Button
+        @click="slidePrev"
+        class="absolute left-0 z-10 p-2 m-2 rounded-full top-1/2"
       >
-        <slot name="slide" class="w-full h-full" :slide="slide" :index="index">
-          <Card class="w-full h-full overflow-hidden cursor-pointer">
-            <img
-              loading="lazy"
-              :src="slide"
-              alt="Slide image"
-              class="object-cover w-full h-full rounded-lg"
-            />
-          </Card>
-        </slot>
-      </SwiperSlide>
-    </Swiper>
-  </div>
+        <ChevronLeftIcon class="w-5 h-5" />
+      </Button>
+      <Button
+        @click="slideNext"
+        class="absolute right-0 z-10 p-2 m-2 rounded-full top-1/2"
+      >
+        <ChevronRightIcon class="w-5 h-5" />
+      </Button>
+
+      <Swiper
+        :modules="[Autoplay, Navigation]"
+        :loop="slides.length > 3"
+        :looped-slides="slides.length"
+        :space-between="16"
+        :slides-per-view="1.25"
+        :breakpoints="breakpoints"
+        :autoplay="{ delay: 3000, disableOnInteraction: false }"
+        @swiper="onSwiper"
+      >
+        <SwiperSlide
+          v-for="(slide, index) in slides"
+          :key="`slide-${index}`"
+          @click="handleSlideClick(index)"
+          class="w-full h-full py-6 grid content-center my-auto"
+        >
+          <slot
+            name="slide"
+            class="w-full h-full"
+            :slide="slide"
+            :index="index"
+          >
+            <Card class="w-full h-full overflow-hidden cursor-pointer">
+              <img
+                loading="lazy"
+                :src="slide"
+                alt="Slide image"
+                class="object-cover w-full h-full rounded-lg"
+              />
+            </Card>
+          </slot>
+        </SwiperSlide>
+      </Swiper>
+    </div>
+  </client-only>
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
 import { Swiper, SwiperSlide } from "swiper/vue";
 import { Autoplay, Navigation } from "swiper/modules";
 import "swiper/css";

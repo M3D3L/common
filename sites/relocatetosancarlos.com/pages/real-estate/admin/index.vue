@@ -275,7 +275,17 @@ const saveProperty = async () => {
             .map((a: any) => a.name.trim()),
         };
 
-        const instruction = `Act as a real estate copywriter: using the provided data, return ONLY a JSON object with a catchy "sub_title" (max 120 chars), an informative "description" (max 300 chars), and engaging "content," using empty strings for missing data and omitting all other text. These homes are in San Carlos, Mexico. Respond in this exact JSON format:`;
+        const instruction = `Act as a senior Real Estate SEO Copywriter. Using the provided property data, generate a high-conversion, SEO-optimized JSON object, ONLY USE KEYWORDS BASED OFF THE data that is available. DO NOT MAKE ANY UP.
+
+Strategy:
+1. sub_title: Use high-intent keywords (e.g., "Ocean View," "Near Marina," "Modern Villa"). Max 120 chars.
+2. description: Craft a Meta Description style summary. Include "San Carlos, Mexico" and primary features. Max 300 chars.
+3. content: Use semantic HTML (h2, p, strong) within the string. Focus on the "San Carlos Lifestyle"—mention the Sea of Cortez, proximity to beaches, or Tetakawi peaks. 
+4. SEO: Incorporate local keywords naturally to rank for "San Carlos Sonora real estate" and "homes for sale in San Carlos Mexico. Base it off the type of property and amenities."
+
+Return ONLY a JSON object with empty strings for missing data. Omit all other text. 
+
+Format:`;
 
         console.log("AI enrichment started with sanitized data...");
 
