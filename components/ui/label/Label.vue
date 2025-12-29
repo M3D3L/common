@@ -15,16 +15,18 @@ const delegatedProps = computed(() => {
 </script>
 
 <template>
-  <Label
-    v-bind="delegatedProps"
-    :id="id"
-    :class="
-      cn(
-        'text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70',
-        props.class
-      )
-    "
-  >
-    <slot />
-  </Label>
+  <client-only>
+    <Label
+      v-bind="delegatedProps"
+      :id="id"
+      :class="
+        cn(
+          'text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70',
+          props.class
+        )
+      "
+    >
+      <slot />
+    </Label>
+  </client-only>
 </template>
