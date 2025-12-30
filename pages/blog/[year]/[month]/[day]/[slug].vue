@@ -228,55 +228,59 @@ const config = useRuntimeConfig();
 const route = useRoute();
 const { fetchPostBySlug } = usePosts();
 
-// 1. DATA FETCHING (SSR)
+/* -------------------------------------------------
+ * 1. BUILD SLUG FROM ROUTE PARAMS (SSR-SAFE)
+ * ------------------------------------------------- */
+const fullSlug = computed(() => {
+  const { year, month, day, slug } = route.params;
+  return `/${year}/${month}/${day}/${slug}`;
+});
+
+/* -------------------------------------------------
+ * 2. DATA FETCHING (SSR)
+ * ------------------------------------------------- */
 const { data: fetchedPost } = await useAsyncData(
-  `blog-${route.path}`,
-  async () => {
-    const fullSlug = route.path.replace("/blog", "");
-    const fetchedPost = await fetchPostBySlug(
-      fullSlug,
-      config.public.blogType as string
-    );
-    return fetchedPost;
-  }
+  `blog-${route.params.slug}`,
+  () => fetchPostBySlug(fullSlug.value, config.public.blogType as string)
 );
 
 // Reactivity
 const post = computed(() => fetchedPost.value || null);
 const isLiked = ref(false);
 
-// 2. SEO LOGIC
+/* -------------------------------------------------
+ * 3. SEO LOGIC (GUARDED FOR SSR)
+ * ------------------------------------------------- */
 const computedSeoData = computed(() => {
   if (!post.value?.id) return null;
+
   return createSeoObject({
-    title: post.value?.title || "Blog Post",
-    summary: post.value?.description || "",
-    imageUri: post.value?.cover_image
+    title: post.value.title,
+    summary: post.value.description || "",
+    imageUri: post.value.cover_image
       ? `${config.public.pocketbaseUrl}api/files/${post.value.collectionId}/${post.value.id}/${post.value.cover_image}`
       : undefined,
     jsonLd: {
       "@type": "BlogPosting",
-      headline: post.value?.title || "",
-      description: post.value?.description || "",
-      datePublished: post.value?.created || "",
-      dateModified: post.value?.updated || "",
+      headline: post.value.title,
+      description: post.value.description || "",
+      datePublished: post.value.created,
+      dateModified: post.value.updated,
       author: {
         "@type": "Person",
-        name: post.value?.expand?.author?.username || "Author",
+        name: post.value.expand?.author?.username || "Author",
       },
       publisher: {
         "@type": "Organization",
         name: config.public.siteName,
-        // logo: {
-        //   "@type": "ImageObject",
-        //   url: config.public.siteLogoUrl,
-        // },
       },
     },
   });
 });
 
-// 3. ACTION LOGIC
+/* -------------------------------------------------
+ * 4. ACTION LOGIC
+ * ------------------------------------------------- */
 const likePost = () => {
   if (!post.value) return;
   isLiked.value = !isLiked.value;
