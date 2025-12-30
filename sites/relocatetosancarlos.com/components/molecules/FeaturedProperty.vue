@@ -19,11 +19,17 @@
           </Badge>
         </div>
 
-        <h2
-          class="text-3xl font-extrabold tracking-tight md:text-4xl lg:text-5xl mb-4 text-foreground"
+        <nuxt-link
+          :to="`/real-estate${content.slug}`"
+          class="hover:text-primary transition-all hover:underline"
+          :alt="`View ${content.title} Details`"
         >
-          {{ content.title }}
-        </h2>
+          <h2
+            class="text-3xl font-extrabold tracking-tight md:text-4xl lg:text-5xl mb-4"
+          >
+            {{ content.title }}
+          </h2>
+        </nuxt-link>
 
         <div class="flex items-center gap-2 mb-6 text-muted-foreground">
           <MapPin :size="18" class="text-primary" />
@@ -84,7 +90,11 @@
             </div>
           </div>
 
-          <nuxt-link :to="`/real-estate${content.slug}`" class="shrink-0">
+          <nuxt-link
+            :to="`/real-estate${content.slug}`"
+            class="shrink-0"
+            :alt="`View ${content.title} Details`"
+          >
             <Button
               size="lg"
               class="px-8 text-md font-bold md:w-auto w-full h-14 shadow-lg hover:shadow-primary/20 transition-all"
@@ -95,13 +105,18 @@
         </div>
       </div>
 
-      <div class="relative min-h-[350px] lg:min-h-full overflow-hidden">
-        <img
-          :src="createImgUrl(content)"
-          :alt="content.title"
-          class="absolute inset-0 object-cover w-full h-full"
-        />
-      </div>
+      <nuxt-link
+        :to="`/real-estate${content.slug}`"
+        :alt="`View ${content.title} Details`"
+      >
+        <div class="relative min-h-[350px] lg:min-h-full overflow-hidden">
+          <img
+            :src="createImgUrl(content)"
+            :alt="content.title"
+            class="absolute inset-0 object-cover w-full h-full transition-transform hover:scale-105"
+          />
+        </div>
+      </nuxt-link>
     </Card>
   </section>
 </template>
