@@ -202,7 +202,6 @@
 </template>
 
 <script setup lang="ts">
-import { useRoute, useRuntimeConfig, useAsyncData } from "#app";
 import {
   Calendar,
   Clock,
@@ -251,7 +250,6 @@ const computedSeoData = computed(() => {
   return createSeoObject({
     title: post.value?.title || "Blog Post",
     summary: post.value?.description || "",
-    keywords: post.value?.keywords || "",
     imageUri: post.value?.cover_image
       ? `${config.public.pocketbaseUrl}api/files/${post.value.collectionId}/${post.value.id}/${post.value.cover_image}`
       : undefined,

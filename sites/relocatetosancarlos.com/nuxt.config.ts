@@ -40,11 +40,11 @@ export default defineNuxtConfig({
   sitemap: {
     urls: [
       { loc: "/" },
-      { loc: "/blog" },
-      { loc: "/real-estate" },
-      { loc: "/real-estate/lots" },
-      { loc: "/real-estate/rentals" },
-      { loc: "/real-estate/properties" },
+      { loc: "/blog/" },
+      { loc: "/real-estate/" },
+      { loc: "/real-estate/lots/" },
+      { loc: "/real-estate/rentals/" },
+      { loc: "/real-estate/properties/" },
     ],
     exclude: [
       "/api/**",
@@ -62,7 +62,7 @@ export default defineNuxtConfig({
       {
         userAgent: "*",
         allow: "/",
-        disallow: ["/api", "/_nuxt", "/blog/admin", "/real-estate/admin"],
+        disallow: ["/api/", "/_nuxt/", "/blog/admin/", "/real-estate/admin/"],
       },
     ],
     sitemap: "https://relocatetosancarlos.com/sitemap.xml",
