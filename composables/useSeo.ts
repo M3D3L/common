@@ -128,13 +128,17 @@ export function createSeoObject({
   const canonicalUrl = normalizeUrl(fullUrlWithDomain, unwrappedPage);
 
   const meta: MetaTag[] = [
-    { hid: "description", name: "description", content: unwrappedSummary },
+    {
+      hid: "description",
+      name: "description",
+      content: unwrappedSummary || "",
+    },
 
     ...(unwrappedKeywords
       ? [{ hid: "keywords", name: "keywords", content: unwrappedKeywords }]
       : []),
 
-    { hid: "og:title", property: "og:title", content: finalTitle },
+    { hid: "og:title", property: "og:title", content: finalTitle || "" },
     {
       hid: "og:image:alt",
       property: "og:image:alt",
@@ -143,18 +147,18 @@ export function createSeoObject({
     {
       hid: "og:description",
       property: "og:description",
-      content: unwrappedSummary,
+      content: unwrappedSummary || "",
     },
-    { hid: "og:site_name", property: "og:site_name", content: siteName },
+    { hid: "og:site_name", property: "og:site_name", content: siteName || "" },
     { hid: "og:type", property: "og:type", content: "article" },
-    { hid: "og:url", property: "og:url", content: canonicalUrl },
+    { hid: "og:url", property: "og:url", content: canonicalUrl || "" },
     { hid: "og:locale", property: "og:locale", content: "en_US" },
 
-    { hid: "twitter:title", name: "twitter:title", content: finalTitle },
+    { hid: "twitter:title", name: "twitter:title", content: finalTitle || "" },
     {
       hid: "twitter:description",
       name: "twitter:description",
-      content: unwrappedSummary,
+      content: unwrappedSummary || "",
     },
     {
       hid: "twitter:card",
@@ -164,19 +168,23 @@ export function createSeoObject({
     {
       hid: "twitter:site",
       name: "twitter:site",
-      content: unwrappedTwitterSite,
+      content: unwrappedTwitterSite || "",
     },
     {
       hid: "twitter:creator",
       name: "twitter:creator",
-      content: unwrappedTwitterCreator || unwrappedTwitterSite,
+      content: unwrappedTwitterCreator || unwrappedTwitterSite || "",
     },
 
-    { hid: "sailthru.title", name: "sailthru.title", content: finalTitle },
+    {
+      hid: "sailthru.title",
+      name: "sailthru.title",
+      content: finalTitle || "",
+    },
     {
       hid: "sailthru.description",
       name: "sailthru.description",
-      content: unwrappedSummary,
+      content: unwrappedSummary || "",
     },
   ];
 
