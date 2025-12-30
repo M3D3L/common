@@ -6,33 +6,31 @@
     <OrganismsHero v-bind="heroSection" />
     <SectionsIntro v-bind="servicesSection" />
     <div class="container">
-      <Card class="border-muted/60">
-        <TextSectionTitle
-          class="pt-12 pb-16"
-          :title="propertiesSection.title"
-          :description="propertiesSection.description"
-          :h1="false"
+      <TextSectionTitle
+        class="pt-12 pb-8"
+        :title="propertiesSection.title"
+        :description="propertiesSection.description"
+        :h1="false"
+      />
+      <div class="grid md:grid-cols-3 gap-6">
+        <CardsPropertyCard
+          v-for="(item, itemIndex) in properties?.items"
+          :key="`property-home-${itemIndex}`"
+          :content="item"
+          class="mt-8"
         />
-        <div class="grid md:grid-cols-3 gap-6">
-          <CardsPropertyCard
-            v-for="(item, itemIndex) in properties?.items"
-            :key="`property-home-${itemIndex}`"
-            :content="item"
-            class="mt-8"
-          />
-        </div>
+      </div>
 
-        <div class="w-full flex justify-end">
-          <div class="mt-16">
-            <nuxt-link
-              to="/real-estate/"
-              class="font-bold w-full transition-all hover:opacity-90 text-primary hover:underline pb-2"
-            >
-              View More Properties
-            </nuxt-link>
-          </div>
+      <div class="w-full flex justify-end">
+        <div class="mt-16">
+          <nuxt-link
+            to="/real-estate/"
+            class="font-bold w-full transition-all hover:opacity-90 text-primary hover:underline pb-2"
+          >
+            View More Properties
+          </nuxt-link>
         </div>
-      </Card>
+      </div>
     </div>
     <SectionsSocialsCarousel v-bind="socialsSection" />
   </div>
@@ -48,7 +46,6 @@ import {
   socialsSection,
   propertiesSection,
 } from "~/assets/configs/layout";
-import { Card } from "@common/components/ui/card";
 
 const { fetchCollection } = usePocketBaseCore();
 const config = useRuntimeConfig();
