@@ -247,6 +247,7 @@ const isLiked = ref(false);
 
 // 2. SEO LOGIC
 const computedSeoData = computed(() => {
+  if (!post.value?.id) return null;
   return createSeoObject({
     title: post.value?.title || "Blog Post",
     summary: post.value?.description || "",
