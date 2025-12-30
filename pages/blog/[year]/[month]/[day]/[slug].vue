@@ -4,19 +4,7 @@
   >
     <SeoMeta :seoData="computedSeoData" />
 
-    <motion.div
-      class="w-full"
-      initial="hidden"
-      whileInView="visible"
-      viewport="{ once: true, amount: 0.2 }"
-      :variants="{
-        hidden: { opacity: 0 },
-        visible: {
-          opacity: 1,
-          transition: { staggerChildren: 0.15 },
-        },
-      }"
-    >
+    <div class="w-full">
       <!-- Breadcrumbs -->
       <nav class="mb-8" v-if="post">
         <ul class="flex flex-wrap items-center gap-2 text-sm">
@@ -69,19 +57,7 @@
                 <div
                   class="flex items-center gap-3 text-sm text-muted-foreground"
                 >
-                  <svg
-                    class="w-4 h-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                    />
-                  </svg>
+                  <Calendar class="w-4 h-4" />
                   <ClientOnly>
                     <time :datetime="post.created">
                       {{ formatDate(post.created)?.[0] }}
@@ -94,19 +70,7 @@
                 <div
                   class="flex items-center gap-2 text-sm text-muted-foreground"
                 >
-                  <svg
-                    class="w-4 h-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                    />
-                  </svg>
+                  <Clock class="w-4 h-4" />
                   {{ calculateReadingTime(post.content) }}
                 </div>
 
@@ -233,13 +197,12 @@
           <SubmitComment v-if="post?.id" :id="post.id" />
         </div>
       </TooltipProvider>
-    </motion.div>
+    </div>
   </section>
 </template>
 
 <script setup lang="ts">
 import { useRoute, useRuntimeConfig, useAsyncData } from "#app";
-import { motion } from "motion-v";
 import {
   Calendar,
   Clock,
@@ -271,7 +234,11 @@ const { data: fetchedPost } = await useAsyncData(
   `blog-${route.path}`,
   async () => {
     const fullSlug = route.path.replace("/blog", "");
-    return await fetchPostBySlug(fullSlug, config.public.blogType as string);
+    const fetchedPost = await fetchPostBySlug(
+      fullSlug,
+      config.public.blogType as string
+    );
+    return fetchedPost;
   }
 );
 
@@ -281,40 +248,31 @@ const isLiked = ref(false);
 
 // 2. SEO LOGIC
 const computedSeoData = computed(() => {
-  if (!post.value) {
-    return createSeoObject({
-      title: `${config.public.siteName} Blog`,
-      summary: `Find essential information about our services.`,
-    });
-  }
-
-  const p = post.value;
-  const author = p.expand?.author?.username || p.author || "Admin";
-  const image = p.cover_image
-    ? `${config.public.pocketbaseUrl}api/files/${p.collectionId}/${p.id}/${p.cover_image}`
-    : undefined;
-
-  // Cleanup description for SEO (no HTML tags)
-  const cleanDescription =
-    p.description?.replace(/<[^>]*>/g, "").substring(0, 160) || "";
-
   return createSeoObject({
-    title: p.title,
-    summary: cleanDescription,
-    imageUri: image,
-    pubDate: p.created,
-    keywords: Array.isArray(p.tags) ? p.tags.join(", ") : p.keywords,
-    byline: author,
-    tags: Array.isArray(p.tags) ? p.tags.join(", ") : "",
-    twitterCreator: author,
+    title: post.value?.title || "Blog Post",
+    summary: post.value?.description || "",
+    keywords: post.value?.keywords || "",
+    imageUri: post.value?.cover_image
+      ? `${config.public.pocketbaseUrl}api/files/${post.value.collectionId}/${post.value.id}/${post.value.cover_image}`
+      : undefined,
     jsonLd: {
-      "@context": "https://schema.org",
       "@type": "BlogPosting",
-      headline: p.title,
-      image: image,
-      author: { "@type": "Person", name: author },
-      datePublished: p.created,
-      description: cleanDescription,
+      headline: post.value?.title || "",
+      description: post.value?.description || "",
+      datePublished: post.value?.created || "",
+      dateModified: post.value?.updated || "",
+      author: {
+        "@type": "Person",
+        name: post.value?.expand?.author?.username || "Author",
+      },
+      publisher: {
+        "@type": "Organization",
+        name: config.public.siteName,
+        // logo: {
+        //   "@type": "ImageObject",
+        //   url: config.public.siteLogoUrl,
+        // },
+      },
     },
   });
 });
@@ -328,7 +286,6 @@ const likePost = () => {
   } else {
     post.value.likes = Math.max(0, (post.value.likes || 1) - 1);
   }
-  // Optional: Call your API here to persist the like
 };
 
 const calculateReadingTime = (html: string) => {
