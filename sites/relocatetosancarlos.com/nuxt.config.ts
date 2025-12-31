@@ -23,7 +23,7 @@ export default defineNuxtConfig({
 
   css: ["@/assets/css/tailwind.css"],
 
-  modules: ["@nuxtjs/sitemap", "@nuxtjs/robots", "nuxt-svgo"],
+  modules: ["@nuxtjs/sitemap", "nuxt-svgo"],
 
   /* -----------------------------
    * ROUTING

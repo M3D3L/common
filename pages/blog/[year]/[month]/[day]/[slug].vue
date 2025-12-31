@@ -2,6 +2,7 @@
   <section
     class="container relative z-10 min-h-screen px-4 pt-20 pb-24 mx-auto"
   >
+    <SeoMeta :seoData="seoData" :no-index="false" />
     <div v-if="post" class="w-full">
       <nav class="mb-8">
         <ul class="flex flex-wrap items-center gap-2 text-sm">
@@ -144,24 +145,13 @@
                   </p>
                 </div>
               </div>
-              <div class="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  class="gap-2"
-                  @click="scrollToComments"
-                >
-                  <MessageSquare class="w-4 h-4" />
-                  {{ post.expand["comments_via_post"]?.length || 0 }}
-                </Button>
-              </div>
             </div>
           </CardFooter>
         </Card>
 
-        <div id="comments-section" class="mt-12">
+        <!-- <div id="comments-section" class="mt-12">
           <SubmitComment v-if="post?.id" :id="post.id" />
-        </div>
+        </div> -->
       </TooltipProvider>
     </div>
   </section>
@@ -170,7 +160,6 @@
 <script setup lang="ts">
 import { Calendar, Clock, MessageSquare } from "lucide-vue-next";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import TooltipProvider from "@/components/ui/tooltip/TooltipProvider.vue";
@@ -193,38 +182,32 @@ const { data: post } = await useAsyncData(`blog-${slug}`, () =>
 
 // 3. SEO Logic
 // We use the object returned by your robust composable and pass it to useHead
-if (post.value) {
-  const p = post.value;
-
-  const seoData = createSeoObject({
-    title: p.title,
-    summary: p.description || "",
-    imageUri: p.cover_image
-      ? `${config.public.pocketbaseUrl}api/files/${p.collectionId}/${p.id}/${p.cover_image}`
-      : undefined,
-    pubDate: p.created,
-    byline: p.expand?.author?.username,
-    // Note: createSeoObject automatically handles twitter, og, and sailthru based on your logic
-    jsonLd: {
-      "@context": "https://schema.org",
-      "@type": "BlogPosting",
-      headline: p.title,
-      description: p.description || "",
-      datePublished: p.created,
-      dateModified: p.updated,
-      author: {
-        "@type": "Person",
-        name: p.expand?.author?.username || "Author",
-      },
-      publisher: {
-        "@type": "Organization",
-        name: config.public.siteName,
-      },
+const seoData = createSeoObject({
+  title: post.value.title,
+  summary: post.value.description || "",
+  imageUri: post.value.cover_image
+    ? `${config.public.pocketbaseUrl}api/files/${post.value.collectionId}/${post.value.id}/${post.value.cover_image}`
+    : undefined,
+  pubDate: post.value.created,
+  byline: post.value.expand?.author?.username,
+  // Note: createSeoObject automatically handles twitter, og, and sailthru based on your logic
+  jsonLd: {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    headline: post.value.title,
+    description: post.value.description || "",
+    datePublished: post.value.created,
+    dateModified: post.value.updated,
+    author: {
+      "@type": "Person",
+      name: post.value.expand?.author?.username || "Author",
     },
-  });
-
-  useHead(seoData);
-}
+    publisher: {
+      "@type": "Organization",
+      name: config.public.siteName,
+    },
+  },
+});
 
 // 4. Helper Functions
 const calculateReadingTime = (html: string) => {
@@ -257,3 +240,12 @@ const navigateToTag = (tag: string) => {
   navigateTo(`/blog/tag/${encodeURIComponent(tag)}`);
 };
 </script>
+
+<style>
+/* Center all images in prose content */
+article.prose img {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+</style>

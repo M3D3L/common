@@ -14,7 +14,7 @@ export default defineNuxtConfig({
   extends: ["../../nuxt.config.ts"],
   css: ["@/assets/css/tailwind.css"],
 
-  modules: ["@nuxtjs/sitemap", "@nuxtjs/robots"],
+  modules: ["@nuxtjs/sitemap"],
 
   googleFonts: {
     families: {
