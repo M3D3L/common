@@ -12,6 +12,13 @@ export default defineNuxtConfig({
     preset: "netlify",
   },
 
+  // Force route rules to override the Netlify/Nitro x-robots-tag
+  routeRules: {
+    "/**": {
+      headers: { "x-robots-tag": "index, follow" },
+    },
+  },
+
   app: {
     baseURL: "/",
     buildAssetsDir: "/_nuxt/",
@@ -58,6 +65,8 @@ export default defineNuxtConfig({
    * ROBOTS.TXT (CRAWL CONTROL ONLY)
    * ----------------------------- */
   robots: {
+    // Prevents the module from forcing noindex on non-prod environments
+    blockNonSeoBots: false,
     rules: [
       {
         userAgent: "*",
@@ -109,6 +118,7 @@ export default defineNuxtConfig({
   site: {
     url: "https://relocatetosancarlos.com",
     name: "Relocate to San Carlos",
+    indexable: true,
   },
 
   /* -----------------------------
