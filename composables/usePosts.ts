@@ -1,118 +1,125 @@
-import usePocketBaseCore from './usePocketBaseCore'
-import usePocketBase from './usePocketbase'
-import type { ListResult, RecordModel } from 'pocketbase'
+import usePocketBaseCore from "./usePocketBaseCore";
+import type { ListResult, RecordModel } from "pocketbase";
 
 export default function usePosts() {
-  const { fetchCollection, createItem, updateItem, deleteItem, uploadFile } = usePocketBaseCore()
-  const pb = usePocketBase()
+  const {
+    fetchCollection,
+    createItem,
+    updateItem,
+    deleteItem,
+    uploadFile,
+    user,
+  } = usePocketBaseCore();
 
   const generateSlug = (title: string): string =>
     title
       .toLowerCase()
-      .replace(/[^\w\s-]/g, '')
-      .replace(/[\s_-]+/g, '-')
-      .replace(/^-+|-+$/g, '')
+      .replace(/[^\w\s-]/g, "")
+      .replace(/[\s_-]+/g, "-")
+      .replace(/^-+|-+$/g, "");
 
   const fetchPosts = async ({
     page = 1,
     perPage = 10,
-    filter = '',
-    sort = '-created',
-    expand = 'author',
+    filter = "",
+    sort = "-created",
+    expand = "author",
     author,
     tag,
   }: {
-    page?: number
-    perPage?: number
-    filter?: string
-    sort?: string
-    expand?: string
-    author?: string
-    tag?: string
+    page?: number;
+    perPage?: number;
+    filter?: string;
+    sort?: string;
+    expand?: string;
+    author?: string;
+    tag?: string;
   } = {}): Promise<ListResult<RecordModel>> => {
-    let finalFilter = filter
-    if (author) finalFilter += (finalFilter ? ' && ' : '') + `author="${author}"`
-    if (tag) finalFilter += (finalFilter ? ' && ' : '') + `tags ?~ "${tag}"`
+    let finalFilter = filter;
+    if (author)
+      finalFilter += (finalFilter ? " && " : "") + `author="${author}"`;
+    if (tag) finalFilter += (finalFilter ? " && " : "") + `tags ?~ "${tag}"`;
 
-    return fetchCollection('posts', page, perPage, finalFilter, sort, expand)
-  }
+    return fetchCollection("posts", page, perPage, finalFilter, sort, expand);
+  };
 
-  const fetchPostBySlug = async (slug: string, type: string): Promise<RecordModel> =>
-    pb.collection(type).getFirstListItem(`slug="${slug}"`, {
-      expand: 'author,comments_via_post.author',
-    })
+  /**
+   * Fetches a single post by slug with caching via fetchCollection
+   */
+  const fetchPostBySlug = async (
+    slug: string,
+    type: string
+  ): Promise<RecordModel> => {
+    const result = await fetchCollection(
+      type,
+      1,
+      1,
+      `slug="${slug}"`,
+      "-created",
+      "author,comments_via_post.author"
+    );
 
-  const createPost = async ({
-    title,
-    content,
-    description,
-    video,
-    tags = [],
-    cover_image,
-  }: {
-    title: string
-    content: string
-    description?: string
-    video?: string
-    tags?: string[]
-    cover_image?: File
+    if (!result.items.length) {
+      throw new Error(`Post not found: ${slug}`);
+    }
+
+    return result.items[0];
+  };
+
+  const createPost = async (data: {
+    title: string;
+    content: string;
+    description?: string;
+    video?: string;
+    tags?: string[];
+    cover_image?: File;
   }): Promise<RecordModel> => {
-    if (!pb.authStore.model) throw new Error('Authentication required')
+    if (!user) throw new Error("Authentication required");
 
-    const post = await createItem('posts', {
-      title,
-      content,
-      description,
-      video,
-      tags,
-      author: pb.authStore.model.id,
-      slug: generateSlug(title),
-    })
+    const post = await createItem("posts", {
+      ...data,
+      author: user.id,
+      slug: generateSlug(data.title),
+    });
 
-    return cover_image
-      ? uploadFile(cover_image, 'posts', post.id, 'cover_image')
-      : post
-  }
+    if (data.cover_image) {
+      return uploadFile(data.cover_image, "posts", post.id, "cover_image");
+    }
+
+    return post;
+  };
 
   const updatePost = async (
     id: string,
-    {
-      title,
-      content,
-      description,
-      video,
-      tags,
-      cover_image,
-    }: {
-      title?: string
-      content?: string
-      description?: string
-      video?: string
-      tags?: string[]
-      cover_image?: File
-    },
+    data: {
+      title?: string;
+      content?: string;
+      description?: string;
+      video?: string;
+      tags?: string[];
+      cover_image?: File;
+    }
   ): Promise<RecordModel> => {
-    if (!pb.authStore.model) throw new Error('Authentication required')
+    if (!user) throw new Error("Authentication required");
 
     const payload: Record<string, any> = {
-      ...(title && { title, slug: generateSlug(title) }),
-      ...(content && { content }),
-      ...(description && { description }),
-      ...(video && { video }),
-      ...(tags && { tags }),
+      ...data,
+      ...(data.title && { slug: generateSlug(data.title) }),
+    };
+
+    const post = await updateItem("posts", id, payload);
+
+    if (data.cover_image) {
+      return uploadFile(data.cover_image, "posts", id, "cover_image");
     }
 
-    const post = await updateItem('posts', id, payload)
-
-    return cover_image
-      ? uploadFile(cover_image, 'posts', id, 'cover_image')
-      : post
-  }
+    return post;
+  };
 
   const removePost = async (id: string): Promise<boolean> => {
-    if (!pb.authStore.model) throw new Error('Authentication required')
-    return deleteItem('posts', id)
-  }
+    if (!user) throw new Error("Authentication required");
+    return deleteItem("posts", id);
+  };
 
   return {
     fetchPosts,
@@ -121,5 +128,5 @@ export default function usePosts() {
     updatePost,
     deletePost: removePost,
     generateSlug,
-  }
+  };
 }

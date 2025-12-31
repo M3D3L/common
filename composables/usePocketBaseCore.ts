@@ -11,12 +11,16 @@ import type { ListResult, RecordModel } from "pocketbase";
 export default function usePocketBaseCore() {
   const pb = usePocketBase();
 
+  // AUTH STATE
+  const user = pb.authStore.model;
+  const isValid = pb.authStore.isValid;
+
   const isUserVerified = (): boolean => {
     return pb.authStore.isValid && pb.authStore.model?.verified === true;
   };
 
   /**
-   * Fetch list of records
+   * Fetch list of records with Caching
    */
   const fetchCollection = async (
     collection: string,
@@ -26,7 +30,7 @@ export default function usePocketBaseCore() {
     sort = "-created",
     expand: string | null = null,
     fields: string[] | null = null,
-    ignoreCache: Boolean = false
+    ignoreCache: boolean = false
   ): Promise<ListResult<RecordModel>> => {
     const cacheKey = getCacheKey("fetchCollection", {
       collection,
@@ -39,7 +43,6 @@ export default function usePocketBaseCore() {
     });
 
     const cached = getCache<ListResult<RecordModel>>(cacheKey);
-
     if (cached && !ignoreCache) return cached;
 
     try {
@@ -49,7 +52,6 @@ export default function usePocketBaseCore() {
         expand: expand ?? undefined,
       });
 
-      // Optional client-side field filtering
       if (fields) {
         response.items = response.items.map((item) =>
           Object.fromEntries(
@@ -67,7 +69,7 @@ export default function usePocketBaseCore() {
   };
 
   /**
-   * Fetch a single record
+   * Fetch a single record by ID
    */
   const fetchRecord = async (
     collection: string,
@@ -89,9 +91,6 @@ export default function usePocketBaseCore() {
     }
   };
 
-  /**
-   * Create record
-   */
   const createItem = async (
     collection: string,
     data: Record<string, any>
@@ -101,14 +100,10 @@ export default function usePocketBaseCore() {
       invalidateCollectionCache(collection);
       return record;
     } catch (error) {
-      console.error(`Error creating item in ${collection}:`, error);
       throw new Error(`Failed to create item in ${collection}`);
     }
   };
 
-  /**
-   * Update record
-   */
   const updateItem = async (
     collection: string,
     id: string,
@@ -116,122 +111,61 @@ export default function usePocketBaseCore() {
   ): Promise<RecordModel> => {
     try {
       const record = await pb.collection(collection).update(id, data);
-
       invalidateCollectionCache(collection);
-      const recordCacheKey = getCacheKey("fetchRecord", { collection, id });
-      clearCache(recordCacheKey);
-
+      clearCache(getCacheKey("fetchRecord", { collection, id }));
       return record;
     } catch (error) {
-      console.error(`Error updating item in ${collection}:`, error);
       throw new Error(`Failed to update item in ${collection}`);
     }
   };
 
-  /**
-   * Delete record
-   */
   const deleteItem = async (
     collection: string,
     id: string
   ): Promise<boolean> => {
     try {
       await pb.collection(collection).delete(id);
-
       invalidateCollectionCache(collection);
-      const recordCacheKey = getCacheKey("fetchRecord", { collection, id });
-      clearCache(recordCacheKey);
-
+      clearCache(getCacheKey("fetchRecord", { collection, id }));
       return true;
     } catch (error) {
-      console.error(`Error deleting item from ${collection}:`, error);
       throw new Error(`Failed to delete item from ${collection}`);
     }
   };
 
-  /**
-   * Upload a file to a record field
-   */
   const uploadFile = async (
     file: File,
     collection: string,
     recordId: string,
     field: string
-  ): Promise<string> => {
+  ): Promise<RecordModel> => {
     try {
       const formData = new FormData();
       formData.append(field, file);
-
       const record = await pb.collection(collection).update(recordId, formData);
-
       invalidateCollectionCache(collection);
-      const recordCacheKey = getCacheKey("fetchRecord", {
-        collection,
-        id: recordId,
-      });
-      clearCache(recordCacheKey);
-
-      return pb.files.getUrl(record, record[field]);
+      return record;
     } catch (error) {
-      console.error("Error uploading file:", error);
       throw new Error("Failed to upload file");
     }
   };
 
-  /**
-   * Build file URL from record + filename
-   */
-  const getFileUrl = (record: RecordModel, filename: string): string =>
-    pb.files.getUrl(record, filename);
-
-  /**
-   * Toggle user email visibility
-   */
-  const toggleEmailVisibility = async (
-    id: string,
-    isVisible: boolean
-  ): Promise<RecordModel> => {
-    try {
-      const record = await pb.collection("users").update(id, {
-        emailVisibility: isVisible,
-      });
-
-      invalidateCollectionCache("users");
-      return record;
-    } catch (err) {
-      console.error("Failed to toggle email visibility:", err);
-      throw err;
-    }
-  };
-
-  /**
-   * Invalidate all cache entries for a given collection
-   */
   const invalidateCollectionCache = (collection: string) => {
     if (typeof clearCachePattern === "function") {
-      // We search for the collection name specifically.
-      // Since getCacheKey uses JSON.stringify, 'properties' becomes '"properties"'
-      // Using just the string name is usually safer for .includes()
       clearCachePattern(collection);
-
-      if (import.meta.env.DEV) {
-        console.log(`Invalidating all cache entries containing: ${collection}`);
-      }
     }
   };
 
   return {
+    user,
+    isValid,
     fetchCollection,
     fetchRecord,
     createItem,
     updateItem,
     deleteItem,
     uploadFile,
-    getFileUrl,
-    getCacheKey,
-    toggleEmailVisibility,
     invalidateCollectionCache,
     isUserVerified,
-    currentUser: pb.authStore.model,
   };
 }

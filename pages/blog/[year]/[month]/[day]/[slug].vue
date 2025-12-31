@@ -2,28 +2,25 @@
   <section
     class="container relative z-10 min-h-screen px-4 pt-20 pb-24 mx-auto"
   >
-    <SeoMeta :seoData="computedSeoData" />
+    <SeoMeta v-if="post" :seoData="computedSeoData" />
 
     <div class="w-full">
-      <!-- Breadcrumbs -->
-      <nav class="mb-8" v-if="post">
+      <nav v-if="post" class="mb-8">
         <ul class="flex flex-wrap items-center gap-2 text-sm">
           <li>
             <NuxtLink
               to="/"
               class="transition-colors text-muted-foreground hover:text-primary"
+              >Home</NuxtLink
             >
-              Home
-            </NuxtLink>
           </li>
           <li class="text-muted-foreground">/</li>
           <li>
             <NuxtLink
               to="/blog"
               class="transition-colors text-muted-foreground hover:text-primary"
+              >Blog</NuxtLink
             >
-              Blog
-            </NuxtLink>
           </li>
           <li class="text-muted-foreground">/</li>
           <li class="font-medium text-foreground">{{ post.title }}</li>
@@ -33,13 +30,12 @@
       <TooltipProvider>
         <Card v-if="post" class="overflow-hidden">
           <CardContent class="p-0">
-            <!-- Hero Image -->
             <div
-              v-if="post?.cover_image"
+              v-if="post.cover_image"
               class="relative w-full overflow-hidden aspect-auto h-96 lg:h-[500px]"
             >
               <img
-                :src="`${config.public.pocketbaseUrl}api/files/${post.collectionId}/${post.id}/${post.cover_image}?token=`"
+                :src="`${config.public.pocketbaseUrl}api/files/${post.collectionId}/${post.id}/${post.cover_image}`"
                 :alt="post.title"
                 class="w-full h-full object-cover"
               />
@@ -48,9 +44,7 @@
               />
             </div>
 
-            <!-- Content -->
             <div class="items-center p-6 lg:p-12">
-              <!-- Article Metadata -->
               <div
                 class="flex flex-wrap items-center gap-4 pb-8 mb-8 border-b border-border/40"
               >
@@ -59,9 +53,9 @@
                 >
                   <Calendar class="w-4 h-4" />
                   <ClientOnly>
-                    <time :datetime="post.created">
-                      {{ formatDate(post.created)?.[0] }}
-                    </time>
+                    <time :datetime="post.created">{{
+                      formatDate(post.created)?.[0]
+                    }}</time>
                   </ClientOnly>
                 </div>
 
@@ -87,7 +81,6 @@
                 />
               </div>
 
-              <!-- Article Content -->
               <article
                 class="prose prose-lg dark:prose-invert max-w-none prose-headings:font-bold prose-headings:scroll-mt-24 prose-a:text-primary hover:prose-a:text-primary/80 prose-img:rounded-lg prose-img:shadow-lg prose-blockquote:border-l-primary prose-blockquote:bg-muted/30 prose-blockquote:py-1 prose-blockquote:px-4 prose-pre:bg-muted prose-pre:rounded-lg prose-pre:border prose-pre:border-border/40"
               >
@@ -95,13 +88,12 @@
                   v-if="post.description"
                   v-html="post.description"
                   class="text-xl leading-relaxed text-muted-foreground"
-                ></p>
-                <ContainersHtml v-if="post.content" :content="post?.content" />
+                />
+                <ContainersHtml v-if="post.content" :content="post.content" />
               </article>
 
-              <!-- Tags -->
               <div
-                v-if="post.tags && post.tags.length"
+                v-if="post.tags?.length"
                 class="pt-8 mt-12 border-t border-border/40"
               >
                 <h2
@@ -116,7 +108,6 @@
                     variant="outline"
                     class="text-sm font-medium transition-all cursor-pointer hover:bg-accent hover:scale-105"
                     @click="navigateToTag(tag)"
-                    :aria-label="`View all posts tagged ${tag}`"
                   >
                     #{{ tag }}
                   </Badge>
@@ -125,7 +116,6 @@
             </div>
           </CardContent>
 
-          <!-- Author Bio -->
           <CardFooter
             v-if="post.expand?.author"
             class="p-6 border-t border-border/40 bg-muted/20 lg:p-8"
@@ -165,34 +155,18 @@
                       size="sm"
                       class="gap-2"
                       @click="scrollToComments"
-                      aria-label="Jump to comments section"
                     >
-                      <svg
-                        class="w-4 h-4"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          stroke-width="2"
-                          d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"
-                        />
-                      </svg>
+                      <MessageSquare class="w-4 h-4" />
                       {{ post.expand["comments_via_post"]?.length || 0 }}
                     </Button>
                   </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Jump to comments</p>
-                  </TooltipContent>
+                  <TooltipContent><p>Jump to comments</p></TooltipContent>
                 </Tooltip>
               </div>
             </div>
           </CardFooter>
         </Card>
 
-        <!-- Comments -->
         <div class="mt-12">
           <SubmitComment v-if="post?.id" :id="post.id" />
         </div>
@@ -202,14 +176,7 @@
 </template>
 
 <script setup lang="ts">
-import {
-  Calendar,
-  Clock,
-  MessageSquare,
-  Heart,
-  Share2,
-  ArrowLeft,
-} from "lucide-vue-next";
+import { Calendar, Clock, MessageSquare } from "lucide-vue-next";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -228,69 +195,44 @@ const config = useRuntimeConfig();
 const route = useRoute();
 const { fetchPostBySlug } = usePosts();
 
-/* -------------------------------------------------
- * 1. BUILD SLUG FROM ROUTE PARAMS (SSR-SAFE)
- * ------------------------------------------------- */
+// 1. Build Slug
 const fullSlug = computed(() => {
   const { year, month, day, slug } = route.params;
   return `/${year}/${month}/${day}/${slug}`;
 });
 
-/* -------------------------------------------------
- * 2. DATA FETCHING (SSR)
- * ------------------------------------------------- */
-const { data: fetchedPost } = await useAsyncData(
-  `blog-${route.params.slug}`,
-  () => fetchPostBySlug(fullSlug.value, config.public.blogType as string)
+// 2. Data Fetching - Renamed 'data' to 'post' directly
+const { data: post } = await useAsyncData(`blog-${route.params.slug}`, () =>
+  fetchPostBySlug(fullSlug.value, config.public.blogType as string)
 );
 
-// Reactivity
-const post = computed(() => fetchedPost.value || null);
-const isLiked = ref(false);
-
-/* -------------------------------------------------
- * 3. SEO LOGIC (GUARDED FOR SSR)
- * ------------------------------------------------- */
+// 3. SEO Logic
 const computedSeoData = computed(() => {
-  if (!post.value?.id) return null;
+  if (!post.value) return null;
+  const p = post.value;
 
   return createSeoObject({
-    title: post.value.title,
-    summary: post.value.description || "",
-    imageUri: post.value.cover_image
-      ? `${config.public.pocketbaseUrl}api/files/${post.value.collectionId}/${post.value.id}/${post.value.cover_image}`
+    title: p.title,
+    summary: p.description || "",
+    imageUri: p.cover_image
+      ? `${config.public.pocketbaseUrl}api/files/${p.collectionId}/${p.id}/${p.cover_image}`
       : undefined,
     jsonLd: {
       "@type": "BlogPosting",
-      headline: post.value.title,
-      description: post.value.description || "",
-      datePublished: post.value.created,
-      dateModified: post.value.updated,
+      headline: p.title,
+      description: p.description || "",
+      datePublished: p.created,
+      dateModified: p.updated,
       author: {
         "@type": "Person",
-        name: post.value.expand?.author?.username || "Author",
+        name: p.expand?.author?.username || "Author",
       },
-      publisher: {
-        "@type": "Organization",
-        name: config.public.siteName,
-      },
+      publisher: { "@type": "Organization", name: config.public.siteName },
     },
   });
 });
 
-/* -------------------------------------------------
- * 4. ACTION LOGIC
- * ------------------------------------------------- */
-const likePost = () => {
-  if (!post.value) return;
-  isLiked.value = !isLiked.value;
-  if (isLiked.value) {
-    post.value.likes = (post.value.likes || 0) + 1;
-  } else {
-    post.value.likes = Math.max(0, (post.value.likes || 1) - 1);
-  }
-};
-
+// 4. Helper Functions
 const calculateReadingTime = (html: string) => {
   if (!html) return "1 min read";
   const words = html
@@ -301,13 +243,14 @@ const calculateReadingTime = (html: string) => {
 };
 
 const getInitials = (name: string) => {
-  if (!name) return "A";
   return name
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .toUpperCase()
-    .substring(0, 2);
+    ? name
+        .split(" ")
+        .map((n) => n[0])
+        .join("")
+        .toUpperCase()
+        .slice(0, 2)
+    : "A";
 };
 
 const scrollToComments = () => {
@@ -317,7 +260,7 @@ const scrollToComments = () => {
 };
 
 const navigateToTag = (tag: string) => {
-  window.location.href = `/blog/tag/${encodeURIComponent(tag)}`;
+  navigateTo(`/blog/tag/${encodeURIComponent(tag)}`);
 };
 </script>
 
