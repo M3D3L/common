@@ -2,10 +2,8 @@
   <section
     class="container relative z-10 min-h-screen px-4 pt-20 pb-24 mx-auto"
   >
-    <SeoMeta v-if="post" :seoData="computedSeoData" />
-
-    <div class="w-full">
-      <nav v-if="post" class="mb-8">
+    <div v-if="post" class="w-full">
+      <nav class="mb-8">
         <ul class="flex flex-wrap items-center gap-2 text-sm">
           <li>
             <NuxtLink
@@ -28,7 +26,7 @@
       </nav>
 
       <TooltipProvider>
-        <Card v-if="post" class="overflow-hidden">
+        <Card class="overflow-hidden">
           <CardContent class="p-0">
             <div
               v-if="post.cover_image"
@@ -146,28 +144,22 @@
                   </p>
                 </div>
               </div>
-
               <div class="flex items-center gap-2">
-                <Tooltip>
-                  <TooltipTrigger as-child>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      class="gap-2"
-                      @click="scrollToComments"
-                    >
-                      <MessageSquare class="w-4 h-4" />
-                      {{ post.expand["comments_via_post"]?.length || 0 }}
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent><p>Jump to comments</p></TooltipContent>
-                </Tooltip>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  class="gap-2"
+                  @click="scrollToComments"
+                >
+                  <MessageSquare class="w-4 h-4" />
+                  {{ post.expand["comments_via_post"]?.length || 0 }}
+                </Button>
               </div>
             </div>
           </CardFooter>
         </Card>
 
-        <div class="mt-12">
+        <div id="comments-section" class="mt-12">
           <SubmitComment v-if="post?.id" :id="post.id" />
         </div>
       </TooltipProvider>
@@ -181,11 +173,6 @@ import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import TooltipProvider from "@/components/ui/tooltip/TooltipProvider.vue";
 
 import { formatDate } from "@/composables/blogHelpers";
@@ -195,29 +182,31 @@ const config = useRuntimeConfig();
 const route = useRoute();
 const { fetchPostBySlug } = usePosts();
 
-// 1. Build Slug
-const fullSlug = computed(() => {
-  const { year, month, day, slug } = route.params;
-  return `/${year}/${month}/${day}/${slug}`;
-});
+// 1. Build Slug (Simplified for immediate use in fetch)
+const { year, month, day, slug } = route.params;
+const fullSlug = `/${year}/${month}/${day}/${slug}`;
 
-// 2. Data Fetching - Renamed 'data' to 'post' directly
-const { data: post } = await useAsyncData(`blog-${route.params.slug}`, () =>
-  fetchPostBySlug(fullSlug.value, config.public.blogType as string)
+// 2. Data Fetching
+const { data: post } = await useAsyncData(`blog-${slug}`, () =>
+  fetchPostBySlug(fullSlug, config.public.blogType as string)
 );
 
 // 3. SEO Logic
-const computedSeoData = computed(() => {
-  if (!post.value) return null;
+// We use the object returned by your robust composable and pass it to useHead
+if (post.value) {
   const p = post.value;
 
-  return createSeoObject({
+  const seoData = createSeoObject({
     title: p.title,
     summary: p.description || "",
     imageUri: p.cover_image
       ? `${config.public.pocketbaseUrl}api/files/${p.collectionId}/${p.id}/${p.cover_image}`
       : undefined,
+    pubDate: p.created,
+    byline: p.expand?.author?.username,
+    // Note: createSeoObject automatically handles twitter, og, and sailthru based on your logic
     jsonLd: {
+      "@context": "https://schema.org",
       "@type": "BlogPosting",
       headline: p.title,
       description: p.description || "",
@@ -227,10 +216,15 @@ const computedSeoData = computed(() => {
         "@type": "Person",
         name: p.expand?.author?.username || "Author",
       },
-      publisher: { "@type": "Organization", name: config.public.siteName },
+      publisher: {
+        "@type": "Organization",
+        name: config.public.siteName,
+      },
     },
   });
-});
+
+  useHead(seoData);
+}
 
 // 4. Helper Functions
 const calculateReadingTime = (html: string) => {
@@ -263,12 +257,3 @@ const navigateToTag = (tag: string) => {
   navigateTo(`/blog/tag/${encodeURIComponent(tag)}`);
 };
 </script>
-
-<style>
-/* Center all images in prose content */
-article.prose img {
-  display: block;
-  margin-left: auto;
-  margin-right: auto;
-}
-</style>
