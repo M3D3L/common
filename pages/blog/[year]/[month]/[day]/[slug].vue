@@ -2,7 +2,7 @@
   <section
     class="container relative z-10 min-h-screen px-4 pt-20 pb-24 mx-auto"
   >
-    <SeoMeta :seoData="seoData" :no-index="false" />
+    <SeoMeta v-if="post" :seoData="computedSeoData" :noIndex="false" />
     <div v-if="post" class="w-full">
       <nav class="mb-8">
         <ul class="flex flex-wrap items-center gap-2 text-sm">
@@ -180,33 +180,49 @@ const { data: post } = await useAsyncData(`blog-${slug}`, () =>
   fetchPostBySlug(fullSlug, config.public.blogType as string)
 );
 
+const imgSrc = computed(() => {
+  if (!post.value?.id) return "";
+  return `${config.public.pocketbaseUrl}api/files/${post.value.collectionId}/${post.value.id}/${post.value.cover_image}`;
+});
+
 // 3. SEO Logic
 // We use the object returned by your robust composable and pass it to useHead
-const seoData = createSeoObject({
-  title: post.value.title,
-  summary: post.value.description || "",
-  imageUri: post.value.cover_image
-    ? `${config.public.pocketbaseUrl}api/files/${post.value.collectionId}/${post.value.id}/${post.value.cover_image}`
-    : undefined,
-  pubDate: post.value.created,
-  byline: post.value.expand?.author?.username,
-  // Note: createSeoObject automatically handles twitter, og, and sailthru based on your logic
-  jsonLd: {
-    "@context": "https://schema.org",
-    "@type": "BlogPosting",
-    headline: post.value.title,
-    description: post.value.description || "",
-    datePublished: post.value.created,
-    dateModified: post.value.updated,
-    author: {
-      "@type": "Person",
-      name: post.value.expand?.author?.username || "Author",
+const computedSeoData = computed(() => {
+  if (!post.value?.id) return null;
+
+  return createSeoObject({
+    title: post.value.title || "Property Details",
+    summary: post.value.description || "View details for this property.",
+    imageUri: imgSrc.value,
+    pubDate: post.value.created,
+    byline: post.value.expand?.author?.name || "",
+    keywords: `${post.value.keywords}`,
+    jsonLd: {
+      "@context": "https://schema.org",
+      "@type": "BlogPosting",
+      headline: post.value.title,
+      description: post.value.description || "",
+      datePublished: post.value.created,
+      dateModified: post.value.updated,
+      author: {
+        "@type": "Person",
+        name: post.value.expand?.author?.name || "Author",
+      },
+      publisher: {
+        "@type": "Organization",
+        name: config.public.siteName,
+      },
     },
-    publisher: {
-      "@type": "Organization",
-      name: config.public.siteName,
-    },
-  },
+  });
+});
+
+const computedSocialLinks = computed(() => {
+  const socials = property.value?.expand?.author?.socials?.socials || [];
+  return socials.map((social: any) => ({
+    icon: social.label.toLowerCase().includes("linkedin") ? Linkedin : Github,
+    href: social.href,
+    label: social.label,
+  }));
 });
 
 // 4. Helper Functions
