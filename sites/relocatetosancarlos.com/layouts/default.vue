@@ -56,7 +56,7 @@ const route = useRoute();
 
 // is blog page
 const isBlogPage = computed(() => {
-  return route.path === "/blog/" || route.path.startsWith("/blog");
+  return route.path.toLocaleLowerCase().replace("/", "") === "/blog/";
 });
 
 const isOnBoadrdingPage = computed(() => {
