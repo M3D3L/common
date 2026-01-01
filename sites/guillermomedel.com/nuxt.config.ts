@@ -1,9 +1,14 @@
 import path from "path";
+import { blogRoutes } from "./routes/blogRoutes";
 
 export default defineNuxtConfig({
   compatibilityDate: "2025-08-30",
   nitro: {
     preset: "github-pages",
+    prerender: {
+      routes: [...blogRoutes, "/sitemap.xml"],
+      crawlLinks: true,
+    },
   },
   app: {
     baseURL: "/",
