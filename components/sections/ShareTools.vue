@@ -72,11 +72,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
 import {
   X,
   Linkedin,
   Facebook,
+  Instagram,
+  Music,
   MessageCircle,
   Mail,
   Link,

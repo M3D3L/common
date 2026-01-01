@@ -97,8 +97,8 @@ export function createSeoObject({
   const route = useRoute();
 
   // 2. Get site settings from config
-  const siteName = config.public.siteName || "";
-  const baseSiteUrl = config.public.siteUrl || "";
+  const siteName = (config.public.siteName as string) || "";
+  const baseSiteUrl = (config.public.siteUrl as string) || "";
   const twitterSite = config.public.twitterSite;
 
   // 3. Unwrap inputs
@@ -135,30 +135,48 @@ export function createSeoObject({
     },
 
     ...(unwrappedKeywords
-      ? [{ hid: "keywords", name: "keywords", content: unwrappedKeywords }]
+      ? [
+          {
+            hid: "keywords",
+            name: "keywords",
+            content: String(unwrappedKeywords),
+          } as MetaTag,
+        ]
       : []),
 
-    { hid: "og:title", property: "og:title", content: finalTitle || "" },
+    {
+      hid: "og:title",
+      property: "og:title",
+      content: String(finalTitle || ""),
+    },
     {
       hid: "og:image:alt",
       property: "og:image:alt",
-      content: `An image related to ${unwrappedTitle}`,
+      content: `An image related to ${String(unwrappedTitle)}`,
     },
     {
       hid: "og:description",
       property: "og:description",
-      content: unwrappedSummary || "",
+      content: String(unwrappedSummary || ""),
     },
-    { hid: "og:site_name", property: "og:site_name", content: siteName || "" },
+    {
+      hid: "og:site_name",
+      property: "og:site_name",
+      content: String(siteName || ""),
+    },
     { hid: "og:type", property: "og:type", content: "article" },
-    { hid: "og:url", property: "og:url", content: canonicalUrl || "" },
+    { hid: "og:url", property: "og:url", content: String(canonicalUrl || "") },
     { hid: "og:locale", property: "og:locale", content: "en_US" },
 
-    { hid: "twitter:title", name: "twitter:title", content: finalTitle || "" },
+    {
+      hid: "twitter:title",
+      name: "twitter:title",
+      content: String(finalTitle || ""),
+    },
     {
       hid: "twitter:description",
       name: "twitter:description",
-      content: unwrappedSummary || "",
+      content: String(unwrappedSummary || ""),
     },
     {
       hid: "twitter:card",
@@ -168,23 +186,23 @@ export function createSeoObject({
     {
       hid: "twitter:site",
       name: "twitter:site",
-      content: unwrappedTwitterSite || "",
+      content: String(unwrappedTwitterSite || ""),
     },
     {
       hid: "twitter:creator",
       name: "twitter:creator",
-      content: unwrappedTwitterCreator || unwrappedTwitterSite || "",
+      content: String(unwrappedTwitterCreator || unwrappedTwitterSite || ""),
     },
 
     {
       hid: "sailthru.title",
       name: "sailthru.title",
-      content: finalTitle || "",
+      content: String(finalTitle || ""),
     },
     {
       hid: "sailthru.description",
       name: "sailthru.description",
-      content: unwrappedSummary || "",
+      content: String(unwrappedSummary || ""),
     },
   ];
 

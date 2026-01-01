@@ -2,6 +2,7 @@
   <section
     class="container relative z-10 min-h-screen px-4 pt-20 pb-24 mx-auto"
   >
+    <SeoMeta :seoData="computedSeoData" />
     <div v-if="pending && !post" class="flex items-center justify-center h-64">
       <p class="text-muted-foreground animate-pulse">
         Loading San Carlos guide...
@@ -19,8 +20,6 @@
     </div>
 
     <div v-else-if="post" class="w-full">
-      <SeoMeta :seoData="computedSeoData" :noIndex="false" />
-
       <nav class="mb-8">
         <ul class="flex flex-wrap items-center gap-2 text-sm">
           <li>
