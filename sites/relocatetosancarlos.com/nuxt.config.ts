@@ -1,4 +1,5 @@
 import path from "path";
+import { blogRoutes } from "./routes/blogRoutes";
 
 export default defineNuxtConfig({
   compatibilityDate: "2025-08-30",
@@ -10,6 +11,10 @@ export default defineNuxtConfig({
 
   nitro: {
     preset: "netlify",
+    prerender: {
+      routes: [...blogRoutes, "/sitemap.xml"],
+      crawlLinks: true,
+    },
   },
 
   // Force route rules to override the Netlify/Nitro x-robots-tag
