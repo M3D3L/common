@@ -1,26 +1,37 @@
+import { useNuxtApp, useRequestEvent } from "#app";
 import * as layoutSp from "./layoutSp.js";
 import * as layoutEn from "./layoutEn.js";
 
-// Internal helper to pick the right file
-const getActiveLayout = () => {
+const isSpanishDomain = (host = "") =>
+  host !== "vivirensancarlos.com" || host.endsWith(".vivirensancarlos.com");
+
+/**
+ * SSR-safe way to get the host.
+ * We wrap this in a function so it's only called at runtime.
+ */
+const getHost = () => {
+  if (process.client) return window.location.hostname;
+
+  // Inside the Proxy 'get' trap, we can safely access useNuxtApp()
+  // as long as the call originates from a Vue component or Nuxt hook.
   try {
-    // This works inside Vue components and Nuxt Hooks
-    const url = useRequestURL();
-    return url.hostname.endsWith("vivirensancarlos.com") ? layoutSp : layoutEn;
+    const event = useRequestEvent();
+    return (
+      event?.node?.req?.headers["x-forwarded-host"] ||
+      event?.node?.req?.headers?.host ||
+      ""
+    );
   } catch (e) {
-    // Fallback if accessed before Nuxt is ready or on the client-side early
-    if (typeof window !== "undefined") {
-      return window.location.hostname.endsWith(".mx") ? layoutSp : layoutEn;
-    }
-    return layoutEn;
+    // Fallback if called outside of a request context
+    return "";
   }
 };
 
-/**
- * We export "Proxy" objects.
- * When your component calls 'heroSection.title',
- * the proxy intercepts the call and gets the correct data.
- */
+const getActiveLayout = () => {
+  const host = getHost();
+  return isSpanishDomain(host) ? layoutSp : layoutEn;
+};
+
 const createDynamicExport = (key) => {
   return new Proxy(
     {},
@@ -29,27 +40,23 @@ const createDynamicExport = (key) => {
         const layout = getActiveLayout();
         const target = layout[key];
 
-        // If the target is a function (like a component or utility), bind it
-        if (typeof target[prop] === "function") {
-          return target[prop].bind(target);
-        }
-        return target[prop];
+        if (!target) return undefined;
+
+        // Logic to handle function binding (e.g. methods in your layout)
+        const value = target[prop];
+        return typeof value === "function" ? value.bind(target) : value;
       },
-      // Required for spread operators and iteration
       ownKeys() {
-        return Reflect.ownKeys(getActiveLayout()[key]);
+        return Reflect.ownKeys(getActiveLayout()[key] || {});
       },
       getOwnPropertyDescriptor(_, prop) {
-        return {
-          enumerable: true,
-          configurable: true,
-        };
+        return { enumerable: true, configurable: true };
       },
     }
   );
 };
 
-// Exporting your keys exactly as they were
+// --- These exports remain identical to your current setup ---
 export const seoDefaults = createDynamicExport("seoDefaults");
 export const contactInfo = createDynamicExport("contactInfo");
 export const heroSection = createDynamicExport("heroSection");
@@ -57,19 +64,14 @@ export const servicesSection = createDynamicExport("servicesSection");
 export const socialsSection = createDynamicExport("socialsSection");
 export const propertiesSection = createDynamicExport("propertiesSection");
 export const blogSection = createDynamicExport("blogSection");
-export const contactSection = {
-  get value() {
-    return getActiveLayout().contactSection;
-  },
-}.value;
 export const siteMap = createDynamicExport("siteMap");
 export const socials = createDynamicExport("socials");
 export const realEstateHeroSection = createDynamicExport(
   "realEstateHeroSection"
 );
 export const categoryConfigs = createDynamicExport("categoryConfigs");
-export const categories = {
-  get value() {
-    return getActiveLayout().categories;
-  },
-}.value;
+
+// For these non-proxy exports, we MUST use a getter.
+// If we evaluate .value immediately, it crashes on import.
+export const contactSection = createDynamicExport("contactSection");
+export const categories = createDynamicExport("categories");

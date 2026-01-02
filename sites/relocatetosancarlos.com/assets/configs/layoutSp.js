@@ -14,10 +14,10 @@ export const seoDefaults = {
 };
 
 export const contactInfo = {
-  siteName: "RelocateToSanCarlos.com",
+  siteName: "VivirEnSanCarlos.com",
   slogan:
     "Su Guía Experta para la Vida Costera e Inversión Inmobiliaria en San Carlos, Sonora.",
-  email: "Brenda@RelocateToSanCarlos.com",
+  email: "Brenda@VivirEnSanCarlos.com",
   phone: "+52(644)457-2193",
 };
 
@@ -55,7 +55,7 @@ export const servicesSection = {
 export const socialsSection = {
   title: "Conecte con Brenda: Su Experta en San Carlos, Sonora",
   description:
-    "Siga a Brenda y RelocateToSanCarlos.com para las últimas tendencias en bienes raíces, consejos de vida para expatriados y exclusivas del mercado inmobiliario en Sonora.",
+    "Siga a Brenda y VivirEnSanCarlos.com para las últimas tendencias en bienes raíces, consejos de vida para expatriados y exclusivas del mercado inmobiliario en Sonora.",
   socials: [
     {
       platform: "TikTok",
@@ -66,7 +66,7 @@ export const socialsSection = {
       ctaText: "Seguir en TikTok",
       link: "https://www.tiktok.com/@relocatetosancarlos?is_from_webapp=1&sender_device=pc",
       imageUrl:
-        "https://images.unsplash.com/photo-1473496169904-658ba7c44d8a?w=800&h=1000&fit=crop",
+        "https://images.pexels.com/photos/35484061/pexels-photo-35484061.png",
     },
     {
       platform: "Instagram",
