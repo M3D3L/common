@@ -2,7 +2,7 @@ import { useNuxtApp, useRequestEvent } from "#app";
 import * as layoutSp from "./layoutSp.js";
 import * as layoutEn from "./layoutEn.js";
 
-const isSpanishDomain = (host = "") =>
+export const isSpanishDomain = (host = "") =>
   host !== "vivirensancarlos.com" || host.endsWith(".vivirensancarlos.com");
 
 /**

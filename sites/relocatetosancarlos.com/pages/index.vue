@@ -4,7 +4,7 @@
     <SeoMeta :seoData="computedSeoData" />
     <!-- Layout Sections -->
     <OrganismsHero v-bind="heroSection" />
-    <SectionsIntro v-bind="servicesSection" />
+    <SectionsIntro v-if="!spanishDomain" v-bind="servicesSection" />
     <div class="container">
       <TextSectionTitle
         class="pt-12 pb-8"
@@ -27,7 +27,11 @@
             to="/real-estate/"
             class="font-bold w-full transition-all hover:opacity-90 text-primary hover:underline pb-2"
           >
-            View More Properties
+            {{
+              spanishDomain
+                ? "Ver Todas las Propiedades"
+                : "View All Properties"
+            }}
           </nuxt-link>
         </div>
       </div>
@@ -45,6 +49,7 @@ import {
   servicesSection,
   socialsSection,
   propertiesSection,
+  isSpanishDomain,
 } from "~/assets/configs/layout";
 
 const { fetchCollection } = usePocketBaseCore();
@@ -72,6 +77,10 @@ const loadProperties = async (ignoreCache = false) => {
     loading.value = false;
   }
 };
+
+const spanishDomain = isSpanishDomain(
+  process.server ? config.public.host : window.location.hostname
+);
 
 const computedSeoData = computed(() =>
   createSeoObject({
