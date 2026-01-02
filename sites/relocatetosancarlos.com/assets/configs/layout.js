@@ -3,7 +3,7 @@ import * as layoutSp from "./layoutSp.js";
 import * as layoutEn from "./layoutEn.js";
 
 export const isSpanishDomain = (host = "") =>
-  host !== "vivirensancarlos.com" || host.endsWith(".vivirensancarlos.com");
+  host === "vivirensancarlos.com" || host.endsWith(".vivirensancarlos.com");
 
 /**
  * SSR-safe way to get the host.
