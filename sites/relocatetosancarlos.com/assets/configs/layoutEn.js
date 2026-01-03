@@ -134,6 +134,16 @@ export const contactSection = {
     "https://www.pexels.com/download/video/32104595/",
   ],
   imgSrc: "",
+  componentText: {
+    header: "Get in Touch",
+    subHeader:
+      "Fill out the form or reach out directly through these channels. We'll get back to you as soon as possible",
+    follow: "Follow Us",
+    call: "Call",
+    email: "Email",
+    message: "Message",
+    submit: "Send Message",
+  },
 };
 
 // Site Map

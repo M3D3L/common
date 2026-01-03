@@ -65,8 +65,7 @@ export const socialsSection = {
         "Tours de propiedades, tips locales e historias de expatriados 🎥",
       ctaText: "Seguir en TikTok",
       link: "https://www.tiktok.com/@relocatetosancarlos?is_from_webapp=1&sender_device=pc",
-      imageUrl:
-        "https://images.pexels.com/photos/35484061/pexels-photo-35484061.png",
+      imageUrl: "/images/socials-carousel/LI-SC.webp",
     },
     {
       platform: "Instagram",
@@ -75,8 +74,7 @@ export const socialsSection = {
       description: "Actualizaciones diarias desde el paraíso 🌊🏡",
       ctaText: "Seguir en Instagram",
       link: "https://www.instagram.com/relocatetosancarlos?igsh=anVwYW95NTMwc3E%3D&utm_source=qr",
-      imageUrl:
-        "https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=800&h=1000&fit=crop",
+      imageUrl: "/images/socials-carousel/IG-SC.webp",
     },
     {
       platform: "Facebook",
@@ -85,8 +83,7 @@ export const socialsSection = {
       description: "Conecte con locales y expatriados en San Carlos 🏖️",
       ctaText: "Me gusta en Facebook",
       link: "https://www.facebook.com/RelocateToSanCarlos",
-      imageUrl:
-        "https://images.unsplash.com/photo-1506929562872-bb421503ef21?w=800&h=1000&fit=crop",
+      imageUrl: "/images/socials-carousel/FB-SC.webp",
     },
     {
       platform: "YouTube",
@@ -95,8 +92,7 @@ export const socialsSection = {
       description: "Tours, guías e información local 🎬",
       ctaText: "Suscribirse en YouTube",
       link: "https://www.youtube.com/channel/UCc5E3eWOS19TF6ri4IpFGww",
-      imageUrl:
-        "https://images.unsplash.com/photo-1505682634904-d7c8d95cdc50?w=800&h=1000&fit=crop",
+      imageUrl: "/images/socials-carousel/X-SC.webp",
     },
   ],
 };
@@ -128,7 +124,7 @@ export const contactSection = {
     "¿Listo para mudarse? Contacte a Brenda, su especialista en San Carlos",
   description: `Inicie su mudanza o inversión inmobiliaria hoy mismo. Contacte a Brenda para una consulta personalizada e información estratégica del mercado en Sonora, México.`,
   formAction: "https://formsubmit.co/7cbfcf8a8143c9f8708006416b2a0aae",
-  contactEmail: "Brenda@RelocateToSanCarlos.com",
+  contactEmail: "Brenda@VivirEnSanCarlos.com",
   contactPhone: "+52(644)457-2193",
   videoArray: [
     "https://www.pexels.com/download/video/33792753/",
@@ -137,6 +133,16 @@ export const contactSection = {
     "https://www.pexels.com/download/video/32104595/",
   ],
   imgSrc: "",
+  componentText: {
+    header: "Ponte en Contacto",
+    subHeader:
+      "Completa el formulario o contáctanos directamente a través de estos canales. Te responderemos lo antes posible",
+    follow: "Síguenos",
+    call: "Llamar",
+    email: "Correo Electrónico",
+    message: "Mensaje",
+    submit: "Enviar Mensaje",
+  },
 };
 
 // Site Map

@@ -4,7 +4,7 @@
     <SeoMeta :seoData="computedSeoData" />
     <!-- Layout Sections -->
     <OrganismsHero v-bind="heroSection" />
-    <SectionsIntro v-if="!spanishDomain" v-bind="servicesSection" />
+    <SectionsIntro v-if="spanishDomain" v-bind="servicesSection" />
     <div class="container">
       <TextSectionTitle
         class="pt-12 pb-8"

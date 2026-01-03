@@ -1,5 +1,8 @@
 <template>
-  <div class="relative flex flex-col min-h-screen mx-auto">
+  <div
+    v-if="!spanishDomain"
+    class="relative flex flex-col min-h-screen mx-auto"
+  >
     <!-- <div class="flex items-center justify-center w-full bg-gray-200 rounded-lg h-72">
       <span class="text-gray-600">[Advertisement]</span>
     </div> -->
@@ -8,12 +11,14 @@
     <main class="w-full">
       <slot />
     </main>
+
     <SectionsBlogColumn
-      v-if="!isBlogPage && !isOnBoadrdingPage"
+      v-if="!isBlogPage && !isOnBoardingPage && !spanishDomain"
       class="pb-16"
       :showPagination="false"
       type="relocateBlog"
       v-bind="blogSection"
+      :title="blogSection.title"
     />
     <SectionsContact
       :contactInfo
@@ -39,7 +44,7 @@
         message="Hello, I would like to schedule a call!"
       /> -->
     </a>
-    <OrganismsBaseFooter :links="siteMap" :contactInfo :socials />
+    <OrganismsBaseFooter :links="siteMap" :contactInfo :socials footerConfig />
   </div>
 </template>
 
@@ -50,18 +55,21 @@ import {
   blogSection,
   contactSection,
   socials,
+  isSpanishDomain,
 } from "~/assets/configs/layout";
 
+const config = useRuntimeConfig();
 const route = useRoute();
 
-// is blog page
+const spanishDomain = isSpanishDomain(
+  process.server ? config.public.host : window.location.hostname
+);
+
 const isBlogPage = computed(() => {
   return route.path.toLocaleLowerCase().replace("/", "") === "/blog/";
 });
 
-const isOnBoadrdingPage = computed(() => {
+const isOnBoardingPage = computed(() => {
   return route.path === "/onboarding" || route.path.startsWith("/onboarding");
 });
 </script>
-
-<style lang="postcss" scoped></style>

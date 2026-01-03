@@ -1,8 +1,12 @@
 <template>
   <div class="flex flex-col w-full md:flex-row lg:flex-col">
     <!-- Left text/CTA block -->
-    <div class="grid content-center w-full px-2 mb-8 md:w-1/2 lg:w-full md:pr-16 lg:pr-0 md:mb-4 md:px-0">
-      <h2 class="mb-2 text-2xl font-bold tracking-tight text-primary md:text-3xl lg:text-4xl">
+    <div
+      class="grid content-center w-full px-2 mb-8 md:w-1/2 lg:w-full md:pr-16 lg:pr-0 md:mb-4 md:px-0"
+    >
+      <h2
+        class="mb-2 text-2xl font-bold tracking-tight text-primary md:text-3xl lg:text-4xl"
+      >
         {{ title }}
       </h2>
 
