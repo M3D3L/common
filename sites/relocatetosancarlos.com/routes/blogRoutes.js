@@ -1,9 +1,9 @@
 // Auto-generated at build time
 export const blogRoutes = [
-  "/blog/2025/10/25/buying-real-estate-in-mexico-foreigners-guide",
-  "/blog/2025/10/25/how-to-make-friends-san-carlos-sonora",
-  "/blog/2025/10/14/grocery-shopping-in-san-carlos-mexico",
-  "/blog/2025/10/12/wifi-providers-in-san-carlos",
-  "/blog/2025/09/19/cost-of-living-in-san-carlos-sonora",
-  "/blog/2025/09/14/why-we-relocated-to-san-carlos-sonora-mx",
+  "/blog/2025/10/25/how-to-buy-real-estate-in-mexico-foreigners-guide",
+  "/blog/2025/10/25/how-to-make-friends-san-carlos-sonora-mx",
+  "/blog/2025/10/14/what-is-the-grocery-shopping-in-san-carlos-sonora-mx",
+  "/blog/2025/10/12/what-are-the-wifi-providers-in-san-carlos-sonora-mx",
+  "/blog/2025/09/19/what-is-the-cost-of-living-in-san-carlos-sonora-mx",
+  "/blog/2025/09/14/why-we-relocated-to-san-carlos-sonora-mx"
 ];
