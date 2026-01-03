@@ -63,8 +63,7 @@ export const socialsSection = {
       description: "Property tours, local tips & expat stories 🎥",
       ctaText: "Follow on TikTok",
       link: "https://www.tiktok.com/@relocatetosancarlos?is_from_webapp=1&sender_device=pc",
-      imageUrl:
-        "https://images.unsplash.com/photo-1473496169904-658ba7c44d8a?w=800&h=1000&fit=crop",
+      imageUrl: "/images/socials-carousel/LI-SC.webp",
     },
     {
       platform: "Instagram",
@@ -73,8 +72,7 @@ export const socialsSection = {
       description: "Daily updates from paradise 🌊🏡",
       ctaText: "Follow on Instagram",
       link: "https://www.instagram.com/relocatetosancarlos?igsh=anVwYW95NTMwc3E%3D&utm_source=qr",
-      imageUrl:
-        "https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=800&h=1000&fit=crop",
+      imageUrl: "/images/socials-carousel/IG-SC.webp",
     },
     {
       platform: "Facebook",
@@ -83,8 +81,7 @@ export const socialsSection = {
       description: "Connect with San Carlos locals & expats 🏖️",
       ctaText: "Like Our Page",
       link: "https://www.facebook.com/RelocateToSanCarlos",
-      imageUrl:
-        "https://images.unsplash.com/photo-1506929562872-bb421503ef21?w=800&h=1000&fit=crop",
+      imageUrl: "/images/socials-carousel/FB-SC.webp",
     },
     {
       platform: "YouTube",
@@ -93,8 +90,7 @@ export const socialsSection = {
       description: "Tours, guides, and local insights 🎬",
       ctaText: "Subscribe on YouTube",
       link: "https://www.youtube.com/channel/UCc5E3eWOS19TF6ri4IpFGww",
-      imageUrl:
-        "https://images.unsplash.com/photo-1505682634904-d7c8d95cdc50?w=800&h=1000&fit=crop",
+      imageUrl: "/images/socials-carousel/X-SC.webp",
     },
   ],
 };
