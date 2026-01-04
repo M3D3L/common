@@ -3,11 +3,11 @@
     <SeoMeta :seoData="computedSeoData" />
 
     <ul class="container pb-32 space-y-32">
-      <li v-if="!pending">
+      <li v-if="!pending && typeMap[type]">
         <TextSectionTitle
           class="pt-12 pb-6"
-          :title="categoriesHeaders?.[typeMap[type]?.query]?.title"
-          :description="categoriesHeaders?.[typeMap[type]?.query]?.subTitle"
+          :title="categoriesHeaders[typeMap[type].query]?.title"
+          :description="categoriesHeaders[typeMap[type].query]?.subTitle"
           :h1="true"
         />
 
@@ -51,6 +51,10 @@
           </div>
         </div>
       </li>
+
+      <li v-else-if="pending" class="pt-20 text-center">
+        <p>Loading San Carlos Properties...</p>
+      </li>
     </ul>
   </div>
 </template>
@@ -75,23 +79,33 @@ const typeMap: Record<string, { index: number; query: string }> = {
 };
 
 // 2. REACTIVE PARAMS
-// These must be defined before any 'await' to ensure they are reactive from the start
 const type = computed(() => (route.params?.type as string) || "");
 const page = computed(() => Number(route.query.page) || 1);
 
-// 3. SEO DATA (Moved up and simplified for reliability)
+// 3. SEO DATA
 const computedSeoData = computed(() => {
   const currentType = type.value;
   const configMatch = typeMap[currentType];
 
-  // Logic check: If route is /rentals, configMatch.query will be "rental"
-  const queryKey = configMatch?.query;
-  const header = categoriesHeaders?.value?.[queryKey];
+  // 1. Check if configMatch exists AND categoriesHeaders.value exists
+  if (!configMatch || !categoriesHeaders?.value) {
+    return createSeoObject({
+      title: "Real Estate San Carlos",
+      summary: "Expert Real Estate Services in San Carlos, Sonora",
+    });
+  }
+
+  // 2. Safe access to the query key
+  const queryKey = configMatch.query;
+
+  // 3. Use optional chaining in case queryKey doesn't exist in the object
+  const header = categoriesHeaders.value[queryKey];
 
   if (!header) {
     return createSeoObject({
       title: "Real Estate San Carlos",
       summary: "Expert Real Estate Services in San Carlos, Sonora",
+      keywords: "Real Estate, San Carlos, Sonora",
     });
   }
 
@@ -108,7 +122,6 @@ const computedSeoData = computed(() => {
 });
 
 // 4. DATA FETCHING
-// We use await here. Everything above this line is already initialized.
 const {
   data: propertyData,
   pending,
@@ -142,6 +155,10 @@ const {
       featured: featuredRes?.items[0] || null,
       standard: standardRes || { items: [], totalPages: 0 },
     };
+  },
+  {
+    // Ensure data is watched correctly in Nuxt 3
+    watch: [type, page],
   }
 );
 
@@ -151,10 +168,5 @@ const currentCategory = computed(() => {
     properties: propertyData.value?.standard || { items: [], totalPages: 0 },
     featuredProperty: propertyData.value?.featured || null,
   };
-});
-
-// Watch for route changes to refresh data
-watch([type, page], () => {
-  refresh();
 });
 </script>
