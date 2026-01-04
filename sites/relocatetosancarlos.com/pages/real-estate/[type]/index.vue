@@ -3,7 +3,7 @@
     <SeoMeta :seoData="computedSeoData" />
 
     <ul class="container pb-32 space-y-32">
-      <li v-if="!pending && typeMap[type]">
+      <li v-if="!pending && typeMap[type] && propertyData">
         <TextSectionTitle
           class="pt-12 pb-6"
           :title="categoriesHeaders[typeMap[type].query]?.title"
@@ -55,6 +55,10 @@
       <li v-else-if="pending" class="pt-20 text-center">
         <p>Loading San Carlos Properties...</p>
       </li>
+
+      <li v-else class="pt-20 text-center">
+        <p>No properties found for this category.</p>
+      </li>
     </ul>
   </div>
 </template>
@@ -79,6 +83,7 @@ const typeMap: Record<string, { index: number; query: string }> = {
 };
 
 // 2. REACTIVE PARAMS
+// Using a computed for type ensures it updates if the route changes
 const type = computed(() => (route.params?.type as string) || "");
 const page = computed(() => Number(route.query.page) || 1);
 
@@ -87,7 +92,6 @@ const computedSeoData = computed(() => {
   const currentType = type.value;
   const configMatch = typeMap[currentType];
 
-  // 1. Check if configMatch exists AND categoriesHeaders.value exists
   if (!configMatch || !categoriesHeaders?.value) {
     return createSeoObject({
       title: "Real Estate San Carlos",
@@ -95,10 +99,7 @@ const computedSeoData = computed(() => {
     });
   }
 
-  // 2. Safe access to the query key
   const queryKey = configMatch.query;
-
-  // 3. Use optional chaining in case queryKey doesn't exist in the object
   const header = categoriesHeaders.value[queryKey];
 
   if (!header) {
@@ -122,14 +123,15 @@ const computedSeoData = computed(() => {
 });
 
 // 4. DATA FETCHING
-const {
-  data: propertyData,
-  pending,
-  refresh,
-} = await useAsyncData(
-  `properties-split-${type.value}-${page.value}`,
+// Stable key helps Nuxt hydrate correctly after a refresh
+// 4. DATA FETCHING
+const { data: propertyData, pending } = await useAsyncData(
+  // Use a dynamic key so Nuxt knows to trigger a new fetch when the type changes
+  `properties-list-${type.value}`,
   async () => {
-    const configMatch = typeMap[type.value];
+    const currentType = type.value;
+    const configMatch = typeMap[currentType];
+
     if (!configMatch) return null;
 
     const { query } = configMatch;
@@ -157,7 +159,7 @@ const {
     };
   },
   {
-    // Ensure data is watched correctly in Nuxt 3
+    // Watch ensures that changes to 'page' within the same 'type' trigger a refetch
     watch: [type, page],
   }
 );

@@ -96,7 +96,7 @@ const props = defineProps<{
   slides: (string | { url: string; alt?: string })[];
   collectionId: string;
   propertyId: string;
-  breakpoints: Record<string, { slidesPerView: number }>;
+  breakpoints?: Record<string, { slidesPerView: number }>;
 }>();
 
 const isModalOpen = ref(false);
