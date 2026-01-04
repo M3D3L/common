@@ -19,7 +19,24 @@ export default defineNuxtConfig({
   extends: ["../../nuxt.config.ts"],
   css: ["@/assets/css/tailwind.css"],
 
-  modules: ["@nuxtjs/sitemap"],
+  modules: ["@nuxtjs/i18n", "@nuxtjs/sitemap"],
+  /* -----------------------------
+   * I18N CONFIGURATION
+   * ----------------------------- */
+  i18n: {
+    locales: [
+      {
+        code: "en",
+        iso: "en-US",
+        domains: ["guillermomedel.com", "www.guillermomedel.com"],
+        name: "English",
+      },
+    ],
+    defaultLocale: "en",
+    strategy: "no_prefix",
+    detectBrowserLanguage: false,
+    differentDomains: true,
+  },
 
   googleFonts: {
     families: {
