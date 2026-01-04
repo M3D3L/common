@@ -1,5 +1,6 @@
 import path from "path";
 import { blogRoutes } from "./routes/blogRoutes";
+import { propertyRoutes } from "./routes/propertyRoutes";
 
 export default defineNuxtConfig({
   compatibilityDate: "2025-08-30",
@@ -12,7 +13,7 @@ export default defineNuxtConfig({
   nitro: {
     preset: "netlify",
     prerender: {
-      routes: [...blogRoutes, "/sitemap.xml"],
+      routes: [...blogRoutes, ...propertyRoutes, "/sitemap.xml"],
       crawlLinks: true,
     },
   },
