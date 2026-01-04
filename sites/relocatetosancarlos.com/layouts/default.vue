@@ -1,8 +1,5 @@
 <template>
-  <div
-    v-if="!spanishDomain"
-    class="relative flex flex-col min-h-screen mx-auto"
-  >
+  <div class="relative flex flex-col min-h-screen mx-auto">
     <!-- <div class="flex items-center justify-center w-full bg-gray-200 rounded-lg h-72">
       <span class="text-gray-600">[Advertisement]</span>
     </div> -->
@@ -13,7 +10,7 @@
     </main>
 
     <SectionsBlogColumn
-      v-if="!isBlogPage && !isOnBoardingPage && !spanishDomain"
+      v-if="!isBlogPage && !isOnBoardingPage"
       class="pb-16"
       :showPagination="false"
       type="relocateBlog"
@@ -55,15 +52,10 @@ import {
   blogSection,
   contactSection,
   socials,
-  isSpanishDomain,
 } from "~/assets/configs/layout";
 
 const config = useRuntimeConfig();
 const route = useRoute();
-
-const spanishDomain = isSpanishDomain(
-  process.server ? config.public.host : window.location.hostname
-);
 
 const isBlogPage = computed(() => {
   return route.path.toLocaleLowerCase().replace("/", "") === "/blog/";

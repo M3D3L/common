@@ -6,7 +6,7 @@
           {{ title }}
         </span>
       </CardTitle>
-      <CardDescription class="text-base text-muted-foreground">
+      <CardDescription v-if="subTitle" class="text-base text-muted-foreground">
         {{ subTitle }}
       </CardDescription>
     </CardHeader>
@@ -53,12 +53,18 @@ export interface BenefitItem {
   description: string;
 }
 
+// Define the structure using pure TypeScript
 interface Props {
   title: string;
-  subTitle: string;
+  subTitle?: string; // The '?' makes it optional
   footerText: string;
   benefits: BenefitItem[];
 }
 
-const props = defineProps<Props>();
+// Apply default values using withDefaults
+const props = withDefaults(defineProps<Props>(), {
+  subTitle: "",
+  footerText: "",
+  benefits: () => [],
+});
 </script>

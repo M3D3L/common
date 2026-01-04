@@ -147,7 +147,7 @@ export const siteMap = [
   { label: "View All", href: "/real-estate" },
   { label: "For Sale", href: "/real-estate/properties" },
   { label: "Rentals", href: "/real-estate/rentals" },
-  { label: "Lots", href: "/real-estate/lots" },
+  // { label: "Lots", href: "/real-estate/lots" },
   { label: "Relocation Guide", href: "/blog" },
   { label: "Contact", href: "/#contact" },
 ];
@@ -192,6 +192,36 @@ export const realEstateHeroSection = {
   keywords:
     "san carlos sonora real estate, relocate to san carlos mexico, san carlos long term rentals, san carlos mexico homes for sale, san carlos sonora lots for sale, mexico real estate agent",
   propertiesText: "Get Personalized Property Info",
+};
+
+export const categoryHeaders = {
+  title: "San Carlos, Sonora Real Estate",
+  subTitle:
+    "Find Your Ideal Home, Long-Term Rental, or Investment Lot with Expert Bilingual Support.",
+};
+
+export const categoriesHeaders = {
+  property: {
+    title: "San Carlos, Sonora Real Estate",
+    subTitle:
+      "Find Your Ideal Home, Long-Term Rental, or Investment Lot with Expert Bilingual Support.",
+    keywords:
+      "San Carlos Sonora real estate, homes for sale San Carlos Mexico, San Carlos MLS, buy property in Mexico, San Carlos beachfront homes, expat real estate Sonora, luxury homes San Carlos",
+  },
+  rental: {
+    title: "San Carlos, Sonora Long-Term Rentals",
+    subTitle:
+      "Discover Furnished, Pet-Friendly Homes with Expert Lease Negotiation & Bilingual Support.",
+    keywords:
+      "long term rentals San Carlos Sonora, furnished rentals San Carlos, pet friendly rentals Mexico, San Carlos house rentals, monthly rentals San Carlos, expat housing San Carlos, condo rentals Sonora",
+  },
+  lot: {
+    title: "San Carlos, Sonora Land & Lots for Sale",
+    subTitle:
+      "Build Your Dream Home with Prime Coastal Land and Trusted Local Builder Referrals.",
+    keywords:
+      "land for sale San Carlos Sonora, ocean view lots San Carlos, building lots Mexico, San Carlos investment land, coastal property Sonora, residential lots San Carlos, development land Mexico",
+  },
 };
 
 export const categoryConfigs = {

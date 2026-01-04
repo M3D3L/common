@@ -22,8 +22,8 @@
       <li v-else>
         <TextSectionTitle
           class="pt-12 pb-6"
-          :title="currentCategory?.title"
-          :description="currentCategory?.sectionSubTitle"
+          :title="categoriesHeaders?.[typeMap[type]?.query]?.title"
+          :description="categoriesHeaders?.[typeMap[type]?.query]?.subTitle"
           :h1="true"
         />
 
@@ -54,16 +54,15 @@
 
           <div class="w-full lg:w-1/3">
             <CardsInfoCard
-              v-if="currentCategory"
-              :title="currentCategory.sectionTitle"
-              :footerText="currentCategory.footerText"
-              :subTitle="currentCategory.subTitle"
-              :sectionTitle="currentCategory.sectionTitle"
-              :benefits="currentCategory.benefits"
-              :categories="currentCategory.categories"
-              :dataArray="currentCategory?.properties?.items"
+              :title="rawCategories?.[typeMap[type]?.index]?.sectionTitle"
+              :footerText="rawCategories?.[typeMap[type]?.index]?.footerText"
+              :subTitle="rawCategories?.[typeMap[type]?.index]?.subTitle"
+              :benefits="rawCategories?.[typeMap[type]?.index]?.benefits"
+              :dataArray="
+                rawCategories?.[typeMap[type]?.index]?.properties?.items
+              "
               class="z-10 sticky-position top-28"
-              :mode="currentCategory.mode"
+              :mode="rawCategories?.[typeMap[type]?.index]?.mode"
             />
           </div>
         </div>
@@ -73,15 +72,17 @@
 </template>
 
 <script lang="ts" setup>
-import { categories } from "~/assets/configs/layout.js";
+import {
+  categories as rawCategories,
+  categoriesHeaders,
+} from "~/assets/configs/layout.js";
 import { createSeoObject } from "@common/composables/useSeo";
 
 const { fetchCollection } = usePocketBaseCore();
 const config = useRuntimeConfig();
 const route = useRoute();
 
-const page = computed(() => Number(route.query.page) || 1);
-const type = computed(() => route.params?.type);
+// 1. CONSTANTS & MAPS
 const perPage = 10;
 const typeMap: Record<string, { index: number; query: string }> = {
   properties: { index: 0, query: "property" },
@@ -89,13 +90,41 @@ const typeMap: Record<string, { index: number; query: string }> = {
   lots: { index: 2, query: "lot" },
 };
 
-const currentCategory = computed(() => {
-  if (typeMap[type.value]) {
-    return categories[typeMap[type.value].index];
+// 2. REACTIVE PARAMS
+// These must be defined before any 'await' to ensure they are reactive from the start
+const type = computed(() => (route.params?.type as string) || "");
+const page = computed(() => Number(route.query.page) || 1);
+
+// 3. SEO DATA (Moved up and simplified for reliability)
+const computedSeoData = computed(() => {
+  const currentType = type.value;
+  const configMatch = typeMap[currentType];
+
+  // Logic check: If route is /rentals, configMatch.query will be "rental"
+  const queryKey = configMatch?.query;
+  const header = categoriesHeaders?.value?.[queryKey];
+
+  if (!header) {
+    return createSeoObject({
+      title: "Real Estate San Carlos",
+      summary: "Expert Real Estate Services in San Carlos, Sonora",
+    });
   }
-  return null;
+
+  return createSeoObject({
+    title: header.title,
+    summary: header.subTitle,
+    keywords: header.keywords || "",
+    jsonLd: {
+      "@type": "WebSite",
+      url: `${config.public.siteUrl}${route.fullPath}`,
+      name: header.title,
+    },
+  });
 });
 
+// 4. DATA FETCHING
+// We use await here. Everything above this line is already initialized.
 const {
   data: propertyData,
   pending,
@@ -103,60 +132,45 @@ const {
 } = await useAsyncData(
   `properties-split-${type.value}-${page.value}`,
   async () => {
-    if (!typeMap[type.value]) return null;
-    const { query } = typeMap[type.value];
+    const configMatch = typeMap[type.value];
+    if (!configMatch) return null;
 
-    // 1. Fetch exactly one featured item for this type
-    const featuredRes = await fetchCollection(
-      "properties",
-      1,
-      1,
-      `type="${query}" && featured=true`,
-      "-created"
-    );
+    const { query } = configMatch;
 
-    // 2. Fetch standard items (where featured is false)
-    const standardRes = await fetchCollection(
-      "properties",
-      page.value,
-      perPage,
-      `type="${query}" && featured=false`,
-      "-created"
-    );
+    const [featuredRes, standardRes] = await Promise.all([
+      fetchCollection(
+        "properties",
+        1,
+        1,
+        `type="${query}" && featured=true`,
+        "-created"
+      ),
+      fetchCollection(
+        "properties",
+        page.value,
+        perPage,
+        `type="${query}" && featured=false`,
+        "-created"
+      ),
+    ]);
 
     return {
-      featured: featuredRes.items[0] || null,
-      standard: standardRes,
+      featured: featuredRes?.items[0] || null,
+      standard: standardRes || { items: [], totalPages: 0 },
     };
   }
 );
 
-// Sync both standard list and featured item to your category object
-watch(
-  propertyData,
-  (newData) => {
-    if (currentCategory.value && newData) {
-      currentCategory.value.properties = newData.standard;
-      currentCategory.value.featuredProperty = newData.featured;
-    }
-  },
-  { immediate: true }
-);
-
-watch([type.value, page], () => {
-  refresh();
+// 5. VIEW COMPUTEDS
+const currentCategory = computed(() => {
+  return {
+    properties: propertyData.value?.standard || { items: [], totalPages: 0 },
+    featuredProperty: propertyData.value?.featured || null,
+  };
 });
 
-const computedSeoData = computed(() =>
-  createSeoObject({
-    title: currentCategory.value?.title || "",
-    summary: currentCategory.value?.subTitle || "",
-    keywords: currentCategory.value?.keywords || [],
-    jsonLd: {
-      "@type": "WebSite",
-      url: config.public.siteUrl,
-      name: currentCategory.value?.title,
-    },
-  })
-);
+// Watch for route changes to refresh data
+watch([type, page], () => {
+  refresh();
+});
 </script>

@@ -1,67 +1,72 @@
 <template>
   <div class="w-full pb-16">
-    <!-- SeoMeta component for SEO metadata -->
     <SeoMeta :seoData="computedSeoData" />
-    <!-- Layout Sections -->
-    <OrganismsHero v-bind="heroSection" />
-    <!-- <SectionsIntro v-bind="servicesSection" /> -->
+
+    <OrganismsHero v-bind="heroSection?.value || heroSection" />
+
     <div class="container">
       <TextSectionTitle
         class="pt-12 pb-8"
-        :title="propertiesSection.title"
-        :description="propertiesSection.description"
+        :title="propertiesSection?.value?.title || propertiesSection?.title"
+        :description="
+          propertiesSection?.value?.description ||
+          propertiesSection?.description
+        "
         :h1="false"
       />
+
       <div class="grid md:grid-cols-3 gap-6">
         <CardsPropertyCard
-          v-for="(item, itemIndex) in properties?.items"
+          v-for="(item, itemIndex) in propertyItems.items"
           :key="`property-home-${itemIndex}`"
           :content="item"
           class="mt-8"
         />
       </div>
 
-      <div class="w-full flex justify-end">
-        <div class="mt-16">
-          <nuxt-link
-            to="/real-estate/"
-            class="font-bold w-full transition-all hover:opacity-90 text-primary hover:underline pb-2"
-          >
-            {{
-              spanishDomain
-                ? "Ver Todas las Propiedades"
-                : "View All Properties"
-            }}
-          </nuxt-link>
-        </div>
+      <div class="w-full flex justify-end mt-16">
+        <NuxtLink
+          to="/real-estate/"
+          class="font-bold w-full transition-all hover:opacity-90 text-primary hover:underline pb-2"
+        >
+          {{
+            $isSpanishDomain
+              ? "Ver Todas las Propiedades"
+              : "View All Properties"
+          }}
+        </NuxtLink>
       </div>
     </div>
-    <SectionsSocialsCarousel v-bind="socialsSection" />
+
+    <SectionsSocialsCarousel v-bind="socialsSection?.value || socialsSection" />
   </div>
 </template>
 
 <script setup>
 import { createSeoObject } from "@common/composables/useSeo";
 
+// Nuxt / app context (SAFE)
+const { $isSpanishDomain } = useNuxtApp();
+const config = useRuntimeConfig();
+
+// Layout configs (computed refs)
 import {
   seoDefaults,
   heroSection,
-  servicesSection,
   socialsSection,
   propertiesSection,
-  isSpanishDomain,
 } from "~/assets/configs/layout";
 
+// Data
 const { fetchCollection } = usePocketBaseCore();
-const config = useRuntimeConfig();
-
 const loading = ref(false);
-const properties = ref([]);
+const propertyItems = ref({ items: [] });
 
+// Fetch properties
 const loadProperties = async (ignoreCache = false) => {
   loading.value = true;
   try {
-    properties.value = await fetchCollection(
+    const data = await fetchCollection(
       "properties",
       1,
       3,
@@ -71,40 +76,39 @@ const loadProperties = async (ignoreCache = false) => {
       null,
       ignoreCache
     );
+    propertyItems.value = data || { items: [] };
   } catch (error) {
-    console.error("Error:", error);
+    console.error("Error fetching properties:", error);
   } finally {
     loading.value = false;
   }
 };
 
-const spanishDomain = isSpanishDomain(
-  process.server ? config.public.host : window.location.hostname
-);
+// SEO (PURE + SAFE)
+const computedSeoData = computed(() => {
+  const defaults = seoDefaults.value?.home || {};
 
-const computedSeoData = computed(() =>
-  createSeoObject({
-    title: seoDefaults.home.title,
-    summary: seoDefaults.home.description,
-    keywords: seoDefaults.home.keywords,
-    imageUri: seoDefaults.home.image,
+  return createSeoObject({
+    title: defaults.title || "Real Estate",
+    summary: defaults.description || "",
+    keywords: defaults.keywords || "",
+    imageUri: defaults.image || "",
     pubDate: "",
-    byline: seoDefaults.home.byline,
-    // Optional for homepage JSON-LD customization
+    byline: defaults.byline || "",
     jsonLd: {
       "@type": "WebSite",
       url: config.public.siteUrl,
-      name: seoDefaults.home.title,
-      description: seoDefaults.home.description,
+      name: defaults.title,
+      description: defaults.description,
       publisher: {
         "@type": "Organization",
         name: config.public.siteName,
       },
     },
-  })
-);
+  });
+});
 
-// Initial load
+// Lifecycle
 onMounted(() => {
   loadProperties();
 });

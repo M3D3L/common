@@ -35,7 +35,7 @@
 
           <slot name="extra-links" />
 
-          <ClientOnly>
+          <!-- <ClientOnly>
             <template v-if="showAuthButtons">
               <template v-if="!auth.isAuthenticated.value">
                 <AtomsStyledLink :to="getLoginHref()" title="Login" />
@@ -54,7 +54,7 @@
             <template #fallback>
               <div class="w-20 h-8 animate-pulse bg-muted rounded-md"></div>
             </template>
-          </ClientOnly>
+          </ClientOnly> -->
         </nav>
 
         <ClientOnly>

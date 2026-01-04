@@ -150,7 +150,7 @@ export const siteMap = [
   { label: "Ver Todo", href: "/real-estate" },
   { label: "En Venta", href: "/real-estate/properties" },
   { label: "Rentas", href: "/real-estate/rentals" },
-  { label: "Terrenos", href: "/real-estate/lots" },
+  // { label: "Terrenos", href: "/real-estate/lots" },
   { label: "Guía de Relocalización", href: "/blog" },
   { label: "Contacto", href: "/#contact" },
 ];
@@ -194,6 +194,37 @@ export const realEstateHeroSection = {
   keywords:
     "bienes raíces san carlos sonora, mudarse a san carlos méxico, rentas largo plazo san carlos, casas en venta méxico, terrenos en venta san carlos, agente inmobiliario méxico",
   propertiesText: "Obtener Información Personalizada",
+};
+
+export const categoryHeaders = {
+  title: "Bienes Raíces en San Carlos, Sonora",
+  subTitle:
+    "Encuentre su Casa Ideal, Renta a Largo Plazo o Terreno de Inversión con Apoyo Bilingüe Experto.",
+  keywords: "",
+};
+
+export const categoriesHeaders = {
+  property: {
+    title: "Bienes Raíces en San Carlos, Sonora",
+    subTitle:
+      "Encuentre su Casa Ideal, Renta a Largo Plazo o Terreno de Inversión con Apoyo Bilingüe Experto.",
+    keywords:
+      "bienes raíces San Carlos Sonora, casas en venta San Carlos, real estate San Carlos Mexico, comprar casa en San Carlos, agencias inmobiliarias San Carlos, viviendas de lujo Sonora, San Carlos property for sale",
+  },
+  rental: {
+    title: "Rentas a Largo Plazo en San Carlos, Sonora",
+    subTitle:
+      "Descubra Rentas Asequibles y Pet-Friendly con Apoyo Experto en Contratos Bilingües.",
+    keywords:
+      "rentas a largo plazo San Carlos, long term rentals San Carlos Sonora, casas en renta San Carlos, rentas pet-friendly San Carlos, departamentos en renta San Carlos, condominios renta San Carlos, houses for rent San Carlos Mexico",
+  },
+  lot: {
+    title: "Terrenos y Lotes en Venta en San Carlos, Sonora",
+    subTitle:
+      "Compre Terrenos Costeros con Apoyo Local Experto para Construir su Casa Ideal.",
+    keywords:
+      "terrenos en venta San Carlos Sonora, lotes frente al mar San Carlos, terrenos de inversión Sonora, lots for sale San Carlos Mexico, terrenos con vista al mar, comprar terreno en San Carlos, land for sale San Carlos",
+  },
 };
 
 export const categoryConfigs = {
