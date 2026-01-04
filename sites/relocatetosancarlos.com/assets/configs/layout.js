@@ -8,7 +8,7 @@ import { computed } from "vue";
 const currentLayout = computed(() => {
   try {
     const { $isSpanishDomain } = useNuxtApp();
-    return !$isSpanishDomain ? layoutSp : layoutEn;
+    return $isSpanishDomain ? layoutSp : layoutEn;
   } catch (e) {
     return layoutEn;
   }
