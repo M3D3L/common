@@ -4,7 +4,7 @@ import { computed } from "vue";
 
 const resolveLayout = () => {
   const { $isSpanishDomain } = useNuxtApp();
-  return !$isSpanishDomain ? layoutSp : layoutEn;
+  return $isSpanishDomain ? layoutSp : layoutEn;
 };
 
 // Remove 'as any' and the type ': string'
