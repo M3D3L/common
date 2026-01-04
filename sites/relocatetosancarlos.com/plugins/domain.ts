@@ -1,28 +1,27 @@
-// plugins/domain.js
 export default defineNuxtPlugin((nuxtApp) => {
-  const req = useRequestEvent();
+  let isSpanishDomain: boolean;
 
-  const host = process.client
-    ? window.location.hostname
-    : req?.node?.req?.headers["x-forwarded-host"] ||
+  if (process.server) {
+    // Server-side: detect from headers
+    const req = useRequestEvent();
+    const host =
+      req?.node?.req?.headers["x-forwarded-host"] ||
       req?.node?.req?.headers?.host ||
       "";
 
-  const isSpanishDomain =
-    host === "vivirensancarlos.com" || host.endsWith(".vivirensancarlos.com");
+    const hostname = host.split(":")[0];
 
-  // Set a global variable BEFORE the plugin provides it
-  // This allows synchronous access during module initialization
-  if (process.server) {
-    // Use process.env for server-side synchronous access
-    process.env.NUXT_PUBLIC_IS_SPANISH_DOMAIN = isSpanishDomain
-      ? "true"
-      : "false";
-  }
+    isSpanishDomain =
+      hostname === "vivirensancarlos.com" ||
+      hostname === "www.vivirensancarlos.com" ||
+      hostname.endsWith(".vivirensancarlos.com");
+    // Store in payload for client hydration
+    nuxtApp.payload.isSpanishDomain = isSpanishDomain;
 
-  if (process.client) {
-    // Set on window for client-side synchronous access
-    window.__NUXT_IS_SPANISH_DOMAIN = isSpanishDomain;
+    console.log("SERVER - after setting:", nuxtApp.payload.isSpanishDomain);
+  } else {
+    // MUST use the value from server payload for hydration
+    isSpanishDomain = nuxtApp.payload.isSpanishDomain ?? false;
   }
 
   return {

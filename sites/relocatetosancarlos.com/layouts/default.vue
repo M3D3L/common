@@ -9,14 +9,14 @@
       <slot />
     </main>
 
-    <SectionsBlogColumn
+    <!-- <SectionsBlogColumn
       v-if="!isBlogPage && !isOnBoardingPage"
       class="pb-16"
       :showPagination="false"
       type="relocateBlog"
       v-bind="blogSection"
       :title="blogSection.title"
-    />
+    /> -->
     <SectionsContact
       :contactInfo
       :social-links="socials"
