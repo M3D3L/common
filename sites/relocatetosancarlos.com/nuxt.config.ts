@@ -36,7 +36,32 @@ export default defineNuxtConfig({
 
   css: ["@/assets/css/tailwind.css"],
 
-  modules: ["@nuxtjs/sitemap", "nuxt-svgo"],
+  modules: ["@nuxtjs/i18n", "@nuxtjs/sitemap", "nuxt-svgo"],
+
+  /* -----------------------------
+   * I18N CONFIGURATION
+   * ----------------------------- */
+  i18n: {
+    locales: [
+      {
+        code: "en",
+        iso: "en-US",
+        domain: "relocatetosancarlos.com",
+        name: "English",
+      },
+      {
+        code: "es",
+        iso: "es-MX",
+        domain: "vivirensancarlos.com",
+        name: "Español",
+      },
+    ],
+    defaultLocale: "en",
+    strategy: "no_prefix", // No /en or /es in URLs
+    detectBrowserLanguage: false, // Rely on domain only
+    differentDomains: true, // Enable domain-based locale detection
+    skipSettingLocaleOnNavigate: true, // Prevent locale changes on navigation
+  },
 
   /* -----------------------------
    * ROUTING
@@ -134,7 +159,7 @@ export default defineNuxtConfig({
     public: {
       pocketbaseUrl:
         process.env.POCKETBASE_URL || "https://api.sancarlosinsider.com/",
-      whatsappNumber: process.env.WHATSAPP_NUMBER || "6444444444",
+      // whatsappNumber: process.env.WHATSAPP_NUMBER || "6444444444",
       siteName: "RelocateToSanCarlos.com",
       siteUrl: "https://www.relocatetosancarlos.com",
       twitterSite: "@relocatetosc",
