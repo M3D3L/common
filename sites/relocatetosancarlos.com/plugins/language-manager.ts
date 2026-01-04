@@ -1,21 +1,27 @@
 export default defineNuxtPlugin((nuxtApp) => {
   const { $i18n } = nuxtApp;
 
-  // 1. Detect Host (Server headers vs Client window)
+  // 1. Safety Check: Are we building/prerendering?
+  const isPrerendering = process.server && !!useNitroApp?.() === false;
+  // If we are prerendering, we just default to English and skip logic
+  if (isPrerendering) return;
+
+  // 2. Detect Host
   const headers = useRequestHeaders(["host", "x-forwarded-host"]);
   const host = process.server
     ? headers["x-forwarded-host"] || headers["host"] || ""
     : window.location.host;
 
-  // 2. Determine target language
+  // 3. Determine target language (Shared logic for both domains)
+  // Spanish domain = Spanish, English domain (or anything else) = English
   const isSpanish = host.includes("vivirensancarlos.com");
   const targetLocale = isSpanish ? "es" : "en";
 
-  // 3. Force the locale immediately
-  // This updates the i18n instance before the page renders
-  $i18n.locale.value = targetLocale;
+  // 4. Force the locale immediately
+  if ($i18n) {
+    $i18n.locale.value = targetLocale;
+  }
 
-  // 4. Provide the helper for your templates
   return {
     provide: {
       isSpanishDomain: isSpanish,
