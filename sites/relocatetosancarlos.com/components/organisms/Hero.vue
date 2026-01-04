@@ -21,7 +21,6 @@
           <section
             ref="parallaxContainer"
             :style="{ transform: `translateY(${parallaxOffset}px)` }"
-            :id="headerId"
             class="md:w-1/2 z-10 flex h-full bg-black bg-opacity-50 rounded-lg overflow-hidden flex-col items-center justify-center text-center p-6 transition-transform duration-100 ease-out"
           >
             <div class="w-full space-y-6">
@@ -30,17 +29,11 @@
               >
                 {{ titleLine1 }}
                 <span
-                  class="mt-2 font-bold leading-tight text-primary text-xl sm:text-2xl"
+                  class="mt-2 font-bold leading-tight text-primary text-xl sm:text-2xl block"
                 >
                   {{ titleHighlight }}
                 </span>
               </h1>
-
-              <img
-                :src="imageSrc"
-                :alt="imageAlt"
-                class="md:hidden w-2/3 mx-auto"
-              />
 
               <p
                 class="mx-auto max-w-xl text-white/90 sm:text-base font-light leading-tight"
@@ -69,27 +62,15 @@
 
           <nuxt-link
             to="/#about"
-            class="absolute hidden md:block bottom-24 cursor-pointer transition-opacity duration-500 hover:opacity-100"
+            class="absolute hidden md:block bottom-24 cursor-pointer"
           >
             <p
               class="text-xl uppercase tracking-widest text-white/70 font-light"
             >
-              Discover San Carlos
+              {{
+                $isSpanishDomain ? "Descubre San Carlos" : "Discover San Carlos"
+              }}
             </p>
-            <svg
-              class="mx-auto mt-2 h-6 w-6 text-white animate-bounce"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="1.5"
-                d="M19 9l-7 7-7-7"
-              ></path>
-            </svg>
           </nuxt-link>
         </div>
       </section>
@@ -114,37 +95,22 @@ interface Props {
   buttons: Array<{ text: string; title: string; link: string }>;
 }
 
-const props = defineProps<Partial<Props>>();
+// DO NOT DESTRUCTURE PROPS HERE
+const props = defineProps<Props>();
 
-const {
-  id,
-  padding,
-  video,
-  headerId,
-  imageSrc,
-  imageAlt,
-  titleLine1,
-  titleHighlight,
-  description,
-} = props;
-
-// Parallax effect
+// Use a simple proxy or computed to handle parallax if needed,
+// but keep the prop values linked to the props object.
 const parallaxContainer = ref<HTMLElement | null>(null);
 const parallaxOffset = ref(0);
 
 const handleScroll = () => {
   if (parallaxContainer.value) {
-    const scrolled = window.scrollY;
-    // Adjust the multiplier (0.3) to control parallax intensity
-    // Positive value moves down when scrolling down
-    // Negative value moves up when scrolling down
-    parallaxOffset.value = scrolled * -0.3;
+    parallaxOffset.value = window.scrollY * -0.3;
   }
 };
 
 onMounted(() => {
   window.addEventListener("scroll", handleScroll);
-  handleScroll(); // Initialize on mount
 });
 
 onUnmounted(() => {

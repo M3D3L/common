@@ -2,7 +2,7 @@
   <div class="w-full pb-16">
     <SeoMeta :seoData="computedSeoData" />
 
-    <OrganismsHero v-bind="heroSection?.value || heroSection" />
+    <OrganismsHero v-bind="heroSection" />
 
     <div class="container">
       <TextSectionTitle
