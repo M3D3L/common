@@ -3,7 +3,7 @@
     <SeoMeta :seoData="computedSeoData" />
 
     <ul class="container pb-32 space-y-32">
-      <li v-if="!pending && typeMap[type] && propertyData">
+      <li v-if="typeMap[type] && propertyData">
         <TextSectionTitle
           class="pt-12 pb-6"
           :title="categoriesHeaders[typeMap[type].query]?.title"
@@ -50,14 +50,6 @@
             />
           </div>
         </div>
-      </li>
-
-      <li v-else-if="pending" class="pt-20 text-center">
-        <p>Loading San Carlos Properties...</p>
-      </li>
-
-      <li v-else class="pt-20 text-center">
-        <p>No properties found for this category.</p>
       </li>
     </ul>
   </div>
@@ -125,7 +117,7 @@ const computedSeoData = computed(() => {
 // 4. DATA FETCHING
 // Stable key helps Nuxt hydrate correctly after a refresh
 // 4. DATA FETCHING
-const { data: propertyData, pending } = await useAsyncData(
+const { data: propertyData } = await useAsyncData(
   // Use a dynamic key so Nuxt knows to trigger a new fetch when the type changes
   `properties-list-${type.value}`,
   async () => {
