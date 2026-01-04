@@ -2,8 +2,11 @@ export default defineNuxtPlugin((nuxtApp) => {
   let isSpanishDomain: boolean;
 
   if (process.server) {
-    // Server-side: detect from headers
     const req = useRequestEvent();
+
+    // Log ALL headers to see what we're getting
+    console.log("SERVER - All headers:", req?.node?.req?.headers);
+
     const host =
       req?.node?.req?.headers["x-forwarded-host"] ||
       req?.node?.req?.headers?.host ||
@@ -15,13 +18,12 @@ export default defineNuxtPlugin((nuxtApp) => {
       hostname === "vivirensancarlos.com" ||
       hostname === "www.vivirensancarlos.com" ||
       hostname.endsWith(".vivirensancarlos.com");
-    // Store in payload for client hydration
-    nuxtApp.payload.isSpanishDomain = isSpanishDomain;
 
-    console.log("SERVER - after setting:", nuxtApp.payload.isSpanishDomain);
+    console.log("SERVER - hostname:", hostname, "isSpanish:", isSpanishDomain);
+    nuxtApp.payload.isSpanishDomain = isSpanishDomain;
   } else {
-    // MUST use the value from server payload for hydration
     isSpanishDomain = nuxtApp.payload.isSpanishDomain ?? false;
+    console.log("CLIENT - using value:", isSpanishDomain);
   }
 
   return {
