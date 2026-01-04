@@ -4,14 +4,10 @@ import * as layoutEn from "~/assets/configs/layoutEn";
 
 const createLayoutComputed = (key) => {
   return computed(() => {
-    // Access the Nuxt app instance
-    const nuxtApp = useNuxtApp();
-
-    // Use the provided value from our domain plugin
-    // This value is hydrated correctly from Server to Client
-    const isSpanish = nuxtApp.$isSpanishDomain;
-
-    const layout = isSpanish ? layoutSp : layoutEn;
+    const { $i18n } = useNuxtApp();
+    // i18n.locale is reactive, so this will update
+    // immediately when the middleware sets the language.
+    const layout = $i18n.locale.value === "es" ? layoutSp : layoutEn;
     return layout[key];
   });
 };
