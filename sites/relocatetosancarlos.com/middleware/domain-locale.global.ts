@@ -1,28 +1,15 @@
-export default defineNuxtRouteMiddleware((to) => {
+export default defineNuxtRouteMiddleware(() => {
   const { $i18n } = useNuxtApp();
-  let host = "";
+  const headers = useRequestHeaders(["host", "x-forwarded-host"]);
 
-  if (process.server) {
-    const event = useRequestEvent();
-    // Netlify specific priority: x-forwarded-host
-    host =
-      event?.node?.req?.headers["x-forwarded-host"] ||
-      event?.node?.req?.headers?.host ||
-      "";
+  const host = process.server
+    ? headers["x-forwarded-host"] || headers["host"] || ""
+    : window.location.host;
 
-    // Log this during development/build to see what Netlify is actually sending
-    console.log("SSR Host Detection:", host);
-  } else {
-    host = window.location.host;
-  }
-
-  // Clean the host (remove ports if they exist)
-  const hostname = host.split(":")[0];
-
-  const isSpanish = hostname.includes("vivirensancarlos.com");
+  const isSpanish = host.includes("vivirensancarlos.com");
   const targetLocale = isSpanish ? "es" : "en";
 
-  // Sync the i18n locale
+  // Force the locale immediately
   if ($i18n.locale.value !== targetLocale) {
     $i18n.setLocale(targetLocale);
   }
