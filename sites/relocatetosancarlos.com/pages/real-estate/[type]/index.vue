@@ -3,23 +3,7 @@
     <SeoMeta :seoData="computedSeoData" />
 
     <ul class="container pb-32 space-y-32">
-      <template
-        v-if="
-          !pending &&
-          !currentCategory?.featuredProperty &&
-          currentCategory?.properties?.items?.length === 0
-        "
-      >
-        <li>
-          <p
-            class="w-full h-[80vh] grid content-center text-center text-muted-foreground italic"
-          >
-            No results available right now. Please check back soon.
-          </p>
-        </li>
-      </template>
-
-      <li v-else>
+      <li v-if="!pending">
         <TextSectionTitle
           class="pt-12 pb-6"
           :title="categoriesHeaders?.[typeMap[type]?.query]?.title"
