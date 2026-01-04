@@ -43,11 +43,18 @@ export default defineNuxtConfig({
    * ----------------------------- */
   i18n: {
     strategy: "no_prefix",
+    differentDomains: true,
     detectBrowserLanguage: false,
     defaultLocale: "en",
     locales: [
-      { code: "en", iso: "en-US" },
-      { code: "es", iso: "es-ES" },
+      {
+        code: "en",
+        domain: "relocatetosancarlos.com",
+      },
+      {
+        code: "es",
+        domain: "vivirensancarlos.com",
+      },
     ],
   },
 
