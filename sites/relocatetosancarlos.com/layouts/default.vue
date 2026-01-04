@@ -9,14 +9,14 @@
       <slot />
     </main>
 
-    <!-- <SectionsBlogColumn
-      v-if="!isBlogPage && !isOnBoardingPage"
+    <SectionsBlogColumn
+      v-if="!isBlogPage"
       class="pb-16"
       :showPagination="false"
       type="relocateBlog"
       v-bind="blogSection"
       :title="blogSection.title"
-    /> -->
+    />
     <SectionsContact
       :contactInfo
       :social-links="socials"
@@ -61,7 +61,7 @@ const isBlogPage = computed(() => {
   return route.path.toLocaleLowerCase().replace("/", "") === "/blog/";
 });
 
-const isOnBoardingPage = computed(() => {
-  return route.path === "/onboarding" || route.path.startsWith("/onboarding");
-});
+// const isOnBoardingPage = computed(() => {
+//   return route.path === "/onboarding" || route.path.startsWith("/onboarding");
+// });
 </script>
