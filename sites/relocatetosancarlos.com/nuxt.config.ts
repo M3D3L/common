@@ -46,21 +46,20 @@ export default defineNuxtConfig({
       {
         code: "en",
         iso: "en-US",
-        domain: "relocatetosancarlos.com",
+        domains: ["relocatetosancarlos.com", "www.relocatetosancarlos.com"],
         name: "English",
       },
       {
         code: "es",
         iso: "es-MX",
-        domain: "vivirensancarlos.com",
+        domains: ["vivirensancarlos.com", "www.vivirensancarlos.com"],
         name: "Español",
       },
     ],
     defaultLocale: "en",
-    strategy: "no_prefix", // No /en or /es in URLs
-    detectBrowserLanguage: false, // Rely on domain only
-    differentDomains: true, // Enable domain-based locale detection
-    skipSettingLocaleOnNavigate: true, // Prevent locale changes on navigation
+    strategy: "no_prefix",
+    detectBrowserLanguage: false,
+    differentDomains: true,
   },
 
   /* -----------------------------
