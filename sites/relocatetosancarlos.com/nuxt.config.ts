@@ -50,10 +50,12 @@ export default defineNuxtConfig({
       {
         code: "en",
         domain: "relocatetosancarlos.com",
+        domainDefault: true,
       },
       {
         code: "es",
         domain: "vivirensancarlos.com",
+        domainDefault: true,
       },
     ],
   },
