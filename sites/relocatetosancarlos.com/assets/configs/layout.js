@@ -4,9 +4,11 @@ import * as layoutEn from "~/assets/configs/layoutEn";
 
 const createLayoutComputed = (key) => {
   return computed(() => {
-    const { $i18n } = useNuxtApp();
-    // This tracks the i18n locale reactively
-    const layout = $i18n.locale.value === "es" ? layoutSp : layoutEn;
+    const nuxtApp = useNuxtApp();
+    // Crucial: Use the locale from i18n, which is updated by the middleware
+    const locale = nuxtApp.$i18n.locale.value;
+
+    const layout = locale === "es" ? layoutSp : layoutEn;
     return layout[key];
   });
 };
