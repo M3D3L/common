@@ -32,7 +32,13 @@
     </div>
 
     <!-- Sticky newsletter hero container -->
-    <SectionsNewsletterHero class="w-full md:w-1/2 md:pl-2 lg:pl-0 lg:w-full" />
+    <SectionsNewsletterHero
+      :email-label="email"
+      :name-label="name"
+      :privacy-label="privacy"
+      :button-label="button"
+      class="w-full md:w-1/2 md:pl-2 lg:pl-0 lg:w-full"
+    />
   </div>
 </template>
 
@@ -46,6 +52,22 @@ const props = defineProps({
     type: String,
     default:
       "Stay updated with the latest news, articles, and resources. Subscribe and never miss out!",
+  },
+  email: {
+    type: String,
+    default: "Email Address",
+  },
+  name: {
+    type: String,
+    default: "Name (Optional)",
+  },
+  privacy: {
+    type: String,
+    default: "I agree to receive emails and accept the privacy policy",
+  },
+  button: {
+    type: String,
+    default: "Subscribe Now",
   },
 });
 </script>

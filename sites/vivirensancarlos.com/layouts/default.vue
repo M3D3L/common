@@ -16,6 +16,7 @@
       type="relocateBlog"
       v-bind="blogSection"
       :title="blogSection.title"
+      :newsLetterModule
     />
     <SectionsContact
       :contactInfo
@@ -53,6 +54,7 @@ import {
   contactSection,
   socials,
   footerConfig,
+  newsLetterModule,
 } from "~/assets/configs/layout";
 
 const config = useRuntimeConfig();

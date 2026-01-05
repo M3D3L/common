@@ -12,6 +12,16 @@ export const seoDefaults = {
   },
 };
 
+export const newsLetterModule = {
+  title: "Join Newsletter",
+  description:
+    "Stay updated with the latest news, articles, and resources. Subscribe and never miss out!",
+  email: "Email Address",
+  name: "Name (Optional)",
+  privacy: "I agree to receive emails and accept the privacy policy",
+  button: "Subscribe Now",
+};
+
 export const contactInfo = {
   siteName: "RelocateToSanCarlos.com",
   slogan:

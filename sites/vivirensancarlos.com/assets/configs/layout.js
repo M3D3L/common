@@ -13,6 +13,17 @@ export const seoDefaults = {
   },
 };
 
+export const newsLetterModule = {
+  title: "Suscríbase a Nuestro Boletín",
+  description:
+    "Manténgase informado con las últimas noticias, artículos y recursos. ¡Suscríbase y no se pierda nada!",
+  email: "Correo Electrónico",
+  name: "Nombre (Opcional)",
+  privacy:
+    "Acepto recibir correos electrónicos y acepto la política de privacidad",
+  button: "Suscribirse Ahora",
+};
+
 export const contactInfo = {
   siteName: "VivirEnSanCarlos.com",
   slogan:

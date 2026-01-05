@@ -4,7 +4,7 @@
       <CardContent class="p-6 space-y-6">
         <form @submit.prevent="handleSubmit" class="space-y-4">
           <div class="space-y-2">
-            <Label for="newsletter-email">Email Address</Label>
+            <Label for="newsletter-email">{{ emailLabel }}</Label>
             <Input
               id="newsletter-email"
               v-model="form.email"
@@ -15,7 +15,7 @@
             />
           </div>
           <div class="space-y-2">
-            <Label for="newsletter-name">Name (Optional)</Label>
+            <Label for="newsletter-name">{{ nameLabel }}</Label>
             <Input
               id="newsletter-name"
               v-model="form.name"
@@ -54,7 +54,7 @@
             :disabled="isSubmitting"
             type="submit"
           >
-            {{ isSubmitting ? "Subscribing..." : "Subscribe Now" }}
+            {{ isSubmitting ? "..." : buttonLabel }}
           </Button>
         </form>
 
@@ -96,6 +96,25 @@ import { ShieldCheck, Lock } from "lucide-vue-next";
 import usePocketBaseCore from "@/composables/usePocketBaseCore";
 import Modal from "@/components/ui/modal/Modal.vue";
 import { privacyConfig } from "@/assets/configs/privacy.js";
+
+const props = defineProps<{
+  emailLabel: {
+    type: String;
+    default: string;
+  };
+  nameLabel: {
+    type: String;
+    default: string;
+  };
+  privacyLabel: {
+    type: String;
+    default: string;
+  };
+  buttonLabel: {
+    type: String;
+    default: string;
+  };
+}>();
 
 // Animation variants
 const fadeUp = {

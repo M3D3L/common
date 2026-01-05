@@ -13,6 +13,7 @@
       class="flex w-full mt-6"
       :content="posts.items"
       :baseUrl
+      :newsLetterModule
     />
 
     <div class="flex justify-center w-full mr-auto -mt-12 lg:-mt-20 lg:w-2/3">
@@ -57,6 +58,10 @@ const props = defineProps({
       page?: number;
       perPage?: number;
     },
+  },
+  newsLetterModule: {
+    type: Object,
+    default: () => ({}),
   },
   showMore: {
     type: Boolean,

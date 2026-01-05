@@ -18,7 +18,10 @@
       </div>
     </template>
     <template #right>
-      <SectionsSubscribe class="z-10 sticky-position top-24" />
+      <SectionsSubscribe
+        v-bind="newsLetterModule"
+        class="z-10 sticky-position top-24"
+      />
     </template>
   </containers-fixed-rail>
 </template>
@@ -35,6 +38,17 @@ const props = defineProps({
   type: {
     type: String,
     default: "posts",
+  },
+  newsLetterModule: {
+    type: Object as () => {
+      title: string;
+      description: string;
+      email: string;
+      name: string;
+      privacy: string;
+      button: string;
+    },
+    default: () => ({}),
   },
 });
 
