@@ -1,5 +1,7 @@
 import { Facebook, Youtube, Instagram, Music } from "lucide-vue-next";
 
+console.log("[LAYOUT CONFIG Spanish]", import.meta.url);
+
 export const seoDefaults = {
   home: {
     title:

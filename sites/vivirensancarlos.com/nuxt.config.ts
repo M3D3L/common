@@ -32,7 +32,7 @@ export default defineNuxtConfig({
 
   devtools: { enabled: true },
 
-  extends: ["../../nuxt.config.ts"],
+  extends: ["../relocatetosancarlos.com/nuxt.config.ts"],
 
   css: ["@/assets/css/tailwind.css"],
 
@@ -80,7 +80,7 @@ export default defineNuxtConfig({
         disallow: ["/api/", "/_nuxt/", "/blog/admin/", "/real-estate/admin/"],
       },
     ],
-    sitemap: "https://relocatetosancarlos.com/sitemap.xml",
+    sitemap: "https://vivirensancarlos.com/sitemap.xml",
   },
 
   /* -----------------------------
@@ -117,6 +117,10 @@ export default defineNuxtConfig({
   alias: {
     "@common": path.resolve(__dirname, "../../"),
     "@local": path.resolve(__dirname, "./"),
+    "@relocatetosancarlos": path.resolve(
+      __dirname,
+      "../relocatetosancarlos.com/"
+    ),
   },
 
   /* -----------------------------
@@ -136,8 +140,8 @@ export default defineNuxtConfig({
       pocketbaseUrl:
         process.env.POCKETBASE_URL || "https://api.sancarlosinsider.com/",
       // whatsappNumber: process.env.WHATSAPP_NUMBER || "6444444444",
-      siteName: "RelocateToSanCarlos.com",
-      siteUrl: "https://www.relocatetosancarlos.com",
+      siteName: "VivirEnSanCarlos.com",
+      siteUrl: "https://www.vivirensancarlos.com",
       twitterSite: "@relocatetosc",
       blogType: "relocateBlog",
       chatgptProxyUrl:

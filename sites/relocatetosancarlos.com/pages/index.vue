@@ -1,7 +1,6 @@
 <template>
   <div class="w-full pb-16">
     <SeoMeta :seoData="computedSeoData" />
-
     <OrganismsHero v-bind="heroSection" />
 
     <div class="container">
@@ -49,7 +48,7 @@ import {
   heroSection,
   socialsSection,
   propertiesSection,
-} from "~/assets/configs/layout";
+} from "@local/assets/configs/layout.js";
 
 // Data
 const { fetchCollection } = usePocketBaseCore();
@@ -80,7 +79,7 @@ const loadProperties = async (ignoreCache = false) => {
 
 // SEO (PURE + SAFE)
 const computedSeoData = computed(() => {
-  const defaults = seoDefaults.value?.home || {};
+  const defaults = seoDefaults?.home || {};
 
   return createSeoObject({
     title: defaults.title || "Real Estate",

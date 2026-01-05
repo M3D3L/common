@@ -86,7 +86,7 @@ import {
   realEstateHeroSection,
   categories as categoriesComputed,
   categoryHeaders,
-} from "~/assets/configs/layout.js";
+} from "@local/assets/configs/layout.js";
 import { Edit } from "lucide-vue-next";
 import { createSeoObject } from "@common/composables/useSeo";
 

@@ -1,0 +1,8 @@
+[build]
+  publish = "." # Serves your built HTML/Assets
+  functions = "functions" # Points to where your SSR server code lives
+
+[[redirects]]
+  from = "/*"
+  to = "/.netlify/functions/server" # Redirects all traffic to your SSR function
+  status = 200

@@ -1,0 +1,351 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Root variables */
+@layer base {
+  :root {
+    /* Font families */
+    --font-body: "Roboto", sans-serif;
+    --font-heading: "Montserrat", sans-serif;
+    --font-logo: "Montserrat", sans-serif;
+    --font-sans: "Roboto", sans-serif;
+
+    /* --- Light Mode Colors (Original Palette) --- */
+    --background: hsl(190 60% 97%); /* Very light, icy blue */
+    --foreground: hsl(200 45% 20%); /* Deep, dark cyan-blue text */
+
+    --muted: hsl(190 40% 92%); /* Light blue-gray for accents */
+    --muted-foreground: hsl(200 25% 45%); /* Muted dark text */
+
+    --popover: hsl(190 60% 97%);
+    --popover-foreground: hsl(200 45% 20%);
+
+    --card: hsl(190 60% 97%);
+    --card-foreground: hsl(200 45% 20%);
+
+    --border: hsl(195 25% 80%);
+    --input: hsl(195 25% 80%);
+
+    --primary: hsl(185 80% 45%); /* Bright Cyan/Turquoise */
+    --primary-foreground: hsl(0 0% 100%); /* White text on primary */
+
+    --secondary: hsl(25 45% 60%); /* Muted warm orange/brown */
+    --secondary-foreground: hsl(0 0% 100%);
+
+    --accent: hsl(155 80% 45%); /* Bright Green */
+    --accent-foreground: hsl(0 0% 100%);
+
+    --destructive: hsl(5 75% 50%); /* Red */
+    --destructive-foreground: hsl(0 0% 100%);
+
+    --ring: hsl(185 80% 45%);
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    /* --- Dark Mode Colors (Inverted and Adjusted Palette) --- */
+    --background: hsl(200 40% 15%); /* Very dark blue-gray background */
+    --foreground: hsl(190 60% 95%); /* Very light text color */
+
+    --muted: hsl(200 35% 25%); /* Darker blue-gray for accents */
+    --muted-foreground: hsl(190 40% 75%); /* Lighter muted text */
+
+    --popover: hsl(200 40% 20%);
+    --popover-foreground: hsl(190 60% 95%);
+
+    --card: hsl(200 40% 20%);
+    --card-foreground: hsl(190 60% 95%);
+
+    --border: hsl(200 35% 30%);
+    --input: hsl(200 35% 30%);
+
+    --primary: hsl(185 70% 55%); /* Slightly lighter Cyan for visibility */
+    --primary-foreground: hsl(200 45% 20%); /* Deep dark text on primary */
+
+    --secondary: hsl(
+      25 45% 70%
+    ); /* Muted warm orange/brown (slightly lighter) */
+    --secondary-foreground: hsl(200 40% 15%); /* Dark text on secondary */
+
+    --accent: hsl(155 70% 55%); /* Slightly lighter Green for visibility */
+    --accent-foreground: hsl(200 40% 15%);
+
+    --destructive: hsl(5 75% 60%); /* Slightly lighter Red */
+    --destructive-foreground: hsl(200 40% 15%);
+
+    --ring: hsl(185 70% 55%);
+  }
+
+  html {
+    font-family: var(--font-body) !important;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: var(--font-heading) !important;
+  }
+
+  h1 {
+    @apply font-bold text-7xl;
+  }
+
+  h2 {
+    @apply text-3xl font-bold;
+  }
+
+  h3 {
+    @apply text-2xl font-medium;
+  }
+
+  h4 {
+    @apply text-xl font-medium;
+  }
+
+  body {
+    font-family: var(--font-body) !important;
+    @apply text-base font-light text-foreground bg-background;
+  }
+
+  .logo-text {
+    font-family: var(--font-logo) !important;
+  }
+
+  .ui-text {
+    font-family: var(--font-sans) !important;
+    @apply font-sans;
+  }
+
+  article h1,
+  article h2,
+  article h3,
+  article h4 {
+    font-family: var(--font-heading) !important;
+  }
+
+  article p {
+    font-family: var(--font-body) !important;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  /* Blog content styling */
+  article {
+    @apply max-w-none;
+  }
+
+  article h1,
+  article h2,
+  article h3,
+  article h4 {
+    font-family: var(--font-heading);
+    @apply text-foreground;
+  }
+
+  article p {
+    @apply mb-4 leading-relaxed;
+  }
+
+  article a {
+    @apply underline text-primary hover:text-primary-foreground;
+  }
+
+  article blockquote {
+    @apply pl-4 my-4 italic border-l-4 border-muted text-muted-foreground;
+  }
+
+  article ul,
+  article li {
+    @apply pl-6 mb-4;
+  }
+
+  article ul li::marker,
+  article ol li::marker {
+    @apply text-primary;
+  }
+
+  article code {
+    @apply bg-muted text-sm px-1 py-0.5 rounded font-mono;
+  }
+
+  pre {
+    @apply bg-foreground-30 text-foreground;
+  }
+
+  code {
+    @apply bg-background text-foreground;
+  }
+
+  article img {
+    @apply my-4 rounded-md;
+  }
+
+  article hr {
+    @apply my-6 border-t border-muted;
+  }
+
+  article table {
+    @apply w-full my-4 text-left border-collapse;
+  }
+
+  article th,
+  article td {
+    @apply px-3 py-2 border;
+  }
+
+  article th {
+    @apply bg-muted text-muted-foreground;
+  }
+
+  /* Dark mode video filter for contrast */
+  .dark video {
+    filter: brightness(0.8) saturate(1) !important;
+  }
+
+  /* Light mode video filter */
+  video {
+    filter: brightness(1) saturate(1.5) !important;
+  }
+
+  button:hover {
+    @apply hover:opacity-80 transition-default !important;
+  }
+
+  .transition-default {
+    @apply transition-all duration-300 ease-in-out !important;
+  }
+
+  .card-styles {
+    @apply transition-all duration-300 ease-in-out transform border border-transparent rounded-lg shadow-md hover:shadow-xl hover:border-primary;
+  }
+
+  .sticky-position {
+    position: sticky !important;
+    z-index: 32;
+  }
+}
+
+/* Custom utilities mapping var() */
+@layer utilities {
+  .container {
+    @apply max-w-6xl px-4 mx-auto lg:px-0;
+  }
+  /* text */
+  .text-foreground {
+    color: var(--foreground) !important;
+  }
+  .text-background {
+    color: var(--background) !important;
+  }
+  .text-muted {
+    color: var(--muted) !important;
+  }
+  .text-muted-foreground {
+    color: var(--muted-foreground) !important;
+  }
+  .text-primary {
+    color: var(--primary) !important;
+  }
+  .text-primary-foreground {
+    color: var(--primary-foreground) !important;
+  }
+  .text-secondary {
+    color: var(--secondary) !important;
+  }
+  .text-secondary-foreground {
+    color: var(--secondary-foreground) !important;
+  }
+
+  /* background */
+  .bg-foreground {
+    background-color: var(--foreground) !important;
+  }
+  .bg-background {
+    background-color: var(--background) !important;
+  }
+  .bg-muted {
+    background-color: var(--muted) !important;
+  }
+  .bg-muted-foreground {
+    background-color: var(--muted-foreground) !important;
+  }
+  .bg-primary {
+    background-color: var(--primary) !important;
+  }
+  .bg-primary-foreground {
+    background-color: var(--primary-foreground) !important;
+  }
+  .bg-secondary {
+    background-color: var(--secondary) !important;
+  }
+  .bg-secondary-foreground {
+    background-color: var(--secondary-foreground) !important;
+  }
+  .bg-card {
+    background-color: var(--card) !important;
+  }
+  .bg-card-foreground {
+    background-color: var(--card-foreground) !important;
+  }
+
+  /* borders */
+  .border-border {
+    border-color: var(--border) !important;
+  }
+  .border-muted {
+    border-color: var(--muted) !important;
+  }
+  .border-primary {
+    border-color: var(--primary) !important;
+  }
+
+  /* opacity variants */
+  .bg-foreground-30 {
+    background-color: color-mix(
+      in srgb,
+      var(--foreground) 30%,
+      transparent
+    ) !important;
+  }
+  .bg-foreground-50 {
+    background-color: color-mix(
+      in srgb,
+      var(--foreground) 50%,
+      transparent
+    ) !important;
+  }
+  .bg-card-90 {
+    background-color: color-mix(
+      in srgb,
+      var(--card) 90%,
+      transparent
+    ) !important;
+  }
+  .bg-card-95 {
+    background-color: color-mix(
+      in srgb,
+      var(--card) 95%,
+      transparent
+    ) !important;
+  }
+  .hover\:bg-card-95:hover {
+    background-color: color-mix(
+      in srgb,
+      var(--card) 95%,
+      transparent
+    ) !important;
+  }
+  .hover\:border-primary-40:hover {
+    border-color: color-mix(
+      in srgb,
+      var(--primary) 40%,
+      transparent
+    ) !important;
+  }
+}

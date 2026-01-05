@@ -117,7 +117,7 @@
 import {
   categories as rawCategories,
   categoriesHeaders,
-} from "~/assets/configs/layout.js";
+} from "@local/assets/configs/layout.js";
 import { createSeoObject } from "@common/composables/useSeo";
 
 const { fetchCollection } = usePocketBaseCore();
@@ -149,7 +149,7 @@ const computedSeoData = computed(() => {
 
   const configMatch = typeMap[currentType];
 
-  if (!configMatch || !categoriesHeaders?.value) {
+  if (!configMatch || !categoriesHeaders) {
     return createSeoObject({
       title: "Real Estate San Carlos",
       summary: "Expert Real Estate Services in San Carlos, Sonora",
@@ -157,7 +157,7 @@ const computedSeoData = computed(() => {
   }
 
   const queryKey = configMatch.query;
-  const header = categoriesHeaders.value[queryKey];
+  const header = categoriesHeaders[queryKey];
 
   if (!header) {
     return createSeoObject({
