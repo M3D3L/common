@@ -50,6 +50,7 @@ export const heroSection = {
       title: "Ver Propiedades",
     },
   ],
+  callToAction: "Descubra San Carlos",
 };
 
 // Services Section

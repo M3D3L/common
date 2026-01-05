@@ -49,6 +49,7 @@ export const heroSection = {
       title: "View Properties",
     },
   ],
+  callToAction: "Discover San Carlos",
 };
 
 // Services Section

@@ -61,13 +61,17 @@
           </section>
 
           <nuxt-link
-            to="/#about"
+            to="/#contact"
             class="absolute hidden md:block bottom-24 cursor-pointer"
           >
             <p
               class="text-xl uppercase tracking-widest text-white/70 font-light"
             >
-              Discover San Carlos
+              {{ callToAction }}
+
+              <ChevronDown
+                class="w-8 h-8 mt-2 mx-auto text-white/70 animate-bounce"
+              />
             </p>
           </nuxt-link>
         </div>
@@ -78,7 +82,7 @@
 
 <script setup lang="ts">
 import { Button } from "@common/components/ui/button";
-import { ref, onMounted, onUnmounted } from "vue";
+import { ChevronDown } from "lucide-vue-next";
 
 interface Props {
   id: string;
@@ -90,6 +94,7 @@ interface Props {
   titleLine1: string;
   titleHighlight: string;
   description: string;
+  callToAction: string;
   buttons: Array<{ text: string; title: string; link: string }>;
 }
 
