@@ -27,31 +27,25 @@
               <h1
                 class="text-2xl font-extralight uppercase tracking-[0.3em] text-white sm:text-3xl lg:text-4xl"
               >
-                {{ props.titleLine1 }}
+                {{ titleLine1 }}
                 <span
                   class="mt-2 font-bold leading-tight text-primary text-xl sm:text-2xl block"
                 >
-                  {{ props.titleHighlight }}
+                  {{ titleHighlight }}
                 </span>
               </h1>
-
-              <img
-                :src="imageSrc"
-                :alt="imageAlt"
-                class="md:hidden w-2/3 mx-auto"
-              />
 
               <p
                 class="mx-auto max-w-xl text-white/90 sm:text-base font-light leading-tight"
               >
-                {{ props.description }}
+                {{ description }}
               </p>
 
               <div
                 class="flex flex-col gap-4 pt-8 lg:flex-row sm:justify-center"
               >
                 <Button
-                  v-for="(button, index) in props.buttons"
+                  v-for="(button, index) in buttons"
                   :key="button.title"
                   asChild
                   size="lg"
@@ -68,30 +62,13 @@
 
           <nuxt-link
             to="/#about"
-            class="absolute hidden md:block bottom-24 cursor-pointer transition-opacity duration-500 hover:opacity-100"
+            class="absolute hidden md:block bottom-24 cursor-pointer"
           >
             <p
               class="text-xl uppercase tracking-widest text-white/70 font-light"
             >
-              {{
-                $i18n.locale === "es"
-                  ? "Descubre San Carlos"
-                  : "Discover San Carlos"
-              }}
+              Discover San Carlos
             </p>
-            <svg
-              class="mx-auto mt-2 h-6 w-6 text-white animate-bounce"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="1.5"
-                d="M19 9l-7 7-7-7"
-              />
-            </svg>
           </nuxt-link>
         </div>
       </section>
@@ -104,22 +81,23 @@ import { Button } from "@common/components/ui/button";
 import { ref, onMounted, onUnmounted } from "vue";
 
 interface Props {
-  id?: string;
-  padding?: string;
-  video?: string;
-  headerId?: string;
-  imageSrc?: string;
-  imageAlt?: string;
-  titleLine1?: string;
-  titleHighlight?: string;
-  description?: string;
-  buttons?: Array<{ text: string; title: string; link: string }>;
+  id: string;
+  padding: string;
+  video: string;
+  headerId: string;
+  imageSrc: string;
+  imageAlt: string;
+  titleLine1: string;
+  titleHighlight: string;
+  description: string;
+  buttons: Array<{ text: string; title: string; link: string }>;
 }
 
-// Keep the props reactive by NOT destructuring
+// DO NOT DESTRUCTURE PROPS HERE
 const props = defineProps<Props>();
 
-// Parallax logic
+// Use a simple proxy or computed to handle parallax if needed,
+// but keep the prop values linked to the props object.
 const parallaxContainer = ref<HTMLElement | null>(null);
 const parallaxOffset = ref(0);
 

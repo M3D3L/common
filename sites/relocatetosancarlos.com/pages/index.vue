@@ -29,11 +29,7 @@
           to="/real-estate/"
           class="font-bold w-full transition-all hover:opacity-90 text-primary hover:underline pb-2"
         >
-          {{
-            $isSpanishDomain
-              ? "Ver Todas las Propiedades"
-              : "View All Properties"
-          }}
+          View All Properties
         </NuxtLink>
       </div>
     </div>
@@ -45,8 +41,6 @@
 <script setup>
 import { createSeoObject } from "@common/composables/useSeo";
 
-// Nuxt / app context (SAFE)
-const { $isSpanishDomain } = useNuxtApp();
 const config = useRuntimeConfig();
 
 // Layout configs (computed refs)

@@ -15,7 +15,7 @@
           class="flex items-center justify-center text-center w-full gap-2"
         >
           <Edit class="w-4 h-4" />
-          {{ $isSpanishDomain ? "Administrar Listados" : "Manage Listings" }}
+          Manage Listings
         </nuxt-link>
       </Button>
     </div>
@@ -45,9 +45,7 @@
               baseUrl="/real-estate"
               :removeSpacing="true"
               :content="item"
-              :buttonText="
-                $isSpanishDomain ? '¡Ver Detalles!' : 'Check it Out!'
-              "
+              buttonText="Check it Out!"
             />
 
             <div
@@ -58,7 +56,7 @@
                 :to="`/real-estate/${category.type}/`"
                 class="text-sm font-medium underline capitalize transition-colors hover:text-primary underline-offset-4"
               >
-                {{ $isSpanishDomain ? "Ver todo" : "View All" }}
+                View All
                 {{ category.type }}
               </nuxt-link>
             </div>
@@ -92,7 +90,6 @@ import {
 import { Edit } from "lucide-vue-next";
 import { createSeoObject } from "@common/composables/useSeo";
 
-const { $isSpanishDomain } = useNuxtApp();
 const config = useRuntimeConfig();
 const { fetchCollection, isUserVerified } = usePocketBaseCore();
 
@@ -150,22 +147,17 @@ categoryData.value = categoryData.value
   .filter(Boolean);
 
 const computedSeoData = computed(() => {
-  const isSpanish = unref($isSpanishDomain);
   const hero = toValue(realEstateHeroSection);
 
   // FIX: Explicitly unwrap categoryHeaders using toValue
   const headers = toValue(categoryHeaders);
 
-  const defaultTitle = isSpanish
-    ? "Inmobiliaria San Carlos"
-    : (hero?.titleLine1 || "") + " " + (hero?.titleHighlight || "");
+  const defaultTitle = "Real Estate Listings in San Carlos, Sonora Mexico";
 
   return createSeoObject({
     // Use the title from headers if it exists, otherwise fallback to defaultTitle
     title: headers?.title || defaultTitle,
-    summary: isSpanish
-      ? "Tu especialista en reubicación."
-      : hero?.description || "",
+    summary: headers?.summary || "",
     keywords: hero?.keywords || "",
     imageUri: hero?.imageSrc || "",
     pubDate: "",
