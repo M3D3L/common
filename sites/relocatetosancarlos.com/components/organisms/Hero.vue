@@ -35,6 +35,12 @@
                 </span>
               </h1>
 
+              <img
+                :src="imageSrc"
+                :alt="imageAlt"
+                class="md:hidden w-2/3 mx-auto"
+              />
+
               <p
                 class="mx-auto max-w-xl text-white/90 sm:text-base font-light leading-tight"
               >
