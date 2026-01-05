@@ -18,8 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        # Added vivirensancarlos to the matrix
-        site: [guillermomedel, relocatetosancarlos, vivirensancarlos]
+        site: [guillermomedel, relocatetosancarlos]
 
     steps:
       - uses: actions/checkout@v4
@@ -46,10 +45,6 @@ jobs:
             echo "domain=relocatetosancarlos.com" >> $GITHUB_OUTPUT
             echo "path=./sites/relocatetosancarlos.com" >> $GITHUB_OUTPUT
             echo "repo=M3D3L/relocatetosancarlos.com" >> $GITHUB_OUTPUT
-          elif [ "${{ matrix.site }}" = "vivirensancarlos" ]; then
-            echo "domain=vivirensancarlos.com" >> $GITHUB_OUTPUT
-            echo "path=./sites/vivirensancarlos.com" >> $GITHUB_OUTPUT
-            echo "repo=M3D3L/vivirensancarlos.com" >> $GITHUB_OUTPUT
           fi
 
       - name: Build ${{ steps.vars.outputs.domain }}
@@ -64,6 +59,7 @@ jobs:
           SITE_PATH="${{ steps.vars.outputs.path }}"
           DEPLOY_DIR="deploy_${{ matrix.site }}"
 
+          # Look for build output directory
           if [ -d "$SITE_PATH/.output/public" ]; then
             BUILD_OUTPUT="$SITE_PATH/.output/public"
           elif [ -d "$SITE_PATH/dist" ]; then
@@ -77,12 +73,14 @@ jobs:
 
           echo "Using build output: $BUILD_OUTPUT"
 
+          # Create deploy directory and copy files
           mkdir -p "$DEPLOY_DIR"
           cp -a "$BUILD_OUTPUT"/. "$DEPLOY_DIR"/
 
-          # This adds the CNAME file for GitHub Pages custom domain
+          # Add CNAME file
           echo "${{ steps.vars.outputs.domain }}" > "$DEPLOY_DIR/CNAME"
 
+          # Debug output
           echo "Deploy folder contents:"
           ls -la "$DEPLOY_DIR"
 
