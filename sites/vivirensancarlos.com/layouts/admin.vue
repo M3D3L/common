@@ -8,5 +8,5 @@
 </template>
 
 <script setup lang="ts">
-import { contactInfo, siteMap, socials } from "~/assets/configs/layout";
+import { contactInfo, siteMap } from "~/assets/configs/layout";
 </script>

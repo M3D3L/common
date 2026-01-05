@@ -1,7 +1,5 @@
 import { Facebook, Youtube, Instagram, Music } from "lucide-vue-next";
 
-console.log("[LAYOUT CONFIG Spanish]", import.meta.url);
-
 export const seoDefaults = {
   home: {
     title:
@@ -21,6 +19,13 @@ export const contactInfo = {
     "Su Guía Experta para la Vida Costera e Inversión Inmobiliaria en San Carlos, Sonora.",
   email: "Brenda@VivirEnSanCarlos.com",
   phone: "+52(644)457-2193",
+};
+
+export const footerConfig = {
+  connectText: "Conéctese con Nosotros",
+  rightsText: "Todos los derechos reservados.",
+  recent: "Blogs Recientes",
+  more: "Más",
 };
 
 // Hero Section

@@ -1,7 +1,5 @@
 import { Facebook, Youtube, Instagram, Music } from "lucide-vue-next";
 
-console.log("[LAYOUT CONFIG]", import.meta.url);
-
 export const seoDefaults = {
   home: {
     title:
@@ -20,6 +18,13 @@ export const contactInfo = {
     "Your Expert Guide to Coastal Living and Mexico Real Estate Investment in San Carlos, Sonora.",
   email: "Brenda@RelocateToSanCarlos.com",
   phone: "+52(644)457-2193",
+};
+
+export const footerConfig = {
+  connectText: "Connect With Us",
+  rightsText: "All rights reserved.",
+  recent: "Recent Blogs",
+  more: "More",
 };
 
 // Hero Section

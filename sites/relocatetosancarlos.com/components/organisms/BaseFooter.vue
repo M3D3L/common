@@ -1,21 +1,30 @@
 <template>
-<TheFooter :links="siteMap" :contactInfo :socials type="relocateBlog" />
+  <TheFooter
+    :links="siteMap"
+    :footerConfig
+    :contactInfo
+    :socials
+    type="relocateBlog"
+  />
 </template>
 
 <script setup lang="ts">
-
 const props = defineProps({
   socials: {
     type: Array,
-    default: () => []
+    default: () => [],
   },
   contactInfo: {
     type: Object,
-    default: () => ({})
+    default: () => ({}),
   },
   siteMap: {
     type: Array,
-    default: () => []
+    default: () => [],
   },
-})
+  footerConfig: {
+    type: Object,
+    default: () => ({}),
+  },
+});
 </script>

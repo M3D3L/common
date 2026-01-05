@@ -41,7 +41,7 @@
         message="Hello, I would like to schedule a call!"
       /> -->
     </a>
-    <OrganismsBaseFooter :links="siteMap" :contactInfo :socials footerConfig />
+    <OrganismsBaseFooter :links="siteMap" :footerConfig :contactInfo :socials />
   </div>
 </template>
 
@@ -52,6 +52,7 @@ import {
   blogSection,
   contactSection,
   socials,
+  footerConfig,
 } from "~/assets/configs/layout";
 
 const config = useRuntimeConfig();

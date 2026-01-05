@@ -21,7 +21,7 @@
             <p
               class="text-xs font-semibold tracking-wide uppercase text-foreground/60"
             >
-              Connect With Us
+              {{ footerConfig?.connectText || "Connect with us" }}
             </p>
             <ContainersSocials :socialLinks="socials" />
           </div>
@@ -65,7 +65,7 @@
           <span class="font-medium text-foreground">{{
             contactInfo?.siteName
           }}</span>
-          . All rights reserved.
+          . {{ footerConfig?.rightsText || "All rights reserved." }}
         </p>
 
         <div class="flex flex-wrap items-center justify-center gap-6">
@@ -117,6 +117,7 @@ const props = defineProps<{
   type: string;
   contactInfo: Record<string, any>;
   links: FooterLink[];
+  footerConfig: Record<string, any>;
 }>();
 
 const { fetchCollection } = usePocketBaseCore();
@@ -148,7 +149,7 @@ onMounted(async () => {
 
     // Insert first 3 into "Recent Posts" column at index 1
     localFooterColumns.value.splice(1, 0, {
-      title: "Recent Posts",
+      title: props?.footerConfig?.recent || "Recent Posts",
       links: firstThree.map((post) => ({
         label: post.title,
         href: `/blog${post.slug}`,
@@ -158,7 +159,7 @@ onMounted(async () => {
     // If there are more posts, add them in a new column with no title
     if (lastTwo.length) {
       localFooterColumns.value.push({
-        title: "More",
+        title: props?.footerConfig?.more || "More Posts",
         links: lastTwo.map((post) => ({
           label: post.title,
           href: `/blog${post.slug}`,
