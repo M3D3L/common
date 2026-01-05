@@ -14,19 +14,12 @@ export default defineNuxtConfig({
     preset: "netlify",
     prerender: {
       routes: [...blogRoutes, ...propertyRoutes, "/sitemap.xml"],
-      crawlLinks: false,
+      crawlLinks: true,
     },
   },
 
-  /* -----------------------------
-   * ROUTE RULES
-   * ----------------------------- */
+  // Force route rules to override the Netlify/Nitro x-robots-tag
   routeRules: {
-    "/": {
-      prerender: false,
-    },
-
-    // All other routes: keep SEO headers
     "/**": {
       headers: { "x-robots-tag": "index, follow" },
     },
@@ -75,9 +68,10 @@ export default defineNuxtConfig({
   },
 
   /* -----------------------------
-   * ROBOTS.TXT
+   * ROBOTS.TXT (CRAWL CONTROL ONLY)
    * ----------------------------- */
   robots: {
+    // Prevents the module from forcing noindex on non-prod environments
     blockNonSeoBots: false,
     rules: [
       {
@@ -140,6 +134,7 @@ export default defineNuxtConfig({
     public: {
       pocketbaseUrl:
         process.env.POCKETBASE_URL || "https://api.sancarlosinsider.com/",
+      // whatsappNumber: process.env.WHATSAPP_NUMBER || "6444444444",
       siteName: "RelocateToSanCarlos.com",
       siteUrl: "https://www.relocatetosancarlos.com",
       twitterSite: "@relocatetosc",
