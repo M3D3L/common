@@ -61,7 +61,8 @@ import {
 const route = useRoute();
 
 const isBlogPage = computed(() => {
-  const currentRoute = route.path.toLocaleLowerCase();
-  return currentRoute.replace("/", "") === "blog";
+  // Remove leading and trailing slashes, then lowercase
+  const path = route.path.replace(/^\/|\/$/g, "").toLowerCase();
+  return path === "blog";
 });
 </script>
