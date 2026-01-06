@@ -50,5 +50,3 @@ const isBlogPage = computed(() => {
   return currentRoute.replace("/", "") === "blog";
 });
 </script>
-
-<style lang="postcss" scoped></style>

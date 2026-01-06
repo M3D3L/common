@@ -5,7 +5,7 @@
 </template>
 
 <script setup lang="ts">
-import { blogSection } from "@local/assets/configs/layout";
+import { blogSection } from "~/assets/configs/layout";
 import { createSeoObject } from "~/composables/useSeo";
 
 const config = useRuntimeConfig();

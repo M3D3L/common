@@ -20,7 +20,7 @@ export default function usePocketBaseCore() {
   };
 
   /**
-   * Fetch list of records with Caching
+   * Fetch list of records with Caching and Concurrency Fix
    */
   const fetchCollection = async (
     collection: string,
@@ -50,8 +50,11 @@ export default function usePocketBaseCore() {
         filter,
         sort,
         expand: expand ?? undefined,
+        // FIX: Unique key per collection prevents Promise.all from cancelling simultaneous requests
+        requestKey: `list_${collection}`,
       });
 
+      // Maintain your original fields filtering logic
       if (fields) {
         response.items = response.items.map((item) =>
           Object.fromEntries(
@@ -62,7 +65,12 @@ export default function usePocketBaseCore() {
 
       setCache(cacheKey, response);
       return response;
-    } catch (error) {
+    } catch (error: any) {
+      // Specifically handle the PocketBase auto-cancellation error
+      if (error.isAbort) {
+        console.warn(`Request for ${collection} was auto-cancelled.`);
+        throw error;
+      }
       console.error(`Error fetching ${collection}:`, error);
       throw new Error(`Failed to fetch ${collection}`);
     }
@@ -82,10 +90,14 @@ export default function usePocketBaseCore() {
     if (cached) return cached;
 
     try {
-      const record = await pb.collection(collection).getOne(stringId);
+      const record = await pb.collection(collection).getOne(stringId, {
+        // FIX: Unique key per record fetch
+        requestKey: `record_${collection}_${stringId}`,
+      });
       setCache(cacheKey, record);
       return record;
-    } catch (error) {
+    } catch (error: any) {
+      if (error.isAbort) throw error;
       console.error(`Error fetching ${collection} record ${stringId}:`, error);
       throw new Error(`Failed to fetch ${collection} record`);
     }
