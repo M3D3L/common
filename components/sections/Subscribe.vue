@@ -36,6 +36,7 @@
       :email-label="email"
       :name-label="name"
       :privacy-label="privacy"
+      :privacy-button="privacyButton"
       :button-label="button"
       class="w-full md:w-1/2 md:pl-2 lg:pl-0 lg:w-full"
     />
@@ -63,7 +64,11 @@ const props = defineProps({
   },
   privacy: {
     type: String,
-    default: "I agree to receive emails and accept the privacy policy",
+    default: "I agree to receive emails and accept the",
+  },
+  privacyButton: {
+    type: String,
+    default: "privacy policy",
   },
   button: {
     type: String,

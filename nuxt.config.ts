@@ -1,3 +1,5 @@
+import path from "path";
+
 export default defineNuxtConfig({
   compatibilityDate: "2025-08-30",
   devtools: { enabled: true },
@@ -20,6 +22,7 @@ export default defineNuxtConfig({
   build: {
     transpile: ["vueuc"],
   },
+
   runtimeConfig: {
     public: {
       pocketbaseUrl:

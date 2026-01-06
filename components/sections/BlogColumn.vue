@@ -1,5 +1,5 @@
 <template>
-  <div class="container flex flex-col w-full mx-auto">
+  <div class="container flex flex-col w-full mx-auto h-auto">
     <TextSectionTitle
       v-if="title || description"
       class="pb-16"
@@ -14,20 +14,26 @@
       :content="posts.items"
       :baseUrl
       :newsLetterModule
+      :view-more-text="
+        posts?.totalPages > 1 && !showPagination ? viewMoreText : ''
+      "
+      :show-more="showMore"
     />
 
-    <div class="flex justify-center w-full mr-auto -mt-12 lg:-mt-20 lg:w-2/3">
-      <div>
+    <div class="flex justify-center w-full mr-auto -mt-12 lg:-mt-24 lg:w-2/3">
+      <div
+        v-if="showMore && !showPagination"
+        class="w-full flex justify-center mt-6"
+      >
         <nuxt-link
-          v-if="showMore"
           to="/blog/"
-          class="font-bold w-full transition-all hover:opacity-90 text-primary hover:underline pb-2"
+          class="font-light transition-all hover:opacity-90 text-foreground hover:text-primary hover:underline pb-2"
         >
-          View All Posts
+          {{ viewMoreText }}
         </nuxt-link>
       </div>
       <Pagination
-        v-if="posts?.totalPages > 1 && showPagination"
+        v-else-if="showMore && showPagination"
         :total-pages="posts?.totalPages"
         :show-pagination="true"
       />
@@ -83,6 +89,10 @@ const props = defineProps({
     type: String,
     default: "posts",
   },
+  viewMoreText: {
+    type: String,
+    default: "View All Posts",
+  },
 });
 
 const { fetchCollection } = usePocketBaseCore();
@@ -116,7 +126,7 @@ const fetchPosts = async (
     const result = await fetchCollection(
       props.type,
       page,
-      perPage,
+      (perPage = 5),
       "",
       "-created",
       ""

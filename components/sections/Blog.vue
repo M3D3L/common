@@ -18,10 +18,9 @@
       </div>
     </template>
     <template #right>
-      <SectionsSubscribe
-        v-bind="newsLetterModule"
-        class="z-10 sticky-position top-24"
-      />
+      <div class="z-10 sticky-position top-16">
+        <SectionsSubscribe v-bind="newsLetterModule" />
+      </div>
     </template>
   </containers-fixed-rail>
 </template>
@@ -49,6 +48,14 @@ const props = defineProps({
       button: string;
     },
     default: () => ({}),
+  },
+  showMore: {
+    type: Boolean,
+    default: true,
+  },
+  viewMoreText: {
+    type: String,
+    default: "View All Posts",
   },
 });
 

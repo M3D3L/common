@@ -18,7 +18,8 @@ export const newsLetterModule = {
     "Stay updated with the latest news, articles, and resources. Subscribe and never miss out!",
   email: "Email Address",
   name: "Name (Optional)",
-  privacy: "I agree to receive emails and accept the privacy policy",
+  privacy: "I agree to receive emails and accept the",
+  prvacyButton: "privacy policy",
   button: "Subscribe Now",
 };
 
@@ -132,6 +133,7 @@ export const blogSection = {
   byline: "San Carlos, Sonora Relocation & Real Estate Insights",
   keywords:
     "relocate to mexico blog, san carlos sonora real estate tips, expat guide san carlos mexico, mexico relocation advice, san carlos sonora living, mexico property investment, retire in san carlos sonora blog",
+  viewMoreText: "View All Posts",
 };
 
 // Contact Section

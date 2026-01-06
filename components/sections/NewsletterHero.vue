@@ -9,7 +9,7 @@
               id="newsletter-email"
               v-model="form.email"
               type="email"
-              placeholder="your@email.com"
+              placeholder="..."
               required
               class="bg-white/10 border-white/20 focus:ring-2 focus:ring-primary-500"
             />
@@ -20,7 +20,7 @@
               id="newsletter-name"
               v-model="form.name"
               type="text"
-              placeholder="Your name"
+              placeholder="..."
               class="bg-white/10 border-white/20 focus:ring-2 focus:ring-primary-500"
             />
           </div>
@@ -34,15 +34,15 @@
               class="w-4 h-4 rounded text-primary-600 bg-white/10 border-white/20 focus:ring-primary-500"
             />
             <label for="newsletter-consent" class="ml-2 text-sm">
-              I agree to receive emails and accept the
+              {{ privacyLabel }}
               <modal
                 title="Privacy Policy"
                 description="This Privacy Policy explains how information may be collected, used, and shared."
                 :htmlContent="privacyConfig"
               >
                 <template #button>
-                  <span class="cursor-pointer text-primary-500 hover:underline">
-                    privacy policy
+                  <span class="cursor-pointer text-primary hover:underline">
+                    {{ privacyButton }}
                   </span>
                 </template>
               </modal>
@@ -107,6 +107,10 @@ const props = defineProps<{
     default: string;
   };
   privacyLabel: {
+    type: String;
+    default: string;
+  };
+  privacyButton: {
     type: String;
     default: string;
   };

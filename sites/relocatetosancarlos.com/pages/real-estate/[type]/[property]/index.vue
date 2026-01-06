@@ -170,7 +170,9 @@
     </section>
 
     <section id="gallery">
-      <h2 class="text-2xl font-bold mb-4 w-full mt-16 scroll-mt-24">
+      <h2
+        class="mb-8 text-3xl font-bold mt-16 scroll-mt-24 sm:text-4xl font-heading text-foreground"
+      >
         Photo Gallery
       </h2>
       <ModalCarousel
@@ -182,7 +184,9 @@
     </section>
 
     <section id="realtor" class="py-12 scroll-mt-40">
-      <h2 class="mb-8 text-3xl font-bold sm:text-4xl font-heading text-primary">
+      <h2
+        class="mb-8 text-3xl font-bold sm:text-4xl font-heading text-foreground"
+      >
         Realtor
       </h2>
       <Card

@@ -10,9 +10,10 @@
     </main>
 
     <SectionsBlogColumn
-      v-if="!isBlogPage"
       class="pb-16"
-      :showPagination="false"
+      :h1="isBlogPage"
+      :showPagination="isBlogPage"
+      :perPage="isBlogPage ? 10 : 5"
       type="relocateBlog"
       v-bind="blogSection"
       :title="blogSection.title"
@@ -28,9 +29,9 @@
       href="https://calendly.com/brendaaigsc/30min"
       target="_blank"
       rel="noopener noreferrer"
-      class="fixed z-50 bottom-4 px-4 py-2 right-4 flex gap-4 items-center bg-primary text-primary-foreground rounded-lg whitespace-nowrap shadow-lg"
+      class="fixed z-50 bottom-4 hover:opacity-80 hover:scale-105 transform uppercase px-4 py-2 right-4 flex gap-4 items-center bg-primary text-primary-foreground rounded-lg transition-all whitespace-nowrap shadow-lg"
     >
-      <p>Schedule a Call</p>
+      <p>agendar una cita</p>
 
       <!-- <CalendlyButton
         class="hover:scale-125 transition-all duration-150 transform"
@@ -42,7 +43,7 @@
         message="Hello, I would like to schedule a call!"
       /> -->
     </a>
-    <OrganismsBaseFooter :footerConfig :links="siteMap" :contactInfo :socials />
+    <OrganismsBaseFooter :links="siteMap" :footerConfig :contactInfo :socials />
   </div>
 </template>
 
@@ -57,14 +58,10 @@ import {
   newsLetterModule,
 } from "~/assets/configs/layout";
 
-const config = useRuntimeConfig();
 const route = useRoute();
 
 const isBlogPage = computed(() => {
-  return route.path.toLocaleLowerCase().replace("/", "") === "/blog/";
+  const currentRoute = route.path.toLocaleLowerCase();
+  return currentRoute.replace("/", "") === "blog";
 });
-
-// const isOnBoardingPage = computed(() => {
-//   return route.path === "/onboarding" || route.path.startsWith("/onboarding");
-// });
 </script>

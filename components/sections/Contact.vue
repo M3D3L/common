@@ -88,7 +88,7 @@
                   id="message"
                   v-model="message"
                   name="message"
-                  placeholder="Tell us about your project or inquiry..."
+                  placeholder="..."
                   class="min-h-[140px] rounded-lg border border-input bg-background focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-300 resize-none hover:border-primary/50"
                   :class="{
                     'border-destructive focus:ring-destructive/20 focus:border-destructive':

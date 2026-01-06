@@ -1,20 +1,11 @@
 <template>
   <div class="mt-8 md:pt-16">
     <SeoMeta :seoData="computedSeoData" />
-    <SectionsBlogColumn
-      :h1="true"
-      :title="blogSection?.title"
-      :description="blogSection?.description"
-      :type="(config.public.blogType as string)"
-      :imgSrc
-      :showMore="false"
-      :showPagination="true"
-    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { blogSection } from "~/assets/configs/layout";
+import { blogSection } from "@local/assets/configs/layout";
 import { createSeoObject } from "~/composables/useSeo";
 
 const config = useRuntimeConfig();

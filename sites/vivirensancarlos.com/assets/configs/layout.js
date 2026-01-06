@@ -19,8 +19,8 @@ export const newsLetterModule = {
     "Manténgase informado con las últimas noticias, artículos y recursos. ¡Suscríbase y no se pierda nada!",
   email: "Correo Electrónico",
   name: "Nombre (Opcional)",
-  privacy:
-    "Acepto recibir correos electrónicos y acepto la política de privacidad",
+  privacy: "Acepto recibir correos electrónicos y acepto la",
+  privacyButton: "política de privacidad",
   button: "Suscribirse Ahora",
 };
 
@@ -135,6 +135,7 @@ export const blogSection = {
   byline: "Información sobre Relocalización y Bienes Raíces en San Carlos",
   keywords:
     "blog mudarse a méxico, consejos bienes raíces san carlos, guía expatriados méxico, consejos relocalización méxico, vivir en san carlos sonora, inversión inmobiliaria méxico, jubilarse en san carlos blog",
+  viewMoreText: "Ver Todos",
 };
 
 // Contact Section
