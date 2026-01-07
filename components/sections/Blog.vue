@@ -49,14 +49,6 @@ const props = defineProps({
     },
     default: () => ({}),
   },
-  showMore: {
-    type: Boolean,
-    default: true,
-  },
-  viewMoreText: {
-    type: String,
-    default: "View All Posts",
-  },
 });
 
 const { fetchCollection } = usePocketBaseCore();

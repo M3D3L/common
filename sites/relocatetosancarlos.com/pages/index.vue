@@ -14,22 +14,43 @@
         :h1="false"
       />
 
-      <div class="grid md:grid-cols-3 gap-6">
+      <div
+        v-if="error"
+        class="py-12 text-center border border-red-100 rounded-xl bg-red-50"
+      >
+        <p class="text-red-600 font-medium">
+          We couldn't load the featured properties.
+        </p>
+        <button
+          @click="loadProperties(true)"
+          class="mt-2 text-sm underline hover:text-primary"
+        >
+          Try again
+        </button>
+      </div>
+
+      <div v-else-if="loading" class="grid md:grid-cols-3 gap-6 mt-8">
+        <AtomsBaseSkeleton v-for="n in 3" :key="n" class="h-[400px]" />
+      </div>
+
+      <div v-else class="grid md:grid-cols-3 gap-6">
         <CardsPropertyCard
           v-for="(item, itemIndex) in propertyItems.items"
           :key="`property-home-${itemIndex}`"
           :content="item"
           class="mt-8"
         />
+
+        <div
+          v-if="propertyItems.items.length === 0"
+          class="col-span-3 py-12 text-center text-gray-500"
+        >
+          No featured properties available at the moment.
+        </div>
       </div>
 
-      <div class="w-full flex justify-end mt-16">
-        <NuxtLink
-          to="/real-estate/"
-          class="font-bold w-full transition-all hover:opacity-90 text-primary hover:underline pb-2"
-        >
-          View All Properties
-        </NuxtLink>
+      <div v-if="!loading && !error" class="w-full flex justify-center mt-16">
+        <AtomsBaseLink to="/real-estate/" text="View All Properties" />
       </div>
     </div>
 
@@ -53,11 +74,13 @@ import {
 // Data
 const { fetchCollection } = usePocketBaseCore();
 const loading = ref(false);
+const error = ref(null);
 const propertyItems = ref({ items: [] });
 
 // Fetch properties
 const loadProperties = async (ignoreCache = false) => {
   loading.value = true;
+  error.value = null;
   try {
     const data = await fetchCollection(
       "properties",
@@ -70,8 +93,9 @@ const loadProperties = async (ignoreCache = false) => {
       ignoreCache
     );
     propertyItems.value = data || { items: [] };
-  } catch (error) {
-    console.error("Error fetching properties:", error);
+  } catch (err) {
+    console.error("Error fetching properties:", err);
+    error.value = err;
   } finally {
     loading.value = false;
   }

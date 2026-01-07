@@ -4,6 +4,7 @@
 
     <div v-if="error" class="container py-32 text-center">
       <h2 class="text-2xl font-bold text-red-600">Error loading properties</h2>
+
       <p class="mt-4 text-gray-600">
         Please try again or contact support if the problem persists.
       </p>
@@ -19,10 +20,7 @@
       v-else-if="pending && !propertyData"
       class="container py-32 text-center"
     >
-      <div
-        class="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"
-      ></div>
-      <p class="mt-4 text-gray-600">Loading properties...</p>
+      <AtomsLoadingSpinner />
     </div>
 
     <ul v-else class="container pb-32 space-y-32">
