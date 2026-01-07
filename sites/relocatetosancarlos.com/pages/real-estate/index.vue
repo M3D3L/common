@@ -24,7 +24,7 @@
       <AtomsLoadingSpinner />
     </div>
 
-    <ul v-else class="pt-16 pb-32 container space-y-32 lg:pt-24">
+    <ul v-else class="pt-16 pb-32 container space-y-16 lg:pt-24">
       <div class="flex flex-col md:flex-row justify-between gap-4">
         <TextSectionTitle
           :title="categoryHeaders?.title"
@@ -43,13 +43,17 @@
         </Button>
       </div>
 
+      <div v-if="featuredProperty && !pending">
+        <MoleculesFeaturedProperty :content="featuredProperty" />
+      </div>
+
       <template v-for="(category, index) in categoryData">
         <li
           v-if="category?.properties?.items?.length || pending"
           :key="category.type || index"
         >
           <TextSectionTitle
-            :class="{ 'pt-12': index !== 0 }"
+            :class="{ 'pt-12': index !== 0 || featuredProperty }"
             :title="category.title"
             :description="category?.subtitle"
             :h1="false"
@@ -61,13 +65,7 @@
           >
             <div v-if="pending" class="w-full lg:w-2/3">
               <div class="grid grid-cols-1 gap-8 md:grid-cols-2">
-                <div v-for="n in 4" :key="n" class="animate-pulse">
-                  <div class="h-64 bg-gray-200 rounded-lg"></div>
-                  <div class="mt-4 space-y-2">
-                    <div class="h-4 bg-gray-200 rounded w-1/3"></div>
-                    <div class="h-6 bg-gray-200 rounded w-3/4"></div>
-                  </div>
-                </div>
+                <AtomsBaseSkeleton v-for="n in 4" :key="n" />
               </div>
             </div>
 
@@ -77,7 +75,7 @@
             >
               <CardsPropertyCard
                 v-for="(item, itemIndex) in category.properties.items"
-                :key="`${category.type}-${itemIndex}`"
+                :key="`${category.type}-${item.id || itemIndex}`"
                 baseUrl="/real-estate"
                 :removeSpacing="true"
                 :content="item"
@@ -95,7 +93,7 @@
               </div>
             </div>
 
-            <div class="w-full lg:w-1/3">
+            <div class="w-full lg:w-1/3 lg:pb-16">
               <CardsInfoCard
                 :title="category.sectionTitle"
                 :footerText="category.footerText"
@@ -128,8 +126,9 @@ const { fetchCollection, isUserVerified } = usePocketBaseCore();
 
 const isVerified = computed(() => isUserVerified());
 
-// LOADING STATES
+// STATE
 const categoryData = ref([]);
+const featuredProperty = ref(null);
 const pending = ref(false);
 const error = ref(null);
 
@@ -155,16 +154,21 @@ const loadAllData = async () => {
   error.value = null;
 
   try {
-    // Initialize category structure from config
     const rawCategories = toValue(categoriesComputed);
     if (!Array.isArray(rawCategories)) return;
 
-    const [propData, rentalData, lotData] = await Promise.all([
+    // 1. Fetch Global Featured Property and category data in parallel
+    const [featuredRes, propData, rentalData, lotData] = await Promise.all([
+      fetchCollection("properties", 1, 1, "featured=true", "-created"),
       fetchPropertiesByType("property"),
       fetchPropertiesByType("rental"),
       fetchPropertiesByType("lot"),
     ]);
 
+    // Set the featured property
+    featuredProperty.value = featuredRes?.items[0] || null;
+
+    // 2. Map data and filter out the featured property if it exists in any category
     categoryData.value = rawCategories
       .map((cat) => {
         if (typeof cat === "string") return null;
@@ -173,10 +177,18 @@ const loadAllData = async () => {
         let fetched = { items: [], totalPages: 0 };
 
         if (typeKey === "properties" || typeKey === "property")
-          fetched = propData;
+          fetched = { ...propData };
         else if (typeKey === "rentals" || typeKey === "rental")
-          fetched = rentalData;
-        else if (typeKey === "lots" || typeKey === "lot") fetched = lotData;
+          fetched = { ...rentalData };
+        else if (typeKey === "lots" || typeKey === "lot")
+          fetched = { ...lotData };
+
+        // Filter out the featured property from the specific category list
+        if (featuredProperty.value && fetched.items.length) {
+          fetched.items = fetched.items.filter(
+            (item) => item.id !== featuredProperty.value.id
+          );
+        }
 
         return {
           ...cat,
@@ -185,13 +197,13 @@ const loadAllData = async () => {
       })
       .filter(Boolean);
   } catch (err) {
+    console.error("Critical error loading data:", err);
     error.value = err;
   } finally {
     pending.value = false;
   }
 };
 
-// Initial fetch
 onMounted(() => {
   loadAllData();
 });
