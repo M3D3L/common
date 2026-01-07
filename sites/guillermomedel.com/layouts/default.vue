@@ -18,7 +18,7 @@
         :h1="isBlogPage"
         :showPagination="isBlogPage"
         :perPage="isBlogPage ? 10 : 5"
-        type="relocateBlog"
+        type="posts"
         v-bind="blogSection"
         :title="blogSection.title"
         :newsLetterModule
