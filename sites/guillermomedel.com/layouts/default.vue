@@ -5,6 +5,7 @@
     </div> -->
     <the-navbar
       :links="siteMap"
+      slogan="Full Stack Developer | Nuxt.js & Vue.js"
       :siteName="contactInfo?.siteName"
       class="fixed top-0 left-0 right-0 z-50 w-full"
     />
