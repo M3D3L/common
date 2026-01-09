@@ -1,6 +1,10 @@
 <template>
   <div class="relative flex flex-col min-h-screen mx-auto">
-    <TheNavbar :links="siteMap" :siteName="contactInfo?.siteName" />
+    <TheNavbar
+      slogan="Real Estate"
+      :links="siteMap"
+      :siteName="contactInfo?.siteName"
+    />
     <main class="w-full">
       <slot />
     </main>

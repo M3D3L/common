@@ -1,155 +1,147 @@
 <template>
   <header
-    class="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60"
+    class="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur-md supports-[backdrop-filter]:bg-background/60"
   >
-    <div
-      class="container relative flex items-center justify-between h-16 mx-auto"
-    >
+    <div class="container mx-auto flex h-20 items-center justify-between px-4">
       <NuxtLink
-        v-if="logo"
         to="/"
-        class="flex items-center gap-2 transition-opacity hover:opacity-80"
+        class="flex items-center gap-2 transition-transform hover:scale-[1.01] active:scale-95"
       >
-        <img :src="logo" alt="Logo" class="h-10 md:h-12" />
-      </NuxtLink>
-      <NuxtLink
-        v-else
-        to="/"
-        class="flex items-center transition-colors hover:text-primary"
-      >
-        <span class="flex flex-col logo-text">
-          <span class="text-lg font-bold md:text-xl">{{ siteName }}</span>
-        </span>
+        <img v-if="logo" :src="logo" alt="Logo" class="h-10 md:h-12 w-auto" />
+        <div v-else class="flex flex-col leading-none">
+          <span class="text-xl font-bold tracking-tight md:text-2xl">
+            {{ siteName }}
+          </span>
+          <span
+            v-if="slogan"
+            class="text-[10px] font-semibold uppercase tracking-[0.3em] text-muted-foreground"
+          >
+            {{ slogan }}
+          </span>
+        </div>
       </NuxtLink>
 
-      <div class="flex items-center gap-2 md:gap-4">
-        <nav
-          class="items-center pl-4 gap-4 hidden justify-between w-full md:flex"
+      <nav class="hidden items-center gap-8 md:flex ml-auto mr-6">
+        <NuxtLink
+          v-for="link in links"
+          :key="link.href"
+          :to="link.href"
+          class="text-sm font-medium transition-colors hover:text-primary text-foreground/70"
+          active-class="text-primary font-semibold"
         >
-          <AtomsStyledLink
-            v-for="(link, linkIndex) in links"
-            :key="linkIndex"
-            :to="link.href"
-            :title="link.label"
-          />
+          {{ link.label }}
+        </NuxtLink>
+        <slot name="extra-links" />
+      </nav>
 
-          <slot name="extra-links" />
-
-          <!-- <ClientOnly>
-            <template v-if="showAuthButtons">
-              <template v-if="!auth.isAuthenticated.value">
-                <AtomsStyledLink :to="getLoginHref()" title="Login" />
-                <AtomsStyledLink :to="getRegisterHref()" title="Register" />
-              </template>
-              <Button
-                v-else
-                class="text-sm font-medium shadow-sm hover:shadow-md"
-                @click="auth.logout()"
-                variant="default"
-                size="sm"
-              >
-                Logout
-              </Button>
-            </template>
-            <template #fallback>
-              <div class="w-20 h-8 animate-pulse bg-muted rounded-md"></div>
-            </template>
-          </ClientOnly> -->
-        </nav>
-
+      <div class="flex items-center gap-2">
         <ClientOnly>
           <button
             @click="toggleDark()"
-            class="p-2.5 transition-all rounded-lg hover:bg-accent/50 hover:scale-110 active:scale-95"
+            class="p-2.5 transition-all rounded-full hover:bg-accent text-muted-foreground hover:text-foreground"
             aria-label="Toggle dark mode"
           >
-            <Sun
-              v-if="isDark"
-              class="w-5 h-5 transition-transform duration-500 rotate-0 hover:rotate-180"
-            />
-            <Moon
-              v-else
-              class="w-5 h-5 transition-transform duration-300 rotate-0 hover:rotate-12"
-            />
+            <Sun v-if="isDark" class="w-5 h-5" />
+            <Moon v-else class="w-5 h-5" />
           </button>
         </ClientOnly>
 
+        <!-- <div class="hidden items-center gap-2 md:flex">
+          <template v-if="showAuthButtons">
+            <template v-if="!auth.isAuthenticated.value">
+              <NuxtLink
+                :to="getLoginHref()"
+                class="px-4 py-2 text-sm font-medium hover:text-primary transition-colors"
+              >
+                Sign In
+              </NuxtLink>
+              <NuxtLink
+                :to="getRegisterHref()"
+                class="inline-flex items-center justify-center rounded-full bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm transition-all hover:opacity-90 active:scale-95"
+              >
+                Join Now
+              </NuxtLink>
+            </template>
+            <Button
+              v-else
+              @click="auth.logout()"
+              variant="outline"
+              size="sm"
+              class="rounded-full px-5"
+            >
+              Log out
+            </Button>
+          </template>
+        </div> -->
+
         <button
           @click="isMobileMenuOpen = !isMobileMenuOpen"
-          class="p-2.5 transition-all rounded-lg hover:bg-accent/50 md:hidden hover:scale-110 active:scale-95"
+          class="flex h-10 w-10 items-center justify-center rounded-full hover:bg-accent md:hidden transition-colors"
           aria-label="Toggle menu"
         >
-          <X
-            v-if="isMobileMenuOpen"
-            class="w-5 h-5 transition-transform duration-300 rotate-0 hover:rotate-90"
-          />
-          <Menu
-            v-else
-            class="w-5 h-5 transition-transform duration-200 rotate-0 hover:scale-110"
-          />
+          <X v-if="isMobileMenuOpen" class="w-5 h-5" />
+          <Menu v-else class="w-5 h-5" />
         </button>
       </div>
     </div>
 
     <Transition
       enter-active-class="transition duration-300 ease-out"
-      enter-from-class="transform -translate-y-2 opacity-0"
-      enter-to-class="transform translate-y-0 opacity-100"
+      enter-from-class="opacity-0 -translate-y-4"
+      enter-to-class="opacity-100 translate-y-0"
       leave-active-class="transition duration-200 ease-in"
-      leave-from-class="transform translate-y-0 opacity-100"
-      leave-to-class="transform -translate-y-2 opacity-0"
+      leave-from-class="opacity-100 translate-y-0"
+      leave-to-class="opacity-0 -translate-y-4"
     >
-      <Card
+      <div
         v-if="isMobileMenuOpen"
-        class="absolute w-full md:hidden !rounded-t-none"
+        class="absolute inset-x-0 top-full border-b border-border bg-background p-6 shadow-xl md:hidden"
       >
-        <CardContent class="container flex flex-col gap-1 px-4 py-4">
+        <div class="flex flex-col gap-2">
           <NuxtLink
             v-for="link in links"
             :key="link.href"
             :to="link.href"
-            class="px-4 py-3 text-sm font-medium transition-all rounded-lg hover:bg-accent/50 hover:translate-x-1 active:scale-95"
-            active-class="font-semibold text-primary bg-accent/30"
+            class="flex items-center px-4 py-3 text-lg font-medium rounded-lg hover:bg-accent transition-colors"
             @click="isMobileMenuOpen = false"
           >
             {{ link.label }}
           </NuxtLink>
 
-          <div v-if="showAuthButtons" class="h-px my-2 bg-border/40" />
-
-          <ClientOnly>
-            <template v-if="showAuthButtons">
-              <template v-if="!auth.isAuthenticated.value">
-                <NuxtLink
-                  :to="getLoginHref()"
-                  class="px-4 py-3 text-sm font-medium"
-                  @click="isMobileMenuOpen = false"
-                  >Login</NuxtLink
-                >
-                <NuxtLink
-                  :to="getRegisterHref()"
-                  class="px-4 py-3 text-sm font-semibold bg-primary text-primary-foreground text-center rounded-lg"
-                  @click="isMobileMenuOpen = false"
-                  >Register</NuxtLink
-                >
-              </template>
-              <Button
-                v-else
-                class="w-full"
-                @click="
-                  () => {
-                    auth.logout();
-                    isMobileMenuOpen = false;
-                  }
-                "
-                variant="default"
-                size="sm"
-                >Logout</Button
+          <!-- <div
+            v-if="showAuthButtons"
+            class="mt-4 pt-4 border-t border-border flex flex-col gap-3"
+          >
+            <template v-if="!auth.isAuthenticated.value">
+              <NuxtLink
+                :to="getLoginHref()"
+                class="px-4 py-2 font-medium"
+                @click="isMobileMenuOpen = false"
               >
+                Login
+              </NuxtLink>
+              <NuxtLink
+                :to="getRegisterHref()"
+                class="flex h-12 items-center justify-center rounded-full bg-primary px-6 font-bold text-primary-foreground shadow-lg shadow-primary/20"
+                @click="isMobileMenuOpen = false"
+              >
+                Get Started
+              </NuxtLink>
             </template>
-          </ClientOnly>
-        </CardContent>
-      </Card>
+            <Button
+              v-else
+              @click="
+                auth.logout();
+                isMobileMenuOpen = false;
+              "
+              variant="outline"
+              class="w-full h-12 rounded-full"
+            >
+              Logout
+            </Button>
+          </div> -->
+        </div>
+      </div>
     </Transition>
   </header>
 </template>
@@ -159,6 +151,7 @@ import useAuth from "@/composables/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Sun, Moon, ShoppingCart, Menu, X } from "lucide-vue-next";
+import { Slot } from "reka-ui";
 
 interface NavLink {
   href: string;
@@ -181,6 +174,10 @@ const props = defineProps({
   showAuthButtons: {
     type: Boolean,
     default: true,
+  },
+  slogan: {
+    type: String,
+    default: "",
   },
 });
 
