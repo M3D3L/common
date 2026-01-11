@@ -3,13 +3,13 @@
     <div class="relative w-full overflow-hidden">
       <Button
         @click="slidePrev"
-        class="absolute left-0 z-10 p-2 m-2 rounded-full top-1/2"
+        class="absolute left-0 z-10 p-2 m-2 rounded-full top-[45%]"
       >
         <ChevronLeftIcon class="w-5 h-5" />
       </Button>
       <Button
         @click="slideNext"
-        class="absolute right-0 z-10 p-2 m-2 rounded-full top-1/2"
+        class="absolute right-0 z-10 p-2 m-2 rounded-full top-[45%]"
       >
         <ChevronRightIcon class="w-5 h-5" />
       </Button>

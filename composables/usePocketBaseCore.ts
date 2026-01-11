@@ -159,7 +159,7 @@ export default function usePocketBaseCore() {
   };
 
   const getFileUrl = (record: RecordModel, filename: string): string => {
-    return pb.files.getUrl(record, filename);
+    return pb.files.getURL(record, filename);
   };
 
   return {

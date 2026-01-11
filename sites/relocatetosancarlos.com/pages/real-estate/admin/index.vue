@@ -291,12 +291,15 @@ const saveProperty = async () => {
       try {
         const aiContext = {
           title: formData.value.title,
+          description: formData.value.description,
           type: formData.value.type,
           price: formData.value.price,
           bedrooms: formData.value.bedrooms,
+          content: formData.value.content,
           bathrooms: formData.value.bathrooms,
           area: formData.value.area,
           address: formData.value.address,
+          keywords: formData.value.keywords,
           amenities: formData.value.amenities
             .filter((a: any) => a?.name?.trim())
             .map((a: any) => a.name.trim()),

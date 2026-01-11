@@ -58,28 +58,6 @@
             <ChevronRight class="w-8 h-8" />
           </Button>
         </div>
-
-        <div
-          class="w-full bg-background/10 backdrop-blur-xl border-t border-white/10 px-6 py-4 flex items-center justify-between"
-        >
-          <div class="flex flex-col">
-            <span class="text-2xl font-bold text-white leading-none">
-              Viewing Property Gallery
-            </span>
-          </div>
-
-          <div class="flex items-center gap-4">
-            <Button
-              variant="outline"
-              class="hidden border-white/20 hover:bg-white/10 hover:text-white md:flex"
-            >
-              Request Info
-            </Button>
-            <Button class="bg-primary text-primary-foreground font-bold">
-              Inquire Now
-            </Button>
-          </div>
-        </div>
       </DialogContent>
     </Dialog>
   </div>
