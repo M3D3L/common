@@ -70,15 +70,18 @@
         v-if="property?.video"
         class="relative w-full overflow-hidden rounded-xl aspect-video shadow-xl"
       >
-        <video
-          class="absolute inset-0 object-cover w-full h-full"
+        <iframe
+          width="315"
+          height="560"
           :src="property?.video"
-          autoplay
-          muted
-          loop
-          playsinline
-          controls
-        ></video>
+          title="YouTube video player"
+          frameborder="0"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          referrerpolicy="strict-origin-when-cross-origin"
+          allowfullscreen
+          class="absolute inset-0 object-cover w-full h-full"
+        >
+        </iframe>
       </Card>
 
       <img
