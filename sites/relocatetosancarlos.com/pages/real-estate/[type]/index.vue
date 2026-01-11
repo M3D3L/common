@@ -39,7 +39,7 @@
           class="mb-6"
         />
 
-        <div class="flex flex-col gap-6 lg:flex-row">
+        <div class="flex flex-col gap-6 lg:flex-row mb-6">
           <!-- Show loading state for properties -->
           <div v-if="propertiesLoading" class="w-full lg:w-2/3">
             <div class="grid gap-6 md:grid-cols-2">
@@ -59,7 +59,9 @@
             class="grid content-center w-full gap-6 md:grid-cols-2 lg:w-2/3"
           >
             <CardsPropertyCard
-              v-for="(item, itemIndex) in currentCategory?.properties?.items"
+              v-for="(
+                item, itemIndex
+              ) in currentCategory?.properties?.items.slice(0, 6)"
               :key="item.id || `property-${itemIndex}`"
               :content="item"
             />
@@ -98,6 +100,18 @@
               :mode="rawCategories?.[typeMap[type]?.index]?.mode"
             />
           </div>
+        </div>
+        <div class="grid content-center w-full gap-6 md:grid-cols-3">
+          <CardsPropertyCard
+            v-for="(
+              item, itemIndex
+            ) in currentCategory?.properties?.items.slice(
+              6,
+              currentCategory?.properties?.items.length
+            )"
+            :key="item.id || `property-${itemIndex}`"
+            :content="item"
+          />
         </div>
       </li>
 

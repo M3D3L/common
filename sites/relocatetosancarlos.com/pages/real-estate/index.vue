@@ -30,6 +30,14 @@
             >
               {{ realEstateHeroSection.propertiesText }}
             </Button>
+
+            <nuxt-link
+              v-if="isUserVerified"
+              :to="`/real-estate/admin`"
+              class="inline-flex items-center justify-center px-8 py-3 text-lg font-medium text-center text-primary underline rounded-lg hover:text-primary/80 focus:ring-4 focus:outline-none focus:ring-primary/50"
+            >
+              Mange Properties
+            </nuxt-link>
           </div>
         </div>
       </div>
@@ -139,7 +147,7 @@ import {
 } from "@local/assets/configs/layout.js";
 import Card from "@common/components/ui/card/Card.vue";
 
-const { fetchCollection } = usePocketBaseCore();
+const { fetchCollection, isUserVerified } = usePocketBaseCore();
 const categoryData = ref([]);
 const pending = ref(false);
 const error = ref(null);
