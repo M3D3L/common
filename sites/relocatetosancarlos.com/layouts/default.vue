@@ -48,10 +48,14 @@
       /> -->
     </a>
     <OrganismsBaseFooter :links="siteMap" :footerConfig :contactInfo :socials />
+
+    <DebugBar />
   </div>
 </template>
 
 <script setup lang="ts">
+import DebugBar from "@common/components/DebugBar.vue";
+
 import {
   contactInfo,
   siteMap,

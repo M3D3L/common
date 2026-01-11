@@ -8,9 +8,11 @@
     <main class="w-full">
       <slot />
     </main>
+    <DebugBar />
   </div>
 </template>
 
 <script setup lang="ts">
+import DebugBar from "@common/components/DebugBar.vue";
 import { contactInfo, siteMap, socials } from "~/assets/configs/layout";
 </script>

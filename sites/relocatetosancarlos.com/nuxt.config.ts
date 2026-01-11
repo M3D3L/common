@@ -140,6 +140,7 @@ export default defineNuxtConfig({
       siteUrl: "https://www.relocatetosancarlos.com",
       twitterSite: "@relocatetosc",
       blogType: "relocateBlog",
+      environment: process.env.NODE_ENV || "development",
       chatgptProxyUrl:
         "https://chatgpt-proxy.guillermoantoniomedel.workers.dev",
     },

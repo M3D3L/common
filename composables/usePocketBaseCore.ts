@@ -1,4 +1,6 @@
+import { useRuntimeConfig } from "#app";
 import usePocketBase from "./usePocketbase";
+import { useDebugStore } from "~/store/debug";
 import {
   getCache,
   setCache,
@@ -10,8 +12,11 @@ import type { ListResult, RecordModel } from "pocketbase";
 
 export default function usePocketBaseCore() {
   const pb = usePocketBase();
+  const debugStore = useDebugStore();
+  const runtimeConfig = useRuntimeConfig();
 
-  // AUTH STATE
+  const isDev = runtimeConfig.public.environment === "development";
+
   const user = pb.authStore.model;
   const isValid = pb.authStore.isValid;
 
@@ -20,7 +25,8 @@ export default function usePocketBaseCore() {
   };
 
   /**
-   * Fetch list of records with Caching and Concurrency Fix
+   * Fetch list of records
+   * Logs cache hits and network requests ONLY in development
    */
   const fetchCollection = async (
     collection: string,
@@ -44,19 +50,21 @@ export default function usePocketBaseCore() {
 
     const cached = getCache<ListResult<RecordModel>>(cacheKey);
 
-    console.log("Cache Key:", cacheKey, "Cached Data:", cached);
-    if (cached && !ignoreCache) return cached;
+    if (cached && !ignoreCache) {
+      if (isDev) {
+        debugStore.addQuery(`${cacheKey} (cache)`, cached);
+      }
+      return cached;
+    }
 
     try {
       const response = await pb.collection(collection).getList(page, perPage, {
         filter,
         sort,
         expand: expand ?? undefined,
-        // FIX: Unique key per collection prevents Promise.all from cancelling simultaneous requests
         requestKey: `list_${collection}`,
       });
 
-      // Maintain your original fields filtering logic
       if (fields) {
         response.items = response.items.map((item) =>
           Object.fromEntries(
@@ -66,21 +74,18 @@ export default function usePocketBaseCore() {
       }
 
       setCache(cacheKey, response);
+
+      if (isDev) {
+        debugStore.addQuery(`${cacheKey} (network)`, response);
+      }
+
       return response;
     } catch (error: any) {
-      // Specifically handle the PocketBase auto-cancellation error
-      if (error.isAbort) {
-        console.warn(`Request for ${collection} was auto-cancelled.`);
-        throw error;
-      }
-      console.error(`Error fetching ${collection}:`, error);
+      if (error.isAbort) throw error;
       throw new Error(`Failed to fetch ${collection}`);
     }
   };
 
-  /**
-   * Fetch a single record by ID
-   */
   const fetchRecord = async (
     collection: string,
     id: string | number
@@ -93,14 +98,13 @@ export default function usePocketBaseCore() {
 
     try {
       const record = await pb.collection(collection).getOne(stringId, {
-        // FIX: Unique key per record fetch
         requestKey: `record_${collection}_${stringId}`,
       });
+
       setCache(cacheKey, record);
       return record;
     } catch (error: any) {
       if (error.isAbort) throw error;
-      console.error(`Error fetching ${collection} record ${stringId}:`, error);
       throw new Error(`Failed to fetch ${collection} record`);
     }
   };
@@ -109,13 +113,9 @@ export default function usePocketBaseCore() {
     collection: string,
     data: Record<string, any>
   ): Promise<RecordModel> => {
-    try {
-      const record = await pb.collection(collection).create(data);
-      invalidateCollectionCache(collection);
-      return record;
-    } catch (error) {
-      throw new Error(`Failed to create item in ${collection}`);
-    }
+    const record = await pb.collection(collection).create(data);
+    invalidateCollectionCache(collection);
+    return record;
   };
 
   const updateItem = async (
@@ -123,28 +123,20 @@ export default function usePocketBaseCore() {
     id: string,
     data: Record<string, any>
   ): Promise<RecordModel> => {
-    try {
-      const record = await pb.collection(collection).update(id, data);
-      invalidateCollectionCache(collection);
-      clearCache(getCacheKey("fetchRecord", { collection, id }));
-      return record;
-    } catch (error) {
-      throw new Error(`Failed to update item in ${collection}`);
-    }
+    const record = await pb.collection(collection).update(id, data);
+    invalidateCollectionCache(collection);
+    clearCache(getCacheKey("fetchRecord", { collection, id }));
+    return record;
   };
 
   const deleteItem = async (
     collection: string,
     id: string
   ): Promise<boolean> => {
-    try {
-      await pb.collection(collection).delete(id);
-      invalidateCollectionCache(collection);
-      clearCache(getCacheKey("fetchRecord", { collection, id }));
-      return true;
-    } catch (error) {
-      throw new Error(`Failed to delete item from ${collection}`);
-    }
+    await pb.collection(collection).delete(id);
+    invalidateCollectionCache(collection);
+    clearCache(getCacheKey("fetchRecord", { collection, id }));
+    return true;
   };
 
   const uploadFile = async (
@@ -153,15 +145,11 @@ export default function usePocketBaseCore() {
     recordId: string,
     field: string
   ): Promise<RecordModel> => {
-    try {
-      const formData = new FormData();
-      formData.append(field, file);
-      const record = await pb.collection(collection).update(recordId, formData);
-      invalidateCollectionCache(collection);
-      return record;
-    } catch (error) {
-      throw new Error("Failed to upload file");
-    }
+    const formData = new FormData();
+    formData.append(field, file);
+    const record = await pb.collection(collection).update(recordId, formData);
+    invalidateCollectionCache(collection);
+    return record;
   };
 
   const invalidateCollectionCache = (collection: string) => {
