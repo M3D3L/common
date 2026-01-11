@@ -164,7 +164,7 @@ export const contactSection = {
 
 // Site Map
 export const siteMap = [
-  // { label: "View All", href: "/real-estate/properties/" },
+  { label: "Properties", href: "/real-estate/" },
   { label: "For Sale", href: "/real-estate/properties" },
   { label: "Rentals", href: "/real-estate/rentals/" },
   // { label: "Lots", href: "/real-estate/lots" },
