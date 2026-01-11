@@ -19,95 +19,93 @@
       </nuxt-link>
     </CardHeader>
 
-    <CardContent class="p-6">
-      <div class="flex flex-col h-full">
-        <div class="mb-2">
-          <span class="text-xl font-bold text-foreground">
-            {{ formattedPrice }}
-          </span>
-        </div>
+    <CardContent class="px-6 pt-6 pb-8 h-full flex flex-col overflow-hidden">
+      <div class="mb-2">
+        <span class="text-xl font-bold text-foreground">
+          {{ formattedPrice }}
+        </span>
+      </div>
 
-        <div class="space-y-1">
-          <nuxt-link
-            v-if="content?.slug"
-            useChat
-            :to="`/real-estate${content.slug}`"
-            class="transition-colors text-primary hover:underline"
-          >
-            <h3 class="text-lg font-bold leading-snug line-clamp-1">
-              {{ content.title }}
-            </h3>
-          </nuxt-link>
-
-          <div
-            v-if="content.address"
-            class="flex items-center gap-1 text-sm text-muted-foreground"
-          >
-            <MapPin :size="14" class="shrink-0" />
-            <span class="truncate">{{ content.address }}</span>
-          </div>
-        </div>
+      <div class="space-y-1">
+        <nuxt-link
+          v-if="content?.slug"
+          useChat
+          :to="`/real-estate${content.slug}`"
+          class="transition-colors text-primary hover:underline"
+        >
+          <h3 class="text-lg font-bold leading-snug line-clamp-1">
+            {{ content.title }}
+          </h3>
+        </nuxt-link>
 
         <div
-          class="flex items-center gap-4 py-4 mt-4 border-t border-muted/50 text-muted-foreground"
+          v-if="content.address"
+          class="flex items-center gap-1 text-sm text-muted-foreground"
         >
-          <div v-if="content.bedrooms" class="flex items-center gap-1.5">
-            <Bed :size="16" />
-            <span class="text-sm font-medium text-foreground">{{
-              content.bedrooms
-            }}</span>
-          </div>
-          <div v-if="content.bathrooms" class="flex items-center gap-1.5">
-            <Bath :size="16" />
-            <span class="text-sm font-medium text-foreground">{{
-              content.bathrooms
-            }}</span>
-          </div>
-          <div v-if="content.area" class="flex items-center gap-1.5">
-            <Square :size="16" />
-            <span class="text-sm font-medium text-foreground"
-              >{{ content.area }} m²</span
-            >
-          </div>
+          <MapPin :size="14" class="shrink-0" />
+          <span class="truncate">{{ content.address }}</span>
         </div>
+      </div>
 
-        <p
-          v-if="content.description"
-          class="text-sm leading-relaxed line-clamp-2 text-muted-foreground"
-        >
-          {{ content.description }}
-        </p>
-
-        <div v-if="displayAmenities.length > 0" class="mt-4 mb-6">
-          <div class="flex flex-wrap gap-1.5">
-            <Badge
-              v-for="(amenity, index) in displayAmenities"
-              :key="index"
-              variant="secondary"
-              class="text-[10px] font-medium px-2 py-0"
-            >
-              {{ amenity }}
-            </Badge>
-            <span
-              v-if="remainingAmenities > 0"
-              class="text-[10px] text-muted-foreground self-center"
-            >
-              +{{ remainingAmenities }} more
-            </span>
-          </div>
+      <div
+        class="flex items-center gap-4 py-4 mt-4 border-t border-muted/50 text-muted-foreground"
+      >
+        <div v-if="content.bedrooms" class="flex items-center gap-1.5">
+          <Bed :size="16" />
+          <span class="text-sm font-medium text-foreground">{{
+            content.bedrooms
+          }}</span>
         </div>
-
-        <div class="mt-auto">
-          <nuxt-link
-            v-if="content?.slug"
-            :to="`/real-estate${content.slug}`"
-            class="w-full"
+        <div v-if="content.bathrooms" class="flex items-center gap-1.5">
+          <Bath :size="16" />
+          <span class="text-sm font-medium text-foreground">{{
+            content.bathrooms
+          }}</span>
+        </div>
+        <div v-if="content.area" class="flex items-center gap-1.5">
+          <Square :size="16" />
+          <span class="text-sm font-medium text-foreground"
+            >{{ content.area }} m²</span
           >
-            <Button class="w-full font-semibold">
-              {{ buttonText || "View Listing" }}
-            </Button>
-          </nuxt-link>
         </div>
+      </div>
+
+      <p
+        v-if="content.description"
+        class="text-sm leading-relaxed line-clamp-2 text-muted-foreground"
+      >
+        {{ content.description }}
+      </p>
+
+      <div v-if="displayAmenities.length > 0" class="mt-4 mb-6">
+        <div class="flex flex-wrap gap-1.5">
+          <Badge
+            v-for="(amenity, index) in displayAmenities"
+            :key="index"
+            variant="secondary"
+            class="text-[10px] font-medium px-2 py-0"
+          >
+            {{ amenity }}
+          </Badge>
+          <span
+            v-if="remainingAmenities > 0"
+            class="text-[10px] text-muted-foreground self-center"
+          >
+            +{{ remainingAmenities }} more
+          </span>
+        </div>
+      </div>
+
+      <div class="absolute bottom-0 left-0 right-0 mt-auto">
+        <nuxt-link
+          v-if="content?.slug"
+          :to="`/real-estate${content.slug}`"
+          class="w-full"
+        >
+          <Button class="w-full font-semibold">
+            {{ buttonText || "View Listing" }}
+          </Button>
+        </nuxt-link>
       </div>
     </CardContent>
   </Card>

@@ -80,8 +80,7 @@
           referrerpolicy="strict-origin-when-cross-origin"
           allowfullscreen
           class="absolute inset-0 object-cover w-full h-full"
-        >
-        </iframe>
+        ></iframe>
       </Card>
 
       <img
@@ -94,7 +93,7 @@
 
     <section
       id="details"
-      class="grid grid-cols-1 gap-8 lg:grid-cols-3 scroll-mt-24"
+      class="grid grid-cols-1 gap-8 lg:grid-cols-3 scroll-mt-24 items-start"
     >
       <div class="lg:col-span-3 flex w-full p-0 -mt-4 -mb-4">
         <TooltipProvider class="p-0 m-0">
@@ -108,7 +107,7 @@
 
       <div class="lg:col-span-2 space-y-10">
         <div
-          class="prose prose-slate max-w-none"
+          class="prose prose-slate max-w-none dark:prose-invert"
           v-html="property?.content"
         ></div>
 
@@ -157,19 +156,21 @@
         </Card>
       </div>
 
-      <Card
-        v-if="mapSrc"
-        class="relative my-auto w-full h-[400px] bg-primary overflow-hidden rounded-xl shadow-md"
-      >
-        <iframe
-          class="inset-0 w-full h-full object-cover"
-          :src="mapSrc"
-          style="border: 0"
-          allowfullscreen
-          loading="lazy"
-          title="Property Location"
-        ></iframe>
-      </Card>
+      <div class="hidden lg:block lg:col-span-1 lg:sticky lg:top-24">
+        <Card
+          v-if="mapSrc"
+          class="relative w-full aspect-square bg-primary overflow-hidden rounded-xl shadow-md"
+        >
+          <iframe
+            class="inset-0 w-full h-full object-cover"
+            :src="mapSrc"
+            style="border: 0"
+            allowfullscreen
+            loading="lazy"
+            title="Property Location"
+          ></iframe>
+        </Card>
+      </div>
     </section>
 
     <section id="gallery">
@@ -205,8 +206,8 @@
         </div>
 
         <div class="grid w-full items-center md:w-2/3 lg:p-0 px-6 pb-6">
-          <div>
-            <h3 class="text-2xl font-bold text-primary md:mt-4 lg:mt-0">
+          <div class="p-6">
+            <h3 class="text-2xl font-bold text-primary">
               {{ property?.expand?.author?.name }}
             </h3>
             <p class="text-lg text-muted-foreground">
@@ -215,27 +216,27 @@
             <p class="mt-3 leading-relaxed">
               {{ property?.expand?.author?.bio }}
             </p>
-          </div>
 
-          <div class="flex flex-col gap-2 text-sm mt-4">
-            <a
-              :href="`mailto:${property?.expand?.author?.email}`"
-              class="flex items-center gap-2 hover:underline text-primary"
-            >
-              <Mail class="w-4 h-4" /> {{ property?.expand?.author?.email }}
-            </a>
-            <a
-              :href="`tel:${property?.expand?.author?.phone}`"
-              class="flex items-center gap-2 hover:underline text-primary"
-            >
-              <Phone class="w-4 h-4" /> {{ property?.expand?.author?.phone }}
-            </a>
+            <div class="flex flex-col gap-2 text-sm mt-6">
+              <a
+                :href="`mailto:${property?.expand?.author?.email}`"
+                class="flex items-center gap-2 hover:underline text-primary"
+              >
+                <Mail class="w-4 h-4" /> {{ property?.expand?.author?.email }}
+              </a>
+              <a
+                :href="`tel:${property?.expand?.author?.phone}`"
+                class="flex items-center gap-2 hover:underline text-primary"
+              >
+                <Phone class="w-4 h-4" /> {{ property?.expand?.author?.phone }}
+              </a>
+            </div>
+            <ContainersSocials
+              :socialLinks="computedSocialLinks"
+              :columnOnMobile="false"
+              class="mt-6"
+            />
           </div>
-          <ContainersSocials
-            :socialLinks="computedSocialLinks"
-            :columnOnMobile="false"
-            class="mt-4"
-          />
         </div>
       </Card>
     </section>
