@@ -3,7 +3,7 @@ on:
   push:
     branches:
       - main
-  workflow_dispatch: # Allow manual triggering
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -17,7 +17,6 @@ jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     strategy:
-      # This prevents one site's failure from stopping the other sites' builds
       fail-fast: false
       matrix:
         site: [guillermomedel, relocatetosancarlos, vivirensancarlos]
@@ -54,7 +53,9 @@ jobs:
           fi
 
       - name: Build ${{ steps.vars.outputs.domain }}
-        run: npm run generate
+        run: |
+          npx nuxi prepare
+          npm run generate
         working-directory: ${{ steps.vars.outputs.path }}
         env:
           POCKETBASE_URL: ${{ env.POCKETBASE_URL }}
@@ -85,10 +86,6 @@ jobs:
 
           # Add CNAME file
           echo "${{ steps.vars.outputs.domain }}" > "$DEPLOY_DIR/CNAME"
-
-          # Debug output
-          echo "Deploy folder contents:"
-          ls -la "$DEPLOY_DIR"
 
       - name: Deploy ${{ steps.vars.outputs.domain }}
         uses: JamesIves/github-pages-deploy-action@v4
