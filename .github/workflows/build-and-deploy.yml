@@ -3,7 +3,7 @@ on:
   push:
     branches:
       - main
-  workflow_dispatch: # Allow manual triggering
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        site: [guillermomedel, relocatetosancarlos]
+        site: [guillermomedel, relocatetosancarlos, vivirensancarlos]
 
     steps:
       - uses: actions/checkout@v4
@@ -45,6 +45,10 @@ jobs:
             echo "domain=relocatetosancarlos.com" >> $GITHUB_OUTPUT
             echo "path=./sites/relocatetosancarlos.com" >> $GITHUB_OUTPUT
             echo "repo=M3D3L/relocatetosancarlos.com" >> $GITHUB_OUTPUT
+          elif [ "${{ matrix.site }}" = "vivirensancarlos" ]; then
+            echo "domain=vivirensancarlos.com" >> $GITHUB_OUTPUT
+            echo "path=./sites/vivirensancarlos.com" >> $GITHUB_OUTPUT
+            echo "repo=M3D3L/vivirensancarlos.com" >> $GITHUB_OUTPUT
           fi
 
       - name: Build ${{ steps.vars.outputs.domain }}

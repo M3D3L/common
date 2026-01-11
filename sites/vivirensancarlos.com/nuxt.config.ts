@@ -127,7 +127,7 @@ export default defineNuxtConfig({
    * SITE META
    * ----------------------------- */
   site: {
-    url: "https://relocatetosancarlos.com",
+    url: "https://vivirensancarlos.com",
     name: "Relocate to San Carlos",
     indexable: true,
   },
