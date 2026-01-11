@@ -53,6 +53,7 @@ jobs:
           fi
 
       - name: Build ${{ steps.vars.outputs.domain }}
+        # The 'prepare' command creates the .nuxt/tsconfig.json that Vite is looking for
         run: |
           npx nuxi prepare
           npm run generate
@@ -66,7 +67,6 @@ jobs:
           SITE_PATH="${{ steps.vars.outputs.path }}"
           DEPLOY_DIR="deploy_${{ matrix.site }}"
 
-          # Look for build output directory
           if [ -d "$SITE_PATH/.output/public" ]; then
             BUILD_OUTPUT="$SITE_PATH/.output/public"
           elif [ -d "$SITE_PATH/dist" ]; then
@@ -78,13 +78,8 @@ jobs:
             exit 1
           fi
 
-          echo "Using build output: $BUILD_OUTPUT"
-
-          # Create deploy directory and copy files
           mkdir -p "$DEPLOY_DIR"
           cp -a "$BUILD_OUTPUT"/. "$DEPLOY_DIR"/
-
-          # Add CNAME file
           echo "${{ steps.vars.outputs.domain }}" > "$DEPLOY_DIR/CNAME"
 
       - name: Deploy ${{ steps.vars.outputs.domain }}
