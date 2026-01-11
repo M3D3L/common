@@ -36,11 +36,10 @@ export const contactInfo = {
 export const footerConfig = {
   connectText: "Conéctese con Nosotros",
   rightsText: "Todos los derechos reservados.",
-  recent: "Artículos Recientes", // "Blogs" es común, pero "Artículos" suena más profesional
+  recent: "Artículos Recientes",
   more: "Más Información",
 };
 
-// Hero Section
 export const heroSection = {
   id: "hero",
   padding: "",
@@ -54,19 +53,12 @@ export const heroSection = {
   description:
     "Como agente inmobiliaria y especialista en relocalización, Brenda ofrece apoyo bilingüe integral para expatriados, jubilados e inversionistas. Desde encontrar la casa ideal hasta asegurar rentas de largo plazo, logramos que su transición al Mar de Cortés sea libre de estrés.",
   buttons: [
-    {
-      link: "/blog/",
-      title: "Guía de Relocalización",
-    },
-    {
-      link: "/real-estate/",
-      title: "Explorar Propiedades",
-    },
+    { link: "/blog/", title: "Guía de Relocalización" },
+    { link: "/real-estate/", title: "Explorar Propiedades" },
   ],
   callToAction: "Viva San Carlos",
 };
 
-// Services Section
 export const servicesSection = {
   title:
     "Múdese a San Carlos: Servicios Integrales de Bienes Raíces y Mudanza para Expatriados",
@@ -86,7 +78,7 @@ export const socialsSection = {
       description:
         "Tours de propiedades, consejos locales e historias de expatriados 🎥",
       ctaText: "Seguir en TikTok",
-      link: "https://www.tiktok.com/@relocatetosancarlos?is_from_webapp=1&sender_device=pc",
+      link: "https://www.tiktok.com/@relocatetosancarlos",
       imageUrl: "/images/socials-carousel/LI-SC.webp",
     },
     {
@@ -95,7 +87,7 @@ export const socialsSection = {
       tagline: "Su viaje a San Carlos comienza aquí",
       description: "Actualizaciones diarias desde el paraíso 🌊🏡",
       ctaText: "Seguir en Instagram",
-      link: "https://www.instagram.com/relocatetosancarlos?igsh=anVwYW95NTMwc3E%3D&utm_source=qr",
+      link: "https://www.instagram.com/relocatetosancarlos",
       imageUrl: "/images/socials-carousel/IG-SC.webp",
     },
     {
@@ -119,7 +111,6 @@ export const socialsSection = {
   ],
 };
 
-// Properties Section
 export const propertiesSection = {
   title: "Bienes Raíces en San Carlos: Casas, Rentas y Terrenos de Inversión",
   description:
@@ -127,10 +118,9 @@ export const propertiesSection = {
   imgSrc: "/images/san-carlos-real-estate.webp",
   byline: "Oportunidades Inmobiliarias para Expatriados",
   keywords:
-    "bienes raíces san carlos sonora, casas en venta san carlos méxico, rentas largo plazo san carlos, listados MLS san carlos, casas frente al mar méxico, condominios en venta san carlos, mudarse a san carlos méxico",
+    "bienes raíces san carlos sonora, casas en venta san carlos méxico, rentas largo plazo san carlos, listados MLS san carlos, casas frente al mar méxico, condominos en venta san carlos, mudarse a san carlos méxico",
 };
 
-// Blog Section
 export const blogSection = {
   title: "Blog de Relocalización: Consejos y Bienes Raíces",
   description:
@@ -142,7 +132,6 @@ export const blogSection = {
   viewMoreText: "Ver Todo",
 };
 
-// Contact Section
 export const contactSection = {
   title:
     "¿Listo para el cambio? Contacte a Brenda, su especialista en San Carlos",
@@ -170,7 +159,6 @@ export const contactSection = {
   },
 };
 
-// Site Map
 export const siteMap = [
   { label: "Propiedades", href: "/real-estate/" },
   { label: "En Venta", href: "/real-estate/properties" },
@@ -180,7 +168,6 @@ export const siteMap = [
   { label: "Contacto", href: "/#contact" },
 ];
 
-// Socials Icons
 export const socials = [
   {
     icon: Music,
@@ -204,7 +191,6 @@ export const socials = [
   },
 ];
 
-// Real Estate Hero Section
 export const realEstateHeroSection = {
   id: "hero",
   padding: "",

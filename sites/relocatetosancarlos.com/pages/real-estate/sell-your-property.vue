@@ -119,7 +119,7 @@ import {
   contactInfo,
   heroSection,
   socials,
-} from "~/assets/configs/layout.js";
+} from "@local/assets/configs/layout.js";
 import { MapPin, Mail, Phone, Check } from "lucide-vue-next";
 import { Card } from "@common/components/ui/card";
 import { Button } from "@common/components/ui/button";

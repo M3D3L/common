@@ -2,7 +2,7 @@
   <div class="w-full">
     <SeoMeta :seoData="computedSeoData" />
 
-    <section class="bg-white border-b border-gray-100">
+    <section class="border-gray-100">
       <div class="container py-20 lg:py-32">
         <div class="max-w-4xl">
           <span
@@ -10,16 +10,14 @@
           >
             {{ sellData.hero.label }}
           </span>
-          <h1
-            class="text-5xl font-extrabold tracking-tight text-gray-900 sm:text-7xl"
-          >
+          <h1 class="text-5xl font-extrabold tracking-tight sm:text-7xl">
             {{ sellData.hero.title }}
             <span class="block mt-2 text-primary">
               {{ sellData.hero.highlight }}
             </span>
           </h1>
 
-          <p class="mt-8 text-xl leading-relaxed text-gray-600">
+          <p class="mt-8 text-xl leading-relaxed">
             {{ sellData.hero.description }}
           </p>
 

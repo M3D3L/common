@@ -22,7 +22,7 @@
 </template>
 
 <script setup>
-import { Card } from "@/components/ui/card";
+import { Card } from "@common/components/ui/card";
 import ContainersSocials from "@common/components/containers/Socials.vue";
 const props = defineProps({
   heroSection: {
