@@ -3,7 +3,7 @@ on:
   push:
     branches:
       - main
-  workflow_dispatch:
+  workflow_dispatch: # Allow manual triggering
 
 permissions:
   contents: read
@@ -17,6 +17,8 @@ jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     strategy:
+      # This prevents one site's failure from stopping the other sites' builds
+      fail-fast: false
       matrix:
         site: [guillermomedel, relocatetosancarlos, vivirensancarlos]
 
