@@ -46,7 +46,7 @@
           </button>
         </ClientOnly>
 
-        <div class="hidden items-center gap-2 md:flex">
+        <!-- <div class="hidden items-center gap-2 md:flex">
           <template v-if="showAuthButtons">
             <template v-if="!auth.isAuthenticated.value">
               <NuxtLink
@@ -72,7 +72,7 @@
               Log out
             </Button>
           </template>
-        </div>
+        </div> -->
 
         <button
           @click="isMobileMenuOpen = !isMobileMenuOpen"

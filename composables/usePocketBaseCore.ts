@@ -43,6 +43,8 @@ export default function usePocketBaseCore() {
     });
 
     const cached = getCache<ListResult<RecordModel>>(cacheKey);
+
+    console.log("Cache Key:", cacheKey, "Cached Data:", cached);
     if (cached && !ignoreCache) return cached;
 
     try {
@@ -50,12 +52,11 @@ export default function usePocketBaseCore() {
         filter,
         sort,
         expand: expand ?? undefined,
-        // FIX: Set requestKey to null.
-        // Using `list_${collection}` was causing identical requests to cancel each other.
-        requestKey: null,
+        // FIX: Unique key per collection prevents Promise.all from cancelling simultaneous requests
+        requestKey: `list_${collection}`,
       });
 
-      // Maintain original fields filtering logic
+      // Maintain your original fields filtering logic
       if (fields) {
         response.items = response.items.map((item) =>
           Object.fromEntries(
@@ -70,14 +71,7 @@ export default function usePocketBaseCore() {
       // Specifically handle the PocketBase auto-cancellation error
       if (error.isAbort) {
         console.warn(`Request for ${collection} was auto-cancelled.`);
-        // Return a safe empty state instead of throwing to prevent UI "Error Boxes"
-        return {
-          items: [],
-          totalItems: 0,
-          totalPages: 0,
-          page: 1,
-          perPage,
-        } as any;
+        throw error;
       }
       console.error(`Error fetching ${collection}:`, error);
       throw new Error(`Failed to fetch ${collection}`);
@@ -99,8 +93,8 @@ export default function usePocketBaseCore() {
 
     try {
       const record = await pb.collection(collection).getOne(stringId, {
-        // FIX: Unique key or null to prevent cancellation
-        requestKey: null,
+        // FIX: Unique key per record fetch
+        requestKey: `record_${collection}_${stringId}`,
       });
       setCache(cacheKey, record);
       return record;
@@ -176,6 +170,10 @@ export default function usePocketBaseCore() {
     }
   };
 
+  const getFileUrl = (record: RecordModel, filename: string): string => {
+    return pb.files.getUrl(record, filename);
+  };
+
   return {
     user,
     isValid,
@@ -187,5 +185,6 @@ export default function usePocketBaseCore() {
     uploadFile,
     invalidateCollectionCache,
     isUserVerified,
+    getFileUrl,
   };
 }
