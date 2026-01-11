@@ -62,7 +62,6 @@
 
 <script setup lang="ts">
 import { Card, CardContent } from "@/components/ui/card";
-
 import { Calendar, ArrowRight } from "lucide-vue-next";
 
 const props = defineProps<{

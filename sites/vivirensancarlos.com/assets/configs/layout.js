@@ -343,4 +343,39 @@ export const categoryConfigs = {
   },
 };
 
+export const sellPropertyPage = {
+  seo: {
+    title: "Venda su Propiedad en San Carlos, Sonora",
+    description:
+      "¿Desea vender su casa, lote o condominio en San Carlos? Brenda ofrece marketing experto, servicios de listado en el MLS y apoyo bilingüe para vender su propiedad rápidamente.",
+    keywords:
+      "vender casa san carlos sonora, listar propiedad san carlos méxico, valuación de propiedades san carlos, bienes raíces brenda san carlos",
+  },
+  hero: {
+    title: "Venda su Propiedad en",
+    highlight: "San Carlos, Sonora",
+    description:
+      "Maximice el valor de su propiedad con un plan de marketing estratégico, medios profesionales y exposición a una red global de compradores que buscan su pedazo de paraíso.",
+    cta: "Obtenga una Valuación Gratuita",
+    image: "/images/san-carlos-snapshot.webp",
+  },
+  steps: [
+    {
+      name: "Valuación Profesional",
+      description:
+        "Analizamos los datos del MLS de San Carlos para asignar un precio competitivo a su propiedad.",
+    },
+    {
+      name: "Marketing Global",
+      description:
+        "Su propiedad aparecerá en las plataformas principales, llegando a compradores de EE. UU., Canadá y México.",
+    },
+    {
+      name: "Cierre Experto",
+      description:
+        "Asesoría bilingüe durante todo el proceso ante Notario y la gestión del Fideicomiso.",
+    },
+  ],
+};
+
 export const categories = Object.values(categoryConfigs);

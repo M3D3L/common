@@ -2,8 +2,12 @@
   <section v-if="content" class="relative w-full">
     <Card
       class="lg:grid flex flex-col-reverse border items-stretch overflow-hidden gap-0 lg:grid-cols-2 min-h-[500px]"
+      :class="{ 'lg:[direction:rtl]': reverse }"
     >
-      <div class="flex flex-col justify-center px-6 py-10 lg:px-12 lg:py-16">
+      <div
+        class="flex flex-col justify-center px-6 py-10 lg:px-12 lg:py-16"
+        :class="{ 'lg:[direction:ltr]': reverse }"
+      >
         <div class="flex items-center gap-2 mb-4">
           <Badge
             variant="default"
@@ -108,6 +112,8 @@
       <nuxt-link
         :to="`/real-estate${content.slug}`"
         :alt="`View ${content.title} Details`"
+        class="block"
+        :class="{ 'lg:[direction:ltr]': reverse }"
       >
         <div class="relative min-h-[350px] lg:min-h-full overflow-hidden">
           <img
@@ -122,6 +128,7 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from "vue";
 import { Badge } from "@common/components/ui/badge";
 import { Button } from "@common/components/ui/button";
 import { Card } from "@common/components/ui/card";
@@ -129,7 +136,6 @@ import { MapPin, Bed, Bath, Square } from "lucide-vue-next";
 
 const config = useRuntimeConfig();
 
-// Re-using your existing interfaces
 export interface PropertyContent {
   id: string;
   title: string;
@@ -157,17 +163,18 @@ export interface PropertyContent {
 interface Props {
   content: PropertyContent | null;
   buttonText?: string;
+  reverse?: boolean; // New Prop
 }
 
-const props = defineProps<Props>();
+const props = withDefaults(defineProps<Props>(), {
+  content: null,
+  buttonText: "",
+  reverse: false,
+});
 
 const createImgUrl = (content: PropertyContent) => {
   if (!content?.cover_image) return "";
   return `${config.public.pocketbaseUrl}api/files/${content.collectionId}/${content.id}/${content.cover_image}`;
-};
-
-const getAgentAvatar = (author: any) => {
-  return `${config.public.pocketbaseUrl}api/files/${author.collectionId}/${author.id}/${author.avatar}`;
 };
 
 const formattedPrice = computed(() => {

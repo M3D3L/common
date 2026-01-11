@@ -160,7 +160,7 @@
             <div class="space-y-4">
               <a
                 :href="`mailto:${contactEmail}`"
-                class="flex items-start gap-4 p-5 transition-all duration-300 rounded-xl bg-card/30 backdrop-blur-sm border border-border/40 hover:border-primary/40 hover:shadow-lg hover:scale-[1.02] group"
+                class="flex items-start gap-1 md:gap-4 p-5 transition-all duration-300 rounded-xl bg-card/30 backdrop-blur-sm border border-border/40 hover:border-primary/40 hover:shadow-lg hover:scale-[1.02] group"
               >
                 <div
                   class="flex-shrink-0 p-3 transition-all duration-300 rounded-lg bg-primary/10 group-hover:bg-primary/20 group-hover:scale-110"
@@ -172,7 +172,7 @@
                     {{ componentText.email }}
                   </p>
                   <p
-                    class="text-sm transition-colors text-muted-foreground group-hover:text-primary"
+                    class="text-xs transition-colors text-muted-foreground group-hover:text-primary"
                   >
                     {{ contactEmail }}
                   </p>
@@ -193,7 +193,7 @@
                     {{ componentText.call }}
                   </p>
                   <p
-                    class="text-sm transition-colors text-muted-foreground group-hover:text-primary"
+                    class="text-xs transition-colors text-muted-foreground group-hover:text-primary"
                   >
                     {{ contactPhone }}
                   </p>

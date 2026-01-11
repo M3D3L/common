@@ -21,7 +21,7 @@
         </div>
       </NuxtLink>
 
-      <nav class="hidden items-center gap-8 md:flex ml-auto mr-6">
+      <nav class="hidden items-center gap-8 lg:flex ml-auto mr-6">
         <NuxtLink
           v-for="link in links"
           :key="link.href"
@@ -76,7 +76,7 @@
 
         <button
           @click="isMobileMenuOpen = !isMobileMenuOpen"
-          class="flex h-10 w-10 items-center justify-center rounded-full hover:bg-accent md:hidden transition-colors"
+          class="flex h-10 w-10 items-center justify-center rounded-full hover:bg-accent lg:hidden transition-colors"
           aria-label="Toggle menu"
         >
           <X v-if="isMobileMenuOpen" class="w-5 h-5" />
@@ -95,7 +95,7 @@
     >
       <div
         v-if="isMobileMenuOpen"
-        class="absolute inset-x-0 top-full border-b border-border bg-background p-6 shadow-xl md:hidden"
+        class="absolute inset-x-0 top-full border-b border-border bg-background p-6 shadow-xl lg:hidden"
       >
         <div class="flex flex-col gap-2">
           <NuxtLink

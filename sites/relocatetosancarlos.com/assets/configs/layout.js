@@ -167,6 +167,7 @@ export const siteMap = [
   { label: "Properties", href: "/real-estate/" },
   { label: "For Sale", href: "/real-estate/properties" },
   { label: "Rentals", href: "/real-estate/rentals/" },
+  { label: "Sell Your Property", href: "/real-estate/sell-your-property/" },
   // { label: "Lots", href: "/real-estate/lots" },
   { label: "Relocation Guide", href: "/blog/" },
   { label: "Contact", href: "/#contact" },
@@ -338,6 +339,58 @@ export const categoryConfigs = {
     cta: "Inquire about available land in San Carlos, Sonora",
     keywords:
       "san carlos sonora lots for sale, buy land san carlos mexico, san carlos land investment, mexico coastal land for sale, build home san carlos sonora, san carlos property development",
+  },
+};
+
+export const sellPropertyPage = {
+  seo: {
+    title: "Sell Your Property in San Carlos, Sonora",
+    description:
+      "Want to sell your home, lot, or condo in San Carlos? Brenda provides expert marketing, MLS listing services, and bilingual support to get your property sold fast.",
+    keywords:
+      "sell home san carlos sonora, real estate listing san carlos mexico, home valuation san carlos, brenda real estate san carlos",
+  },
+  hero: {
+    label: "Listing Services",
+    location: "San Carlos, Sonora, Mexico",
+    title: "Sell Your Property in",
+    highlight: "San Carlos, Sonora",
+    description:
+      "Maximize your property's value with a strategic marketing plan, professional media, and exposure to a global network of buyers looking for their piece of paradise.",
+    image: "/images/san-carlos-snapshot.webp",
+  },
+  content: {
+    whyTitle: "Why List With Brenda?",
+    whyDescription:
+      "Selling a property in Mexico requires more than just a sign in the yard. It requires a deep understanding of the San Carlos MLS, legal requirements for international sellers, and a marketing engine that reaches beyond the local border.",
+    processTitle: "Our Sales Process",
+  },
+  cta: {
+    title: "Ready to start?",
+    description:
+      "Contact Brenda today for a custom market analysis of your property.",
+  },
+  steps: [
+    {
+      name: "Professional Valuation",
+      description:
+        "We analyze San Carlos MLS data to price your property competitively.",
+    },
+    {
+      name: "Global Marketing",
+      description:
+        "Your listing appears on major platforms reaching US, Canadian, and Mexican buyers.",
+    },
+    {
+      name: "Expert Closing",
+      description:
+        "Bilingual support through the Notario and Fideicomiso process.",
+    },
+  ],
+  realtor: {
+    sectionTitle: "Your Listing Specialist",
+    role: "Brenda - Relocation Specialist",
+    bio: "Brenda ensures your property is positioned to attract qualified buyers and navigate the complexities of Mexican real estate law.",
   },
 };
 

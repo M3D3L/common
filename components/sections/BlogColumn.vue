@@ -39,7 +39,7 @@
         No articles found in this category.
       </div>
 
-      <div class="flex justify-center w-full mr-auto -mt-12 lg:-mt-20 lg:w-2/3">
+      <div class="flex justify-center w-full mr-auto -mt-20 lg:w-2/3">
         <div
           v-if="showMore && !showPagination"
           class="w-full flex justify-center mt-6"
@@ -52,6 +52,8 @@
           :show-pagination="true"
         />
       </div>
+
+      <SectionsSubscribe v-bind="newsLetterModule" class="md:hidden mt-12" />
     </template>
   </div>
 </template>

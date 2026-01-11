@@ -6,7 +6,9 @@
       <div class="grid gap-12 sm:grid-cols-2 lg:grid-cols-4">
         <div class="flex flex-col gap-6 sm:col-span-2 lg:col-span-1">
           <div class="flex flex-col gap-3">
-            <h3 class="text-lg font-bold text-foreground">
+            <h3
+              class="text-xl font-bold tracking-tight md:text-lg font text-foreground"
+            >
               {{ contactInfo?.siteName }}
             </h3>
             <p class="text-sm leading-relaxed text-muted-foreground">

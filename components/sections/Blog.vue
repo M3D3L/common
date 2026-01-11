@@ -18,7 +18,7 @@
       </div>
     </template>
     <template #right>
-      <div class="z-10 sticky-position top-16">
+      <div class="z-10 sticky-position top-16 md:grid hidden">
         <SectionsSubscribe v-bind="newsLetterModule" />
       </div>
     </template>
