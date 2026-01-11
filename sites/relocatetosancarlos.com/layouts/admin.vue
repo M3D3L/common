@@ -8,6 +8,7 @@
     <main class="w-full">
       <slot />
     </main>
+
     <DebugBar />
   </div>
 </template>

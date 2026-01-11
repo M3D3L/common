@@ -70,6 +70,7 @@ export default defineNuxtConfig({
       pocketbaseUrl:
         process.env.POCKETBASE_URL || "https://api.sancarlosinsider.com/",
       whatsappNumber: process.env.WHATSAPP_NUMBER || "6444444444",
+      environment: process.env.NODE_ENV || "development",
       siteName: "GuillermoMedel.com",
       siteUrl: "https://www.guillermomedel.com",
       twitterSite: "@GM3D3L",
