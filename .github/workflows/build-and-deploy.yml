@@ -35,6 +35,13 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # CRITICAL FIX: Prepare all sites so the TS 'extends' can resolve
+      - name: Prepare all Nuxt environments
+        run: |
+          npx nuxi prepare sites/guillermomedel.com
+          npx nuxi prepare sites/relocatetosancarlos.com
+          npx nuxi prepare sites/vivirensancarlos.com
+
       - name: Set site variables
         id: vars
         run: |
@@ -53,10 +60,7 @@ jobs:
           fi
 
       - name: Build ${{ steps.vars.outputs.domain }}
-        # The 'prepare' command creates the .nuxt/tsconfig.json that Vite is looking for
-        run: |
-          npx nuxi prepare
-          npm run generate
+        run: npm run generate
         working-directory: ${{ steps.vars.outputs.path }}
         env:
           POCKETBASE_URL: ${{ env.POCKETBASE_URL }}
@@ -71,11 +75,8 @@ jobs:
             BUILD_OUTPUT="$SITE_PATH/.output/public"
           elif [ -d "$SITE_PATH/dist" ]; then
             BUILD_OUTPUT="$SITE_PATH/dist"
-          elif [ -d "$SITE_PATH/build" ]; then
-            BUILD_OUTPUT="$SITE_PATH/build"
           else
-            echo "Error: No build output found"
-            exit 1
+            BUILD_OUTPUT="$SITE_PATH/build"
           fi
 
           mkdir -p "$DEPLOY_DIR"
