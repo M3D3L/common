@@ -54,7 +54,7 @@ export const heroSection = {
     "Como agente inmobiliaria y especialista en relocalización, Brenda ofrece apoyo bilingüe integral para expatriados, jubilados e inversionistas. Desde encontrar la casa ideal hasta asegurar rentas de largo plazo, logramos que su transición al Mar de Cortés sea libre de estrés.",
   buttons: [
     { link: "/blog/", title: "Guía de Relocalización" },
-    { link: "/real-estate/", title: "Explorar Propiedades" },
+    { link: "/bienes-raices/", title: "Explorar Propiedades" },
   ],
   callToAction: "Viva San Carlos",
 };

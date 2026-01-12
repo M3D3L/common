@@ -36,7 +36,7 @@ export default defineNuxtConfig({
 
   css: ["@/assets/css/tailwind.css"],
 
-  modules: ["@nuxtjs/sitemap", "nuxt-svgo"],
+  modules: ["@nuxtjs/sitemap", "nuxt-svgo", "@nuxtjs/leaflet"],
 
   /* -----------------------------
    * ROUTING

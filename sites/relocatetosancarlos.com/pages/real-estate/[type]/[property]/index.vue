@@ -159,17 +159,17 @@
 
       <div class="hidden lg:block lg:col-span-1 lg:sticky lg:top-24">
         <Card
-          v-if="mapSrc"
+          v-if="property?.lat && property?.long"
           class="relative w-full aspect-square bg-primary overflow-hidden rounded-xl shadow-md"
         >
-          <iframe
-            class="inset-0 w-full h-full object-cover"
-            :src="mapSrc"
-            style="border: 0"
-            allowfullscreen
-            loading="lazy"
-            title="Property Location"
-          ></iframe>
+          <MoleculesBaseMap
+            :lat="property.lat"
+            :lng="property.long"
+            :height="'400px'"
+            :width="'100%'"
+            :zoom="14"
+            class="rounded-xl shadow-md"
+          />
         </Card>
       </div>
     </section>
@@ -192,63 +192,19 @@
       <h2
         class="mb-8 text-3xl font-bold sm:text-4xl font-heading text-foreground"
       >
-        {{ isSp ? "Agente Inmobiliario" : "Realtor" }}
+        {{ sellData.realtor.sectionTitle }}
       </h2>
-      <Card
-        class="flex flex-col gap-6 rounded-lg md:flex-row md:gap-8 border overflow-hidden shadow-md"
-      >
-        <div class="flex-shrink-0 w-full md:w-1/3">
-          <img
-            v-if="authorImageUrl"
-            :src="authorImageUrl"
-            :alt="property?.expand?.author?.name"
-            class="object-cover w-full h-64 rounded-lg shadow-md md:h-full"
-          />
-        </div>
 
-        <div class="grid w-full items-center md:w-2/3 lg:p-0 px-6 pb-6">
-          <div class="p-6">
-            <h3 class="text-2xl font-bold text-primary">
-              {{ property?.expand?.author?.name }}
-            </h3>
-            <p class="text-lg text-muted-foreground">
-              {{ property?.expand?.author?.title }}
-            </p>
-            <p class="mt-3 leading-relaxed">
-              {{ property?.expand?.author?.bio }}
-            </p>
-
-            <div class="flex flex-col gap-2 text-sm mt-6">
-              <a
-                v-if="property?.expand?.author?.email"
-                :href="`mailto:${property.expand.author.email}`"
-                class="flex items-center gap-2 hover:underline text-primary"
-              >
-                <Mail class="w-4 h-4" /> {{ property.expand.author.email }}
-              </a>
-              <a
-                v-if="property?.expand?.author?.phone"
-                :href="`tel:${property.expand.author.phone}`"
-                class="flex items-center gap-2 hover:underline text-primary"
-              >
-                <Phone class="w-4 h-4" /> {{ property.expand.author.phone }}
-              </a>
-            </div>
-            <ContainersSocials
-              :socialLinks="computedSocialLinks"
-              :columnOnMobile="false"
-              class="mt-6"
-            />
-          </div>
-        </div>
-      </Card>
+      <MoleculesRealtorBio
+        :heroSection="heroSection"
+        :sellData="sellData"
+        :socialLinks="computedSocialLinks"
+      />
     </section>
   </div>
 </template>
 
 <script lang="ts" setup>
-import { computed } from "vue";
-import { useRoute, useRuntimeConfig, useAsyncData } from "#imports";
 import usePocketBaseCore from "@common/composables/usePocketBaseCore";
 import {
   Mail,
@@ -266,6 +222,10 @@ import { Card } from "@common/components/ui/card";
 import ShareTools from "@common/components/sections/ShareTools.vue";
 import TooltipProvider from "@common/components/ui/tooltip/TooltipProvider.vue";
 import { createSeoObject } from "@common/composables/useSeo";
+import {
+  realEstateHeroSection as heroSection,
+  sellPropertyPage as sellData,
+} from "@local/assets/configs/layout.js";
 
 const props = defineProps<{
   lang?: string;
@@ -336,19 +296,6 @@ const hasAmenities = computed(() => activeAmenities.value.length > 0);
 const imgSrc = computed(() => {
   if (!property.value?.id || !property.value?.cover_image) return "";
   return `${config.public.pocketbaseUrl}api/files/${property.value.collectionId}/${property.value.id}/${property.value.cover_image}`;
-});
-
-const authorImageUrl = computed(() => {
-  const author = property.value?.expand?.author;
-  if (!author?.id || !author?.avatar) return "";
-  return `${config.public.pocketbaseUrl}api/files/${author.collectionId}/${author.id}/${author.avatar}`;
-});
-
-const mapSrc = computed(() => {
-  if (!property.value?.lat || !property.value?.long) return "";
-  const key = config.public.googleMapsKey || "";
-  // Fixed the template literal syntax and params
-  return `https://www.google.com/maps/embed/v1/place?key=${key}&q=${property.value.lat},${property.value.long}`;
 });
 
 // 5. SEO DATA
