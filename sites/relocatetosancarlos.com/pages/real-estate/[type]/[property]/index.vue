@@ -2,7 +2,10 @@
   <div
     class="container relative w-full p-6 font-body bg-background text-foreground md:py-10"
   >
-    <SeoMeta v-if="property?.id" :seoData="computedSeoData" />
+    <SeoMeta
+      v-if="property?.id && computedSeoData"
+      :seoData="computedSeoData"
+    />
 
     <div
       class="flex flex-col gap-6 mb-8 md:flex-row md:items-start md:justify-between"
@@ -32,11 +35,11 @@
         <div class="flex items-center gap-4 text-sm font-medium md:text-base">
           <span v-if="property?.bedrooms" class="flex items-center gap-1.5">
             <Bed :size="18" class="text-muted-foreground" />
-            {{ property.bedrooms }} Bed
+            {{ property.bedrooms }} {{ isSp ? "Recámaras" : "Bed" }}
           </span>
           <span v-if="property?.bathrooms" class="flex items-center gap-1.5">
             <Bath :size="18" class="text-muted-foreground" />
-            {{ property.bathrooms }} Bath
+            {{ property.bathrooms }} {{ isSp ? "Baños" : "Bath" }}
           </span>
           <span v-if="property?.area" class="flex items-center gap-1.5">
             <Square :size="18" class="text-muted-foreground" />
@@ -44,8 +47,14 @@
           </span>
         </div>
 
+        <p
+          v-if="getLocaleField('sub_title')"
+          class="text-lg font-medium text-primary/80 italic"
+        >
+          {{ getLocaleField("sub_title") }}
+        </p>
         <p class="text-muted-foreground leading-relaxed max-w-2xl">
-          {{ property?.description }}
+          {{ getLocaleField("description") }}
         </p>
       </div>
 
@@ -98,8 +107,9 @@
       <div class="lg:col-span-3 flex w-full p-0 -mt-4 -mb-4">
         <TooltipProvider class="p-0 m-0">
           <ShareTools
+            v-if="property?.id"
             :title="property?.title"
-            :description="property?.description"
+            :description="getLocaleField('description')"
             class="ml-auto"
           />
         </TooltipProvider>
@@ -108,43 +118,34 @@
       <div class="lg:col-span-2 space-y-10">
         <div
           class="prose prose-slate max-w-none dark:prose-invert"
-          v-html="property?.content"
+          v-html="getLocaleField('content')"
         ></div>
 
         <Card class="p-6 md:p-8">
           <h3 class="mb-6 text-xl font-bold border-b pb-4">
-            Property Specifics
+            {{ isSp ? "Especificaciones" : "Property Specifics" }}
           </h3>
           <dl class="grid grid-cols-1 gap-y-6 gap-x-12 sm:grid-cols-2">
             <div v-if="property?.lotSize">
               <dt
                 class="text-xs font-semibold text-muted-foreground uppercase tracking-wider"
               >
-                Lot Size
+                {{ isSp ? "Tamaño del Lote" : "Lot Size" }}
               </dt>
               <dd class="text-lg font-medium">{{ property.lotSize }} acres</dd>
             </div>
-            <div v-if="property?.type">
-              <dt
-                class="text-xs font-semibold text-muted-foreground uppercase tracking-wider"
-              >
-                Property Type
-              </dt>
-              <dd class="text-lg font-medium capitalize">
-                {{ property.type }}
-              </dd>
-            </div>
           </dl>
 
-          <div v-if="property?.amenities?.length" class="mt-10">
+          <div v-if="hasAmenities" class="mt-10">
             <h4
               class="mb-4 text-sm font-semibold text-muted-foreground uppercase"
             >
-              Key Amenities
+              {{ isSp ? "Comodidades" : "Key Amenities" }}
             </h4>
+
             <div class="grid grid-cols-2 gap-3 sm:grid-cols-3">
               <div
-                v-for="(amenity, index) in property.amenities"
+                v-for="(amenity, index) in activeAmenities"
                 :key="index"
                 class="flex items-center gap-2 p-3 rounded-lg bg-muted/40"
               >
@@ -177,7 +178,7 @@
       <h2
         class="mb-8 text-3xl font-bold mt-16 scroll-mt-24 sm:text-4xl font-heading text-foreground"
       >
-        Photo Gallery
+        {{ isSp ? "Galería de Fotos" : "Photo Gallery" }}
       </h2>
       <ModalCarousel
         v-if="property?.id"
@@ -191,7 +192,7 @@
       <h2
         class="mb-8 text-3xl font-bold sm:text-4xl font-heading text-foreground"
       >
-        Realtor
+        {{ isSp ? "Agente Inmobiliario" : "Realtor" }}
       </h2>
       <Card
         class="flex flex-col gap-6 rounded-lg md:flex-row md:gap-8 border overflow-hidden shadow-md"
@@ -244,7 +245,6 @@
 </template>
 
 <script lang="ts" setup>
-import { useRoute, useRuntimeConfig, useAsyncData } from "#app";
 import usePocketBaseCore from "@common/composables/usePocketBaseCore";
 import {
   Mail,
@@ -261,32 +261,37 @@ import ModalCarousel from "@common/components/ui/modal/ModalCarousel.vue";
 import { Card } from "@common/components/ui/card";
 import ShareTools from "@common/components/sections/ShareTools.vue";
 import TooltipProvider from "@common/components/ui/tooltip/TooltipProvider.vue";
+import { createSeoObject } from "@common/composables/useSeo";
+import { computed } from "vue";
+import { useRoute, useRuntimeConfig, useAsyncData } from "#imports";
+
+const props = defineProps<{
+  lang?: string;
+}>();
 
 const config = useRuntimeConfig();
 const route = useRoute();
 const { fetchCollection } = usePocketBaseCore();
 
-// 1. FORMAT ROUTE DATA
-const formattedRoute = computed(() => {
-  let type = route.params.type as string;
-  const propertySlug = route.params.property as string;
-  const fullSlug = `/${type}/${propertySlug}`;
+const isSp = computed(() => props.lang === "Sp");
 
-  if (type === "rentals") type = "rental";
-  else if (type === "properties") type = "property";
-  else if (type === "lots") type = "lot";
-
-  return { type, propertySlug, fullSlug };
-});
-
-// 2. FETCH DATA (SSR COMPATIBLE)
-// useAsyncData ensures the property is loaded before the SEO components render.
+// DATA FETCHING
 const { data: pageData } = await useAsyncData(
   `property-${route.params.property}`,
   async () => {
-    const { fullSlug, type } = formattedRoute.value;
+    let slugType = route.params.type as string;
+    // Map Spanish slugs to English base types used in PocketBase slugs
+    if (slugType === "rentas") {
+      slugType = "rentals";
+    } else if (slugType === "ventas") {
+      slugType = "properties";
+    } else if (slugType === "terrenos") {
+      slugType = "lots";
+    }
 
-    const propertyRes = await fetchCollection(
+    const fullSlug = `/${slugType}/${route.params.property}`;
+
+    const res = await fetchCollection(
       "properties",
       1,
       1,
@@ -294,17 +299,36 @@ const { data: pageData } = await useAsyncData(
       "-created",
       "author"
     );
-
-    return {
-      property: propertyRes?.items?.[0] || null,
-    };
+    return res?.items?.[0] || null;
   }
 );
 
-// 3. REACTIVE STATE
-const property = computed(() => pageData.value?.property || {});
+const property = computed(() => pageData.value || {});
 
-// 4. COMPUTED ASSETS
+// LOCALIZATION HELPER
+const getLocaleField = (field: string) => {
+  if (!property.value?.id) return "";
+  const spField = `${field}_Sp`;
+  if (isSp.value && property.value[spField]) {
+    return property.value[spField];
+  }
+  return property.value[field] || "";
+};
+
+// AMENITIES LOGIC
+const activeAmenities = computed(() => {
+  if (!property.value?.id) return [];
+  // Use Spanish array if in Sp mode and data exists, otherwise English
+  return isSp.value &&
+    Array.isArray(property.value.amenities_Sp) &&
+    property.value.amenities_Sp.length > 0
+    ? property.value.amenities_Sp
+    : property.value.amenities || [];
+});
+
+const hasAmenities = computed(() => activeAmenities.value.length > 0);
+
+// COMPUTED ASSETS
 const imgSrc = computed(() => {
   if (!property.value?.id) return "";
   return `${config.public.pocketbaseUrl}api/files/${property.value.collectionId}/${property.value.id}/${property.value.cover_image}`;
@@ -317,51 +341,40 @@ const authorImageUrl = computed(() => {
 });
 
 const mapSrc = computed(() => {
-  const lat = property.value?.lat;
-  const long = property.value?.long;
-  if (!lat || !long) return "";
-  return `https://maps.google.com/maps?q=${lat},${long}&z=14&output=embed`;
+  if (!property.value?.lat || !property.value?.long) return "";
+  return `https://www.google.com/maps/embed/v1/place?key=${
+    config.public.googleMapsKey || ""
+  }&q=${property.value.lat},${property.value.long}`;
 });
 
-// 5. SEO DATA (The fix for undefined property in SEO)
+// SEO DATA
 const computedSeoData = computed(() => {
-  if (!property.value?.id) return null;
+  if (!property.value?.id) {
+    return { title: "Loading...", meta: [], link: [], script: [] };
+  }
 
-  return createSeoObject({
-    title: property.value.title || "Property Details",
-    summary: property.value.description || "View details for this property.",
+  const seo = createSeoObject({
+    title: property.value.title,
+    summary: getLocaleField("description"),
     imageUri: imgSrc.value,
-    pubDate: property.value.created,
-    byline: property.value.expand?.author?.name || "",
-    keywords: `${property.value.keywords}`,
+    keywords: getLocaleField("keywords"),
   });
+
+  return {
+    ...seo,
+    meta: seo.meta || [],
+    link: seo.link || [],
+    script: seo.script || [],
+  };
 });
 
 const computedSocialLinks = computed(() => {
-  const socials = property.value?.expand?.author?.socials?.socials || [];
+  const author = property.value?.expand?.author;
+  const socials = author?.socials?.socials || [];
   return socials.map((social: any) => ({
-    icon: social.label.toLowerCase().includes("linkedin") ? Linkedin : Github,
+    icon: social.label?.toLowerCase().includes("linkedin") ? Linkedin : Github,
     href: social.href,
     label: social.label,
   }));
 });
 </script>
-
-<style lang="css">
-.aspect-video {
-  position: relative;
-  overflow: hidden;
-  width: 100%;
-  height: 0;
-  padding-bottom: 56.25%;
-}
-
-.aspect-video iframe {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  border: 0;
-}
-</style>

@@ -33,10 +33,10 @@
 
             <nuxt-link
               v-if="isUserVerified"
-              :to="`/real-estate/admin`"
+              :to="isSp ? '/bienes-raices/admin/' : '/real-estate/admin/'"
               class="inline-flex items-center justify-center px-8 py-3 text-lg font-medium text-center text-primary underline rounded-lg hover:text-primary/80 focus:ring-4 focus:outline-none focus:ring-primary/50"
             >
-              Mange Properties
+              {{ isSp ? "Panel de Administración" : "Admin Dashboard" }}
             </nuxt-link>
           </div>
         </div>
@@ -52,13 +52,13 @@
 
     <div v-else-if="error" class="container py-32 text-center">
       <h2 class="text-2xl font-bold text-red-600">
-        Error loading real estate data
+        {{ isSp ? "Error al cargar datos" : "Error loading real estate data" }}
       </h2>
       <button
         @click="loadAllData"
         class="px-4 py-2 mt-4 text-white bg-blue-500 rounded"
       >
-        Retry
+        {{ isSp ? "Reintentar" : "Retry" }}
       </button>
     </div>
 
@@ -84,7 +84,7 @@
       </section>
 
       <section
-        v-for="(cat, cIndex) in categoryData"
+        v-for="(cat, cIndex) in localizedCategoryData"
         :key="cIndex"
         class="pt-16 space-y-16 border-t border-gray-100"
       >
@@ -104,12 +104,19 @@
               :key="cIndex + '-' + pIndex"
               :content="property"
               :reverse="cIndex % 2 === 1"
+              :button-text="isSp ? 'Ver Detalles' : 'View Full Details'"
+              :badge-text="isSp ? 'Listado Destacado' : 'Featured Listing'"
+              :is-sp="isSp"
             />
 
             <div class="w-full flex justify-center">
               <AtomsBaseLink
-                :to="`/real-estate/${cat.type.toLowerCase()}`"
-                :text="`View All ${cat.type}`"
+                :to="getCategoryLink(cat.type)"
+                :text="
+                  isSp
+                    ? `Ver Todo en ${translateType(cat.type)}`
+                    : `View All ${cat.type}`
+                "
                 class="mx-auto"
               />
             </div>
@@ -135,7 +142,7 @@
 </template>
 
 <script lang="ts" setup>
-import { Edit } from "lucide-vue-next";
+import { computed, ref, onMounted, toValue } from "vue";
 import Button from "@common/components/ui/button/Button.vue";
 import { createSeoObject } from "@common/composables/useSeo";
 import {
@@ -147,19 +154,54 @@ import {
 } from "@local/assets/configs/layout.js";
 import Card from "@common/components/ui/card/Card.vue";
 
+const props = defineProps<{
+  lang: string;
+}>();
+
 const { fetchCollection, isUserVerified } = usePocketBaseCore();
 const categoryData = ref([]);
 const pending = ref(false);
 const error = ref(null);
 
-// Assigning your provided sellData structure
 const sellData = sellPropertyPage;
+const isSp = computed(() => props.lang === "Sp");
 
-const computedSocialLinks = computed(() => {
-  return socials.map((s) => ({
-    icon: s.icon,
-    href: s.href,
-    label: s.label,
+// HELPERS FOR TRANSLATION & ROUTING
+const translateType = (type: string) => {
+  if (!isSp.value) return type;
+  const lowerType = type.toLowerCase();
+  if (lowerType === "properties") return "Ventas";
+  if (lowerType === "rentals") return "Rentas";
+  if (lowerType === "lots") return "Terrenos";
+  return type;
+};
+
+const getCategoryLink = (type: string) => {
+  const lowerType = type.toLowerCase();
+  const base = isSp.value ? "/bienes-raices" : "/real-estate";
+
+  // Mapping plural types to the correct URL slugs
+  let slug = lowerType;
+  if (isSp.value) {
+    if (lowerType === "properties") slug = "ventas";
+    if (lowerType === "rentals") slug = "rentas";
+    if (lowerType === "lots") slug = "terrenos";
+  }
+
+  return `${base}/${slug}`;
+};
+
+// DATA MAPPING FOR CARDS
+const localizedCategoryData = computed(() => {
+  return categoryData.value.map((cat) => ({
+    ...cat,
+    properties: cat.properties.map((p: any) => ({
+      ...p,
+      title: isSp.value && p.title_Sp ? p.title_Sp : p.title,
+      description:
+        isSp.value && p.description_Sp ? p.description_Sp : p.description,
+      sub_title: isSp.value && p.sub_title_Sp ? p.sub_title_Sp : p.sub_title,
+    })),
   }));
 });
 
@@ -202,12 +244,21 @@ onMounted(() => {
 });
 
 const computedSeoData = computed(() => {
-  // Now using the 'seo' block from your sellData
+  const seo = sellData.seo || {};
   return createSeoObject({
-    title: sellData.seo.title,
-    summary: sellData.seo.description,
-    keywords: sellData.seo.keywords,
+    title: isSp.value && seo.title_Sp ? seo.title_Sp : seo.title,
+    summary:
+      isSp.value && seo.description_Sp ? seo.description_Sp : seo.description,
+    keywords: isSp.value && seo.keywords_Sp ? seo.keywords_Sp : seo.keywords,
     byline: "Brenda – San Carlos Relocation Specialist",
   });
+});
+
+const computedSocialLinks = computed(() => {
+  return socials.map((s) => ({
+    icon: s.icon,
+    href: s.href,
+    label: s.label,
+  }));
 });
 </script>

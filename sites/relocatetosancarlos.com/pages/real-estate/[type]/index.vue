@@ -3,16 +3,14 @@
     <SeoMeta :seoData="computedSeoData" />
 
     <div v-if="error" class="container py-32 text-center">
-      <h2 class="text-2xl font-bold text-red-600">Error loading properties</h2>
-
-      <p class="mt-4 text-gray-600">
-        Please try again or contact support if the problem persists.
-      </p>
+      <h2 class="text-2xl font-bold text-red-600">
+        {{ isSp ? "Error al cargar propiedades" : "Error loading properties" }}
+      </h2>
       <button
-        @click="refreshData"
+        @click="fetchProperties"
         class="px-4 py-2 mt-4 text-white bg-blue-500 rounded hover:bg-blue-600"
       >
-        Retry
+        {{ isSp ? "Reintentar" : "Retry" }}
       </button>
     </div>
 
@@ -24,36 +22,26 @@
     </div>
 
     <ul v-else class="container pb-32 space-y-32">
-      <li v-if="typeMap[type] && (propertyData || propertyDataLoading)">
+      <li v-if="typeMap[mappedType] && (propertyData || propertiesLoading)">
         <TextSectionTitle
           class="pt-12 pb-6"
-          :title="categoriesHeaders[typeMap[type].query]?.title"
-          :description="categoriesHeaders[typeMap[type].query]?.subTitle"
+          :title="categoriesHeaders[typeMap[mappedType].query]?.title"
+          :description="categoriesHeaders[typeMap[mappedType].query]?.subTitle"
           :h1="true"
         />
 
-        <!-- Show featured property only when it exists -->
         <MoleculesFeaturedProperty
           v-if="currentCategory?.featuredProperty"
           :content="currentCategory.featuredProperty"
+          :button-text="isSp ? 'Ver Detalles' : 'View Full Details'"
+          :badge-text="isSp ? 'Listado Destacado' : 'Featured Listing'"
+          :is-sp="isSp"
           class="mb-6"
         />
 
         <div class="flex flex-col gap-6 lg:flex-row mb-6">
-          <!-- Show loading state for properties -->
-          <div v-if="propertiesLoading" class="w-full lg:w-2/3">
-            <div class="grid gap-6 md:grid-cols-2">
-              <div v-for="n in 4" :key="n" class="animate-pulse">
-                <div class="h-64 bg-gray-200 rounded-lg"></div>
-                <div class="mt-2 space-y-2">
-                  <div class="h-4 bg-gray-200 rounded"></div>
-                  <div class="h-4 bg-gray-200 rounded w-3/4"></div>
-                </div>
-              </div>
-            </div>
-          </div>
+          <div v-if="propertiesLoading" class="w-full lg:w-2/3"></div>
 
-          <!-- Show properties when loaded -->
           <div
             v-else
             class="grid content-center w-full gap-6 md:grid-cols-2 lg:w-2/3"
@@ -64,62 +52,24 @@
               ) in currentCategory?.properties?.items.slice(0, 6)"
               :key="item.id || `property-${itemIndex}`"
               :content="item"
+              :button-text="isSp ? 'Ver Propiedad' : 'View Listing'"
+              :is-sp="isSp"
             />
-
-            <!-- Show message when no properties found -->
-            <div
-              v-if="currentCategory?.properties?.items?.length === 0"
-              class="py-8 text-center md:col-span-2"
-            >
-              <p class="text-lg text-gray-600">
-                No properties found in this category.
-              </p>
-            </div>
-
-            <div
-              class="flex justify-center w-full mt-8 md:col-span-2"
-              v-if="currentCategory?.properties?.totalPages > 1"
-            >
-              <Pagination
-                :showPagination="true"
-                :total-pages="currentCategory?.properties?.totalPages"
-              />
-            </div>
           </div>
 
           <div class="w-full lg:w-1/3">
             <CardsInfoCard
-              :title="rawCategories?.[typeMap[type]?.index]?.sectionTitle"
-              :footerText="rawCategories?.[typeMap[type]?.index]?.footerText"
-              :subTitle="rawCategories?.[typeMap[type]?.index]?.subTitle"
-              :benefits="rawCategories?.[typeMap[type]?.index]?.benefits"
-              :dataArray="
-                rawCategories?.[typeMap[type]?.index]?.properties?.items
+              v-if="typeMap[mappedType]"
+              :title="rawCategories?.[typeMap[mappedType].index]?.sectionTitle"
+              :subTitle="rawCategories?.[typeMap[mappedType].index]?.subTitle"
+              :footerText="
+                rawCategories?.[typeMap[mappedType].index]?.footerText
               "
-              class="z-10 sticky-position top-28"
-              :mode="rawCategories?.[typeMap[type]?.index]?.mode"
+              :benefits="rawCategories?.[typeMap[mappedType].index]?.benefits"
+              class="z-10 sticky top-28"
             />
           </div>
         </div>
-        <div class="grid content-center w-full gap-6 md:grid-cols-3">
-          <CardsPropertyCard
-            v-for="(
-              item, itemIndex
-            ) in currentCategory?.properties?.items.slice(
-              6,
-              currentCategory?.properties?.items.length
-            )"
-            :key="item.id || `property-${itemIndex}`"
-            :content="item"
-          />
-        </div>
-      </li>
-
-      <li v-else-if="!typeMap[type]" class="container py-32 text-center">
-        <h2 class="text-2xl font-bold text-gray-800">Category not found</h2>
-        <p class="mt-4 text-gray-600">
-          The requested property type does not exist.
-        </p>
       </li>
     </ul>
   </div>
@@ -130,13 +80,17 @@ import {
   categories as rawCategories,
   categoriesHeaders,
 } from "@local/assets/configs/layout.js";
-import { createSeoObject } from "@common/composables/useSeo";
+import { computed, ref, watch } from "vue";
+import { useRoute } from "vue-router";
 
+const props = defineProps({
+  lang: { type: String, default: "En" },
+});
+
+const isSp = computed(() => props.lang === "Sp");
 const { fetchCollection } = usePocketBaseCore();
-const config = useRuntimeConfig();
 const route = useRoute();
 
-// 1. CONSTANTS & MAPS
 const perPage = 10;
 const typeMap: Record<string, { index: number; query: string }> = {
   properties: { index: 0, query: "property" },
@@ -144,91 +98,54 @@ const typeMap: Record<string, { index: number; query: string }> = {
   lots: { index: 2, query: "lot" },
 };
 
-// 2. Get type from route params
-const type = computed(() => route.params?.type as string);
-const page = computed(() => Number(route.query.page) || 1);
+const mappedType = computed(() => {
+  const rawType = route.params?.type as string;
+  if (!isSp.value) return rawType;
 
-// 3. SEO DATA
-const computedSeoData = computed(() => {
-  const currentType = type.value;
-
-  if (!currentType) {
-    return createSeoObject({
-      title: "Real Estate San Carlos",
-      summary: "Expert Real Estate Services in San Carlos, Sonora",
-    });
-  }
-
-  const configMatch = typeMap[currentType];
-
-  if (!configMatch || !categoriesHeaders) {
-    return createSeoObject({
-      title: "Real Estate San Carlos",
-      summary: "Expert Real Estate Services in San Carlos, Sonora",
-    });
-  }
-
-  const queryKey = configMatch.query;
-  const header = categoriesHeaders[queryKey];
-
-  if (!header) {
-    return createSeoObject({
-      title: "Real Estate San Carlos",
-      summary: "Expert Real Estate Services in San Carlos, Sonora",
-      keywords: "Real Estate, San Carlos, Sonora",
-    });
-  }
-
-  return createSeoObject({
-    title: header.title,
-    summary: header.subTitle,
-    keywords: header.keywords || "",
-    jsonLd: {
-      "@type": "WebSite",
-      url: `${config.public.siteUrl}${route.fullPath}`,
-      name: header.title,
-    },
-  });
+  const translationMap: Record<string, string> = {
+    ventas: "properties",
+    propiedades: "properties",
+    rentas: "rentals",
+    alquileres: "rentals",
+    terrenos: "lots",
+  };
+  return translationMap[rawType] || rawType;
 });
 
-// 4. Separate loading states for better UX
+const mapProperty = (item: any) => {
+  if (!item || !isSp.value) return item;
+
+  return {
+    ...item,
+    sub_title: item.sub_title_Sp || item.sub_title,
+    description: item.description_Sp || item.description,
+    content: item.content_Sp || item.content,
+    keywords: item.keywords_Sp || item.keywords,
+    amenities:
+      item.amenities_Sp && item.amenities_Sp.length > 0
+        ? item.amenities_Sp
+        : item.amenities,
+    amenities_string: item.amenities_Sp || item.amenities_string,
+  };
+};
+
 const propertyData = ref<any>(null);
 const pending = ref(false);
 const error = ref<any>(null);
 const propertiesLoading = ref(false);
 
-// 5. Fetch data function
 const fetchProperties = async () => {
-  const currentType = type.value;
+  const currentType = mappedType.value;
   const configMatch = typeMap[currentType];
 
-  if (!currentType || !configMatch) {
-    propertyData.value = null;
-    return;
-  }
-
-  const { query } = configMatch;
-  const currentPage = page.value;
+  if (!configMatch) return;
 
   pending.value = true;
   propertiesLoading.value = true;
-  error.value = null;
 
   try {
-    console.log(`Fetching properties for type: ${query}, page: ${currentPage}`);
+    const { query } = configMatch;
 
-    // Fetch regular properties first
-    const standardRes = await fetchCollection(
-      "properties",
-      currentPage,
-      perPage,
-      `type="${query}"`,
-      "-created"
-    );
-
-    console.log("Standard properties fetched:", standardRes?.items?.length);
-
-    // Try to get a featured property (first item sorted by featured flag and date)
     const featuredRes = await fetchCollection(
       "properties",
       1,
@@ -237,99 +154,45 @@ const fetchProperties = async () => {
       "-created"
     );
 
-    console.log("Featured properties found:", featuredRes?.items?.length);
+    const standardRes = await fetchCollection(
+      "properties",
+      Number(route.query.page) || 1,
+      perPage,
+      `type="${query}"`,
+      "-created"
+    );
 
-    // If no featured property is flagged, use the first property as featured
-    let featuredProperty = featuredRes?.items[0] || null;
+    const featuredMapped = featuredRes?.items[0]
+      ? mapProperty(featuredRes.items[0])
+      : null;
 
-    // If no featured property found but we have regular properties,
-    // use the first one as featured (optional behavior)
-    if (!featuredProperty && standardRes?.items?.length > 0) {
-      // Uncomment if you want to use first property as featured when none are flagged
-      // featuredProperty = standardRes.items[0];
-    }
+    const itemsMapped =
+      standardRes?.items
+        ?.map(mapProperty)
+        .filter((i: any) => i.id !== featuredMapped?.id) || [];
 
     propertyData.value = {
-      featured: featuredProperty,
-      standard: {
-        ...standardRes,
-        // Remove the featured property from standard list if we're using it as featured
-        items:
-          standardRes?.items?.filter((item) =>
-            featuredProperty ? item.id !== featuredProperty.id : true
-          ) || [],
-      },
+      featured: featuredMapped,
+      standard: { ...standardRes, items: itemsMapped },
     };
-
-    console.log("Final data:", {
-      hasFeatured: !!featuredProperty,
-      standardCount: propertyData.value.standard.items.length,
-      totalPages: propertyData.value.standard.totalPages,
-    });
   } catch (err) {
-    console.error("Error fetching properties:", err);
     error.value = err;
-
-    // Provide fallback data structure
-    propertyData.value = {
-      featured: null,
-      standard: {
-        items: [],
-        totalPages: 0,
-        page: currentPage,
-        perPage,
-        totalItems: 0,
-      },
-    };
   } finally {
     pending.value = false;
     propertiesLoading.value = false;
   }
 };
 
-// 6. Watch for route changes and fetch data
-watch(
-  [type, page],
-  () => {
-    // Don't fetch if type is invalid
-    if (!type.value || !typeMap[type.value]) {
-      return;
-    }
-
-    // Use setTimeout to avoid rapid consecutive requests
-    setTimeout(() => {
-      fetchProperties();
-    }, 10);
-  },
-  { immediate: true }
-);
-
-// 7. Manual refresh function
-const refreshData = () => {
-  fetchProperties();
-};
-
-// 8. VIEW COMPUTEDS
-const currentCategory = computed(() => {
-  if (!propertyData.value) {
-    return {
-      properties: { items: [], totalPages: 0 },
-      featuredProperty: null,
-    };
-  }
-
-  return {
-    properties: propertyData.value?.standard || { items: [], totalPages: 0 },
-    featuredProperty: propertyData.value?.featured || null,
-  };
+watch([mappedType, () => route.query.page], () => fetchProperties(), {
+  immediate: true,
 });
 
-// 9. Debug logging (optional)
-onMounted(() => {
-  console.log("Component mounted, current route:", {
-    type: type.value,
-    page: page.value,
-    fullPath: route.fullPath,
-  });
+const currentCategory = computed(() => ({
+  properties: propertyData.value?.standard || { items: [], totalPages: 0 },
+  featuredProperty: propertyData.value?.featured || null,
+}));
+
+const computedSeoData = computed(() => {
+  return createSeoObject(propertyData.value?.featured || {});
 });
 </script>

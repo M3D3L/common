@@ -4,11 +4,7 @@
     class="h-full overflow-hidden transition-shadow duration-300 group hover:shadow-md"
   >
     <CardHeader class="p-0">
-      <nuxt-link
-        v-if="content?.slug"
-        :to="`/real-estate${content.slug}`"
-        class="block w-full"
-      >
+      <nuxt-link v-if="localizedSlug" :to="localizedSlug" class="block w-full">
         <div class="relative w-full aspect-[4/3] overflow-hidden bg-muted">
           <img
             :src="createImgUrl(content)"
@@ -28,9 +24,8 @@
 
       <div class="space-y-1">
         <nuxt-link
-          v-if="content?.slug"
-          useChat
-          :to="`/real-estate${content.slug}`"
+          v-if="localizedSlug"
+          :to="localizedSlug"
           class="transition-colors text-primary hover:underline"
         >
           <h3 class="text-lg font-bold leading-snug line-clamp-1">
@@ -91,19 +86,15 @@
             v-if="remainingAmenities > 0"
             class="text-[10px] text-muted-foreground self-center"
           >
-            +{{ remainingAmenities }} more
+            +{{ remainingAmenities }} {{ isSp ? "más" : "more" }}
           </span>
         </div>
       </div>
 
       <div class="absolute bottom-0 left-0 right-0 mt-auto">
-        <nuxt-link
-          v-if="content?.slug"
-          :to="`/real-estate${content.slug}`"
-          class="w-full"
-        >
+        <nuxt-link v-if="localizedSlug" :to="localizedSlug" class="w-full">
           <Button class="w-full font-semibold">
-            {{ buttonText || "View Listing" }}
+            {{ buttonText || (isSp ? "Ver Propiedad" : "View Listing") }}
           </Button>
         </nuxt-link>
       </div>
@@ -112,6 +103,7 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from "vue";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { Button } from "~/components/ui/button";
 import { Badge } from "~/components/ui/badge";
@@ -145,10 +137,37 @@ interface Props {
   maxAmenities?: number;
   buttonText?: string;
   baseUrl?: string;
+  isSp?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
   maxAmenities: 3,
+  isSp: false,
+});
+
+// Rewriting logic for the URL based on isSp
+const localizedSlug = computed(() => {
+  if (!props.content?.slug) return "#";
+
+  let slug = props.content.slug;
+
+  if (props.isSp) {
+    const map: Record<string, string> = {
+      "/rentals/": "/rentas/",
+      "/properties/": "/ventas/",
+      "/lots/": "/terrenos/",
+    };
+
+    Object.entries(map).forEach(([eng, sp]) => {
+      if (slug.startsWith(eng)) {
+        slug = slug.replace(eng, sp);
+      }
+    });
+
+    return `/bienes-raices${slug}`;
+  }
+
+  return `/real-estate${slug}`;
 });
 
 const createImgUrl = (content: PropertyContent) => {

@@ -15,7 +15,7 @@
       </div>
 
       <div class="col-span-2 space-y-2">
-        <Label for="description">Short Description *</Label>
+        <Label for="description">Short Description * (EN)</Label>
         <Textarea
           id="description"
           v-model="modelValue.description"
@@ -48,21 +48,6 @@
         />
       </div>
 
-      <div class="space-y-2 col-span-2">
-        <Label>Price Type</Label>
-        <Select v-model="modelValue.pricingType">
-          <SelectTrigger
-            ><SelectValue placeholder="Select price type"
-          /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="per/night">Per Night</SelectItem>
-            <SelectItem value="per/month">Per Month</SelectItem>
-            <SelectItem value="usd">usd</SelectItem>
-            <SelectItem value="mxn">mxn</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
       <div class="col-span-2 flex md:flex-row flex-col gap-4">
         <div class="space-y-2 w-full">
           <Label for="beds">Bedrooms</Label>
@@ -78,44 +63,12 @@
           />
         </div>
       </div>
-
-      <div class="grid grid-cols-2 gap-4">
-        <div class="space-y-2">
-          <Label for="area">Area (m²)</Label>
-          <Input id="area" type="number" v-model.number="modelValue.area" />
-        </div>
-        <div class="space-y-2">
-          <Label for="lot">Lot Size (m²)</Label>
-          <Input id="lot" type="number" v-model.number="modelValue.lotSize" />
-        </div>
-      </div>
-    </div>
-
-    <Separator />
-
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-      <div class="md:col-span-3 space-y-2">
-        <Label for="address">Full Address</Label>
-        <Input
-          id="address"
-          v-model="modelValue.address"
-          placeholder="123 Street..."
-        />
-      </div>
-      <div class="space-y-2">
-        <Label for="lat">Latitude</Label>
-        <Input id="lat" v-model="modelValue.lat" placeholder="0.0000" />
-      </div>
-      <div class="space-y-2">
-        <Label for="long">Longitude</Label>
-        <Input id="long" v-model="modelValue.long" placeholder="0.0000" />
-      </div>
     </div>
 
     <Separator />
 
     <div class="space-y-4">
-      <Label class="text-base">Amenities & Features</Label>
+      <Label class="text-base font-bold">Amenities & Features (English)</Label>
       <div class="flex flex-wrap gap-2 w-full">
         <Button
           v-for="amenity in amenitiesList"
@@ -123,7 +76,7 @@
           type="button"
           variant="secondary"
           size="sm"
-          @click="addAmenity({ name: amenity })"
+          @click="addAmenity('amenities', { name: amenity })"
         >
           <Plus class="w-3 h-3 mr-2" /> {{ amenity }}
         </Button>
@@ -139,20 +92,69 @@
             type="button"
             variant="outline"
             size="icon"
-            @click="removeAmenity(index)"
+            @click="removeAmenity('amenities', index)"
             class="shrink-0"
           >
             <X class="w-4 h-4" />
           </Button>
         </div>
       </div>
-      <Button type="button" variant="secondary" size="sm" @click="addAmenity()">
-        <Plus class="w-3 h-3 mr-2" /> Add Amenity
+      <Button
+        type="button"
+        variant="secondary"
+        size="sm"
+        @click="addAmenity('amenities')"
+      >
+        <Plus class="w-3 h-3 mr-2" /> Add English Amenity
       </Button>
     </div>
 
+    <Separator />
+
+    <div
+      class="space-y-4 p-4 bg-primary/5 rounded-lg border border-dashed border-primary/20"
+    >
+      <div class="flex items-center gap-2">
+        <span class="text-lg">🇲🇽</span>
+        <Label class="text-base font-bold text-primary"
+          >Amenidades y Características (Español)</Label
+        >
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div
+          v-for="(amenity, index) in modelValue.amenities_Sp"
+          :key="index"
+          class="flex gap-2"
+        >
+          <Input
+            v-model="amenity.name"
+            placeholder="Nombre de la amenidad..."
+          />
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            @click="removeAmenity('amenities_Sp', index)"
+            class="shrink-0"
+          >
+            <X class="w-4 h-4" />
+          </Button>
+        </div>
+      </div>
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        @click="addAmenity('amenities_Sp')"
+      >
+        <Plus class="w-3 h-3 mr-2" /> Agregar Amenidad en Español
+      </Button>
+    </div>
+
+    <Separator />
+
     <div class="space-y-2">
-      <Label for="content">Detailed Content (HTML)</Label>
+      <Label for="content">Detailed Content (HTML - English)</Label>
       <Textarea
         id="content"
         v-model="modelValue.content"
@@ -173,9 +175,7 @@
         format="webp"
         :width="800"
         :height="600"
-        :quality="80"
       />
-
       <ImageGalleryUploader
         :key="modelValue.gallery?.length || 0"
         label="Gallery Images"
@@ -187,7 +187,6 @@
         format="webp"
         :width="1200"
         :height="800"
-        :quality="80"
       />
     </div>
   </form>
@@ -215,21 +214,23 @@ const props = defineProps({
   modelValue: {
     type: Object,
     required: true,
-    default: () => ({ amenities: [] }),
+    default: () => ({ amenities: [], amenities_Sp: [] }),
   },
   authorDisplay: { type: String, default: "" },
 });
 
 const emit = defineEmits(["update:modelValue", "save"]);
 
-const addAmenity = (payload?: { name: string }) => {
-  // If a payload with a name is passed (from the buttons), use it.
-  // Otherwise (from the "Add Amenity" button), use an empty string.
+const addAmenity = (
+  field: "amenities" | "amenities_Sp",
+  payload?: { name: string }
+) => {
+  if (!props.modelValue[field]) props.modelValue[field] = [];
   const amenityName = payload?.name || "";
-  props.modelValue.amenities.push({ name: amenityName });
+  props.modelValue[field].push({ name: amenityName });
 };
 
-const removeAmenity = (index: number) => {
-  props.modelValue.amenities.splice(index, 1);
+const removeAmenity = (field: "amenities" | "amenities_Sp", index: number) => {
+  props.modelValue[field].splice(index, 1);
 };
 </script>

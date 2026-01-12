@@ -45,7 +45,7 @@
     </a>
     <OrganismsBaseFooter :links="siteMap" :footerConfig :contactInfo :socials />
 
-    <DebugBar />
+    <!-- <DebugBar /> -->
   </div>
 </template>
 
@@ -59,7 +59,7 @@ import {
   footerConfig,
   newsLetterModule,
 } from "~/assets/configs/layout";
-import DebugBar from "@common/components/DebugBar.vue";
+// import DebugBar from "@common/components/DebugBar.vue";
 
 const route = useRoute();
 

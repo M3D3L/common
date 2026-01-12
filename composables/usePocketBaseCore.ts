@@ -1,6 +1,6 @@
 import { useRuntimeConfig } from "#app";
 import usePocketBase from "./usePocketbase";
-import { useDebugStore } from "~/store/debug";
+
 import {
   getCache,
   setCache,
@@ -12,7 +12,6 @@ import type { ListResult, RecordModel } from "pocketbase";
 
 export default function usePocketBaseCore() {
   const pb = usePocketBase();
-  const debugStore = useDebugStore();
   const runtimeConfig = useRuntimeConfig();
 
   const isDev = runtimeConfig.public.environment === "development";
@@ -25,9 +24,28 @@ export default function usePocketBaseCore() {
   };
 
   /**
-   * Fetch list of records
-   * Logs cache hits and network requests ONLY in development
+   * Safe Logger: Only attempts to find Pinia on the client and when Pinia is initialized
    */
+  const logQuery = async (key: string, data: any) => {
+    if (process.client && isDev) {
+      try {
+        // Check if Pinia is available before importing
+        const { getActivePinia } = await import("pinia");
+        if (!getActivePinia()) {
+          // Pinia not yet initialized, skip logging
+          return;
+        }
+
+        // Dynamic import ensures the store is never touched by the server
+        const { useDebugStore } = await import("~/store/debug");
+        const debugStore = useDebugStore();
+        debugStore.addQuery(key, data);
+      } catch (e) {
+        console.warn("DebugStore could not be initialized", e);
+      }
+    }
+  };
+
   const fetchCollection = async (
     collection: string,
     page = 1,
@@ -51,9 +69,7 @@ export default function usePocketBaseCore() {
     const cached = getCache<ListResult<RecordModel>>(cacheKey);
 
     if (cached && !ignoreCache) {
-      if (isDev) {
-        debugStore.addQuery(`${cacheKey} (cache)`, cached);
-      }
+      logQuery(`${cacheKey} (cache)`, cached);
       return cached;
     }
 
@@ -74,10 +90,7 @@ export default function usePocketBaseCore() {
       }
 
       setCache(cacheKey, response);
-
-      if (isDev) {
-        debugStore.addQuery(`${cacheKey} (network)`, response);
-      }
+      logQuery(`${cacheKey} (network)`, response);
 
       return response;
     } catch (error: any) {

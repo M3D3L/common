@@ -160,12 +160,13 @@ export const contactSection = {
 };
 
 export const siteMap = [
-  { label: "Propiedades", href: "/real-estate/" },
-  { label: "En Venta", href: "/real-estate/properties" },
-  { label: "Rentas", href: "/real-estate/rentals/" },
-  { label: "Venda su Propiedad", href: "/real-estate/sell-your-property/" },
-  { label: "Guía de Relocalización", href: "/blog/" },
-  { label: "Contacto", href: "/#contact" },
+  { label: "Propiedades", href: "/bienes-raices/" },
+  { label: "En Venta", href: "/bienes-raices/ventas/" },
+  { label: "Rentas", href: "/bienes-raices/rentas/" },
+  { label: "Venda su Propiedad", href: "/bienes-raices/venda-su-propiedad/" },
+  // { label: "Terrenos", href: "/bienes-raices/terrenos" },
+  { label: "Guía de Reubicación", href: "/blog/" },
+  { label: "Contacto", href: "/#contacto" },
 ];
 
 export const socials = [

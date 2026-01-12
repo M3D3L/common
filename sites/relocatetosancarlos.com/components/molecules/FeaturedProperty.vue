@@ -13,18 +13,26 @@
             variant="default"
             class="px-3 py-1 text-xs uppercase tracking-wider"
           >
-            Featured Listing
+            {{ badgeText }}
           </Badge>
           <Badge
             variant="outline"
             class="px-3 py-1 text-xs uppercase tracking-wider"
           >
-            {{ content.pricingType === "per/night" ? "Rental" : "For Sale" }}
+            {{
+              content.pricingType === "per/night"
+                ? isSp
+                  ? "Renta"
+                  : "Rental"
+                : isSp
+                ? "En Venta"
+                : "For Sale"
+            }}
           </Badge>
         </div>
 
         <nuxt-link
-          :to="`/real-estate${content.slug}`"
+          :to="localizedSlug"
           class="hover:text-primary transition-all hover:underline"
           :alt="`View ${content.title} Details`"
         >
@@ -35,7 +43,10 @@
           </h2>
         </nuxt-link>
 
-        <div class="flex items-center gap-2 mb-6 text-muted-foreground">
+        <div
+          v-if="content?.address"
+          class="flex items-center gap-2 mb-6 text-muted-foreground"
+        >
           <MapPin :size="18" class="text-primary" />
           <span class="text-lg">{{ content.address }}</span>
         </div>
@@ -54,9 +65,6 @@
                 content.bedrooms
               }}</span>
             </div>
-            <span class="text-xs uppercase text-muted-foreground font-semibold"
-              >Bedrooms</span
-            >
           </div>
           <div
             class="flex flex-col items-center lg:items-start border-x border-border/60 px-4"
@@ -67,9 +75,6 @@
                 content.bathrooms
               }}</span>
             </div>
-            <span class="text-xs uppercase text-muted-foreground font-semibold"
-              >Bathrooms</span
-            >
           </div>
           <div class="flex flex-col items-center lg:items-start">
             <div class="flex items-center gap-2 text-primary mb-1">
@@ -78,9 +83,6 @@
                 content.area || "--"
               }}</span>
             </div>
-            <span class="text-xs uppercase text-muted-foreground font-semibold"
-              >m² Area</span
-            >
           </div>
         </div>
 
@@ -88,14 +90,13 @@
           class="flex flex-col sm:flex-row sm:items-center justify-between gap-6"
         >
           <div>
-            <p class="text-sm text-muted-foreground font-medium mb-1">Price</p>
             <div class="text-3xl font-bold text-primary">
               {{ formattedPrice }}
             </div>
           </div>
 
           <nuxt-link
-            :to="`/real-estate${content.slug}`"
+            :to="localizedSlug"
             class="shrink-0"
             :alt="`View ${content.title} Details`"
           >
@@ -110,7 +111,7 @@
       </div>
 
       <nuxt-link
-        :to="`/real-estate${content.slug}`"
+        :to="localizedSlug"
         :alt="`View ${content.title} Details`"
         class="block"
         :class="{ 'lg:[direction:ltr]': reverse }"
@@ -149,27 +150,51 @@ export interface PropertyContent {
   cover_image: string;
   slug: string;
   collectionId?: string;
-  expand?: {
-    author: {
-      name: string;
-      title: string;
-      avatar: string;
-      collectionId: string;
-      id: string;
-    };
-  };
 }
 
 interface Props {
   content: PropertyContent | null;
   buttonText?: string;
-  reverse?: boolean; // New Prop
+  reverse?: boolean;
+  badgeText?: string;
+  isSp?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
   content: null,
   buttonText: "",
   reverse: false,
+  badgeText: "Featured Listing",
+  isSp: false,
+});
+
+// SINGLE SOURCE OF TRUTH FOR SLUG REWRITING
+const localizedSlug = computed(() => {
+  if (!props.content?.slug) return "#";
+
+  let slug = props.content.slug;
+
+  if (props.isSp) {
+    // 1. Rewrite categories inside the slug
+    // We use a mapping to replace the category segment
+    const map: Record<string, string> = {
+      "/rentals/": "/rentas/",
+      "/properties/": "/ventas/",
+      "/lots/": "/terrenos/",
+    };
+
+    Object.entries(map).forEach(([eng, sp]) => {
+      if (slug.startsWith(eng)) {
+        slug = slug.replace(eng, sp);
+      }
+    });
+
+    // 2. Add the Spanish base prefix
+    return `/bienes-raices${slug}`;
+  }
+
+  // English default prefix
+  return `/real-estate${slug}`;
 });
 
 const createImgUrl = (content: PropertyContent) => {
@@ -186,8 +211,11 @@ const formattedPrice = computed(() => {
     maximumFractionDigits: 0,
   });
   const price = formatter.format(props.content.price);
-  return props.content.pricingType
-    ? `${price} ${props.content.pricingType}`
-    : price;
+
+  // Basic translation for price suffix if needed
+  let suffix = props.content.pricingType || "";
+  if (props.isSp && suffix === "per/night") suffix = "por noche";
+
+  return suffix ? `${price} ${suffix}` : price;
 });
 </script>

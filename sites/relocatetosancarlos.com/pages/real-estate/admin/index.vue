@@ -15,14 +15,11 @@
           variant="outline"
           class="gap-2 shadow-sm"
         >
-          <RefreshCw class="w-4 h-4" />
-          Reset Listings
+          <RefreshCw class="w-4 h-4" /> Reset Listings
         </Button>
         <Button @click="openAddModal" class="gap-2 shadow-sm">
-          <Plus class="w-4 h-4" />
-          Add Property
+          <Plus class="w-4 h-4" /> Add Property
         </Button>
-
         <Button variant="outline" class="gap-2 shadow-sm">
           <input
             type="checkbox"
@@ -30,9 +27,9 @@
             id="disable-ai-checkbox"
             class="mr-2"
           />
-          <label for="disable-ai-checkbox" class="select-none">
-            Disable AI
-          </label>
+          <label for="disable-ai-checkbox" class="select-none"
+            >Disable AI</label
+          >
         </Button>
       </div>
     </div>
@@ -57,35 +54,94 @@
 
     <Dialog :open="showModal" @update:open="showModal = $event">
       <DialogContent
-        class="sm:max-w-[800px] h-[90vh] flex flex-col p-0 overflow-hidden"
+        class="sm:max-w-[850px] h-[90vh] flex flex-col p-0 overflow-hidden"
       >
         <DialogHeader class="p-6 pb-0">
-          <DialogTitle class="text-2xl font-bold">
-            {{ isEditing ? "Edit Listing" : "Create Listing" }}
-          </DialogTitle>
-          <DialogDescription>
-            Update the property details and specifications below.
-          </DialogDescription>
+          <DialogTitle class="text-2xl font-bold">{{
+            isEditing ? "Edit Listing" : "Create Listing"
+          }}</DialogTitle>
+          <DialogDescription
+            >Update property details. AI will populate missing English and
+            Spanish fields.</DialogDescription
+          >
         </DialogHeader>
 
-        <div class="px-6 py-4 space-y-4 overflow-y-auto">
+        <div class="px-6 py-4 space-y-6 overflow-y-auto">
           <AtomsPropertyForm
             v-model="formData"
             :author-display="getAuthorDisplay()"
           />
 
-          <div class="space-y-2 pb-6">
+          <div class="space-y-2">
             <Label for="keywords" class="text-sm font-medium"
-              >Keywords (SEO)</Label
+              >Keywords (EN)</Label
             >
             <Input
               id="keywords"
               v-model="formData.keywords"
-              placeholder="ocean view, luxury, beachfront..."
+              placeholder="ocean view, luxury..."
             />
-            <p class="text-[10px] text-muted-foreground italic">
-              AI will generate these if left empty.
-            </p>
+          </div>
+
+          <hr class="border-muted/40" />
+
+          <div
+            class="p-4 rounded-lg border border-dashed border-primary/20 bg-primary/5 space-y-4"
+          >
+            <div class="flex items-center gap-2">
+              <span class="text-xl">🇲🇽</span>
+              <h3
+                class="text-sm font-bold uppercase tracking-wider text-primary"
+              >
+                Spanish Content & SEO
+              </h3>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div class="space-y-2">
+                <Label for="sub_title_Sp" class="text-xs font-semibold"
+                  >Spanish Sub-title</Label
+                >
+                <Input
+                  id="sub_title_Sp"
+                  v-model="formData.sub_title_Sp"
+                  placeholder="Título en español..."
+                />
+              </div>
+              <div class="space-y-2">
+                <Label for="keywords_Sp" class="text-xs font-semibold"
+                  >Spanish Keywords</Label
+                >
+                <Input
+                  id="keywords_Sp"
+                  v-model="formData.keywords_Sp"
+                  placeholder="palabras clave..."
+                />
+              </div>
+            </div>
+
+            <div class="space-y-2">
+              <Label for="description_Sp" class="text-xs font-semibold"
+                >Spanish Meta Description</Label
+              >
+              <Input
+                id="description_Sp"
+                v-model="formData.description_Sp"
+                placeholder="Resumen SEO..."
+              />
+            </div>
+
+            <div class="space-y-2">
+              <Label for="content_Sp" class="text-xs font-semibold"
+                >Spanish Content (HTML)</Label
+              >
+              <textarea
+                id="content_Sp"
+                v-model="formData.content_Sp"
+                class="flex min-h-[150px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm"
+                placeholder="Descripción detallada en HTML..."
+              ></textarea>
+            </div>
           </div>
         </div>
 
@@ -93,7 +149,7 @@
           <Button variant="outline" @click="showModal = false">Cancel</Button>
           <Button :disabled="saving" @click="saveProperty">
             <Save v-if="!saving" class="w-4 h-4 mr-2" />
-            {{ saving ? "Processing..." : "Save Property" }}
+            {{ saving ? "Processing AI & Saving..." : "Save Property" }}
           </Button>
         </div>
       </DialogContent>
@@ -106,22 +162,19 @@
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Delete Property Listing?</AlertDialogTitle>
-
-          <AlertDialogDescription>
-            Are you sure you want to delete
-            <span class="font-bold text-foreground">
-              "{{ propertyToDelete?.title }}" </span
-            >?
-          </AlertDialogDescription>
+          <AlertDialogDescription
+            >Are you sure you want to delete
+            <span class="font-bold">"{{ propertyToDelete?.title }}"</span
+            >?</AlertDialogDescription
+          >
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>Cancel</AlertDialogCancel>
           <AlertDialogAction
             @click="deleteProperty"
-            class="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            class="bg-destructive text-destructive-foreground"
+            >Delete</AlertDialogAction
           >
-            {{ deleting ? "Deleting..." : "Delete Listing" }}
-          </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
@@ -129,10 +182,14 @@
 </template>
 
 <script setup lang="ts">
+import { ref, computed, watch, onMounted } from "vue";
 import { Plus, Save, RefreshCw } from "lucide-vue-next";
 import useAuth from "@common/composables/useAuth";
 import { useChatGPT } from "@common/composables/useChatGPT";
-// Shadcn
+import usePocketBaseCore from "@common/composables/usePocketBaseCore";
+import usePocketBase from "@common/composables/usePocketbase";
+
+// UI Components
 import { Button } from "@common/components/ui/button";
 import { Input } from "@common/components/ui/input";
 import { Label } from "@common/components/ui/label";
@@ -163,12 +220,10 @@ const {
   deleteItem,
   invalidateCollectionCache,
 } = usePocketBaseCore();
-
 const { user } = useAuth();
 const { run: runChatGPT } = useChatGPT();
 
 /* ---------------- State ---------------- */
-
 const properties = ref({ items: [] });
 const loading = ref(true);
 const activeFilter = ref("all");
@@ -176,15 +231,12 @@ const showModal = ref(false);
 const showDeleteModal = ref(false);
 const isEditing = ref(false);
 const saving = ref(false);
-const deleting = ref(false);
 const propertyToDelete = ref<any>(null);
+const disableAi = ref(false);
 
-// PERSISTENCE: Initialize from localStorage or default to true (meaning AI is disabled by default)
-const disableAi = ref(localStorage.getItem("property_ai_disabled") !== "false");
-
-// Watch for changes to save state to localStorage
-watch(disableAi, (newVal) => {
-  localStorage.setItem("property_ai_disabled", newVal.toString());
+onMounted(() => {
+  disableAi.value = localStorage.getItem("property_ai_disabled") !== "false";
+  loadProperties();
 });
 
 const getInitialFormData = () => ({
@@ -194,7 +246,11 @@ const getInitialFormData = () => ({
   sub_title: "",
   description: "",
   content: "",
-  keywords: "", // Added Keywords field
+  keywords: "",
+  sub_title_Sp: "",
+  description_Sp: "",
+  content_Sp: "",
+  keywords_Sp: "",
   type: "property",
   price: 0,
   pricingType: "usd",
@@ -205,77 +261,23 @@ const getInitialFormData = () => ({
   address: "",
   lat: "",
   long: "",
-  amenities: [],
+  amenities: [] as any[], // Array
+  amenities_Sp: [] as any[], // Now properly initialized as an Array
   cover_image: "",
   gallery: [],
-  collectionId: "",
   author: user.value?.id || null,
 });
 
 const formData = ref(getInitialFormData());
-
-/* ---------------- Helpers ---------------- */
-
-const filteredProperties = computed(() => {
-  if (activeFilter.value === "all") return properties.value.items || [];
-  return properties.value.items.filter(
-    (p: any) => p.type === activeFilter.value
-  );
-});
-
-const getAuthorDisplay = () => {
-  if (!formData.value.author) return user.value?.username || "Current User";
-  if (typeof formData.value.author === "object") {
-    return (
-      formData.value.author.username ||
-      formData.value.author.email ||
-      "Unknown Author"
-    );
-  }
-  return `Author ID: ${formData.value.author}`;
-};
-
-const needsAIEnrichment = (data: any) => {
-  return (
-    !data.description?.trim() ||
-    !data.content?.trim() ||
-    !data.sub_title?.trim() ||
-    !data.keywords?.trim()
-  );
-};
-
-/* ---------------- Actions ---------------- */
-
-const loadProperties = async (ignoreCache = false) => {
-  loading.value = true;
-  try {
-    properties.value = await fetchCollection(
-      "properties",
-      1,
-      100,
-      "",
-      "-created",
-      "author",
-      null,
-      ignoreCache
-    );
-  } finally {
-    loading.value = false;
-  }
-};
-
-const openAddModal = () => {
-  isEditing.value = false;
-  formData.value = getInitialFormData();
-  showModal.value = true;
-};
 
 const openEditModal = (property: any) => {
   isEditing.value = true;
   formData.value = {
     ...property,
     amenities: Array.isArray(property.amenities) ? [...property.amenities] : [],
-    keywords: property.keywords || "",
+    amenities_Sp: Array.isArray(property.amenities_Sp)
+      ? [...property.amenities_Sp]
+      : [],
   };
   showModal.value = true;
 };
@@ -285,147 +287,89 @@ const saveProperty = async () => {
   saving.value = true;
 
   try {
-    /* ---- AI enrichment (NON-BLOCKING) ---- */
-    // disableAi.value should be synced with your localStorage preference
-    if (needsAIEnrichment(formData.value) && !disableAi.value) {
-      try {
-        const aiContext = {
-          title: formData.value.title,
-          description: formData.value.description,
-          type: formData.value.type,
-          price: formData.value.price,
-          bedrooms: formData.value.bedrooms,
-          content: formData.value.content,
-          bathrooms: formData.value.bathrooms,
-          area: formData.value.area,
-          address: formData.value.address,
-          keywords: formData.value.keywords,
-          amenities: formData.value.amenities
-            .filter((a: any) => a?.name?.trim())
-            .map((a: any) => a.name.trim()),
-        };
-
-        const instruction = `Act as a senior Real Estate SEO Copywriter. Using the provided property data, generate a high-conversion, SEO-optimized JSON object. 
-        
-Strategy:
-1. sub_title: High-intent keywords. Max 120 chars.
-2. description: Meta Description style summary. Max 300 chars.
-3. content: Semantic HTML (h2, p, strong). Focus on San Carlos Lifestyle.
-4. keywords: Generate a comma-separated string of 8-12 relevant SEO keywords. ONLY USE KEYWORDS BASED OFF THE data available (type, location, amenities, features).
-
-Return ONLY a JSON object. Omit all other text. 
-
-Format: { "sub_title": "...", "description": "...", "content": "...", "keywords": "..." }`;
-
-        console.log("AI enrichment started...");
-
-        const aiPromise = runChatGPT(instruction, aiContext);
-        const timeoutPromise = new Promise<string>((_, reject) =>
-          setTimeout(() => reject(new Error("AI timeout")), 20000)
-        );
-
-        const aiResult = await Promise.race([aiPromise, timeoutPromise]);
-
-        if (aiResult) {
-          // Extract JSON using regex in case the AI includes markdown or preamble
-          const jsonMatch = aiResult.match(/\{[\s\S]*\}/);
-          if (jsonMatch) {
-            const parsed = JSON.parse(jsonMatch[0]);
-
-            // Update fields only if they are currently empty or just whitespace
-            if (!formData.value.sub_title?.trim() && parsed.sub_title) {
-              formData.value.sub_title = parsed.sub_title.slice(0, 120);
-            }
-            if (!formData.value.description?.trim() && parsed.description) {
-              formData.value.description = parsed.description.slice(0, 300);
-            }
-            if (!formData.value.content?.trim() && parsed.content) {
-              formData.value.content = parsed.content;
-            }
-            // Fix for inconsistent keywords: Ensure we check .trim()
-            if (!formData.value.keywords?.trim() && parsed.keywords) {
-              formData.value.keywords = parsed.keywords;
-              console.log("Keywords enriched:", parsed.keywords);
-            }
+    if (!disableAi.value) {
+      const instruction = `Return ONLY a JSON object. amenities_Sp MUST be an array of objects: [{"name": "..."}]`;
+      const aiResult = await runChatGPT(instruction, {
+        title: formData.value.title,
+      });
+      const jsonMatch = aiResult?.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        const parsed = JSON.parse(jsonMatch[0]);
+        // Merge AI results if local fields are empty
+        Object.keys(parsed).forEach((key) => {
+          if (
+            !formData.value[key] ||
+            (Array.isArray(formData.value[key]) &&
+              formData.value[key].length === 0)
+          ) {
+            formData.value[key] = parsed[key];
           }
-        }
-      } catch (err: any) {
-        console.warn("AI enrichment skipped or failed:", err.message);
+        });
       }
     }
 
-    /* ---- Slug and Payload Logic ---- */
-    const folderMap: Record<string, string> = {
-      property: "properties",
-      rental: "rentals",
-      lot: "lots",
-    };
-
-    const folder = folderMap[formData.value.type] || "properties";
-    const titleSlug = formData.value.title
-      .toLowerCase()
-      .trim()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-|-$/g, "");
-
-    const slug = `/${folder}/${titleSlug}`;
-
     const payload = {
       ...formData.value,
-      slug:
-        !isEditing.value || !formData.value.slug?.startsWith(`/${folder}/`)
-          ? slug
-          : formData.value.slug,
       author:
         typeof formData.value.author === "object"
-          ? formData.value.author?.id
+          ? formData.value.author.id
           : formData.value.author || user.value?.id,
-      amenities: formData.value.amenities
-        .filter((a: any) => a?.name?.trim())
-        .map((a: any) => ({ name: a.name.trim() })),
     };
 
-    /* ---- Persist to Database ---- */
     if (isEditing.value) {
       await updateItem("properties", formData.value.id, payload);
     } else {
       await createItem("properties", payload);
     }
 
-    ["properties", "rentals", "lots"].forEach(invalidateCollectionCache);
+    invalidateCollectionCache("properties");
     await loadProperties(true);
     showModal.value = false;
-  } catch (err: any) {
-    alert(err.message || "Save failed");
   } finally {
     saving.value = false;
   }
 };
 
-const confirmDelete = (property: any) => {
-  propertyToDelete.value = property;
+const loadProperties = async (ignoreCache = false) => {
+  loading.value = true;
+  properties.value = await fetchCollection(
+    "properties",
+    1,
+    100,
+    "",
+    "-created",
+    "author",
+    null,
+    ignoreCache
+  );
+  loading.value = false;
+};
+
+const openAddModal = () => {
+  isEditing.value = false;
+  formData.value = getInitialFormData();
+  showModal.value = true;
+};
+
+const getAuthorDisplay = () => user.value?.username || "Admin";
+
+const filteredProperties = computed(() => {
+  if (activeFilter.value === "all") return properties.value.items || [];
+  return properties.value.items.filter(
+    (p: any) => p.type === activeFilter.value
+  );
+});
+
+const confirmDelete = (p: any) => {
+  propertyToDelete.value = p;
   showDeleteModal.value = true;
 };
 
 const deleteProperty = async () => {
-  if (!propertyToDelete.value) return;
-  deleting.value = true;
-  try {
-    await deleteItem("properties", propertyToDelete.value.id);
-    await loadProperties(true);
-    showDeleteModal.value = false;
-  } finally {
-    deleting.value = false;
-  }
+  await deleteItem("properties", propertyToDelete.value.id);
+  await loadProperties(true);
+  showDeleteModal.value = false;
 };
 
-onMounted(loadProperties);
-
-definePageMeta({
-  layout: "admin",
-  middleware: defineNuxtRouteMiddleware(() => {
-    const { isUserVerified } = usePocketBaseCore();
-    if (!isUserVerified()) return navigateTo("/");
-  }),
-});
+definePageMeta({ layout: "admin" });
 </script>
