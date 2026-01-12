@@ -39,6 +39,7 @@
           :key="`property-home-${itemIndex}`"
           :content="item"
           class="mt-8"
+          :is-sp="isSp"
         />
 
         <div
@@ -50,7 +51,10 @@
       </div>
 
       <div v-if="!loading && !error" class="w-full flex justify-center mt-16">
-        <AtomsBaseLink to="/real-estate/" text="View All Properties" />
+        <AtomsBaseLink
+          :to="isSp ? '/bienes-raices/' : '/real-estate/'"
+          :text="isSp ? 'Ver Todas las Propiedades' : 'View All Properties'"
+        />
       </div>
     </div>
 
@@ -70,6 +74,13 @@ import {
   socialsSection,
   propertiesSection,
 } from "@local/assets/configs/layout.js";
+
+const props = defineProps({
+  lang: {
+    type: String,
+    default: "En",
+  },
+});
 
 // Data
 const { fetchCollection } = usePocketBaseCore();
@@ -124,6 +135,8 @@ const computedSeoData = computed(() => {
     },
   });
 });
+
+const isSp = computed(() => props.lang === "Sp");
 
 // Lifecycle
 onMounted(() => {
