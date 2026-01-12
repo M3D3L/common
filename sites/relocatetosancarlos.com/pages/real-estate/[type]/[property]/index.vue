@@ -220,16 +220,18 @@
 
             <div class="flex flex-col gap-2 text-sm mt-6">
               <a
-                :href="`mailto:${property?.expand?.author?.email}`"
+                v-if="property?.expand?.author?.email"
+                :href="`mailto:${property.expand.author.email}`"
                 class="flex items-center gap-2 hover:underline text-primary"
               >
-                <Mail class="w-4 h-4" /> {{ property?.expand?.author?.email }}
+                <Mail class="w-4 h-4" /> {{ property.expand.author.email }}
               </a>
               <a
-                :href="`tel:${property?.expand?.author?.phone}`"
+                v-if="property?.expand?.author?.phone"
+                :href="`tel:${property.expand.author.phone}`"
                 class="flex items-center gap-2 hover:underline text-primary"
               >
-                <Phone class="w-4 h-4" /> {{ property?.expand?.author?.phone }}
+                <Phone class="w-4 h-4" /> {{ property.expand.author.phone }}
               </a>
             </div>
             <ContainersSocials
@@ -245,6 +247,8 @@
 </template>
 
 <script lang="ts" setup>
+import { computed } from "vue";
+import { useRoute, useRuntimeConfig, useAsyncData } from "#imports";
 import usePocketBaseCore from "@common/composables/usePocketBaseCore";
 import {
   Mail,
@@ -262,8 +266,6 @@ import { Card } from "@common/components/ui/card";
 import ShareTools from "@common/components/sections/ShareTools.vue";
 import TooltipProvider from "@common/components/ui/tooltip/TooltipProvider.vue";
 import { createSeoObject } from "@common/composables/useSeo";
-import { computed } from "vue";
-import { useRoute, useRuntimeConfig, useAsyncData } from "#imports";
 
 const props = defineProps<{
   lang?: string;
@@ -275,21 +277,21 @@ const { fetchCollection } = usePocketBaseCore();
 
 const isSp = computed(() => props.lang === "Sp");
 
-// DATA FETCHING
+// 1. DATA FETCHING
 const { data: pageData } = await useAsyncData(
   `property-${route.params.property}`,
   async () => {
     let slugType = route.params.type as string;
-    // Map Spanish slugs to English base types used in PocketBase slugs
-    if (slugType === "rentas") {
-      slugType = "rentals";
-    } else if (slugType === "ventas") {
-      slugType = "properties";
-    } else if (slugType === "terrenos") {
-      slugType = "lots";
-    }
 
-    const fullSlug = `/${slugType}/${route.params.property}`;
+    // Normalize localized slugs to DB English base types
+    const slugMap: Record<string, string> = {
+      rentas: "rentals",
+      ventas: "properties",
+      terrenos: "lots",
+    };
+
+    const dbType = slugMap[slugType] || slugType;
+    const fullSlug = `/${dbType}/${route.params.property}`;
 
     const res = await fetchCollection(
       "properties",
@@ -305,7 +307,7 @@ const { data: pageData } = await useAsyncData(
 
 const property = computed(() => pageData.value || {});
 
-// LOCALIZATION HELPER
+// 2. LOCALIZATION HELPER
 const getLocaleField = (field: string) => {
   if (!property.value?.id) return "";
   const spField = `${field}_Sp`;
@@ -315,39 +317,41 @@ const getLocaleField = (field: string) => {
   return property.value[field] || "";
 };
 
-// AMENITIES LOGIC
+// 3. AMENITIES LOGIC
 const activeAmenities = computed(() => {
   if (!property.value?.id) return [];
-  // Use Spanish array if in Sp mode and data exists, otherwise English
-  return isSp.value &&
+  const amenities =
+    isSp.value &&
     Array.isArray(property.value.amenities_Sp) &&
     property.value.amenities_Sp.length > 0
-    ? property.value.amenities_Sp
-    : property.value.amenities || [];
+      ? property.value.amenities_Sp
+      : property.value.amenities;
+
+  return Array.isArray(amenities) ? amenities : [];
 });
 
 const hasAmenities = computed(() => activeAmenities.value.length > 0);
 
-// COMPUTED ASSETS
+// 4. COMPUTED ASSETS
 const imgSrc = computed(() => {
-  if (!property.value?.id) return "";
+  if (!property.value?.id || !property.value?.cover_image) return "";
   return `${config.public.pocketbaseUrl}api/files/${property.value.collectionId}/${property.value.id}/${property.value.cover_image}`;
 });
 
 const authorImageUrl = computed(() => {
   const author = property.value?.expand?.author;
-  if (!author?.id) return "";
+  if (!author?.id || !author?.avatar) return "";
   return `${config.public.pocketbaseUrl}api/files/${author.collectionId}/${author.id}/${author.avatar}`;
 });
 
 const mapSrc = computed(() => {
   if (!property.value?.lat || !property.value?.long) return "";
-  return `https://www.google.com/maps/embed/v1/place?key=${
-    config.public.googleMapsKey || ""
-  }&q=${property.value.lat},${property.value.long}`;
+  const key = config.public.googleMapsKey || "";
+  // Fixed the template literal syntax and params
+  return `https://www.google.com/maps/embed/v1/place?key=${key}&q=${property.value.lat},${property.value.long}`;
 });
 
-// SEO DATA
+// 5. SEO DATA
 const computedSeoData = computed(() => {
   if (!property.value?.id) {
     return { title: "Loading...", meta: [], link: [], script: [] };
@@ -378,3 +382,10 @@ const computedSocialLinks = computed(() => {
   }));
 });
 </script>
+
+<style scoped>
+/* Ensure aspect-ratio works even if Tailwind classes aren't loading */
+.aspect-video {
+  aspect-ratio: 16 / 9;
+}
+</style>
