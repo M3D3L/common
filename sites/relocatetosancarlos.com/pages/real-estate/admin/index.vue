@@ -57,13 +57,13 @@
         class="sm:max-w-[850px] h-[90vh] flex flex-col p-0 overflow-hidden"
       >
         <DialogHeader class="p-6 pb-0">
-          <DialogTitle class="text-2xl font-bold">{{
-            isEditing ? "Edit Listing" : "Create Listing"
-          }}</DialogTitle>
-          <DialogDescription
-            >Update property details. AI will populate missing English and
-            Spanish fields.</DialogDescription
-          >
+          <DialogTitle class="text-2xl font-bold">
+            {{ isEditing ? "Edit Listing" : "Create Listing" }}
+          </DialogTitle>
+          <DialogDescription>
+            Update property details. AI will populate missing English and
+            Spanish fields.
+          </DialogDescription>
         </DialogHeader>
 
         <div class="px-6 py-4 space-y-6 overflow-y-auto">
@@ -79,7 +79,7 @@
             <Input
               id="keywords"
               v-model="formData.keywords"
-              placeholder="ocean view, luxury..."
+              placeholder="ocean view, luxury, beachfront..."
             />
           </div>
 
@@ -93,7 +93,7 @@
               <h3
                 class="text-sm font-bold uppercase tracking-wider text-primary"
               >
-                Spanish Content & SEO
+                Spanish Localization
               </h3>
             </div>
 
@@ -131,6 +131,13 @@
               />
             </div>
 
+            <!-- <div class="space-y-2">
+              <Label class="text-xs font-semibold">Spanish Amenities</Label>
+              <div class="p-3 border rounded-md bg-background">
+                <AtomsAmenitySelector v-model="formData.amenities_Sp" />
+              </div>
+            </div> -->
+
             <div class="space-y-2">
               <Label for="content_Sp" class="text-xs font-semibold"
                 >Spanish Content (HTML)</Label
@@ -162,11 +169,10 @@
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Delete Property Listing?</AlertDialogTitle>
-          <AlertDialogDescription
-            >Are you sure you want to delete
-            <span class="font-bold">"{{ propertyToDelete?.title }}"</span
-            >?</AlertDialogDescription
-          >
+          <AlertDialogDescription>
+            Are you sure you want to delete
+            <span class="font-bold">"{{ propertyToDelete?.title }}"</span>?
+          </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>Cancel</AlertDialogCancel>
@@ -239,6 +245,10 @@ onMounted(() => {
   loadProperties();
 });
 
+watch(disableAi, (newVal) => {
+  localStorage.setItem("property_ai_disabled", newVal.toString());
+});
+
 const getInitialFormData = () => ({
   id: null,
   title: "",
@@ -251,6 +261,7 @@ const getInitialFormData = () => ({
   description_Sp: "",
   content_Sp: "",
   keywords_Sp: "",
+  amenities_Sp: [] as any[], // Default to Array
   type: "property",
   price: 0,
   pricingType: "usd",
@@ -261,8 +272,7 @@ const getInitialFormData = () => ({
   address: "",
   lat: "",
   long: "",
-  amenities: [] as any[], // Array
-  amenities_Sp: [] as any[], // Now properly initialized as an Array
+  amenities: [] as any[], // Default to Array
   cover_image: "",
   gallery: [],
   author: user.value?.id || null,
@@ -270,14 +280,91 @@ const getInitialFormData = () => ({
 
 const formData = ref(getInitialFormData());
 
+/* ---------------- Helpers ---------------- */
+const filteredProperties = computed(() => {
+  if (activeFilter.value === "all") return properties.value.items || [];
+  return properties.value.items.filter(
+    (p: any) => p.type === activeFilter.value
+  );
+});
+
+const getAuthorDisplay = () => {
+  if (!formData.value.author) return user.value?.username || "Current User";
+  return typeof formData.value.author === "object"
+    ? formData.value.author.username || "Author"
+    : `ID: ${formData.value.author}`;
+};
+
+// Ensures data coming from DB is converted to the Array format the Selector expects
+const ensureArray = (input: any) => {
+  if (Array.isArray(input)) return [...input];
+  if (typeof input === "string" && input.trim()) {
+    return input
+      .split(",")
+      .map((i) => ({ name: i.trim() }))
+      .filter((i) => i.name);
+  }
+  return [];
+};
+
+// Formats array for AI consumption
+const formatAmenitiesToString = (input: any) => {
+  if (typeof input === "string") return input;
+  if (Array.isArray(input)) return input.map((a) => a.name || a).join(", ");
+  return "";
+};
+
+const needsAIEnrichment = (data: any) => {
+  const fields = [
+    "description",
+    "content",
+    "sub_title",
+    "keywords",
+    "description_Sp",
+    "content_Sp",
+    "sub_title_Sp",
+    "keywords_Sp",
+  ];
+  const hasEmptyField = fields.some(
+    (f) => !data[f] || (typeof data[f] === "string" && !data[f].trim())
+  );
+  const hasEmptyAmenities =
+    !data.amenities_Sp || data.amenities_Sp.length === 0;
+
+  return hasEmptyField || hasEmptyAmenities;
+};
+
+/* ---------------- Actions ---------------- */
+const loadProperties = async (ignoreCache = false) => {
+  loading.value = true;
+  try {
+    properties.value = await fetchCollection(
+      "properties",
+      1,
+      100,
+      "",
+      "-created",
+      "author",
+      null,
+      ignoreCache
+    );
+  } finally {
+    loading.value = false;
+  }
+};
+
+const openAddModal = () => {
+  isEditing.value = false;
+  formData.value = getInitialFormData();
+  showModal.value = true;
+};
+
 const openEditModal = (property: any) => {
   isEditing.value = true;
   formData.value = {
     ...property,
-    amenities: Array.isArray(property.amenities) ? [...property.amenities] : [],
-    amenities_Sp: Array.isArray(property.amenities_Sp)
-      ? [...property.amenities_Sp]
-      : [],
+    amenities: ensureArray(property.amenities),
+    amenities_Sp: ensureArray(property.amenities_Sp),
   };
   showModal.value = true;
 };
@@ -287,32 +374,62 @@ const saveProperty = async () => {
   saving.value = true;
 
   try {
-    if (!disableAi.value) {
-      const instruction = `Return ONLY a JSON object. amenities_Sp MUST be an array of objects: [{"name": "..."}]`;
-      const aiResult = await runChatGPT(instruction, {
-        title: formData.value.title,
-      });
-      const jsonMatch = aiResult?.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        const parsed = JSON.parse(jsonMatch[0]);
-        // Merge AI results if local fields are empty
-        Object.keys(parsed).forEach((key) => {
-          if (
-            !formData.value[key] ||
-            (Array.isArray(formData.value[key]) &&
-              formData.value[key].length === 0)
-          ) {
-            formData.value[key] = parsed[key];
-          }
-        });
+    if (needsAIEnrichment(formData.value) && !disableAi.value) {
+      try {
+        const aiContext = {
+          title: formData.value.title,
+          sub_title: formData.value.sub_title,
+          description: formData.value.description,
+          content: formData.value.content,
+          amenities_list: formatAmenitiesToString(formData.value.amenities),
+        };
+
+        const instruction = `You are a Real Estate SEO Expert. 
+        Return ONLY a JSON object with keys: sub_title, description, content, keywords, sub_title_Sp, description_Sp, content_Sp, keywords_Sp, amenities_Sp.
+        CRITICAL: amenities_Sp MUST be a JSON array of objects like: [{"name": "Alberca"}]`;
+
+        const aiResult = await runChatGPT(instruction, aiContext);
+        const jsonMatch = aiResult?.match(/\{[\s\S]*\}/);
+
+        if (jsonMatch) {
+          const parsed = JSON.parse(jsonMatch[0]);
+          Object.keys(parsed).forEach((key) => {
+            const currentVal = formData.value[key];
+            const isEmpty =
+              !currentVal ||
+              (Array.isArray(currentVal)
+                ? currentVal.length === 0
+                : !currentVal.toString().trim());
+
+            if (isEmpty) {
+              formData.value[key] = parsed[key];
+            }
+          });
+        }
+      } catch (err) {
+        console.warn("AI enrichment failed", err);
       }
     }
 
+    const folderMap: Record<string, string> = {
+      property: "properties",
+      rental: "rentals",
+      lot: "lots",
+    };
+    const folder = folderMap[formData.value.type] || "properties";
+    const titleSlug = formData.value.title
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]+/g, "-");
+
     const payload = {
       ...formData.value,
+      amenities: formData.value.amenities,
+      amenities_Sp: formData.value.amenities_Sp,
+      slug: `/${folder}/${titleSlug}`,
       author:
         typeof formData.value.author === "object"
-          ? formData.value.author.id
+          ? formData.value.author?.id
           : formData.value.author || user.value?.id,
     };
 
@@ -322,43 +439,15 @@ const saveProperty = async () => {
       await createItem("properties", payload);
     }
 
-    invalidateCollectionCache("properties");
+    ["properties", "rentals", "lots"].forEach(invalidateCollectionCache);
     await loadProperties(true);
     showModal.value = false;
+  } catch (err: any) {
+    alert(err.message || "Save failed");
   } finally {
     saving.value = false;
   }
 };
-
-const loadProperties = async (ignoreCache = false) => {
-  loading.value = true;
-  properties.value = await fetchCollection(
-    "properties",
-    1,
-    100,
-    "",
-    "-created",
-    "author",
-    null,
-    ignoreCache
-  );
-  loading.value = false;
-};
-
-const openAddModal = () => {
-  isEditing.value = false;
-  formData.value = getInitialFormData();
-  showModal.value = true;
-};
-
-const getAuthorDisplay = () => user.value?.username || "Admin";
-
-const filteredProperties = computed(() => {
-  if (activeFilter.value === "all") return properties.value.items || [];
-  return properties.value.items.filter(
-    (p: any) => p.type === activeFilter.value
-  );
-});
 
 const confirmDelete = (p: any) => {
   propertyToDelete.value = p;
@@ -366,10 +455,21 @@ const confirmDelete = (p: any) => {
 };
 
 const deleteProperty = async () => {
-  await deleteItem("properties", propertyToDelete.value.id);
-  await loadProperties(true);
-  showDeleteModal.value = false;
+  if (!propertyToDelete.value) return;
+  try {
+    await deleteItem("properties", propertyToDelete.value.id);
+    await loadProperties(true);
+    showDeleteModal.value = false;
+  } finally {
+  }
 };
 
-definePageMeta({ layout: "admin" });
+definePageMeta({
+  layout: "admin",
+  middleware: defineNuxtRouteMiddleware(() => {
+    const pb = usePocketBase();
+    if (!pb.authStore.isValid || pb.authStore.model?.verified !== true)
+      return navigateTo("/");
+  }),
+});
 </script>
