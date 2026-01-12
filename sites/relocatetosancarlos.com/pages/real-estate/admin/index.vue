@@ -9,6 +9,7 @@
           Manage, edit, and track your real estate listings.
         </p>
       </div>
+
       <div class="flex gap-2 flex-wrap">
         <Button
           @click="loadProperties(true)"
@@ -17,20 +18,23 @@
         >
           <RefreshCw class="w-4 h-4" /> Reset Listings
         </Button>
+
         <Button @click="openAddModal" class="gap-2 shadow-sm">
           <Plus class="w-4 h-4" /> Add Property
         </Button>
-        <Button variant="outline" class="gap-2 shadow-sm">
+
+        <!-- Safari-safe: input NOT nested inside button -->
+        <label
+          class="inline-flex items-center gap-2 border rounded-md px-3 py-2 cursor-pointer select-none bg-background shadow-sm"
+        >
           <input
             type="checkbox"
             v-model="disableAi"
             id="disable-ai-checkbox"
             class="mr-2"
           />
-          <label for="disable-ai-checkbox" class="select-none"
-            >Disable AI</label
-          >
-        </Button>
+          <span>Disable AI</span>
+        </label>
       </div>
     </div>
 
@@ -54,7 +58,7 @@
 
     <Dialog :open="showModal" @update:open="showModal = $event">
       <DialogContent
-        class="sm:max-w-[850px] h-[90vh] flex flex-col p-0 overflow-hidden"
+        class="sm:max-w-[850px] max-h-[90dvh] flex flex-col p-0 overflow-hidden"
       >
         <DialogHeader class="p-6 pb-0">
           <DialogTitle class="text-2xl font-bold">
@@ -131,13 +135,6 @@
               />
             </div>
 
-            <!-- <div class="space-y-2">
-              <Label class="text-xs font-semibold">Spanish Amenities</Label>
-              <div class="p-3 border rounded-md bg-background">
-                <AtomsAmenitySelector v-model="formData.amenities_Sp" />
-              </div>
-            </div> -->
-
             <div class="space-y-2">
               <Label for="content_Sp" class="text-xs font-semibold"
                 >Spanish Content (HTML)</Label
@@ -195,7 +192,7 @@ import { useChatGPT } from "@common/composables/useChatGPT";
 import usePocketBaseCore from "@common/composables/usePocketBaseCore";
 import usePocketBase from "@common/composables/usePocketbase";
 
-// UI Components
+/* UI Components */
 import { Button } from "@common/components/ui/button";
 import { Input } from "@common/components/ui/input";
 import { Label } from "@common/components/ui/label";
@@ -241,12 +238,18 @@ const propertyToDelete = ref<any>(null);
 const disableAi = ref(false);
 
 onMounted(() => {
-  disableAi.value = localStorage.getItem("property_ai_disabled") !== "false";
+  try {
+    disableAi.value = localStorage.getItem("property_ai_disabled") !== "false";
+  } catch {
+    disableAi.value = false;
+  }
   loadProperties();
 });
 
 watch(disableAi, (newVal) => {
-  localStorage.setItem("property_ai_disabled", newVal.toString());
+  try {
+    localStorage.setItem("property_ai_disabled", newVal.toString());
+  } catch {}
 });
 
 const getInitialFormData = () => ({
@@ -261,7 +264,7 @@ const getInitialFormData = () => ({
   description_Sp: "",
   content_Sp: "",
   keywords_Sp: "",
-  amenities_Sp: [] as any[], // Default to Array
+  amenities_Sp: [] as any[],
   type: "property",
   price: 0,
   pricingType: "usd",
@@ -272,7 +275,7 @@ const getInitialFormData = () => ({
   address: "",
   lat: "",
   long: "",
-  amenities: [] as any[], // Default to Array
+  amenities: [] as any[],
   cover_image: "",
   gallery: [],
   author: user.value?.id || null,
@@ -389,10 +392,11 @@ const saveProperty = async () => {
         CRITICAL: amenities_Sp MUST be a JSON array of objects like: [{"name": "Alberca"}]`;
 
         const aiResult = await runChatGPT(instruction, aiContext);
-        const jsonMatch = aiResult?.match(/\{[\s\S]*\}/);
 
-        if (jsonMatch) {
-          const parsed = JSON.parse(jsonMatch[0]);
+        const start = aiResult?.indexOf("{");
+        const end = aiResult?.lastIndexOf("}");
+        if (start !== -1 && end !== -1) {
+          const parsed = JSON.parse(aiResult.slice(start, end + 1));
           Object.keys(parsed).forEach((key) => {
             const currentVal = formData.value[key];
             const isEmpty =
