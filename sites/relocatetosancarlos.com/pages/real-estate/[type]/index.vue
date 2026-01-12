@@ -55,6 +55,29 @@
               :button-text="isSp ? 'Ver Propiedad' : 'View Listing'"
               :is-sp="isSp"
             />
+
+            <div
+              v-if="currentCategory?.properties?.items?.length === 0"
+              class="py-8 text-center md:col-span-2"
+            >
+              <p class="text-lg text-gray-600">
+                {{
+                  isSp
+                    ? "No se encontraron propiedades."
+                    : "No properties found."
+                }}
+              </p>
+            </div>
+
+            <div
+              class="flex justify-center w-full mt-8 md:col-span-2"
+              v-if="currentCategory?.properties?.totalPages > 1"
+            >
+              <Pagination
+                :showPagination="true"
+                :total-pages="currentCategory?.properties?.totalPages"
+              />
+            </div>
           </div>
 
           <div class="w-full lg:w-1/3">
@@ -66,10 +89,29 @@
                 rawCategories?.[typeMap[mappedType].index]?.footerText
               "
               :benefits="rawCategories?.[typeMap[mappedType].index]?.benefits"
+              :mode="rawCategories?.[typeMap[mappedType].index]?.mode"
               class="z-10 sticky top-28"
             />
           </div>
         </div>
+
+        <div class="grid content-center w-full gap-6 md:grid-cols-3">
+          <CardsPropertyCard
+            v-for="(
+              item, itemIndex
+            ) in currentCategory?.properties?.items.slice(6)"
+            :key="item.id || `extra-property-${itemIndex}`"
+            :content="item"
+            :button-text="isSp ? 'Ver Propiedad' : 'View Listing'"
+            :is-sp="isSp"
+          />
+        </div>
+      </li>
+
+      <li v-else-if="!typeMap[mappedType]" class="container py-32 text-center">
+        <h2 class="text-2xl font-bold text-gray-800">
+          {{ isSp ? "Categoría no encontrada" : "Category not found" }}
+        </h2>
       </li>
     </ul>
   </div>
@@ -80,6 +122,7 @@ import {
   categories as rawCategories,
   categoriesHeaders,
 } from "@local/assets/configs/layout.js";
+import { createSeoObject } from "@common/composables/useSeo";
 import { computed, ref, watch } from "vue";
 import { useRoute } from "vue-router";
 
@@ -98,6 +141,7 @@ const typeMap: Record<string, { index: number; query: string }> = {
   lots: { index: 2, query: "lot" },
 };
 
+// Handle route translation
 const mappedType = computed(() => {
   const rawType = route.params?.type as string;
   if (!isSp.value) return rawType;
@@ -112,9 +156,11 @@ const mappedType = computed(() => {
   return translationMap[rawType] || rawType;
 });
 
+const page = computed(() => Number(route.query.page) || 1);
+
+// Logic to map fields to Spanish if necessary
 const mapProperty = (item: any) => {
   if (!item || !isSp.value) return item;
-
   return {
     ...item,
     sub_title: item.sub_title_Sp || item.sub_title,
@@ -122,10 +168,7 @@ const mapProperty = (item: any) => {
     content: item.content_Sp || item.content,
     keywords: item.keywords_Sp || item.keywords,
     amenities:
-      item.amenities_Sp && item.amenities_Sp.length > 0
-        ? item.amenities_Sp
-        : item.amenities,
-    amenities_string: item.amenities_Sp || item.amenities_string,
+      item.amenities_Sp?.length > 0 ? item.amenities_Sp : item.amenities,
   };
 };
 
@@ -142,10 +185,12 @@ const fetchProperties = async () => {
 
   pending.value = true;
   propertiesLoading.value = true;
+  error.value = null;
 
   try {
     const { query } = configMatch;
 
+    // 1. Fetch Featured
     const featuredRes = await fetchCollection(
       "properties",
       1,
@@ -154,9 +199,10 @@ const fetchProperties = async () => {
       "-created"
     );
 
+    // 2. Fetch Standard
     const standardRes = await fetchCollection(
       "properties",
-      Number(route.query.page) || 1,
+      page.value,
       perPage,
       `type="${query}"`,
       "-created"
@@ -183,9 +229,7 @@ const fetchProperties = async () => {
   }
 };
 
-watch([mappedType, () => route.query.page], () => fetchProperties(), {
-  immediate: true,
-});
+watch([mappedType, page], () => fetchProperties(), { immediate: true });
 
 const currentCategory = computed(() => ({
   properties: propertyData.value?.standard || { items: [], totalPages: 0 },
@@ -193,6 +237,11 @@ const currentCategory = computed(() => ({
 }));
 
 const computedSeoData = computed(() => {
-  return createSeoObject(propertyData.value?.featured || {});
+  const header = categoriesHeaders[typeMap[mappedType.value]?.query];
+  return createSeoObject({
+    title: header?.title || "Real Estate",
+    summary: header?.subTitle || "",
+    // If you have specific SEO data from propertyData, you can merge it here
+  });
 });
 </script>
