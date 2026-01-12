@@ -171,6 +171,38 @@
             class="rounded-xl shadow-md"
           />
         </Card>
+
+        <Card v-else class="p-8 text-center">
+          <div class="flex justify-center mb-4">
+            <div class="p-3 rounded-full bg-primary/10">
+              <MapPin :size="32" class="text-primary opacity-50" />
+            </div>
+          </div>
+          <h3 class="mb-3 text-xl font-bold text-primary">
+            {{
+              isSp
+                ? "¿Buscas vender tu propiedad?"
+                : "Looking to sell your home?"
+            }}
+          </h3>
+          <p class="mb-6 text-sm leading-relaxed text-muted-foreground">
+            {{
+              isSp
+                ? "Obtén la mejor valoración de mercado y exposición premium para tu propiedad en San Carlos."
+                : "Get the best market valuation and premium exposure for your property in San Carlos."
+            }}
+          </p>
+          <NuxtLink
+            :to="
+              isSp
+                ? '/bienes-raices/venda-su-propiedad/'
+                : '/real-estate/sell-your-property/'
+            "
+            class="inline-flex items-center justify-center w-full px-4 py-2 text-sm font-semibold text-white transition-colors rounded-lg bg-primary hover:bg-primary/90"
+          >
+            {{ isSp ? "Contactar Agente" : "List Your Property" }}
+          </NuxtLink>
+        </Card>
       </div>
     </section>
 
