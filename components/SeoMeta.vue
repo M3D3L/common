@@ -14,7 +14,7 @@ const headConfig = computed(() => {
     title: base.title,
 
     meta: [
-      { name: 'format-detection', content: 'telephone=no' }
+      { name: "format-detection", content: "telephone=no" },
       ...base.meta,
       {
         name: "robots",
