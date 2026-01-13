@@ -31,13 +31,15 @@
               {{ realEstateHeroSection.propertiesText }}
             </Button>
 
-            <nuxt-link
-              v-if="isUserVerified"
-              :to="isSp ? '/bienes-raices/admin/' : '/real-estate/admin/'"
-              class="inline-flex items-center justify-center px-8 py-3 text-lg font-medium text-center text-primary underline rounded-lg hover:text-primary/80 focus:ring-4 focus:outline-none focus:ring-primary/50"
-            >
-              {{ isSp ? "Panel de Administración" : "Admin Dashboard" }}
-            </nuxt-link>
+            <ClientOnly>
+              <nuxt-link
+                v-if="isVerified"
+                :to="isSp ? '/bienes-raices/admin/' : '/real-estate/admin/'"
+                class="inline-flex items-center justify-center px-8 py-3 text-lg font-medium text-center text-primary underline rounded-lg hover:text-primary/80 focus:ring-4 focus:outline-none focus:ring-primary/50"
+              >
+                {{ isSp ? "Panel de Administración" : "Admin Dashboard" }}
+              </nuxt-link>
+            </ClientOnly>
           </div>
         </div>
       </div>
@@ -155,7 +157,7 @@ import {
 import Card from "@common/components/ui/card/Card.vue";
 
 const props = defineProps<{
-  lang: string;
+  lang?: string;
 }>();
 
 const { fetchCollection, isUserVerified } = usePocketBaseCore();
@@ -165,7 +167,7 @@ const error = ref(null);
 
 const sellData = sellPropertyPage;
 const isSp = computed(() => props.lang === "Sp");
-
+const isVerified = computed(() => isUserVerified());
 // HELPERS FOR TRANSLATION & ROUTING
 const translateType = (type: string) => {
   if (!isSp.value) return type;
