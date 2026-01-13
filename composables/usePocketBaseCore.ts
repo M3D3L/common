@@ -54,7 +54,8 @@ export default function usePocketBaseCore() {
     sort = "-created",
     expand: string | null = null,
     fields: string[] | null = null,
-    ignoreCache: boolean = false
+    ignoreCache: boolean = false,
+    options: any = {} // New parameter to handle request overrides
   ): Promise<ListResult<RecordModel>> => {
     const cacheKey = getCacheKey("fetchCollection", {
       collection,
@@ -74,11 +75,19 @@ export default function usePocketBaseCore() {
     }
 
     try {
+      // Determine the request key:
+      // 1. If options.requestKey is explicitly provided (even if null), use it.
+      // 2. Otherwise, use your standard default key.
+      const requestKey = options.hasOwnProperty("requestKey")
+        ? options.requestKey
+        : `list_${collection}`;
+
       const response = await pb.collection(collection).getList(page, perPage, {
         filter,
         sort,
         expand: expand ?? undefined,
-        requestKey: `list_${collection}`,
+        requestKey: requestKey,
+        ...options,
       });
 
       if (fields) {
@@ -94,8 +103,12 @@ export default function usePocketBaseCore() {
 
       return response;
     } catch (error: any) {
+      // Re-throw if it's an intentional cancellation from the SDK
       if (error.isAbort) throw error;
-      throw new Error(`Failed to fetch ${collection}`);
+
+      // Provide a more descriptive error for debugging
+      console.error(`PocketBase Fetch Error (${collection}):`, error);
+      throw new Error(`Failed to fetch ${collection}: ${error.message}`);
     }
   };
 

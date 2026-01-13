@@ -1,6 +1,7 @@
 <template>
   <Card
-    class="relative w-full py-1 my-8 overflow-hidden lg:container !shadow-none lg:!shadow-md"
+    id="contact"
+    class="relative w-full scroll-mt-32 py-1 my-8 overflow-hidden lg:container !shadow-none lg:!shadow-md"
   >
     <TextSectionTitle
       :title

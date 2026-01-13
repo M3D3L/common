@@ -139,7 +139,6 @@ const typeMap: Record<string, { index: number; query: string }> = {
   lots: { index: 2, query: "lot" },
 };
 
-// 1. Robust Mapping to handle route changes and Spanish slugs
 const mappedType = computed(() => {
   const rawType = (route.params?.type as string)?.toLowerCase();
   if (!rawType) return "";
@@ -158,7 +157,6 @@ const mappedType = computed(() => {
 
 const page = computed(() => Number(route.query.page) || 1);
 
-// 2. Data mapping for Spanish content
 const mapProperty = (item: any) => {
   if (!item || !isSp.value) return item;
   return {
@@ -173,59 +171,75 @@ const mapProperty = (item: any) => {
   };
 };
 
-// 3. Centralized Fetching with useAsyncData
-// This resolves the Safari loading issues and route race conditions
 const {
   data: propertyData,
   pending,
   error,
   refresh,
-} = await useAsyncData(
-  `properties-list-${mappedType.value}-${page.value}`,
+} = useAsyncData(
+  `properties-list-${props.lang}-${mappedType.value}-${page.value}`,
   async () => {
     const currentType = mappedType.value;
     const configMatch = typeMap[currentType];
 
-    // If no match found (like when navigating away), exit early
     if (!configMatch) return null;
-
     const { query } = configMatch;
 
-    // Parallel fetching for performance
-    const [featuredRes, standardRes] = await Promise.all([
-      fetchCollection(
-        "properties",
-        1,
-        1,
-        `type="${query}" && featured=true`,
-        "-created"
-      ),
-      fetchCollection(
-        "properties",
-        page.value,
-        perPage,
-        `type="${query}"`,
-        "-created"
-      ),
-    ]);
+    try {
+      // 1. Single quotes for PocketBase filters
+      const featuredFilter = `type='${query}' && featured=true`;
+      const standardFilter = `type='${query}'`;
 
-    const featuredMapped = featuredRes?.items[0]
-      ? mapProperty(featuredRes.items[0])
-      : null;
+      // 2. Parallel fetching with requestKey: null override
+      // Passing nulls for arguments we aren't using to reach the 'options' object
+      const [featuredRes, standardRes] = await Promise.all([
+        fetchCollection(
+          "properties",
+          1,
+          1,
+          featuredFilter,
+          "-created",
+          null,
+          null,
+          false,
+          { requestKey: null }
+        ),
+        fetchCollection(
+          "properties",
+          page.value,
+          perPage,
+          standardFilter,
+          "-created",
+          null,
+          null,
+          false,
+          { requestKey: null }
+        ),
+      ]);
 
-    const itemsMapped =
-      standardRes?.items
-        ?.map(mapProperty)
-        .filter((i: any) => i.id !== featuredMapped?.id) || [];
+      const featuredMapped = featuredRes?.items?.[0]
+        ? mapProperty(featuredRes.items[0])
+        : null;
 
-    return {
-      featured: featuredMapped,
-      standard: { ...standardRes, items: itemsMapped },
-    };
+      const itemsMapped =
+        standardRes?.items
+          ?.map(mapProperty)
+          .filter((i: any) => i.id !== featuredMapped?.id) || [];
+
+      return {
+        featured: featuredMapped,
+        standard: { ...standardRes, items: itemsMapped },
+      };
+    } catch (err: any) {
+      if (err.isAbort) return; // Silent return for intentional aborts
+      console.error("Critical Fetch Error in Index.vue:", err);
+      throw err;
+    }
   },
   {
     watch: [mappedType, page],
-    default: () => null,
+    lazy: true,
+    server: true,
   }
 );
 
