@@ -172,53 +172,51 @@
       </div>
 
       <div class="hidden lg:block lg:col-span-1 lg:sticky lg:top-24">
-        <ClientOnly>
-          <Card
-            v-if="property?.lat && property?.long"
-            class="relative w-full aspect-square bg-primary overflow-hidden rounded-xl shadow-md"
-          >
-            <MoleculesBaseMap
-              :lat="property.lat"
-              :lng="property.long"
-              :height="'400px'"
-              :width="'100%'"
-              :zoom="14"
-              class="rounded-xl shadow-md"
-            />
-          </Card>
+        <Card
+          v-if="property?.lat && property?.long"
+          class="relative w-full aspect-square bg-primary overflow-hidden rounded-xl shadow-md"
+        >
+          <MoleculesBaseMap
+            :lat="property.lat"
+            :lng="property.long"
+            :height="'400px'"
+            :width="'100%'"
+            :zoom="14"
+            class="rounded-xl shadow-md"
+          />
+        </Card>
 
-          <Card v-else class="p-8 text-center">
-            <div class="flex justify-center mb-4">
-              <div class="p-3 rounded-full bg-primary/10">
-                <MapPin :size="32" class="text-primary opacity-50" />
-              </div>
+        <Card v-else class="p-8 text-center">
+          <div class="flex justify-center mb-4">
+            <div class="p-3 rounded-full bg-primary/10">
+              <MapPin :size="32" class="text-primary opacity-50" />
             </div>
-            <h3 class="mb-3 text-xl font-bold text-primary">
-              {{
-                isSp
-                  ? "¿Buscas vender tu propiedad?"
-                  : "Looking to sell your home?"
-              }}
-            </h3>
-            <p class="mb-6 text-sm leading-relaxed text-muted-foreground">
-              {{
-                isSp
-                  ? "Obtén la mejor valoración de mercado y exposición premium."
-                  : "Get the best market valuation and premium exposure."
-              }}
-            </p>
-            <NuxtLink
-              :to="
-                isSp
-                  ? '/bienes-raices/venda-su-propiedad/'
-                  : '/list-your-property/'
-              "
-              class="inline-flex items-center justify-center w-full px-4 py-2 text-sm font-semibold text-white transition-colors rounded-lg bg-primary hover:bg-primary/90"
-            >
-              {{ isSp ? "Contactar Agente" : "List Your Property" }}
-            </NuxtLink>
-          </Card>
-        </ClientOnly>
+          </div>
+          <h3 class="mb-3 text-xl font-bold text-primary">
+            {{
+              isSp
+                ? "¿Buscas vender tu propiedad?"
+                : "Looking to sell your home?"
+            }}
+          </h3>
+          <p class="mb-6 text-sm leading-relaxed text-muted-foreground">
+            {{
+              isSp
+                ? "Obtén la mejor valoración de mercado y exposición premium."
+                : "Get the best market valuation and premium exposure."
+            }}
+          </p>
+          <NuxtLink
+            :to="
+              isSp
+                ? '/bienes-raices/venda-su-propiedad/'
+                : '/list-your-property/'
+            "
+            class="inline-flex items-center justify-center w-full px-4 py-2 text-sm font-semibold text-white transition-colors rounded-lg bg-primary hover:bg-primary/90"
+          >
+            {{ isSp ? "Contactar Agente" : "List Your Property" }}
+          </NuxtLink>
+        </Card>
       </div>
     </section>
 
