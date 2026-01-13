@@ -1,13 +1,14 @@
 <template>
   <header
-    class="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur-md supports-[backdrop-filter]:bg-background/60"
+    class="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 md:backdrop-blur-md supports-[backdrop-filter]:md:bg-background/60"
   >
     <div class="container mx-auto flex h-20 items-center justify-between px-4">
+      <!-- Logo -->
       <NuxtLink
         to="/"
-        class="flex items-center gap-2 transition-transform hover:scale-[1.01] active:scale-95"
+        class="flex items-center gap-2 transition-transform md:hover:scale-[1.01] active:scale-95"
       >
-        <img v-if="logo" :src="logo" alt="Logo" class="h-10 md:h-12 w-auto" />
+        <img v-if="logo" :src="logo" alt="Logo" class="h-10 w-auto md:h-12" />
         <div v-else class="flex flex-col leading-none">
           <span class="text-xl font-bold tracking-tight md:text-2xl">
             {{ siteName }}
@@ -21,12 +22,13 @@
         </div>
       </NuxtLink>
 
-      <nav class="hidden items-center gap-8 lg:flex ml-auto mr-6">
+      <!-- Desktop nav -->
+      <nav class="ml-auto mr-6 hidden items-center gap-8 lg:flex">
         <NuxtLink
           v-for="link in links"
           :key="link.href"
           :to="link.href"
-          class="text-sm font-medium transition-colors hover:text-primary text-foreground/70"
+          class="text-sm font-medium text-foreground/70 transition-colors md:hover:text-primary"
           active-class="text-primary font-semibold"
         >
           {{ link.label }}
@@ -34,19 +36,21 @@
         <slot name="extra-links" />
       </nav>
 
+      <!-- Actions -->
       <div class="flex items-center gap-2">
         <ClientOnly>
           <button
             @click="toggleDark()"
-            class="p-2.5 transition-all rounded-full hover:bg-accent text-muted-foreground hover:text-foreground"
+            class="rounded-full p-2.5 text-muted-foreground transition-all md:hover:bg-accent md:hover:text-foreground"
             aria-label="Toggle dark mode"
           >
-            <Sun v-if="isDark" class="w-5 h-5" />
-            <Moon v-else class="w-5 h-5" />
+            <Sun v-if="isDark" class="h-5 w-5" />
+            <Moon v-else class="h-5 w-5" />
           </button>
         </ClientOnly>
 
-        <!-- <div class="hidden items-center gap-2 md:flex">
+        <!--
+        <div class="hidden items-center gap-2 md:flex">
           <template v-if="showAuthButtons">
             <template v-if="!auth.isAuthenticated.value">
               <NuxtLink
@@ -72,19 +76,22 @@
               Log out
             </Button>
           </template>
-        </div> -->
+        </div>
+        -->
 
+        <!-- Mobile menu toggle -->
         <button
           @click="isMobileMenuOpen = !isMobileMenuOpen"
-          class="flex h-10 w-10 items-center justify-center rounded-full hover:bg-accent lg:hidden transition-colors"
+          class="flex h-10 w-10 items-center justify-center rounded-full transition-colors md:hover:bg-accent lg:hidden"
           aria-label="Toggle menu"
         >
-          <X v-if="isMobileMenuOpen" class="w-5 h-5" />
-          <Menu v-else class="w-5 h-5" />
+          <X v-if="isMobileMenuOpen" class="h-5 w-5" />
+          <Menu v-else class="h-5 w-5" />
         </button>
       </div>
     </div>
 
+    <!-- Mobile menu -->
     <Transition
       enter-active-class="transition duration-300 ease-out"
       enter-from-class="opacity-0 -translate-y-4"
@@ -95,20 +102,21 @@
     >
       <div
         v-if="isMobileMenuOpen"
-        class="absolute inset-x-0 top-full border-b border-border bg-background p-6 shadow-xl lg:hidden"
+        class="absolute inset-x-0 top-full z-50 border-b border-border bg-background p-6 shadow-xl lg:hidden"
       >
         <div class="flex flex-col gap-2">
           <NuxtLink
             v-for="link in links"
             :key="link.href"
             :to="link.href"
-            class="flex items-center px-4 py-3 text-lg font-medium rounded-lg hover:bg-accent transition-colors"
+            class="block rounded-lg px-4 py-3 text-lg font-medium transition-colors md:hover:bg-accent"
             @click="isMobileMenuOpen = false"
           >
             {{ link.label }}
           </NuxtLink>
 
-          <!-- <div
+          <!--
+          <div
             v-if="showAuthButtons"
             class="mt-4 pt-4 border-t border-border flex flex-col gap-3"
           >
@@ -139,7 +147,8 @@
             >
               Logout
             </Button>
-          </div> -->
+          </div>
+          -->
         </div>
       </div>
     </Transition>
@@ -183,6 +192,7 @@ const props = defineProps({
 
 const auth = useAuth();
 const route = useRoute();
+
 const isMobileMenuOpen = ref(false);
 const checkoutToggled = ref(false);
 
