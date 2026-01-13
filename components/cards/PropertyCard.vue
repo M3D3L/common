@@ -10,12 +10,15 @@
             :src="createImgUrl(content)"
             :alt="content.title"
             class="object-cover w-full h-full transition-transform duration-500 group-hover:scale-105"
+            loading="lazy"
           />
         </div>
       </nuxt-link>
     </CardHeader>
 
-    <CardContent class="px-6 pt-6 pb-8 h-full flex flex-col overflow-hidden">
+    <CardContent
+      class="px-6 pt-6 pb-20 h-full flex flex-col overflow-hidden relative"
+    >
       <div class="mb-2">
         <span class="text-xl font-bold text-foreground">
           {{ formattedPrice }}
@@ -37,7 +40,12 @@
           v-if="content.address"
           class="flex items-center gap-1 text-sm text-muted-foreground"
         >
-          <MapPin :size="14" class="shrink-0" />
+          <ClientOnly>
+            <MapPin :size="14" class="shrink-0" />
+            <template #fallback
+              ><span class="w-[14px] text-[10px]">📍</span></template
+            >
+          </ClientOnly>
           <span class="truncate">{{ content.address }}</span>
         </div>
       </div>
@@ -46,19 +54,19 @@
         class="flex items-center gap-4 py-4 mt-4 border-t border-muted/50 text-muted-foreground"
       >
         <div v-if="content.bedrooms" class="flex items-center gap-1.5">
-          <Bed :size="16" />
+          <ClientOnly><Bed :size="16" /></ClientOnly>
           <span class="text-sm font-medium text-foreground">{{
             content.bedrooms
           }}</span>
         </div>
         <div v-if="content.bathrooms" class="flex items-center gap-1.5">
-          <Bath :size="16" />
+          <ClientOnly><Bath :size="16" /></ClientOnly>
           <span class="text-sm font-medium text-foreground">{{
             content.bathrooms
           }}</span>
         </div>
         <div v-if="content.area" class="flex items-center gap-1.5">
-          <Square :size="16" />
+          <ClientOnly><Square :size="16" /></ClientOnly>
           <span class="text-sm font-medium text-foreground"
             >{{ content.area }} m²</span
           >
@@ -91,7 +99,7 @@
         </div>
       </div>
 
-      <div class="absolute bottom-0 left-0 right-0 mt-auto">
+      <div class="absolute bottom-6 left-6 right-6 mt-auto">
         <nuxt-link v-if="localizedSlug" :to="localizedSlug" class="w-full">
           <Button class="w-full font-semibold">
             {{ buttonText || (isSp ? "Ver Propiedad" : "View Listing") }}
@@ -103,12 +111,10 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { Button } from "~/components/ui/button";
 import { Badge } from "~/components/ui/badge";
 import { MapPin, Bed, Bath, Square } from "lucide-vue-next";
-import { useRuntimeConfig } from "#imports";
 
 const config = useRuntimeConfig();
 
@@ -145,10 +151,8 @@ const props = withDefaults(defineProps<Props>(), {
   isSp: false,
 });
 
-// Rewriting logic for the URL based on isSp
 const localizedSlug = computed(() => {
   if (!props.content?.slug) return "#";
-
   let slug = props.content.slug;
 
   if (props.isSp) {
@@ -157,16 +161,11 @@ const localizedSlug = computed(() => {
       "/properties/": "/ventas/",
       "/lots/": "/terrenos/",
     };
-
     Object.entries(map).forEach(([eng, sp]) => {
-      if (slug.startsWith(eng)) {
-        slug = slug.replace(eng, sp);
-      }
+      if (slug.startsWith(eng)) slug = slug.replace(eng, sp);
     });
-
     return `/bienes-raices${slug}`;
   }
-
   return `/real-estate${slug}`;
 });
 
@@ -179,20 +178,23 @@ const createImgUrl = (content: PropertyContent) => {
 const formattedPrice = computed(() => {
   if (!props.content) return "";
 
-  const formatter = new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  });
+  // Safari-safe Number Formatting: Manual fallback for SSR stability
+  try {
+    const val = props.content.price;
+    const priceStr = new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(val);
 
-  const price = formatter.format(props.content.price);
-
-  if (props.content.pricingType) {
-    return `${price} ${props.content.pricingType}`;
+    return props.content.pricingType
+      ? `${priceStr} ${props.content.pricingType}`
+      : priceStr;
+  } catch (e) {
+    // Basic fallback if Intl fails during hydration
+    return `$${props.content.price.toLocaleString()}`;
   }
-
-  return price;
 });
 
 const displayAmenities = computed(() => {
@@ -207,3 +209,10 @@ const remainingAmenities = computed(() => {
   return Math.max(0, props.content.amenities.length - props.maxAmenities);
 });
 </script>
+
+<style scoped>
+/* Ensure Safari respects aspect ratios during load */
+.aspect-\[4\/3\] {
+  aspect-ratio: 4 / 3;
+}
+</style>
