@@ -8,6 +8,7 @@
     />
 
     <div
+      v-if="property?.id"
       class="flex flex-col gap-6 mb-8 md:flex-row md:items-start md:justify-between"
     >
       <div class="space-y-2">
@@ -22,7 +23,11 @@
             v-if="property?.address"
             class="text-sm text-muted-foreground items-center flex"
           >
-            <MapPin :size="14" class="mr-1" /> {{ property.address }}
+            <ClientOnly>
+              <MapPin :size="14" class="mr-1" />
+              <template #fallback><span class="mr-1">📍</span></template>
+            </ClientOnly>
+            {{ property.address }}
           </span>
         </div>
 
@@ -34,15 +39,21 @@
 
         <div class="flex items-center gap-4 text-sm font-medium md:text-base">
           <span v-if="property?.bedrooms" class="flex items-center gap-1.5">
-            <Bed :size="18" class="text-muted-foreground" />
+            <ClientOnly
+              ><Bed :size="18" class="text-muted-foreground"
+            /></ClientOnly>
             {{ property.bedrooms }} {{ isSp ? "Recámaras" : "Bed" }}
           </span>
           <span v-if="property?.bathrooms" class="flex items-center gap-1.5">
-            <Bath :size="18" class="text-muted-foreground" />
+            <ClientOnly
+              ><Bath :size="18" class="text-muted-foreground"
+            /></ClientOnly>
             {{ property.bathrooms }} {{ isSp ? "Baños" : "Bath" }}
           </span>
           <span v-if="property?.area" class="flex items-center gap-1.5">
-            <Square :size="18" class="text-muted-foreground" />
+            <ClientOnly
+              ><Square :size="18" class="text-muted-foreground"
+            /></ClientOnly>
             {{ property.area }} sq ft
           </span>
         </div>
@@ -67,7 +78,7 @@
         </div>
         <div
           v-if="property?.pricingType"
-          class="text-sm font-medium text-muted-foreground"
+          class="text-sm font-medium text-muted-foreground uppercase"
         >
           {{ property.pricingType }}
         </div>
@@ -80,8 +91,6 @@
         class="relative w-full overflow-hidden rounded-xl aspect-video shadow-xl"
       >
         <iframe
-          width="315"
-          height="560"
           :src="property?.video"
           title="YouTube video player"
           frameborder="0"
@@ -96,7 +105,8 @@
         v-else-if="imgSrc"
         :src="imgSrc"
         :alt="property?.title"
-        class="w-full h-auto max-h-[600px] object-cover rounded-xl shadow-lg"
+        class="w-full h-auto aspect-video max-h-[600px] object-cover rounded-xl shadow-lg"
+        loading="eager"
       />
     </section>
 
@@ -105,14 +115,16 @@
       class="grid grid-cols-1 gap-8 lg:grid-cols-3 scroll-mt-24 items-start"
     >
       <div class="lg:col-span-3 flex w-full p-0 -mt-4 -mb-4">
-        <TooltipProvider class="p-0 m-0">
-          <ShareTools
-            v-if="property?.id"
-            :title="property?.title"
-            :description="getLocaleField('description')"
-            class="ml-auto"
-          />
-        </TooltipProvider>
+        <ClientOnly>
+          <TooltipProvider class="p-0 m-0">
+            <ShareTools
+              v-if="property?.id"
+              :title="property?.title"
+              :description="getLocaleField('description')"
+              class="ml-auto"
+            />
+          </TooltipProvider>
+        </ClientOnly>
       </div>
 
       <div class="lg:col-span-2 space-y-10">
@@ -149,7 +161,9 @@
                 :key="index"
                 class="flex items-center gap-2 p-3 rounded-lg bg-muted/40"
               >
-                <Check :size="16" class="text-green-600" />
+                <ClientOnly
+                  ><Check :size="16" class="text-green-600"
+                /></ClientOnly>
                 <span class="text-sm font-medium">{{ amenity?.name }}</span>
               </div>
             </div>
@@ -158,62 +172,63 @@
       </div>
 
       <div class="hidden lg:block lg:col-span-1 lg:sticky lg:top-24">
-        <Card
-          v-if="property?.lat && property?.long"
-          class="relative w-full aspect-square bg-primary overflow-hidden rounded-xl shadow-md"
-        >
-          <MoleculesBaseMap
-            :lat="property.lat"
-            :lng="property.long"
-            :height="'400px'"
-            :width="'100%'"
-            :zoom="14"
-            class="rounded-xl shadow-md"
-          />
-        </Card>
-
-        <Card v-else class="p-8 text-center">
-          <div class="flex justify-center mb-4">
-            <div class="p-3 rounded-full bg-primary/10">
-              <MapPin :size="32" class="text-primary opacity-50" />
-            </div>
-          </div>
-          <h3 class="mb-3 text-xl font-bold text-primary">
-            {{
-              isSp
-                ? "¿Buscas vender tu propiedad?"
-                : "Looking to sell your home?"
-            }}
-          </h3>
-          <p class="mb-6 text-sm leading-relaxed text-muted-foreground">
-            {{
-              isSp
-                ? "Obtén la mejor valoración de mercado y exposición premium para tu propiedad en San Carlos."
-                : "Get the best market valuation and premium exposure for your property in San Carlos."
-            }}
-          </p>
-          <NuxtLink
-            :to="
-              isSp
-                ? '/bienes-raices/venda-su-propiedad/'
-                : '/list-your-property/'
-            "
-            class="inline-flex items-center justify-center w-full px-4 py-2 text-sm font-semibold text-white transition-colors rounded-lg bg-primary hover:bg-primary/90"
+        <ClientOnly>
+          <Card
+            v-if="property?.lat && property?.long"
+            class="relative w-full aspect-square bg-primary overflow-hidden rounded-xl shadow-md"
           >
-            {{ isSp ? "Contactar Agente" : "List Your Property" }}
-          </NuxtLink>
-        </Card>
+            <MoleculesBaseMap
+              :lat="property.lat"
+              :lng="property.long"
+              :height="'400px'"
+              :width="'100%'"
+              :zoom="14"
+              class="rounded-xl shadow-md"
+            />
+          </Card>
+
+          <Card v-else class="p-8 text-center">
+            <div class="flex justify-center mb-4">
+              <div class="p-3 rounded-full bg-primary/10">
+                <MapPin :size="32" class="text-primary opacity-50" />
+              </div>
+            </div>
+            <h3 class="mb-3 text-xl font-bold text-primary">
+              {{
+                isSp
+                  ? "¿Buscas vender tu propiedad?"
+                  : "Looking to sell your home?"
+              }}
+            </h3>
+            <p class="mb-6 text-sm leading-relaxed text-muted-foreground">
+              {{
+                isSp
+                  ? "Obtén la mejor valoración de mercado y exposición premium."
+                  : "Get the best market valuation and premium exposure."
+              }}
+            </p>
+            <NuxtLink
+              :to="
+                isSp
+                  ? '/bienes-raices/venda-su-propiedad/'
+                  : '/list-your-property/'
+              "
+              class="inline-flex items-center justify-center w-full px-4 py-2 text-sm font-semibold text-white transition-colors rounded-lg bg-primary hover:bg-primary/90"
+            >
+              {{ isSp ? "Contactar Agente" : "List Your Property" }}
+            </NuxtLink>
+          </Card>
+        </ClientOnly>
       </div>
     </section>
 
-    <section id="gallery">
+    <section id="gallery" v-if="property?.id">
       <h2
         class="mb-8 text-3xl font-bold mt-16 scroll-mt-24 sm:text-4xl font-heading text-foreground"
       >
         {{ isSp ? "Galería de Fotos" : "Photo Gallery" }}
       </h2>
       <ModalCarousel
-        v-if="property?.id"
         :slides="property.gallery || []"
         :collectionId="property.collectionId"
         :propertyId="property.id"
@@ -269,13 +284,12 @@ const { fetchCollection } = usePocketBaseCore();
 
 const isSp = computed(() => props.lang === "Sp");
 
-// 1. DATA FETCHING
+// 1. DATA FETCHING - Safari Safe
 const { data: pageData } = await useAsyncData(
-  `property-${route.params.property}`,
+  `property-detail-${route.params.property}`,
   async () => {
     let slugType = route.params.type as string;
 
-    // Normalize localized slugs to DB English base types
     const slugMap: Record<string, string> = {
       rentas: "rentals",
       ventas: "properties",
@@ -285,16 +299,21 @@ const { data: pageData } = await useAsyncData(
     const dbType = slugMap[slugType] || slugType;
     const fullSlug = `/${dbType}/${route.params.property}`;
 
+    // IMPORTANT: Single quotes for PocketBase filter strings
     const res = await fetchCollection(
       "properties",
       1,
       1,
-      `slug="${fullSlug}"`,
+      `slug='${fullSlug}'`,
       "-created",
-      "author"
+      "author",
+      null,
+      false,
+      { requestKey: null } // Prevents Safari from cancelling the hydration request
     );
     return res?.items?.[0] || null;
-  }
+  },
+  { watch: [route] }
 );
 
 const property = computed(() => pageData.value || {});
@@ -332,23 +351,14 @@ const imgSrc = computed(() => {
 
 // 5. SEO DATA
 const computedSeoData = computed(() => {
-  if (!property.value?.id) {
-    return { title: "Loading...", meta: [], link: [], script: [] };
-  }
+  if (!property.value?.id) return null;
 
-  const seo = createSeoObject({
+  return createSeoObject({
     title: property.value.title,
     summary: getLocaleField("description"),
     imageUri: imgSrc.value,
     keywords: getLocaleField("keywords"),
   });
-
-  return {
-    ...seo,
-    meta: seo.meta || [],
-    link: seo.link || [],
-    script: seo.script || [],
-  };
 });
 
 const computedSocialLinks = computed(() => {
@@ -363,7 +373,6 @@ const computedSocialLinks = computed(() => {
 </script>
 
 <style scoped>
-/* Ensure aspect-ratio works even if Tailwind classes aren't loading */
 .aspect-video {
   aspect-ratio: 16 / 9;
 }
