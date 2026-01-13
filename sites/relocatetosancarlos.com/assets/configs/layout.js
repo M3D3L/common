@@ -167,7 +167,7 @@ export const siteMap = [
   { label: "Properties", href: "/real-estate/" },
   { label: "For Sale", href: "/real-estate/properties" },
   { label: "Rentals", href: "/real-estate/rentals/" },
-  { label: "Sell Your Property", href: "/real-estate/sell-your-property/" },
+  { label: "Sell Your Property", href: "/list-your-property/" },
   // { label: "Lots", href: "/real-estate/lots" },
   { label: "Relocation Guide", href: "/blog/" },
   { label: "Contact", href: "/#contact" },

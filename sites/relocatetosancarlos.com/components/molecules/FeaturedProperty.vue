@@ -2,11 +2,10 @@
   <section v-if="content" class="relative w-full">
     <Card
       class="lg:grid flex flex-col-reverse border items-stretch overflow-hidden gap-0 lg:grid-cols-2 min-h-[500px]"
-      :class="{ 'lg:[direction:rtl]': reverse }"
+      :class="{ 'lg:flex-row-reverse': reverse }"
     >
       <div
-        class="flex flex-col justify-center px-6 py-10 lg:px-12 lg:py-16"
-        :class="{ 'lg:[direction:ltr]': reverse }"
+        class="flex flex-col justify-center px-6 py-10 lg:px-12 lg:py-16 w-full"
       >
         <div class="flex items-center gap-2 mb-4">
           <Badge
@@ -34,7 +33,6 @@
         <nuxt-link
           :to="localizedSlug"
           class="hover:text-primary transition-all hover:underline"
-          :alt="`View ${content.title} Details`"
         >
           <h2
             class="text-3xl font-extrabold tracking-tight md:text-4xl lg:text-5xl mb-4"
@@ -89,17 +87,11 @@
         <div
           class="flex flex-col sm:flex-row sm:items-center justify-between gap-6"
         >
-          <div>
-            <div class="text-3xl font-bold text-primary">
-              {{ formattedPrice }}
-            </div>
+          <div class="text-3xl font-bold text-primary">
+            {{ formattedPrice }}
           </div>
 
-          <nuxt-link
-            :to="localizedSlug"
-            class="shrink-0"
-            :alt="`View ${content.title} Details`"
-          >
+          <nuxt-link :to="localizedSlug" class="shrink-0">
             <Button
               size="lg"
               class="px-8 text-md font-bold md:w-auto w-full h-14 shadow-lg hover:shadow-primary/20 transition-all"
@@ -112,15 +104,14 @@
 
       <nuxt-link
         :to="localizedSlug"
-        :alt="`View ${content.title} Details`"
-        class="block"
-        :class="{ 'lg:[direction:ltr]': reverse }"
+        class="block relative w-full h-full min-h-[350px]"
       >
-        <div class="relative min-h-[350px] lg:min-h-full overflow-hidden">
+        <div class="absolute inset-0 overflow-hidden">
           <img
             :src="createImgUrl(content)"
             :alt="content.title"
-            class="absolute inset-0 object-cover w-full h-full transition-transform hover:scale-105"
+            class="absolute inset-0 object-cover w-full h-full transition-transform duration-500 hover:scale-105 transform translate-z-0"
+            loading="lazy"
           />
         </div>
       </nuxt-link>
@@ -129,7 +120,6 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
 import { Badge } from "@common/components/ui/badge";
 import { Button } from "@common/components/ui/button";
 import { Card } from "@common/components/ui/card";

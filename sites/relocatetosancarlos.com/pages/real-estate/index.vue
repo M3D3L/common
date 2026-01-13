@@ -46,7 +46,7 @@
     </section>
 
     <div
-      v-if="pending && categoryData.length === 0"
+      v-if="pending && (!categoryData || categoryData.length === 0)"
       class="container py-32 text-center"
     >
       <AtomsLoadingSpinner />
@@ -57,8 +57,8 @@
         {{ isSp ? "Error al cargar datos" : "Error loading real estate data" }}
       </h2>
       <button
-        @click="loadAllData"
-        class="px-4 py-2 mt-4 text-white bg-blue-500 rounded"
+        @click="refresh"
+        class="px-4 py-2 mt-4 text-white bg-blue-500 rounded hover:bg-blue-600 transition-colors"
       >
         {{ isSp ? "Reintentar" : "Retry" }}
       </button>
@@ -90,7 +90,10 @@
         :key="cIndex"
         class="pt-16 space-y-16 border-t border-gray-100"
       >
-        <div v-if="cat.properties.length > 0" class="space-y-16">
+        <div
+          v-if="cat.properties && cat.properties.length > 0"
+          class="space-y-16"
+        >
           <div>
             <h2 class="text-4xl font-extrabold">
               {{ cat.sectionTitle }}
@@ -144,7 +147,6 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, ref, onMounted, toValue } from "vue";
 import Button from "@common/components/ui/button/Button.vue";
 import { createSeoObject } from "@common/composables/useSeo";
 import {
@@ -161,28 +163,65 @@ const props = defineProps<{
 }>();
 
 const { fetchCollection, isUserVerified } = usePocketBaseCore();
-const categoryData = ref([]);
-const pending = ref(false);
-const error = ref(null);
-
 const sellData = sellPropertyPage;
 const isSp = computed(() => props.lang === "Sp");
 const isVerified = computed(() => isUserVerified());
+
+// FETCHING DATA - Using useAsyncData for SSR support and Safari stability
+const {
+  data: categoryData,
+  pending,
+  error,
+  refresh,
+} = await useAsyncData(
+  "properties-featured",
+  async () => {
+    const rawCategories = toValue(categoriesComputed);
+
+    const featuredRes = await fetchCollection(
+      "properties",
+      1,
+      100,
+      "featured=true",
+      "-created"
+    );
+
+    const allFeatured = featuredRes?.items || [];
+
+    return rawCategories
+      .map((cat) => {
+        const typeKey = (cat.type || "").toLowerCase();
+        const filteredProperties = allFeatured.filter((item) => {
+          if (typeKey === "properties") return item.type === "property";
+          if (typeKey === "rentals") return item.type === "rental";
+          if (typeKey === "lots") return item.type === "lot";
+          return false;
+        });
+        return { ...cat, properties: filteredProperties };
+      })
+      .filter((cat) => cat.properties.length > 0);
+  },
+  {
+    default: () => [],
+  }
+);
+
 // HELPERS FOR TRANSLATION & ROUTING
 const translateType = (type: string) => {
   if (!isSp.value) return type;
   const lowerType = type.toLowerCase();
-  if (lowerType === "properties") return "Ventas";
-  if (lowerType === "rentals") return "Rentas";
-  if (lowerType === "lots") return "Terrenos";
-  return type;
+  const translations: Record<string, string> = {
+    properties: "Ventas",
+    rentals: "Rentas",
+    lots: "Terrenos",
+  };
+  return translations[lowerType] || type;
 };
 
 const getCategoryLink = (type: string) => {
   const lowerType = type.toLowerCase();
   const base = isSp.value ? "/bienes-raices" : "/real-estate";
 
-  // Mapping plural types to the correct URL slugs
   let slug = lowerType;
   if (isSp.value) {
     if (lowerType === "properties") slug = "ventas";
@@ -195,7 +234,8 @@ const getCategoryLink = (type: string) => {
 
 // DATA MAPPING FOR CARDS
 const localizedCategoryData = computed(() => {
-  return categoryData.value.map((cat) => ({
+  const data = categoryData.value || [];
+  return data.map((cat) => ({
     ...cat,
     properties: cat.properties.map((p: any) => ({
       ...p,
@@ -205,44 +245,6 @@ const localizedCategoryData = computed(() => {
       sub_title: isSp.value && p.sub_title_Sp ? p.sub_title_Sp : p.sub_title,
     })),
   }));
-});
-
-const loadAllData = async () => {
-  pending.value = true;
-  error.value = null;
-  try {
-    const rawCategories = toValue(categoriesComputed);
-    const featuredRes = await fetchCollection(
-      "properties",
-      1,
-      100,
-      "featured=true",
-      "-created"
-    );
-    const allFeatured = featuredRes?.items || [];
-
-    categoryData.value = rawCategories
-      .map((cat) => {
-        const typeKey = (cat.type || "").toLowerCase();
-        const filteredProperties = allFeatured.filter((item) => {
-          if (typeKey === "properties") return item.type === "property";
-          if (typeKey === "rentals") return item.type === "rental";
-          if (typeKey === "lots") return item.type === "lot";
-          return false;
-        });
-        return { ...cat, properties: filteredProperties };
-      })
-      .filter((cat) => cat.properties.length > 0);
-  } catch (err) {
-    console.error("Error loading data:", err);
-    error.value = err;
-  } finally {
-    pending.value = false;
-  }
-};
-
-onMounted(() => {
-  loadAllData();
 });
 
 const computedSeoData = computed(() => {
