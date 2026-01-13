@@ -14,7 +14,11 @@
             {{ sellData.hero.label }}
           </span>
           <span class="text-sm text-muted-foreground items-center flex">
-            <MapPin :size="14" class="mr-1" /> {{ sellData.hero.location }}
+            <ClientOnly>
+              <MapPin :size="14" class="mr-1" />
+              <template #fallback><span class="mr-1">📍</span></template>
+            </ClientOnly>
+            {{ sellData.hero.location }}
           </span>
         </div>
 
@@ -36,6 +40,7 @@
         :src="sellData.hero.image"
         alt="Selling property"
         class="w-full h-auto aspect-video max-h-[500px] object-cover rounded-xl shadow-lg"
+        loading="eager"
       />
     </section>
 
@@ -77,29 +82,32 @@
       </div>
 
       <aside class="relative h-fit">
-        <Card
-          class="p-6 lg:sticky lg:top-28 lg:z-10 shadow-lg border-primary/10"
-        >
-          <h4 class="font-bold text-lg mb-2">{{ sellData.cta.title }}</h4>
-          <p class="text-sm text-muted-foreground mb-4">
-            {{ sellData.cta.description }}
-          </p>
+        <ClientOnly>
+          <Card
+            class="p-6 lg:sticky lg:top-28 lg:z-10 shadow-lg border-primary/10"
+          >
+            <h4 class="font-bold text-lg mb-2">{{ sellData.cta.title }}</h4>
+            <p class="text-sm text-muted-foreground mb-4">
+              {{ sellData.cta.description }}
+            </p>
 
-          <div class="space-y-3">
-            <a
-              :href="`mailto:${contactInfo.email}`"
-              class="flex items-center gap-2 text-sm font-medium hover:text-primary transition-colors"
-            >
-              <Mail :size="16" class="text-primary" /> {{ contactInfo.email }}
-            </a>
-            <a
-              :href="`tel:${contactInfo.phone}`"
-              class="flex items-center gap-2 text-sm font-medium hover:text-primary transition-colors"
-            >
-              <Phone :size="16" class="text-primary" /> {{ contactInfo.phone }}
-            </a>
-          </div>
-        </Card>
+            <div class="space-y-3">
+              <a
+                :href="`mailto:${contactInfo.email}`"
+                class="flex items-center gap-2 text-sm font-medium hover:text-primary transition-colors"
+              >
+                <Mail :size="16" class="text-primary" /> {{ contactInfo.email }}
+              </a>
+              <a
+                :href="`tel:${contactInfo.phone}`"
+                class="flex items-center gap-2 text-sm font-medium hover:text-primary transition-colors"
+              >
+                <Phone :size="16" class="text-primary" />
+                {{ contactInfo.phone }}
+              </a>
+            </div>
+          </Card>
+        </ClientOnly>
       </aside>
     </section>
 
@@ -127,16 +135,11 @@ import { MapPin, Mail, Phone } from "lucide-vue-next";
 import { Card } from "@common/components/ui/card";
 import { createSeoObject } from "@common/composables/useSeo";
 
-/**
- * 1. Wrapping static data in useAsyncData.
- * This "bakes" the data into the page payload. Safari won't have to "wait"
- * for the JS to load the import; it will find the data in the initial HTML.
- */
+// useAsyncData ensures the static config is part of the Nuxt payload
 const { data: sellData } = await useAsyncData("sell-property-data", () => {
   return Promise.resolve(sellPropertyPage);
 });
 
-// SEO
 const computedSeoData = computed(() => {
   if (!sellData.value) return null;
   return createSeoObject({
