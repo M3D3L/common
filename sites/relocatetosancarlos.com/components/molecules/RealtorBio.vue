@@ -9,7 +9,7 @@
       <Card
         class="flex flex-col transition-all group bg-primary gap-6 md:flex-row md:gap-8 overflow-visible border-none shadow-sm"
       >
-        <div class="w-full md:w-1/3">
+        <div class="w-1/2 mx-auto md:w-1/4 md:block hidden">
           <div class="overflow-hidden h-full">
             <motion.img whileHover={{ scale: 1.05 }}
             :transition="{ duration: 0.4 }" :src="heroSection.imageSrc"
@@ -25,6 +25,15 @@
             >
               {{ heroSection.titleHighlight }}
             </h3>
+
+            <div class="w-1/2 mx-auto md:w-1/3">
+              <div class="overflow-hidden h-full md:hidden">
+                <motion.img whileHover={{ scale: 1.05 }}
+                :transition="{ duration: 0.4 }" :src="heroSection.imageSrc"
+                :alt="heroSection.imageAlt" class="object-cover w-full h-full
+                min-h-[300px] md:min-h-[400px]" />
+              </div>
+            </div>
 
             <p class="text-lg leading-relaxed text-slate-700 max-w-2xl">
               {{ sellData.realtor.bio }}

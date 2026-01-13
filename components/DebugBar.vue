@@ -88,8 +88,6 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, reactive, onMounted, watchEffect } from "vue";
-import { storeToRefs } from "pinia";
 import { useDebugStore } from "~/store/debug";
 
 // UI Components

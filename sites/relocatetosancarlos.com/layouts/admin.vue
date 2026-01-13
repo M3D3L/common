@@ -9,7 +9,7 @@
       <slot />
     </main>
 
-    <DebugBar />
+    <!-- <DebugBar /> -->
   </div>
 </template>
 

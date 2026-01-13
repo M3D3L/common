@@ -98,26 +98,11 @@ import Modal from "@/components/ui/modal/Modal.vue";
 import { privacyConfig } from "@/assets/configs/privacy.js";
 
 const props = defineProps<{
-  emailLabel: {
-    type: String;
-    default: string;
-  };
-  nameLabel: {
-    type: String;
-    default: string;
-  };
-  privacyLabel: {
-    type: String;
-    default: string;
-  };
-  privacyButton: {
-    type: String;
-    default: string;
-  };
-  buttonLabel: {
-    type: String;
-    default: string;
-  };
+  emailLabel: string;
+  nameLabel: string;
+  privacyLabel: string;
+  privacyButton: string;
+  buttonLabel: string;
 }>();
 
 // Animation variants

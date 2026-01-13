@@ -49,7 +49,7 @@
     </a>
     <OrganismsBaseFooter :links="siteMap" :footerConfig :contactInfo :socials />
 
-    <DebugBar />
+    <!-- <DebugBar /> -->
   </div>
 </template>
 
