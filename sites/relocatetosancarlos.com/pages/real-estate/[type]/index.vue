@@ -7,8 +7,8 @@
         {{ isSp ? "Error al cargar propiedades" : "Error loading properties" }}
       </h2>
       <button
-        @click="fetchProperties"
-        class="px-4 py-2 mt-4 text-white bg-blue-500 rounded hover:bg-blue-600"
+        @click="refresh"
+        class="px-4 py-2 mt-4 text-white bg-blue-500 rounded hover:bg-blue-600 transition-colors"
       >
         {{ isSp ? "Reintentar" : "Retry" }}
       </button>
@@ -22,7 +22,7 @@
     </div>
 
     <ul v-else class="container pb-32 space-y-32">
-      <li v-if="typeMap[mappedType] && (propertyData || propertiesLoading)">
+      <li v-if="typeMap[mappedType] && propertyData">
         <TextSectionTitle
           class="pt-12 pb-6"
           :title="categoriesHeaders[typeMap[mappedType].query]?.title"
@@ -40,12 +40,7 @@
         />
 
         <div class="flex flex-col gap-6 lg:flex-row mb-6">
-          <div v-if="propertiesLoading" class="w-full lg:w-2/3"></div>
-
-          <div
-            v-else
-            class="grid content-center w-full gap-6 md:grid-cols-2 lg:w-2/3"
-          >
+          <div class="grid content-center w-full gap-6 md:grid-cols-2 lg:w-2/3">
             <CardsPropertyCard
               v-for="(
                 item, itemIndex
@@ -108,7 +103,10 @@
         </div>
       </li>
 
-      <li v-else-if="!typeMap[mappedType]" class="container py-32 text-center">
+      <li
+        v-else-if="!pending && !typeMap[mappedType]"
+        class="container py-32 text-center"
+      >
         <h2 class="text-2xl font-bold text-gray-800">
           {{ isSp ? "Categoría no encontrada" : "Category not found" }}
         </h2>
@@ -123,7 +121,7 @@ import {
   categoriesHeaders,
 } from "@local/assets/configs/layout.js";
 import { createSeoObject } from "@common/composables/useSeo";
-import { computed, ref, watch } from "vue";
+import { computed } from "vue";
 import { useRoute } from "vue-router";
 
 const props = defineProps({
@@ -141,9 +139,11 @@ const typeMap: Record<string, { index: number; query: string }> = {
   lots: { index: 2, query: "lot" },
 };
 
-// Handle route translation
+// 1. Robust Mapping to handle route changes and Spanish slugs
 const mappedType = computed(() => {
-  const rawType = route.params?.type as string;
+  const rawType = (route.params?.type as string)?.toLowerCase();
+  if (!rawType) return "";
+
   if (!isSp.value) return rawType;
 
   const translationMap: Record<string, string> = {
@@ -158,11 +158,12 @@ const mappedType = computed(() => {
 
 const page = computed(() => Number(route.query.page) || 1);
 
-// Logic to map fields to Spanish if necessary
+// 2. Data mapping for Spanish content
 const mapProperty = (item: any) => {
   if (!item || !isSp.value) return item;
   return {
     ...item,
+    title: item.title_Sp || item.title,
     sub_title: item.sub_title_Sp || item.sub_title,
     description: item.description_Sp || item.description,
     content: item.content_Sp || item.content,
@@ -172,41 +173,41 @@ const mapProperty = (item: any) => {
   };
 };
 
-const propertyData = ref<any>(null);
-const pending = ref(false);
-const error = ref<any>(null);
-const propertiesLoading = ref(false);
+// 3. Centralized Fetching with useAsyncData
+// This resolves the Safari loading issues and route race conditions
+const {
+  data: propertyData,
+  pending,
+  error,
+  refresh,
+} = await useAsyncData(
+  `properties-list-${mappedType.value}-${page.value}`,
+  async () => {
+    const currentType = mappedType.value;
+    const configMatch = typeMap[currentType];
 
-const fetchProperties = async () => {
-  const currentType = mappedType.value;
-  const configMatch = typeMap[currentType];
+    // If no match found (like when navigating away), exit early
+    if (!configMatch) return null;
 
-  if (!configMatch) return;
-
-  pending.value = true;
-  propertiesLoading.value = true;
-  error.value = null;
-
-  try {
     const { query } = configMatch;
 
-    // 1. Fetch Featured
-    const featuredRes = await fetchCollection(
-      "properties",
-      1,
-      1,
-      `type="${query}" && featured=true`,
-      "-created"
-    );
-
-    // 2. Fetch Standard
-    const standardRes = await fetchCollection(
-      "properties",
-      page.value,
-      perPage,
-      `type="${query}"`,
-      "-created"
-    );
+    // Parallel fetching for performance
+    const [featuredRes, standardRes] = await Promise.all([
+      fetchCollection(
+        "properties",
+        1,
+        1,
+        `type="${query}" && featured=true`,
+        "-created"
+      ),
+      fetchCollection(
+        "properties",
+        page.value,
+        perPage,
+        `type="${query}"`,
+        "-created"
+      ),
+    ]);
 
     const featuredMapped = featuredRes?.items[0]
       ? mapProperty(featuredRes.items[0])
@@ -217,19 +218,16 @@ const fetchProperties = async () => {
         ?.map(mapProperty)
         .filter((i: any) => i.id !== featuredMapped?.id) || [];
 
-    propertyData.value = {
+    return {
       featured: featuredMapped,
       standard: { ...standardRes, items: itemsMapped },
     };
-  } catch (err) {
-    error.value = err;
-  } finally {
-    pending.value = false;
-    propertiesLoading.value = false;
+  },
+  {
+    watch: [mappedType, page],
+    default: () => null,
   }
-};
-
-watch([mappedType, page], () => fetchProperties(), { immediate: true });
+);
 
 const currentCategory = computed(() => ({
   properties: propertyData.value?.standard || { items: [], totalPages: 0 },
@@ -241,7 +239,6 @@ const computedSeoData = computed(() => {
   return createSeoObject({
     title: header?.title || "Real Estate",
     summary: header?.subTitle || "",
-    // If you have specific SEO data from propertyData, you can merge it here
   });
 });
 </script>
