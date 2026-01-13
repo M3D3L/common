@@ -1,6 +1,6 @@
 <template>
   <div class="container relative w-full p-6 font-body md:py-10">
-    <SeoMeta v-if="sellData" :seoData="computedSeoData" />
+    <SeoMeta :seoData="computedSeoData" />
 
     <div
       class="flex flex-col gap-6 mb-8 md:flex-row md:items-start md:justify-between"
@@ -34,7 +34,8 @@
       <img
         :src="sellData.hero.image"
         alt="Selling property in San Carlos"
-        class="w-full h-auto max-h-[500px] object-cover rounded-xl shadow-lg"
+        class="w-full h-auto aspect-video max-h-[500px] object-cover rounded-xl shadow-lg"
+        loading="eager"
       />
     </section>
 
@@ -44,14 +45,17 @@
           <h2 class="text-2xl font-bold text-primary">
             {{ sellData.content.whyTitle }}
           </h2>
-          <p v-html="sellData.content.whyDescription"></p>
+          <div
+            class="prose-p:text-muted-foreground"
+            v-html="sellData.content.whyDescription"
+          ></div>
         </div>
 
         <Card class="p-6 md:p-8">
           <h3 class="mb-6 text-xl font-bold border-b pb-4">
             {{ sellData.content.processTitle }}
           </h3>
-          <div class="grid grid-cols-1 gap-6 sm:grid-cols-1">
+          <div class="grid grid-cols-1 gap-6">
             <div
               v-for="(step, index) in sellData.steps"
               :key="index"
@@ -71,8 +75,10 @@
         </Card>
       </div>
 
-      <aside class="relative">
-        <Card class="p-6 lg:sticky lg:top-40 lg:z-10 shadow-lg">
+      <aside class="relative h-fit">
+        <Card
+          class="p-6 lg:sticky lg:top-28 lg:z-10 shadow-lg border-primary/10"
+        >
           <h4 class="font-bold text-lg mb-2">{{ sellData.cta.title }}</h4>
           <p class="text-sm text-muted-foreground mb-4">
             {{ sellData.cta.description }}
@@ -81,17 +87,15 @@
           <div class="space-y-3">
             <a
               :href="`mailto:${contactInfo.email}`"
-              class="flex items-center gap-2 text-sm font-medium hover:text-primary transition-colors"
+              class="flex items-center gap-2 text-sm font-medium hover:text-primary transition-colors py-1"
             >
-              <span class="sr-only">Email</span>
-              <Mail :size="16" /> {{ contactInfo.email }}
+              <Mail :size="16" class="text-primary" /> {{ contactInfo.email }}
             </a>
             <a
               :href="`tel:${contactInfo.phone}`"
-              class="flex items-center gap-2 text-sm font-medium hover:text-primary transition-colors"
+              class="flex items-center gap-2 text-sm font-medium hover:text-primary transition-colors py-1"
             >
-              <span class="sr-only">Phone</span>
-              <Phone :size="16" /> {{ contactInfo.phone }}
+              <Phone :size="16" class="text-primary" /> {{ contactInfo.phone }}
             </a>
           </div>
         </Card>
@@ -104,8 +108,8 @@
       </h2>
 
       <MoleculesRealtorBio
-        :heroSection
-        :sellData
+        :heroSection="heroSection"
+        :sellData="sellData"
         :socialLinks="computedSocialLinks"
       />
     </section>
@@ -113,31 +117,30 @@
 </template>
 
 <script lang="ts" setup>
-import { computed } from "vue";
 import {
   sellPropertyPage,
   contactInfo,
   heroSection,
   socials,
 } from "@local/assets/configs/layout.js";
-import { MapPin, Mail, Phone, Check } from "lucide-vue-next";
+import { MapPin, Mail, Phone } from "lucide-vue-next";
 import { Card } from "@common/components/ui/card";
-import { Button } from "@common/components/ui/button";
 import { createSeoObject } from "@common/composables/useSeo";
 
+// Set directly as a constant since it's a local config, no need for ref if it doesn't change
 const sellData = sellPropertyPage;
 
 // SEO
 const computedSeoData = computed(() => {
   return createSeoObject({
-    title: sellData.seo.title,
-    summary: sellData.seo.description,
-    imageUri: sellData.hero.image,
-    keywords: sellData.seo.keywords,
+    title: sellData.seo?.title || "Sell Property",
+    summary: sellData.seo?.description || "",
+    imageUri: sellData.hero?.image || "",
+    keywords: sellData.seo?.keywords || "",
   });
 });
 
-// Map icons for socials based on your logic
+// Map icons for socials
 const computedSocialLinks = computed(() => {
   return socials.map((s) => ({
     icon: s.icon,
