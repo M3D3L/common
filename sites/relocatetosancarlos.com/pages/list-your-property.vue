@@ -1,8 +1,9 @@
 <template>
   <div class="container relative w-full p-6 font-body md:py-10">
-    <SeoMeta :seoData="computedSeoData" />
+    <SeoMeta v-if="sellData" :seoData="computedSeoData" />
 
     <div
+      v-if="sellData"
       class="flex flex-col gap-6 mb-8 md:flex-row md:items-start md:justify-between"
     >
       <div class="space-y-2">
@@ -30,25 +31,25 @@
       </div>
     </div>
 
-    <section id="hero" class="w-full mb-10">
+    <section v-if="sellData" id="hero" class="w-full mb-10">
       <img
         :src="sellData.hero.image"
-        alt="Selling property in San Carlos"
+        alt="Selling property"
         class="w-full h-auto aspect-video max-h-[500px] object-cover rounded-xl shadow-lg"
-        loading="eager"
       />
     </section>
 
-    <section id="details" class="grid grid-cols-1 gap-8 lg:grid-cols-3">
+    <section
+      v-if="sellData"
+      id="details"
+      class="grid grid-cols-1 gap-8 lg:grid-cols-3"
+    >
       <div class="lg:col-span-2 space-y-10">
         <div class="prose prose-slate max-w-none">
           <h2 class="text-2xl font-bold text-primary">
             {{ sellData.content.whyTitle }}
           </h2>
-          <div
-            class="prose-p:text-muted-foreground"
-            v-html="sellData.content.whyDescription"
-          ></div>
+          <div v-html="sellData.content.whyDescription"></div>
         </div>
 
         <Card class="p-6 md:p-8">
@@ -87,13 +88,13 @@
           <div class="space-y-3">
             <a
               :href="`mailto:${contactInfo.email}`"
-              class="flex items-center gap-2 text-sm font-medium hover:text-primary transition-colors py-1"
+              class="flex items-center gap-2 text-sm font-medium hover:text-primary transition-colors"
             >
               <Mail :size="16" class="text-primary" /> {{ contactInfo.email }}
             </a>
             <a
               :href="`tel:${contactInfo.phone}`"
-              class="flex items-center gap-2 text-sm font-medium hover:text-primary transition-colors py-1"
+              class="flex items-center gap-2 text-sm font-medium hover:text-primary transition-colors"
             >
               <Phone :size="16" class="text-primary" /> {{ contactInfo.phone }}
             </a>
@@ -102,11 +103,10 @@
       </aside>
     </section>
 
-    <section id="realtor" class="py-12 scroll-mt-40">
+    <section v-if="sellData" id="realtor" class="py-12 scroll-mt-40">
       <h2 class="mb-8 text-3xl font-bold sm:text-4xl font-heading">
         {{ sellData.realtor.sectionTitle }}
       </h2>
-
       <MoleculesRealtorBio
         :heroSection="heroSection"
         :sellData="sellData"
@@ -127,20 +127,26 @@ import { MapPin, Mail, Phone } from "lucide-vue-next";
 import { Card } from "@common/components/ui/card";
 import { createSeoObject } from "@common/composables/useSeo";
 
-// Set directly as a constant since it's a local config, no need for ref if it doesn't change
-const sellData = sellPropertyPage;
+/**
+ * 1. Wrapping static data in useAsyncData.
+ * This "bakes" the data into the page payload. Safari won't have to "wait"
+ * for the JS to load the import; it will find the data in the initial HTML.
+ */
+const { data: sellData } = await useAsyncData("sell-property-data", () => {
+  return Promise.resolve(sellPropertyPage);
+});
 
 // SEO
 const computedSeoData = computed(() => {
+  if (!sellData.value) return null;
   return createSeoObject({
-    title: sellData.seo?.title || "Sell Property",
-    summary: sellData.seo?.description || "",
-    imageUri: sellData.hero?.image || "",
-    keywords: sellData.seo?.keywords || "",
+    title: sellData.value.seo?.title,
+    summary: sellData.value.seo?.description,
+    imageUri: sellData.value.hero?.image,
+    keywords: sellData.value.seo?.keywords,
   });
 });
 
-// Map icons for socials
 const computedSocialLinks = computed(() => {
   return socials.map((s) => ({
     icon: s.icon,
