@@ -35,7 +35,7 @@
               <nuxt-link
                 v-if="isVerified"
                 :to="isSp ? '/bienes-raices/admin/' : '/real-estate/admin/'"
-                class="inline-flex items-center justify-center px-8 py-3 text-lg font-medium text-center text-primary underline rounded-lg hover:text-primary/80 focus:ring-4 focus:outline-none focus:ring-primary/50"
+                class="inline-flex items-center justify-center px-8 py-3 text-lg font-medium text-center text-primary underline rounded-lg hover:text-primary/80"
               >
                 {{ isSp ? "Panel de Administración" : "Admin Dashboard" }}
               </nuxt-link>
@@ -77,9 +77,7 @@
             >
               {{ index + 1 }}
             </div>
-            <h3 class="mb-4 text-2xl font-bold">
-              {{ step.name }}
-            </h3>
+            <h3 class="mb-4 text-2xl font-bold">{{ step.name }}</h3>
             <p class="leading-relaxed">{{ step.description }}</p>
           </Card>
         </div>
@@ -95,18 +93,14 @@
           class="space-y-16"
         >
           <div>
-            <h2 class="text-4xl font-extrabold">
-              {{ cat.sectionTitle }}
-            </h2>
-            <p class="max-w-4xl mt-4 text-xl">
-              {{ cat.subTitle }}
-            </p>
+            <h2 class="text-4xl font-extrabold">{{ cat.sectionTitle }}</h2>
+            <p class="max-w-4xl mt-4 text-xl">{{ cat.subTitle }}</p>
           </div>
 
           <div class="space-y-8">
             <MoleculesFeaturedProperty
               v-for="(property, pIndex) in cat.properties"
-              :key="cIndex + '-' + pIndex"
+              :key="`cat-${cIndex}-prop-${pIndex}`"
               :content="property"
               :reverse="cIndex % 2 === 1"
               :button-text="isSp ? 'Ver Detalles' : 'View Full Details'"
@@ -135,7 +129,6 @@
         >
           {{ sellData.realtor.sectionTitle }}
         </h2>
-
         <MoleculesRealtorBio
           :heroSection="heroSection"
           :sellData="sellData"
@@ -147,95 +140,101 @@
 </template>
 
 <script lang="ts" setup>
-import Button from "@common/components/ui/button/Button.vue";
-import { createSeoObject } from "@common/composables/useSeo";
 import {
-  categories as categoriesComputed,
+  categories as categoriesStatic,
   realEstateHeroSection,
   sellPropertyPage,
   heroSection,
   socials,
 } from "@local/assets/configs/layout.js";
+import Button from "@common/components/ui/button/Button.vue";
 import Card from "@common/components/ui/card/Card.vue";
+import { createSeoObject } from "@common/composables/useSeo";
 
-const props = defineProps<{
-  lang?: string;
-}>();
-
+const props = defineProps<{ lang?: string }>();
 const { fetchCollection, isUserVerified } = usePocketBaseCore();
-const sellData = sellPropertyPage;
 const isSp = computed(() => props.lang === "Sp");
-const isVerified = computed(() => isUserVerified());
+const sellData = sellPropertyPage;
 
-// FETCHING DATA - Using useAsyncData for SSR support and Safari stability
+// Client-only check for verified status to avoid hydration mismatch
+const isVerified = ref(false);
+onMounted(() => {
+  isVerified.value = isUserVerified();
+});
+
+// FETCHING DATA
 const {
   data: categoryData,
   pending,
   error,
   refresh,
 } = await useAsyncData(
-  "properties-featured",
+  `properties-featured-list-${props.lang}`,
   async () => {
-    const rawCategories = toValue(categoriesComputed);
+    try {
+      // Use requestKey: null to prevent auto-cancellation errors on Safari
+      const featuredRes = await fetchCollection(
+        "properties",
+        1,
+        100,
+        "featured=true",
+        "-created",
+        null, // expand
+        null, // fields
+        false, // ignoreCache
+        { requestKey: null }
+      );
 
-    const featuredRes = await fetchCollection(
-      "properties",
-      1,
-      100,
-      "featured=true",
-      "-created"
-    );
+      const allFeatured = featuredRes?.items || [];
+      const categories = Array.isArray(categoriesStatic)
+        ? categoriesStatic
+        : [];
 
-    const allFeatured = featuredRes?.items || [];
-
-    return rawCategories
-      .map((cat) => {
-        const typeKey = (cat.type || "").toLowerCase();
-        const filteredProperties = allFeatured.filter((item) => {
-          if (typeKey === "properties") return item.type === "property";
-          if (typeKey === "rentals") return item.type === "rental";
-          if (typeKey === "lots") return item.type === "lot";
-          return false;
-        });
-        return { ...cat, properties: filteredProperties };
-      })
-      .filter((cat) => cat.properties.length > 0);
+      return categories
+        .map((cat) => {
+          const typeKey = (cat.type || "").toLowerCase();
+          const filtered = allFeatured.filter((item) => {
+            if (typeKey === "properties") return item.type === "property";
+            if (typeKey === "rentals") return item.type === "rental";
+            if (typeKey === "lots") return item.type === "lot";
+            return false;
+          });
+          return { ...cat, properties: filtered };
+        })
+        .filter((cat) => cat.properties.length > 0);
+    } catch (e) {
+      console.error("Featured Properties Fetch Error:", e);
+      throw e;
+    }
   },
-  {
-    default: () => [],
-  }
+  { server: true } // SSR ensures first visit works
 );
 
-// HELPERS FOR TRANSLATION & ROUTING
+// HELPERS
 const translateType = (type: string) => {
   if (!isSp.value) return type;
-  const lowerType = type.toLowerCase();
   const translations: Record<string, string> = {
     properties: "Ventas",
     rentals: "Rentas",
     lots: "Terrenos",
   };
-  return translations[lowerType] || type;
+  return translations[type.toLowerCase()] || type;
 };
 
 const getCategoryLink = (type: string) => {
   const lowerType = type.toLowerCase();
   const base = isSp.value ? "/bienes-raices" : "/real-estate";
-
-  let slug = lowerType;
-  if (isSp.value) {
-    if (lowerType === "properties") slug = "ventas";
-    if (lowerType === "rentals") slug = "rentas";
-    if (lowerType === "lots") slug = "terrenos";
-  }
-
+  const map: Record<string, string> = {
+    properties: "ventas",
+    rentals: "rentas",
+    lots: "terrenos",
+  };
+  const slug = isSp.value ? map[lowerType] || lowerType : lowerType;
   return `${base}/${slug}`;
 };
 
-// DATA MAPPING FOR CARDS
 const localizedCategoryData = computed(() => {
-  const data = categoryData.value || [];
-  return data.map((cat) => ({
+  return (categoryData.value || []).map((cat: any) => ({
     ...cat,
     properties: cat.properties.map((p: any) => ({
       ...p,
@@ -250,19 +249,15 @@ const localizedCategoryData = computed(() => {
 const computedSeoData = computed(() => {
   const seo = sellData.seo || {};
   return createSeoObject({
-    title: isSp.value && seo.title_Sp ? seo.title_Sp : seo.title,
-    summary:
-      isSp.value && seo.description_Sp ? seo.description_Sp : seo.description,
-    keywords: isSp.value && seo.keywords_Sp ? seo.keywords_Sp : seo.keywords,
-    byline: "Brenda – San Carlos Relocation Specialist",
+    title: isSp.value ? seo.title_Sp || seo.title : seo.title,
+    summary: isSp.value
+      ? seo.description_Sp || seo.description
+      : seo.description,
+    keywords: isSp.value ? seo.keywords_Sp || seo.keywords : seo.keywords,
   });
 });
 
 const computedSocialLinks = computed(() => {
-  return socials.map((s) => ({
-    icon: s.icon,
-    href: s.href,
-    label: s.label,
-  }));
+  return socials.map((s) => ({ icon: s.icon, href: s.href, label: s.label }));
 });
 </script>
