@@ -1,5 +1,5 @@
 <template>
-  <Properties type="property" lang="Sp" />
+  <Properties lang="Sp" />
 </template>
 
 <script lang="ts" setup>
