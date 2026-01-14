@@ -54,14 +54,17 @@
           <h2 class="text-2xl font-bold text-primary">
             {{ sellData.content.whyTitle }}
           </h2>
-          <div v-html="sellData.content.whyDescription"></div>
+          <article
+            v-html="sellData.content.whyDescription"
+            class="mt-4"
+          ></article>
         </div>
 
         <Card class="p-6 md:p-8">
           <h3 class="mb-6 text-xl font-bold border-b pb-4">
             {{ sellData.content.processTitle }}
           </h3>
-          <div class="grid grid-cols-1 gap-6">
+          <div class="space-y-6">
             <div
               v-for="(step, index) in sellData.steps"
               :key="index"
@@ -73,8 +76,10 @@
                 {{ index + 1 }}
               </div>
               <div>
-                <dt class="font-bold text-lg">{{ step.name }}</dt>
-                <dd class="text-muted-foreground">{{ step.description }}</dd>
+                <div class="font-bold text-lg leading-tight">
+                  {{ step.name }}
+                </div>
+                <p class="text-muted-foreground mt-1">{{ step.description }}</p>
               </div>
             </div>
           </div>
@@ -107,6 +112,11 @@
               </a>
             </div>
           </Card>
+          <template #fallback>
+            <div
+              class="p-6 border rounded-xl h-40 animate-pulse bg-muted/50"
+            ></div>
+          </template>
         </ClientOnly>
       </aside>
     </section>
