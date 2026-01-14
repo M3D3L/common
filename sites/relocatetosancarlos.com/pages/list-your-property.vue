@@ -16,9 +16,6 @@
           <span class="text-sm text-muted-foreground items-center flex">
             <ClientOnly>
               <MapPin :size="14" class="mr-1" />
-              <template #fallback>
-                <span class="inline-block w-3.5 h-3.5 mr-1">📍</span>
-              </template>
             </ClientOnly>
             {{ sellData.hero.location }}
           </span>
@@ -42,7 +39,7 @@
         :src="sellData.hero.image"
         alt="Selling property"
         class="w-full h-auto aspect-video max-h-[500px] object-cover rounded-xl shadow-lg"
-        loading="eager"
+        loading="lazy"
       />
     </section>
 

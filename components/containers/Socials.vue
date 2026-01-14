@@ -14,7 +14,9 @@
       target="_blank"
       class="hover:scale-105 trasform"
     >
-      <component v-if="social?.icon" :is="social?.icon" class="w-5 h-5" />
+      <client-only>
+        <component v-if="social?.icon" :is="social?.icon" class="w-5 h-5" />
+      </client-only>
     </Button>
   </div>
 </template>
