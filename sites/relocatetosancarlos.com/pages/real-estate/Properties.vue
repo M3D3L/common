@@ -6,12 +6,12 @@
       <h2 class="text-2xl font-bold text-red-600">
         {{ isSp ? "Error al cargar propiedades" : "Error loading properties" }}
       </h2>
-      <button
+      <Button
         @click="refresh"
         class="px-4 py-2 mt-4 text-white bg-blue-500 rounded hover:bg-blue-600 transition-colors"
       >
         {{ isSp ? "Reintentar" : "Retry" }}
-      </button>
+      </Button>
     </div>
 
     <div
@@ -21,7 +21,7 @@
       <AtomsLoadingSpinner />
     </div>
 
-    <ul v-else-if="isClient" class="container pb-32 space-y-32">
+    <ul v-else class="container pb-32 space-y-32">
       <li v-if="typeMap[mappedType] && propertyData">
         <TextSectionTitle
           class="pt-12 pb-6"
@@ -30,72 +30,30 @@
           :h1="true"
         />
 
-        <MoleculesFeaturedProperty
-          v-if="currentCategory?.featuredProperty"
-          :content="currentCategory.featuredProperty"
-          :button-text="isSp ? 'Ver Detalles' : 'View Full Details'"
-          :badge-text="isSp ? 'Listado Destacado' : 'Featured Listing'"
-          :is-sp="isSp"
-          class="mb-6"
-        />
+        <div v-if="featuredProperties.length > 0" class="space-y-6">
+          <MoleculesFeaturedProperty
+            v-for="(property, index) in featuredProperties"
+            :key="`featured-${property.id}`"
+            :content="property"
+            :button-text="isSp ? 'Ver Detalles' : 'View Full Details'"
+            :badge-text="isSp ? 'Listado Destacado' : 'Featured Listing'"
+            :is-sp="isSp"
+            :reverse="index % 2 !== 0"
+          />
 
-        <div class="flex flex-col gap-6 lg:flex-row mb-6">
-          <div class="grid content-center w-full gap-6 md:grid-cols-2 lg:w-2/3">
-            <CardsPropertyCard
-              v-for="item in currentCategory?.properties?.items.slice(0, 6)"
-              :key="`property-${item.id}`"
-              :content="item"
-              :button-text="isSp ? 'Ver Propiedad' : 'View Listing'"
-              :is-sp="isSp"
-            />
-
-            <div
-              v-if="currentCategory?.properties?.items?.length === 0"
-              class="py-8 text-center md:col-span-2"
-            >
-              <p class="text-lg text-gray-600">
-                {{
-                  isSp
-                    ? "No se encontraron propiedades."
-                    : "No properties found."
-                }}
-              </p>
-            </div>
-
-            <div
-              class="flex justify-center w-full mt-8 md:col-span-2"
-              v-if="currentCategory?.properties?.totalPages > 1"
-            >
-              <Pagination
-                :showPagination="true"
-                :total-pages="currentCategory?.properties?.totalPages"
-              />
-            </div>
-          </div>
-
-          <div class="w-full lg:w-1/3">
-            <CardsInfoCard
-              v-if="typeMap[mappedType]"
-              :title="rawCategories?.[typeMap[mappedType].index]?.sectionTitle"
-              :subTitle="rawCategories?.[typeMap[mappedType].index]?.subTitle"
-              :footerText="
-                rawCategories?.[typeMap[mappedType].index]?.footerText
-              "
-              :benefits="rawCategories?.[typeMap[mappedType].index]?.benefits"
-              :mode="rawCategories?.[typeMap[mappedType].index]?.mode"
-              class="z-10 sticky top-28"
-            />
+          <div class="flex justify-center w-full mt-8" v-if="totalPages > 1">
+            <Pagination :showPagination="true" :total-pages="totalPages" />
           </div>
         </div>
 
-        <div class="grid content-center w-full gap-6 md:grid-cols-3">
-          <CardsPropertyCard
-            v-for="item in currentCategory?.properties?.items.slice(6)"
-            :key="`extra-property-${item.id}`"
-            :content="item"
-            :button-text="isSp ? 'Ver Propiedad' : 'View Listing'"
-            :is-sp="isSp"
-          />
+        <div v-else class="py-8 text-center">
+          <p class="text-lg text-gray-600">
+            {{
+              isSp
+                ? "No se encontraron propiedades destacadas."
+                : "No featured properties found."
+            }}
+          </p>
         </div>
       </li>
 
@@ -116,6 +74,7 @@ import {
   categories as rawCategories,
   categoriesHeaders,
 } from "@local/assets/configs/layout.js";
+import { Button } from "@common/components/ui/button";
 import { createSeoObject } from "@common/composables/useSeo";
 
 const props = defineProps({
@@ -127,22 +86,13 @@ const isSp = computed(() => props.lang === "Sp");
 const { fetchCollection } = usePocketBaseCore();
 const route = useRoute();
 
-// Fix for Safari hydration
-const isClient = ref(false);
-onMounted(() => {
-  isClient.value = true;
-});
-
-const perPage = 10;
+const perPage = 3;
 const typeMap: Record<string, { index: number; query: string }> = {
   properties: { index: 0, query: "property" },
   rentals: { index: 1, query: "rental" },
   lots: { index: 2, query: "lot" },
 };
 
-/**
- * MappedType now uses props.type instead of route.params.type
- */
 const mappedType = computed(() => {
   const rawType = props.type?.toLowerCase();
   if (!rawType) return "properties";
@@ -181,8 +131,7 @@ const {
   error,
   refresh,
 } = useAsyncData(
-  // Ensure stable key generation
-  () => `properties-list-${props.lang}-${mappedType.value}-${page.value}`,
+  () => `featured-properties-${props.lang}-${mappedType.value}-${page.value}`,
   async () => {
     const currentType = mappedType.value;
     const configMatch = typeMap[currentType];
@@ -192,45 +141,24 @@ const {
 
     try {
       const featuredFilter = `type='${query}' && featured=true`;
-      const standardFilter = `type='${query}'`;
 
-      const [featuredRes, standardRes] = await Promise.all([
-        fetchCollection(
-          "properties",
-          1,
-          1,
-          featuredFilter,
-          "-created",
-          null,
-          null,
-          false,
-          { requestKey: null }
-        ),
-        fetchCollection(
-          "properties",
-          page.value,
-          perPage,
-          standardFilter,
-          "-created",
-          null,
-          null,
-          false,
-          { requestKey: null }
-        ),
-      ]);
+      const featuredRes = await fetchCollection(
+        "properties",
+        page.value,
+        perPage,
+        featuredFilter,
+        "-created",
+        null,
+        null,
+        false,
+        { requestKey: null }
+      );
 
-      const featuredMapped = featuredRes?.items?.[0]
-        ? mapProperty(featuredRes.items[0])
-        : null;
-
-      const itemsMapped =
-        standardRes?.items
-          ?.map(mapProperty)
-          .filter((i: any) => i.id !== featuredMapped?.id) || [];
+      const itemsMapped = featuredRes?.items?.map(mapProperty) || [];
 
       return {
-        featured: featuredMapped,
-        standard: { ...standardRes, items: itemsMapped },
+        items: itemsMapped,
+        totalPages: featuredRes?.totalPages || 0,
       };
     } catch (err: any) {
       if (err.isAbort) return null;
@@ -245,10 +173,8 @@ const {
   }
 );
 
-const currentCategory = computed(() => ({
-  properties: propertyData.value?.standard || { items: [], totalPages: 0 },
-  featuredProperty: propertyData.value?.featured || null,
-}));
+const featuredProperties = computed(() => propertyData.value?.items || []);
+const totalPages = computed(() => propertyData.value?.totalPages || 0);
 
 const computedSeoData = computed(() => {
   const header =
