@@ -364,11 +364,15 @@ export const sellPropertyPage = {
     whyDescription:
       "Selling a property in Mexico requires more than just a sign in the yard. It requires a deep understanding of the San Carlos MLS, legal requirements for international sellers, and a marketing engine that reaches beyond the local border.",
     processTitle: "Our Sales Process",
+    benefitsTitle: "What Sets Us Apart",
   },
   cta: {
-    title: "Ready to start?",
+    title: "Ready to Start?",
     description:
       "Contact Brenda today for a custom market analysis of your property.",
+    emailLabel: "Email",
+    phoneLabel: "Phone",
+    contactButton: "Get Your Free Market Analysis",
   },
   steps: [
     {
@@ -385,6 +389,28 @@ export const sellPropertyPage = {
       name: "Expert Closing",
       description:
         "Bilingual support through the Notario and Fideicomiso process.",
+    },
+  ],
+  benefits: [
+    {
+      title: "Proven Track Record",
+      description:
+        "Years of successful sales in the San Carlos market with satisfied sellers.",
+    },
+    {
+      title: "Professional Photography",
+      description:
+        "High-quality photos and virtual tours that showcase your property's best features.",
+    },
+    {
+      title: "International Network",
+      description:
+        "Access to buyers from US, Canada, and Mexico through multiple listing platforms.",
+    },
+    {
+      title: "Legal Expertise",
+      description:
+        "Navigate Mexican real estate law with confidence and bilingual support.",
     },
   ],
   realtor: {

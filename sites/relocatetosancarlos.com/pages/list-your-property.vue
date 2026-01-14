@@ -1,155 +1,211 @@
 <template>
-  <div class="container relative w-full p-6 font-body md:py-10">
-    <SeoMeta v-if="sellData" :seoData="computedSeoData" />
+  <div class="min-h-screen bg-background">
+    <!-- SEO Meta -->
+    <SeoMeta :seoData="seoData" />
 
-    <div
-      v-if="sellData"
-      class="flex flex-col gap-6 mb-8 md:flex-row md:items-start md:justify-between"
+    <!-- Hero Section -->
+    <section
+      class="relative overflow-hidden bg-gradient-to-b from-primary/5 to-background"
     >
-      <div class="space-y-2">
-        <div class="flex flex-wrap items-center gap-2 mb-3">
-          <span
-            class="py-1 text-xs font-semibold uppercase rounded-full bg-primary/10 text-primary px-3"
-          >
+      <div class="container mx-auto px-4 py-16 md:py-24">
+        <div class="mx-auto max-w-4xl text-center">
+          <Badge class="mb-4" variant="secondary">
             {{ sellData.hero.label }}
-          </span>
-          <span class="text-sm text-muted-foreground items-center flex">
+          </Badge>
+
+          <h1
+            class="mb-4 text-4xl font-bold tracking-tight text-primary md:text-6xl"
+          >
+            {{ sellData.hero.title }}
+            <span class="text-foreground">{{ sellData.hero.highlight }}</span>
+          </h1>
+
+          <p class="mb-8 text-lg text-muted-foreground md:text-xl">
+            {{ sellData.hero.description }}
+          </p>
+
+          <div
+            class="flex items-center justify-center gap-2 text-sm text-muted-foreground"
+          >
             <ClientOnly>
-              <MapPin :size="14" class="mr-1" />
+              <MapPin :size="16" />
             </ClientOnly>
-            {{ sellData.hero.location }}
-          </span>
+            <span>{{ sellData.hero.location }}</span>
+          </div>
         </div>
-
-        <h1
-          class="text-3xl text-primary font-extrabold tracking-tight md:text-5xl"
-        >
-          {{ sellData.hero.title }}
-          <span class="text-foreground">{{ sellData.hero.highlight }}</span>
-        </h1>
-
-        <p class="text-muted-foreground leading-relaxed max-w-2xl">
-          {{ sellData.hero.description }}
-        </p>
       </div>
-    </div>
-
-    <section v-if="sellData" id="hero" class="w-full mb-10">
-      <img
-        :src="sellData.hero.image"
-        alt="Selling property"
-        class="w-full h-auto aspect-video max-h-[500px] object-cover rounded-xl shadow-lg"
-        loading="lazy"
-      />
     </section>
 
-    <section
-      v-if="sellData"
-      id="details"
-      class="grid grid-cols-1 gap-8 lg:grid-cols-3"
-    >
-      <div class="lg:col-span-2 space-y-10">
-        <div class="prose prose-slate max-w-none">
-          <h2 class="text-2xl font-bold text-primary">
-            {{ sellData.content.whyTitle }}
-          </h2>
-          <article
-            v-html="sellData.content.whyDescription"
-            class="mt-4"
-          ></article>
-        </div>
+    <!-- Hero Image -->
+    <section class="container mx-auto px-4 -mt-8 mb-16">
+      <div class="mx-auto max-w-6xl">
+        <img
+          :src="sellData.hero.image"
+          alt="San Carlos Sonora Property Listing Services"
+          class="h-auto w-full rounded-xl object-cover shadow-2xl aspect-[21/9]"
+          loading="eager"
+        />
+      </div>
+    </section>
 
-        <Card class="p-6 md:p-8">
-          <h3 class="mb-6 text-xl font-bold border-b pb-4">
-            {{ sellData.content.processTitle }}
-          </h3>
-          <div class="space-y-6">
-            <div
-              v-for="(step, index) in sellData.steps"
-              :key="`step-${index}-${step.name}`"
-              class="flex gap-4"
-            >
-              <div
-                class="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-full bg-primary text-white font-bold"
-              >
-                {{ index + 1 }}
+    <!-- Main Content -->
+    <section class="container mx-auto px-4 pb-16">
+      <div class="mx-auto max-w-6xl">
+        <div class="grid gap-8 lg:grid-cols-3">
+          <!-- Left Column - Main Content -->
+          <div class="lg:col-span-2 space-y-12">
+            <!-- Why List With Brenda -->
+            <div>
+              <h2 class="mb-6 text-3xl font-bold text-primary">
+                {{ sellData.content.whyTitle }}
+              </h2>
+              <div class="prose prose-slate max-w-none">
+                <p class="text-base leading-relaxed text-muted-foreground">
+                  {{ sellData.content.whyDescription }}
+                </p>
               </div>
-              <div>
-                <div class="font-bold text-lg leading-tight">
-                  {{ step.name }}
+            </div>
+
+            <!-- Sales Process -->
+            <Card>
+              <CardHeader>
+                <CardTitle class="text-2xl">{{
+                  sellData.content.processTitle
+                }}</CardTitle>
+              </CardHeader>
+              <CardContent class="space-y-6">
+                <div
+                  v-for="(step, index) in sellData.steps"
+                  :key="index"
+                  class="flex gap-4"
+                >
+                  <div
+                    class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground font-bold"
+                  >
+                    {{ index + 1 }}
+                  </div>
+                  <div class="flex-1">
+                    <h3 class="mb-2 text-lg font-semibold">
+                      {{ step.name }}
+                    </h3>
+                    <p class="text-sm text-muted-foreground">
+                      {{ step.description }}
+                    </p>
+                  </div>
                 </div>
-                <p class="text-muted-foreground mt-1">{{ step.description }}</p>
+              </CardContent>
+            </Card>
+
+            <!-- Benefits Grid -->
+            <div>
+              <h2 class="mb-6 text-2xl font-bold">
+                {{ sellData.content.benefitsTitle }}
+              </h2>
+              <div class="grid gap-4 sm:grid-cols-2">
+                <Card
+                  v-for="(benefit, index) in sellData.benefits"
+                  :key="index"
+                >
+                  <CardHeader>
+                    <CardTitle class="text-lg">{{ benefit.title }}</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p class="text-sm text-muted-foreground">
+                      {{ benefit.description }}
+                    </p>
+                  </CardContent>
+                </Card>
               </div>
             </div>
           </div>
-        </Card>
-      </div>
 
-      <aside class="relative h-fit">
-        <Card
-          class="p-6 lg:sticky lg:top-28 lg:z-10 shadow-lg border-primary/10"
-        >
-          <h4 class="font-bold text-lg mb-2">{{ sellData.cta.title }}</h4>
-          <p class="text-sm text-muted-foreground mb-4">
-            {{ sellData.cta.description }}
-          </p>
+          <!-- Right Column - Sticky Contact Card -->
+          <div class="lg:col-span-1">
+            <Card class="sticky top-24 shadow-lg border-primary/10">
+              <CardHeader>
+                <CardTitle>{{ sellData.cta.title }}</CardTitle>
+                <CardDescription>
+                  {{ sellData.cta.description }}
+                </CardDescription>
+              </CardHeader>
+              <CardContent class="space-y-4">
+                <Separator />
 
-          <div class="space-y-3">
-            <ClientOnly>
-              <a
-                :href="`mailto:${contactInfo.email}`"
-                class="flex items-center gap-2 text-sm font-medium hover:text-primary transition-colors"
-              >
-                <Mail :size="16" class="text-primary" /> {{ contactInfo.email }}
-              </a>
-              <template #fallback>
-                <a
-                  :href="`mailto:${contactInfo.email}`"
-                  class="flex items-center gap-2 text-sm font-medium hover:text-primary transition-colors"
-                >
-                  <span class="inline-block w-4 h-4 text-primary">✉️</span>
-                  {{ contactInfo.email }}
-                </a>
-              </template>
-            </ClientOnly>
+                <div class="space-y-3">
+                  <a
+                    :href="`mailto:${contactInfo.email}`"
+                    class="flex items-center gap-3 rounded-lg p-3 transition-colors hover:bg-muted"
+                  >
+                    <div
+                      class="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10"
+                    >
+                      <ClientOnly>
+                        <Mail :size="20" class="text-primary" />
+                      </ClientOnly>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                      <p class="text-xs font-medium text-muted-foreground">
+                        {{ sellData.cta.emailLabel }}
+                      </p>
+                      <p class="text-sm font-medium truncate">
+                        {{ contactInfo.email }}
+                      </p>
+                    </div>
+                  </a>
 
-            <ClientOnly>
-              <a
-                :href="`tel:${contactInfo.phone}`"
-                class="flex items-center gap-2 text-sm font-medium hover:text-primary transition-colors"
-              >
-                <Phone :size="16" class="text-primary" />
-                {{ contactInfo.phone }}
-              </a>
-              <template #fallback>
-                <a
-                  :href="`tel:${contactInfo.phone}`"
-                  class="flex items-center gap-2 text-sm font-medium hover:text-primary transition-colors"
-                >
-                  <span class="inline-block w-4 h-4 text-primary">📞</span>
-                  {{ contactInfo.phone }}
-                </a>
-              </template>
-            </ClientOnly>
+                  <a
+                    :href="`tel:${contactInfo.phone}`"
+                    class="flex items-center gap-3 rounded-lg p-3 transition-colors hover:bg-muted"
+                  >
+                    <div
+                      class="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10"
+                    >
+                      <ClientOnly>
+                        <Phone :size="20" class="text-primary" />
+                      </ClientOnly>
+                    </div>
+                    <div class="flex-1">
+                      <p class="text-xs font-medium text-muted-foreground">
+                        {{ sellData.cta.phoneLabel }}
+                      </p>
+                      <p class="text-sm font-medium">{{ contactInfo.phone }}</p>
+                    </div>
+                  </a>
+                </div>
+
+                <Separator />
+
+                <Button as-child class="w-full" size="lg">
+                  <a
+                    :href="`mailto:${contactInfo.email}?subject=Property Listing Inquiry`"
+                  >
+                    {{ sellData.cta.contactButton }}
+                  </a>
+                </Button>
+              </CardContent>
+            </Card>
           </div>
-        </Card>
-      </aside>
+        </div>
+      </div>
     </section>
 
-    <section v-if="sellData" id="realtor" class="py-12 scroll-mt-40">
-      <h2 class="mb-8 text-3xl font-bold sm:text-4xl font-heading">
-        {{ sellData.realtor.sectionTitle }}
-      </h2>
-      <MoleculesRealtorBio
-        :heroSection="heroSection"
-        :sellData="sellData"
-        :socialLinks="computedSocialLinks"
-      />
+    <!-- Realtor Bio Section -->
+    <section class="container mx-auto px-4 py-16 bg-muted/30">
+      <div class="mx-auto max-w-6xl">
+        <h2 class="mb-8 text-3xl font-bold md:text-4xl">
+          {{ sellData.realtor.sectionTitle }}
+        </h2>
+        <MoleculesRealtorBio
+          :heroSection="heroSection"
+          :sellData="sellData"
+          :socialLinks="socialLinks"
+        />
+      </div>
     </section>
   </div>
 </template>
 
-<script lang="ts" setup>
+<script setup>
 import {
   sellPropertyPage,
   contactInfo,
@@ -157,32 +213,32 @@ import {
   socials,
 } from "@local/assets/configs/layout.js";
 import { MapPin, Mail, Phone } from "lucide-vue-next";
-import { Card } from "@common/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 import { createSeoObject } from "@common/composables/useSeo";
 
-// useAsyncData ensures the static config is part of the Nuxt payload
-const { data: sellData } = await useAsyncData(
-  "sell-property-data",
-  () => {
-    return Promise.resolve(sellPropertyPage);
-  },
-  {
-    server: true,
-    lazy: false,
-  }
-);
+const sellData = sellPropertyPage;
 
-const computedSeoData = computed(() => {
-  if (!sellData.value) return null;
+// SEO data
+const seoData = computed(() => {
   return createSeoObject({
-    title: sellData.value.seo?.title,
-    summary: sellData.value.seo?.description,
-    imageUri: sellData.value.hero?.image,
-    keywords: sellData.value.seo?.keywords,
+    title: sellData.seo?.title,
+    summary: sellData.seo?.description,
+    imageUri: sellData.hero?.image,
+    keywords: sellData.seo?.keywords,
   });
 });
 
-const computedSocialLinks = computed(() => {
+// Social links
+const socialLinks = computed(() => {
   return socials.map((s) => ({
     icon: s.icon,
     href: s.href,

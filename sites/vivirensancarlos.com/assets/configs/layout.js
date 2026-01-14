@@ -331,11 +331,11 @@ export const categoryConfigs = {
 
 export const sellPropertyPage = {
   seo: {
-    title: "Venda su Propiedad en San Carlos, Sonora | Brenda Especialista",
+    title: "Venda su Propiedad en San Carlos, Sonora",
     description:
-      "¿Desea vender su propiedad en San Carlos? Brenda ofrece marketing estratégico, listado en MLS y apoyo bilingüe para un cierre rápido y seguro.",
+      "¿Quiere vender su casa, lote o condominio en San Carlos? Brenda ofrece marketing experto, servicios de listado MLS y soporte bilingüe para vender su propiedad rápidamente.",
     keywords:
-      "vender casa san carlos sonora, listar propiedad san carlos méxico, valuación inmobiliaria sonora",
+      "vender casa san carlos sonora, listado inmobiliario san carlos mexico, valuación de casa san carlos, brenda bienes raíces san carlos",
   },
   hero: {
     label: "Servicios de Listado",
@@ -343,41 +343,67 @@ export const sellPropertyPage = {
     title: "Venda su Propiedad en",
     highlight: "San Carlos, Sonora",
     description:
-      "Maximice el valor de su patrimonio con una estrategia de marketing personalizada, producción visual profesional y exposición ante una red global de compradores.",
+      "Maximice el valor de su propiedad con un plan de marketing estratégico, medios profesionales y exposición a una red global de compradores que buscan su pedazo de paraíso.",
     image: "/images/san-carlos-snapshot.webp",
   },
   content: {
-    whyTitle: "¿Por qué confiar su venta a Brenda?",
+    whyTitle: "¿Por qué Listar con Brenda?",
     whyDescription:
-      "Vender en México requiere conocimiento profundo del MLS local, dominio de los requisitos fiscales para extranjeros y una plataforma de marketing que cruce fronteras.",
+      "Vender una propiedad en México requiere más que solo un letrero en el jardín. Requiere un conocimiento profundo del MLS de San Carlos, requisitos legales para vendedores internacionales y un motor de marketing que llegue más allá de la frontera local.",
     processTitle: "Nuestro Proceso de Venta",
+    benefitsTitle: "Lo que nos Distingue",
   },
   cta: {
-    title: "¿Iniciamos el proceso?",
+    title: "¿Listo para Comenzar?",
     description:
-      "Contacte a Brenda hoy mismo para obtener un análisis de mercado comparativo de su propiedad.",
+      "Contacte a Brenda hoy para un análisis de mercado personalizado de su propiedad.",
+    emailLabel: "Correo",
+    phoneLabel: "Teléfono",
+    contactButton: "Obtenga su Análisis de Mercado Gratis",
   },
   steps: [
     {
-      name: "Opinión de Valor",
+      name: "Valuación Profesional",
       description:
-        "Analizamos datos reales del MLS para establecer un precio competitivo y rentable.",
+        "Analizamos datos del MLS de San Carlos para fijar el precio de su propiedad de manera competitiva.",
     },
     {
-      name: "Marketing de Impacto",
+      name: "Marketing Global",
       description:
-        "Su propiedad destacará en plataformas internacionales, llegando a mercados de EE. UU., Canadá y México.",
+        "Su listado aparece en las principales plataformas llegando a compradores de EE. UU., Canadá y México.",
     },
     {
-      name: "Cierre y Notaría",
+      name: "Cierre Experto",
       description:
-        "Gestión bilingüe de trámites ante Notario Público y seguimiento del Fideicomiso.",
+        "Soporte bilingüe a través del proceso de Notario y Fideicomiso.",
+    },
+  ],
+  benefits: [
+    {
+      title: "Historial Comprobado",
+      description:
+        "Años de ventas exitosas en el mercado de San Carlos con vendedores satisfechos.",
+    },
+    {
+      title: "Fotografía Profesional",
+      description:
+        "Fotos de alta calidad y tours virtuales que muestran las mejores características de su propiedad.",
+    },
+    {
+      title: "Red Internacional",
+      description:
+        "Acceso a compradores de EE. UU., Canadá y México a través de múltiples plataformas de listado.",
+    },
+    {
+      title: "Experiencia Legal",
+      description:
+        "Navegue la ley de bienes raíces mexicana con confianza y soporte bilingüe.",
     },
   ],
   realtor: {
-    sectionTitle: "Su Especialista en Ventas",
-    role: "Brenda - Especialista en Relocalización e Inversiones",
-    bio: "Brenda posiciona su propiedad para atraer compradores calificados, navegando con éxito las leyes inmobiliarias mexicanas.",
+    sectionTitle: "Su Especialista en Listados",
+    role: "Brenda - Especialista en Reubicación",
+    bio: "Brenda asegura que su propiedad esté posicionada para atraer compradores calificados y navegar las complejidades de la ley de bienes raíces mexicana.",
   },
 };
 
