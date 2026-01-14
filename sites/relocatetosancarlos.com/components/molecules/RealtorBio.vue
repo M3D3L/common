@@ -1,4 +1,4 @@
-<template>
+<!-- <template>
   <div class="min-h-[300px] w-full">
     <motion.div
       :initial="{ opacity: 0, y: 20 }"
@@ -61,4 +61,9 @@ const props = defineProps({
   sellData: { type: Object, required: true },
   socialLinks: { type: Array, required: true },
 });
-</script>
+</script> -->
+<template>
+  <div>
+    <slot />
+  </div>
+</template>
