@@ -163,7 +163,7 @@ export const siteMap = [
   { label: "Propiedades", href: "/bienes-raices/" },
   { label: "En Venta", href: "/bienes-raices/ventas/" },
   { label: "Rentas", href: "/bienes-raices/rentas/" },
-  { label: "Venda su Propiedad", href: "/bienes-raices/venda-su-propiedad/" },
+  { label: "Venda su Propiedad", href: "/venda-su-propiedad/" },
   // { label: "Terrenos", href: "/bienes-raices/terrenos" },
   { label: "Guía de Reubicación", href: "/blog/" },
   { label: "Contacto", href: "/#contacto" },
