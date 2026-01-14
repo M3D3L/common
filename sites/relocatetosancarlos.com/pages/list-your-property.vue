@@ -190,7 +190,7 @@
     </section>
 
     <!-- Realtor Bio Section -->
-    <section class="container mx-auto px-4 py-16 bg-muted/30">
+    <!-- <section class="container mx-auto px-4 py-16 bg-muted/30">
       <div class="mx-auto max-w-6xl">
         <h2 class="mb-8 text-3xl font-bold md:text-4xl">
           {{ sellData.realtor.sectionTitle }}
@@ -201,7 +201,7 @@
           :socialLinks="socialLinks"
         />
       </div>
-    </section>
+    </section> -->
   </div>
 </template>
 
