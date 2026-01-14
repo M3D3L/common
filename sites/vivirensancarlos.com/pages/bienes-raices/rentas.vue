@@ -1,0 +1,9 @@
+<template>
+  <Properties type="rentals" lang="Sp" />
+</template>
+
+<script lang="ts" setup>
+import Properties from "@relocatetosancarlos/pages/real-estate/Properties.vue";
+</script>
+
+<style></style>

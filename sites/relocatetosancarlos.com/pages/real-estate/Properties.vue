@@ -126,6 +126,7 @@ import { useRoute } from "vue-router";
 
 const props = defineProps({
   lang: { type: String, default: "En" },
+  type: { type: String, default: "properties" },
 });
 
 const isSp = computed(() => props.lang === "Sp");
@@ -139,9 +140,12 @@ const typeMap: Record<string, { index: number; query: string }> = {
   lots: { index: 2, query: "lot" },
 };
 
+/**
+ * MappedType now uses props.type instead of route.params.type
+ */
 const mappedType = computed(() => {
-  const rawType = (route.params?.type as string)?.toLowerCase();
-  if (!rawType) return "";
+  const rawType = props.type?.toLowerCase();
+  if (!rawType) return "properties";
 
   if (!isSp.value) return rawType;
 
@@ -177,6 +181,7 @@ const {
   error,
   refresh,
 } = useAsyncData(
+  // The key now includes mappedType (from props) to ensure correct cache isolation
   `properties-list-${props.lang}-${mappedType.value}-${page.value}`,
   async () => {
     const currentType = mappedType.value;
@@ -186,12 +191,9 @@ const {
     const { query } = configMatch;
 
     try {
-      // 1. Single quotes for PocketBase filters
       const featuredFilter = `type='${query}' && featured=true`;
       const standardFilter = `type='${query}'`;
 
-      // 2. Parallel fetching with requestKey: null override
-      // Passing nulls for arguments we aren't using to reach the 'options' object
       const [featuredRes, standardRes] = await Promise.all([
         fetchCollection(
           "properties",
@@ -231,7 +233,7 @@ const {
         standard: { ...standardRes, items: itemsMapped },
       };
     } catch (err: any) {
-      if (err.isAbort) return; // Silent return for intentional aborts
+      if (err.isAbort) return;
       console.error("Critical Fetch Error in Index.vue:", err);
       throw err;
     }
