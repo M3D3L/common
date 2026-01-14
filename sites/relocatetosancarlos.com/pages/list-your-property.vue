@@ -213,16 +213,16 @@ import {
   socials,
 } from "@local/assets/configs/layout.js";
 import { MapPin, Mail, Phone } from "lucide-vue-next";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Badge } from "@common/components/ui/badge";
+import { Button } from "@common/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
+} from "@common/components/ui/card";
+import { Separator } from "@common/components/ui/separator";
 import { createSeoObject } from "@common/composables/useSeo";
 
 const sellData = sellPropertyPage;
