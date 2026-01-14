@@ -393,14 +393,14 @@ export const sellPropertyPage = {
   ],
   benefits: [
     {
-      title: "Proven Track Record",
+      title: "Local Market Expertise",
       description:
-        "Years of successful sales in the San Carlos market with satisfied sellers.",
+        "In-depth knowledge of San Carlos real estate trends to position your property effectively.",
     },
     {
-      title: "Professional Photography",
+      title: "Professional Media & Drone Footage",
       description:
-        "High-quality photos and virtual tours that showcase your property's best features.",
+        "High-quality photography, virtual tours, and professional drone footage—both interior and exterior—to showcase every angle of your property.",
     },
     {
       title: "International Network",

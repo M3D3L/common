@@ -380,14 +380,14 @@ export const sellPropertyPage = {
   ],
   benefits: [
     {
-      title: "Historial Comprobado",
+      title: "Experiencia en el Mercado Local",
       description:
-        "Años de ventas exitosas en el mercado de San Carlos con vendedores satisfechos.",
+        "Conocimiento profundo de las tendencias inmobiliarias en San Carlos para posicionar su propiedad de manera efectiva.",
     },
     {
-      title: "Fotografía Profesional",
+      title: "Fotografía Profesional y Drones",
       description:
-        "Fotos de alta calidad y tours virtuales que muestran las mejores características de su propiedad.",
+        "Fotos de alta calidad, recorridos virtuales y tomas con dron —tanto de interiores como de exteriores— para resaltar los mejores atributos de su propiedad.",
     },
     {
       title: "Red Internacional",
