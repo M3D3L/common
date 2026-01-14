@@ -21,12 +21,12 @@
       <AtomsLoadingSpinner />
     </div>
 
-    <ul v-else class="container pb-32 space-y-32">
+    <ul v-else-if="isClient" class="container pb-32 space-y-32">
       <li v-if="typeMap[mappedType] && propertyData">
         <TextSectionTitle
           class="pt-12 pb-6"
-          :title="categoriesHeaders[typeMap[mappedType].query]?.title"
-          :description="categoriesHeaders[typeMap[mappedType].query]?.subTitle"
+          :title="categoriesHeaders[typeMap[mappedType].query as keyof typeof categoriesHeaders]?.title"
+          :description="categoriesHeaders[typeMap[mappedType].query as keyof typeof categoriesHeaders]?.subTitle"
           :h1="true"
         />
 
@@ -42,10 +42,8 @@
         <div class="flex flex-col gap-6 lg:flex-row mb-6">
           <div class="grid content-center w-full gap-6 md:grid-cols-2 lg:w-2/3">
             <CardsPropertyCard
-              v-for="(
-                item, itemIndex
-              ) in currentCategory?.properties?.items.slice(0, 6)"
-              :key="item.id || `property-${itemIndex}`"
+              v-for="item in currentCategory?.properties?.items.slice(0, 6)"
+              :key="`property-${item.id}`"
               :content="item"
               :button-text="isSp ? 'Ver Propiedad' : 'View Listing'"
               :is-sp="isSp"
@@ -92,10 +90,8 @@
 
         <div class="grid content-center w-full gap-6 md:grid-cols-3">
           <CardsPropertyCard
-            v-for="(
-              item, itemIndex
-            ) in currentCategory?.properties?.items.slice(6)"
-            :key="item.id || `extra-property-${itemIndex}`"
+            v-for="item in currentCategory?.properties?.items.slice(6)"
+            :key="`extra-property-${item.id}`"
             :content="item"
             :button-text="isSp ? 'Ver Propiedad' : 'View Listing'"
             :is-sp="isSp"
@@ -121,8 +117,6 @@ import {
   categoriesHeaders,
 } from "@local/assets/configs/layout.js";
 import { createSeoObject } from "@common/composables/useSeo";
-import { computed } from "vue";
-import { useRoute } from "vue-router";
 
 const props = defineProps({
   lang: { type: String, default: "En" },
@@ -132,6 +126,12 @@ const props = defineProps({
 const isSp = computed(() => props.lang === "Sp");
 const { fetchCollection } = usePocketBaseCore();
 const route = useRoute();
+
+// Fix for Safari hydration
+const isClient = ref(false);
+onMounted(() => {
+  isClient.value = true;
+});
 
 const perPage = 10;
 const typeMap: Record<string, { index: number; query: string }> = {
@@ -181,8 +181,8 @@ const {
   error,
   refresh,
 } = useAsyncData(
-  // The key now includes mappedType (from props) to ensure correct cache isolation
-  `properties-list-${props.lang}-${mappedType.value}-${page.value}`,
+  // Ensure stable key generation
+  () => `properties-list-${props.lang}-${mappedType.value}-${page.value}`,
   async () => {
     const currentType = mappedType.value;
     const configMatch = typeMap[currentType];
@@ -233,7 +233,7 @@ const {
         standard: { ...standardRes, items: itemsMapped },
       };
     } catch (err: any) {
-      if (err.isAbort) return;
+      if (err.isAbort) return null;
       console.error("Critical Fetch Error in Index.vue:", err);
       throw err;
     }
@@ -251,7 +251,10 @@ const currentCategory = computed(() => ({
 }));
 
 const computedSeoData = computed(() => {
-  const header = categoriesHeaders[typeMap[mappedType.value]?.query];
+  const header =
+    categoriesHeaders[
+      typeMap[mappedType.value]?.query as keyof typeof categoriesHeaders
+    ];
   return createSeoObject({
     title: header?.title || "Real Estate",
     summary: header?.subTitle || "",
