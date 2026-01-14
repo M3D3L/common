@@ -16,7 +16,9 @@
           <span class="text-sm text-muted-foreground items-center flex">
             <ClientOnly>
               <MapPin :size="14" class="mr-1" />
-              <template #fallback><span class="mr-1">📍</span></template>
+              <template #fallback>
+                <span class="inline-block w-3.5 h-3.5 mr-1">📍</span>
+              </template>
             </ClientOnly>
             {{ sellData.hero.location }}
           </span>
@@ -67,7 +69,7 @@
           <div class="space-y-6">
             <div
               v-for="(step, index) in sellData.steps"
-              :key="index"
+              :key="`step-${index}-${step.name}`"
               class="flex gap-4"
             >
               <div
@@ -87,22 +89,34 @@
       </div>
 
       <aside class="relative h-fit">
-        <ClientOnly>
-          <Card
-            class="p-6 lg:sticky lg:top-28 lg:z-10 shadow-lg border-primary/10"
-          >
-            <h4 class="font-bold text-lg mb-2">{{ sellData.cta.title }}</h4>
-            <p class="text-sm text-muted-foreground mb-4">
-              {{ sellData.cta.description }}
-            </p>
+        <Card
+          class="p-6 lg:sticky lg:top-28 lg:z-10 shadow-lg border-primary/10"
+        >
+          <h4 class="font-bold text-lg mb-2">{{ sellData.cta.title }}</h4>
+          <p class="text-sm text-muted-foreground mb-4">
+            {{ sellData.cta.description }}
+          </p>
 
-            <div class="space-y-3">
+          <div class="space-y-3">
+            <ClientOnly>
               <a
                 :href="`mailto:${contactInfo.email}`"
                 class="flex items-center gap-2 text-sm font-medium hover:text-primary transition-colors"
               >
                 <Mail :size="16" class="text-primary" /> {{ contactInfo.email }}
               </a>
+              <template #fallback>
+                <a
+                  :href="`mailto:${contactInfo.email}`"
+                  class="flex items-center gap-2 text-sm font-medium hover:text-primary transition-colors"
+                >
+                  <span class="inline-block w-4 h-4 text-primary">✉️</span>
+                  {{ contactInfo.email }}
+                </a>
+              </template>
+            </ClientOnly>
+
+            <ClientOnly>
               <a
                 :href="`tel:${contactInfo.phone}`"
                 class="flex items-center gap-2 text-sm font-medium hover:text-primary transition-colors"
@@ -110,14 +124,18 @@
                 <Phone :size="16" class="text-primary" />
                 {{ contactInfo.phone }}
               </a>
-            </div>
-          </Card>
-          <template #fallback>
-            <div
-              class="p-6 border rounded-xl h-40 animate-pulse bg-muted/50"
-            ></div>
-          </template>
-        </ClientOnly>
+              <template #fallback>
+                <a
+                  :href="`tel:${contactInfo.phone}`"
+                  class="flex items-center gap-2 text-sm font-medium hover:text-primary transition-colors"
+                >
+                  <span class="inline-block w-4 h-4 text-primary">📞</span>
+                  {{ contactInfo.phone }}
+                </a>
+              </template>
+            </ClientOnly>
+          </div>
+        </Card>
       </aside>
     </section>
 
@@ -146,9 +164,16 @@ import { Card } from "@common/components/ui/card";
 import { createSeoObject } from "@common/composables/useSeo";
 
 // useAsyncData ensures the static config is part of the Nuxt payload
-const { data: sellData } = await useAsyncData("sell-property-data", () => {
-  return Promise.resolve(sellPropertyPage);
-});
+const { data: sellData } = await useAsyncData(
+  "sell-property-data",
+  () => {
+    return Promise.resolve(sellPropertyPage);
+  },
+  {
+    server: true,
+    lazy: false,
+  }
+);
 
 const computedSeoData = computed(() => {
   if (!sellData.value) return null;
