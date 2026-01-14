@@ -22,11 +22,11 @@
     </div>
 
     <ul v-else class="container pb-32 space-y-32">
-      <li v-if="typeMap[mappedType] && propertyData">
+      <li v-if="isValidType && propertyData">
         <TextSectionTitle
           class="pt-12 pb-6"
-          :title="categoriesHeaders[typeMap[mappedType].query as keyof typeof categoriesHeaders]?.title"
-          :description="categoriesHeaders[typeMap[mappedType].query as keyof typeof categoriesHeaders]?.subTitle"
+          :title="categoriesHeaders[queryType as keyof typeof categoriesHeaders]?.title"
+          :description="categoriesHeaders[queryType as keyof typeof categoriesHeaders]?.subTitle"
           :h1="true"
         />
 
@@ -75,14 +75,12 @@
 
           <div class="w-full lg:w-1/3">
             <CardsInfoCard
-              v-if="typeMap[mappedType]"
-              :title="rawCategories?.[typeMap[mappedType].index]?.sectionTitle"
-              :subTitle="rawCategories?.[typeMap[mappedType].index]?.subTitle"
-              :footerText="
-                rawCategories?.[typeMap[mappedType].index]?.footerText
-              "
-              :benefits="rawCategories?.[typeMap[mappedType].index]?.benefits"
-              :mode="rawCategories?.[typeMap[mappedType].index]?.mode"
+              v-if="isValidType"
+              :title="rawCategories?.[typeConfig.index]?.sectionTitle"
+              :subTitle="rawCategories?.[typeConfig.index]?.subTitle"
+              :footerText="rawCategories?.[typeConfig.index]?.footerText"
+              :benefits="rawCategories?.[typeConfig.index]?.benefits"
+              :mode="rawCategories?.[typeConfig.index]?.mode"
               class="z-10 sticky top-28"
             />
           </div>
@@ -100,7 +98,7 @@
       </li>
 
       <li
-        v-else-if="!pending && !typeMap[mappedType]"
+        v-else-if="!pending && !isValidType"
         class="container py-32 text-center"
       >
         <h2 class="text-2xl font-bold text-gray-800">
@@ -120,7 +118,7 @@ import { createSeoObject } from "@common/composables/useSeo";
 
 const props = defineProps({
   lang: { type: String, default: "En" },
-  type: { type: String, default: "properties" },
+  type: { type: String, default: "properties", required: false },
 });
 
 const isSp = computed(() => props.lang === "Sp");
@@ -134,24 +132,10 @@ const typeMap: Record<string, { index: number; query: string }> = {
   lots: { index: 2, query: "lot" },
 };
 
-/**
- * MappedType now uses props.type instead of route.params.type
- */
-const mappedType = computed(() => {
-  const rawType = props.type?.toLowerCase();
-  if (!rawType) return "properties";
-
-  if (!isSp.value) return rawType;
-
-  const translationMap: Record<string, string> = {
-    ventas: "properties",
-    propiedades: "properties",
-    rentas: "rentals",
-    alquileres: "rentals",
-    terrenos: "lots",
-  };
-  return translationMap[rawType] || rawType;
-});
+// Get the configuration for the current type prop
+const typeConfig = computed(() => typeMap[props.type]);
+const isValidType = computed(() => !!typeConfig.value);
+const queryType = computed(() => typeConfig.value?.query || "property");
 
 const page = computed(() => Number(route.query.page) || 1);
 
@@ -175,14 +159,11 @@ const {
   error,
   refresh,
 } = useAsyncData(
-  // Ensure stable key generation
-  () => `properties-list-${props.lang}-${mappedType.value}-${page.value}`,
+  () => `properties-list-${props.lang}-${props.type}-${page.value}`,
   async () => {
-    const currentType = mappedType.value;
-    const configMatch = typeMap[currentType];
+    if (!isValidType.value) return null;
 
-    if (!configMatch) return null;
-    const { query } = configMatch;
+    const { query } = typeConfig.value;
 
     try {
       const featuredFilter = `type='${query}' && featured=true`;
@@ -233,7 +214,7 @@ const {
     }
   },
   {
-    watch: [mappedType, page],
+    watch: [() => props.type, page],
     lazy: true,
     server: true,
   }
@@ -246,9 +227,7 @@ const currentCategory = computed(() => ({
 
 const computedSeoData = computed(() => {
   const header =
-    categoriesHeaders[
-      typeMap[mappedType.value]?.query as keyof typeof categoriesHeaders
-    ];
+    categoriesHeaders[queryType.value as keyof typeof categoriesHeaders];
   return createSeoObject({
     title: header?.title || "Real Estate",
     summary: header?.subTitle || "",
