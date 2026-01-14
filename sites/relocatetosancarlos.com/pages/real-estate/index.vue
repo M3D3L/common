@@ -122,19 +122,6 @@
           </div>
         </div>
       </section>
-
-      <!-- <section id="realtor" class="py-12 scroll-mt-40">
-        <h2
-          class="mb-8 text-3xl font-bold sm:text-4xl font-heading text-foreground"
-        >
-          {{ sellData.realtor.sectionTitle }}
-        </h2>
-        <MoleculesRealtorBio
-          :heroSection="heroSection"
-          :sellData="sellData"
-          :socialLinks="computedSocialLinks"
-        />
-      </section> -->
     </div>
   </div>
 </template>
@@ -156,13 +143,12 @@ const { fetchCollection, isUserVerified } = usePocketBaseCore();
 const isSp = computed(() => props.lang === "Sp");
 const sellData = sellPropertyPage;
 
-// Client-only check for verified status to avoid hydration mismatch
 const isVerified = ref(false);
 onMounted(() => {
   isVerified.value = isUserVerified();
 });
 
-// FETCHING DATA
+// FETCHING ONLY FEATURED PROPERTIES
 const {
   data: categoryData,
   pending,
@@ -172,16 +158,15 @@ const {
   `properties-featured-list-${props.lang}`,
   async () => {
     try {
-      // Use requestKey: null to prevent auto-cancellation errors on Safari
       const featuredRes = await fetchCollection(
         "properties",
         1,
         100,
         "featured=true",
         "-created",
-        null, // expand
-        null, // fields
-        false, // ignoreCache
+        null,
+        null,
+        false,
         { requestKey: null }
       );
 
@@ -207,7 +192,7 @@ const {
       throw e;
     }
   },
-  { server: true } // SSR ensures first visit works
+  { server: true }
 );
 
 // HELPERS

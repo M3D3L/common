@@ -229,7 +229,7 @@
       />
     </section>
 
-    <!-- <section id="realtor" class="py-12 scroll-mt-40">
+    <section id="realtor" class="py-12 scroll-mt-40">
       <h2
         class="mb-8 text-3xl font-bold sm:text-4xl font-heading text-foreground"
       >
@@ -241,7 +241,7 @@
         :sellData="sellData"
         :socialLinks="computedSocialLinks"
       />
-    </section> -->
+    </section>
   </div>
 </template>
 
