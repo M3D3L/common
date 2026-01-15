@@ -65,10 +65,8 @@ export default defineNuxtConfig({
       "/blog/admin/**",
       "/real-estate/admin/**",
       "/bienes-raices/admin/**",
+      "/real-estate/**",
       "/real-estate",
-      "/real-estate/lots",
-      "/real-estate/rentals",
-      "/real-estate/properties",
     ],
   },
 
