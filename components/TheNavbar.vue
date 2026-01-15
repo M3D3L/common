@@ -1,6 +1,6 @@
 <template>
   <header
-    class="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 md:backdrop-blur-md supports-[backdrop-filter]:md:bg-background/60"
+    class="sticky top-0 z-50 w-full border-b border-border/40 bg-background"
   >
     <div class="container mx-auto flex h-20 items-center justify-between px-4">
       <!-- Logo -->
