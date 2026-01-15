@@ -51,6 +51,11 @@ export default defineNuxtConfig({
    * SITEMAP
    * ----------------------------- */
   sitemap: {
+    // 1. Whitelist only Spanish paths (and the root)
+    include: ["/", "/blog/**", "/bienes-raices/**"],
+    // 2. Explicitly exclude English patterns as a backup
+    exclude: ["/api/**", "/_nuxt/**", "/**/admin/**", "/real-estate/**"],
+    // 3. Your static index URLs
     urls: [
       { loc: "/" },
       { loc: "/blog/" },
@@ -58,15 +63,6 @@ export default defineNuxtConfig({
       { loc: "/bienes-raices/terrenos/" },
       { loc: "/bienes-raices/rentas/" },
       { loc: "/bienes-raices/ventas/" },
-    ],
-    exclude: [
-      "/api/**",
-      "/_nuxt/**",
-      "/blog/admin/**",
-      "/real-estate/admin/**",
-      "/bienes-raices/admin/**",
-      "/real-estate/**",
-      "/real-estate",
     ],
   },
 
