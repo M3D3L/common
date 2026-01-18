@@ -8,7 +8,7 @@
         <div class="relative w-full aspect-[4/3] overflow-hidden bg-muted">
           <img
             :src="createImgUrl(content)"
-            :alt="content.title"
+            :alt="isSp && content.title_Sp ? content.title_Sp : content.title"
             class="object-cover w-full h-full transition-transform duration-500 group-hover:scale-105"
           />
         </div>
@@ -29,7 +29,7 @@
           class="transition-colors text-primary hover:underline"
         >
           <h3 class="text-lg font-bold leading-snug line-clamp-1">
-            {{ content.title }}
+            {{ isSp && content.title_Sp ? content.title_Sp : content.title }}
           </h3>
         </nuxt-link>
 
@@ -40,7 +40,6 @@
           <ClientOnly>
             <MapPin :size="14" class="shrink-0" />
           </ClientOnly>
-
           <span class="truncate">{{ content.address }}</span>
         </div>
       </div>
@@ -75,10 +74,14 @@
       </div>
 
       <p
-        v-if="content.description"
+        v-if="content.description || content.description_Sp"
         class="text-sm leading-relaxed line-clamp-2 text-muted-foreground"
       >
-        {{ content.description }}
+        {{
+          isSp && content.description_Sp
+            ? content.description_Sp
+            : content.description
+        }}
       </p>
 
       <div v-if="displayAmenities.length > 0" class="mt-4 mb-6">
@@ -115,6 +118,7 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from "vue";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { Button } from "~/components/ui/button";
 import { Badge } from "~/components/ui/badge";
@@ -130,7 +134,9 @@ export interface PropertyAmenity {
 export interface PropertyContent {
   id: string;
   title: string;
+  title_Sp?: string;
   description?: string;
+  description_Sp?: string;
   address?: string;
   price: number;
   pricingType?: string;
@@ -139,6 +145,7 @@ export interface PropertyContent {
   area?: number;
   cover_image: string;
   amenities?: PropertyAmenity[];
+  amenities_Sp?: PropertyAmenity[];
   slug: string;
   collectionId?: string;
 }
@@ -156,10 +163,16 @@ const props = withDefaults(defineProps<Props>(), {
   isSp: false,
 });
 
-// Rewriting logic for the URL based on isSp
+// Helper to get active amenities list based on language
+const activeAmenities = computed(() => {
+  if (!props.content) return [];
+  return props.isSp && props.content.amenities_Sp
+    ? props.content.amenities_Sp
+    : props.content.amenities || [];
+});
+
 const localizedSlug = computed(() => {
   if (!props.content?.slug) return "#";
-
   let slug = props.content.slug;
 
   if (props.isSp) {
@@ -200,21 +213,22 @@ const formattedPrice = computed(() => {
   const price = formatter.format(props.content.price);
 
   if (props.content.pricingType) {
-    return `${price} ${props.content.pricingType}`;
+    // Basic translation for common pricing types
+    let type = props.content.pricingType;
+    if (props.isSp) {
+      type = type.replace("per/night", "por noche").replace("total", "total");
+    }
+    return `${price} ${type}`;
   }
 
   return price;
 });
 
 const displayAmenities = computed(() => {
-  if (!props.content?.amenities) return [];
-  return props.content.amenities
-    .slice(0, props.maxAmenities)
-    .map((a) => a.name);
+  return activeAmenities.value.slice(0, props.maxAmenities).map((a) => a.name);
 });
 
 const remainingAmenities = computed(() => {
-  if (!props.content?.amenities) return 0;
-  return Math.max(0, props.content.amenities.length - props.maxAmenities);
+  return Math.max(0, activeAmenities.value.length - props.maxAmenities);
 });
 </script>

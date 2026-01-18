@@ -19,7 +19,7 @@ const headConfig = computed(() => {
         content: "width=device-width, initial-scale=1, viewport-fit=cover",
       },
       { name: "format-detection", content: "telephone=no" },
-      { name: "apple-mobile-web-app-capable", content: "yes" },
+      { name: "mobile-web-app-capable", content: "yes" },
       { name: "apple-mobile-web-app-status-bar-style", content: "default" },
       ...base.meta,
       {
