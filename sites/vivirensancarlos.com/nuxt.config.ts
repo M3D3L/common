@@ -108,7 +108,7 @@ export default defineNuxtConfig({
    * ANALYTICS
    * ----------------------------- */
   gtag: {
-    id: process.env.GTAG || "G-XXXXXXXXXX",
+    id: "G-28H7W00MJK",
     debug: false,
   },
 
