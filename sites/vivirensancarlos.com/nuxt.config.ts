@@ -63,6 +63,7 @@ export default defineNuxtConfig({
       { loc: "/bienes-raices/terrenos/" },
       { loc: "/bienes-raices/rentas/" },
       { loc: "/bienes-raices/ventas/" },
+      { loc: "/venda-su-propiedad/" },
     ],
   },
 
@@ -101,6 +102,14 @@ export default defineNuxtConfig({
     display: "swap",
     preload: true,
     download: true,
+  },
+
+  /* -----------------------------
+   * ANALYTICS
+   * ----------------------------- */
+  gtag: {
+    id: process.env.GTAG || "G-XXXXXXXXXX",
+    debug: false,
   },
 
   /* -----------------------------
