@@ -50,6 +50,7 @@
     "@nuxtjs/tailwindcss": "^6.12.2",
     "@tailwindcss/typography": "^0.5.16",
     "cross-env": "^10.0.0",
+    "nuxt-gtag": "^4.1.0",
     "typescript": "^5.7.2"
   }
 }
