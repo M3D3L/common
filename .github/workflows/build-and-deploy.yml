@@ -19,56 +19,92 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        site: [guillermomedel, relocatetosancarlos, vivirensancarlos]
+        include:
+          - site: guillermomedel
+            domain: guillermomedel.com
+            repo: M3D3L/guillermomedel.com
+            path: ./sites/guillermomedel.com
+            filter_path: "sites/guillermomedel.com/**"
+          - site: relocatetosancarlos
+            domain: relocatetosancarlos.com
+            repo: M3D3L/relocatetosancarlos.com
+            path: ./sites/relocatetosancarlos.com
+            filter_path: "sites/relocatetosancarlos.com/**"
+          - site: vivirensancarlos
+            domain: vivirensancarlos.com
+            repo: M3D3L/vivirensancarlos.com
+            path: ./sites/vivirensancarlos.com
+            filter_path: "sites/vivirensancarlos.com/**"
 
     steps:
       - uses: actions/checkout@v4
         with:
           lfs: true
 
-      - uses: actions/setup-node@v4
+      - name: Check for changes
+        id: changes
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            current_site:
+              - '${{ matrix.filter_path }}'
+            common:
+              - 'package-lock.json'
+              - '.github/workflows/**'
+              - 'common/**' # Assuming you have a common folder
+            relocate_dependency:
+              - 'sites/relocatetosancarlos.com/**'
+
+      - name: Determine if build is needed
+        id: check_skip
+        run: |
+          # Default to false
+          SHOULD_BUILD=false
+
+          # Build if common files changed, workflow manually dispatched, or site itself changed
+          if [ "${{ steps.changes.outputs.current_site }}" = "true" ] || \
+             [ "${{ steps.changes.outputs.common }}" = "true" ] || \
+             [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            SHOULD_BUILD=true
+          fi
+
+          # Special rule: If relocate changed, vivirensancarlos MUST build
+          if [ "${{ matrix.site }}" = "vivirensancarlos" ] && [ "${{ steps.changes.outputs.relocate_dependency }}" = "true" ]; then
+            SHOULD_BUILD=true
+          fi
+
+          echo "should_build=$SHOULD_BUILD" >> $GITHUB_OUTPUT
+
+      - name: Setup Node
+        if: steps.check_skip.outputs.should_build == 'true'
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
           cache-dependency-path: "./package-lock.json"
 
       - name: Install dependencies
+        if: steps.check_skip.outputs.should_build == 'true'
         run: npm ci
 
-      # Only prepare the base site if we are currently building the child site
       - name: Prepare Base Site (Dependency)
-        if: matrix.site == 'vivirensancarlos'
+        if: steps.check_skip.outputs.should_build == 'true' && matrix.site == 'vivirensancarlos'
         run: npx nuxi prepare sites/relocatetosancarlos.com
 
-      - name: Set site variables
-        id: vars
-        run: |
-          if [ "${{ matrix.site }}" = "guillermomedel" ]; then
-            echo "domain=guillermomedel.com" >> $GITHUB_OUTPUT
-            echo "path=./sites/guillermomedel.com" >> $GITHUB_OUTPUT
-            echo "repo=M3D3L/guillermomedel.com" >> $GITHUB_OUTPUT
-          elif [ "${{ matrix.site }}" = "relocatetosancarlos" ]; then
-            echo "domain=relocatetosancarlos.com" >> $GITHUB_OUTPUT
-            echo "path=./sites/relocatetosancarlos.com" >> $GITHUB_OUTPUT
-            echo "repo=M3D3L/relocatetosancarlos.com" >> $GITHUB_OUTPUT
-          elif [ "${{ matrix.site }}" = "vivirensancarlos" ]; then
-            echo "domain=vivirensancarlos.com" >> $GITHUB_OUTPUT
-            echo "path=./sites/vivirensancarlos.com" >> $GITHUB_OUTPUT
-            echo "repo=M3D3L/vivirensancarlos.com" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Build ${{ steps.vars.outputs.domain }}
+      - name: Build ${{ matrix.domain }}
+        if: steps.check_skip.outputs.should_build == 'true'
         run: |
           npx nuxi prepare
           npm run generate
-        working-directory: ${{ steps.vars.outputs.path }}
+        working-directory: ${{ matrix.path }}
         env:
           POCKETBASE_URL: ${{ env.POCKETBASE_URL }}
           WHATSAPP_NUMBER: ${{ env.WHATSAPP_NUMBER }}
 
       - name: Prepare deploy folder
+        if: steps.check_skip.outputs.should_build == 'true'
         run: |
-          SITE_PATH="${{ steps.vars.outputs.path }}"
+          SITE_PATH="${{ matrix.path }}"
           DEPLOY_DIR="deploy_${{ matrix.site }}"
 
           if [ -d "$SITE_PATH/.output/public" ]; then
@@ -80,13 +116,14 @@ jobs:
           fi
 
           mkdir -p "$DEPLOY_DIR"
-          cp -a "$BUILD_OUTPUT"/. "$DEPLOY_DIR"/
-          echo "${{ steps.vars.outputs.domain }}" > "$DEPLOY_DIR/CNAME"
+          cp -a "$BUILD_OUTPUT"/. "$DEPLOY_DIR/"
+          echo "${{ matrix.domain }}" > "$DEPLOY_DIR/CNAME"
 
-      - name: Deploy ${{ steps.vars.outputs.domain }}
+      - name: Deploy ${{ matrix.domain }}
+        if: steps.check_skip.outputs.should_build == 'true'
         uses: JamesIves/github-pages-deploy-action@v4
         with:
-          repository-name: ${{ steps.vars.outputs.repo }}
+          repository-name: ${{ matrix.repo }}
           branch: gh-pages
           folder: deploy_${{ matrix.site }}
           clean: true
