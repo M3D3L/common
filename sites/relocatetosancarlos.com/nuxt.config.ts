@@ -93,6 +93,7 @@ export default defineNuxtConfig({
   /* -----------------------------
    * FONTS
    * ----------------------------- */
+
   googleFonts: {
     families: {
       Montserrat: { wght: [300, 400, 500, 700] },
@@ -101,6 +102,14 @@ export default defineNuxtConfig({
     display: "swap",
     preload: true,
     download: true,
+  },
+
+  /* -----------------------------
+   * ANALYTICS
+   * ----------------------------- */
+  gtag: {
+    id: process.env.GTAG || "G-XXXXXXXXXX",
+    debug: false,
   },
 
   /* -----------------------------
@@ -142,6 +151,7 @@ export default defineNuxtConfig({
       environment: process.env.NODE_ENV || "development",
       chatgptProxyUrl:
         "https://chatgpt-proxy.guillermoantoniomedel.workers.dev",
+      googleTagId: process.env.GTAG,
     },
   },
 });
