@@ -93,11 +93,13 @@ const loadProperties = async (ignoreCache = false) => {
   loading.value = true;
   error.value = null;
   try {
+    // fetch only featured properties
+
     const data = await fetchCollection(
       "properties",
       1,
-      3,
-      "",
+      2,
+      "featured=true",
       "-created",
       null,
       null,
