@@ -1,473 +1,618 @@
 <template>
-  <SeoMeta :seoData="seoData" />
+  <div
+    class="container relative w-full py-10 md:py-16 font-body bg-background text-foreground"
+  >
+    <!-- Header Section -->
+    <div class="mb-12">
+      <TitleBlock :title="pageTitle" :description="pageDescription" />
 
-  <div class="container relative w-full py-10 md:py-16 font-body bg-background text-foreground">
-    <div v-if="loading" class="flex flex-col items-center justify-center min-h-[50vh] text-center">
-      <p class="text-lg font-semibold">{{ loadingBusinessText }}</p>
-      <div class="w-12 h-12 mt-4 border-b-2 rounded-full animate-spin border-primary"></div>
+      <!-- Language Toggle -->
+      <button
+        @click="isSpanish = !isSpanish"
+        class="fixed flex flex-col items-center content-center gap-2 right-4 bottom-4 z-50 bg-white dark:bg-gray-800 p-3 rounded-lg shadow-lg hover:shadow-xl transition-shadow"
+      >
+        <img
+          :src="
+            isSpanish
+              ? '/images/countries/USA.png'
+              : '/images/countries/Mexico.png'
+          "
+          alt="Country Flag"
+          class="w-10 h-10"
+        />
+        {{ isSpanish ? "English" : "Español" }}
+      </button>
     </div>
 
-    <div v-else-if="error" class="flex flex-col items-center justify-center min-h-[50vh] text-center text-red-500">
+    <!-- Loading State -->
+    <div
+      v-if="loading"
+      class="flex flex-col items-center justify-center min-h-[50vh] text-center"
+    >
+      <p class="text-lg font-semibold">{{ loadingText }}</p>
+      <div
+        class="w-12 h-12 mt-4 border-b-2 rounded-full animate-spin border-primary"
+      ></div>
+    </div>
+
+    <!-- Error State -->
+    <div
+      v-else-if="error"
+      class="flex flex-col items-center justify-center min-h-[50vh] text-center text-red-500"
+    >
       <h2 class="text-2xl font-bold">{{ errorTitle }}</h2>
       <p class="mt-2">{{ error.message || errorText }}</p>
     </div>
 
-    <template v-else-if="business">
-      <div class="container flex flex-row justify-between gap-4 mt-16 mb-6 md:items-center">
-        <TitleBlock class="mb-6" :title="business.name" :description="isSpanish ? business.description_ES : business.description_En
-          " />
+    <!-- Businesses Content -->
+    <div v-else class="space-y-8">
+      <!-- Search and Filter Controls -->
+      <Card class="p-6">
+        <div class="space-y-4">
+          <!-- Search Bar -->
+          <div class="relative">
+            <input
+              v-model="searchQuery"
+              type="text"
+              :placeholder="searchPlaceholder"
+              class="w-full px-4 py-3 pl-10 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+            />
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="absolute w-5 h-5 text-gray-400 left-3 top-3.5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+              />
+            </svg>
+          </div>
 
-        <!-- Social Links -->
-        <ContainersSocialsIcons v-if="business.socials.length && business?.is_featured" :socials="business.socials"
-          :columnOnMobile="true" />
-      </div>
+          <!-- Filters Row -->
+          <div
+            class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
+          >
+            <!-- Featured Filter -->
+            <div class="flex items-center gap-4">
+              <label class="flex items-center gap-2 cursor-pointer">
+                <input
+                  v-model="showFeaturedOnly"
+                  type="checkbox"
+                  class="w-4 h-4 rounded text-primary focus:ring-primary"
+                />
+                <span class="text-sm">{{ featuredOnlyLabel }}</span>
+              </label>
 
-      <button @click="isSpanish = !isSpanish"
-        class="fixed flex flex-col items-center content-center gap-2 right-4 bottom-4">
-        <img :src="isSpanish
-            ? '/images/countries/USA.png'
-            : '/images/countries/Mexico.png'
-          " alt="Country Flag" class="w-10 h-10" />
-        {{ isSpanish ? "English" : "Español" }}
-      </button>
+              <label class="flex items-center gap-2 cursor-pointer">
+                <input
+                  v-model="showOpenNow"
+                  type="checkbox"
+                  class="w-4 h-4 rounded text-primary focus:ring-primary"
+                />
+                <span class="text-sm">{{ openNowLabel }}</span>
+              </label>
+            </div>
 
-      <section id="hero" class="relative w-full h-[40vh] lg:h-[60vh] container overflow-hidden scroll-mt-72">
-        <ModalCarousel v-if="business?.promoGallery" :slides="business?.promoGallery"
-          :collection-id="business?.collectionId" :propertyId="business?.id" @selected-event="openModalWithImage"
-          :aspectRatio="'aspect-video'" :breakpoints="{
-            640: { slidesPerView: 1.1 },
-            768: { slidesPerView: 1.1 },
-            1024: { slidesPerView: 1.1 },
-          }" />
-      </section>
+            <!-- Sort Dropdown -->
+            <select
+              v-model="sortBy"
+              class="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+            >
+              <option value="name">{{ sortByNameLabel }}</option>
+              <option value="newest">{{ sortByNewestLabel }}</option>
+              <option value="featured">{{ sortByFeaturedLabel }}</option>
+            </select>
+          </div>
 
-      <div class="container mx-auto font-body lg:flex lg:gap-8 lg:pt-16">
-        <aside class="self-start mb-10 space-y-6 lg:w-1/3 lg:sticky lg:top-8 lg:mb-0">
-          <Card id="contact" class="p-6 space-y-4 shadow-lg scroll-mt-20" ref="setSectionRef">
-            <h2 class="text-xl font-bold font-heading text-primary">
-              {{ contactTitle }}
-            </h2>
-            <p class="text-sm italic text-muted-foreground">
-              {{ businessSlogan }}
-            </p>
+          <!-- Results Count -->
+          <p class="text-sm text-muted-foreground">
+            {{ filteredBusinessCountText }}
+          </p>
+        </div>
+      </Card>
 
-            <div v-if="business.address" class="pt-2">
-              <p class="font-semibold text-foreground">{{ addressLabel }}</p>
-              <p class="text-sm text-muted-foreground">
-                {{ formatAddress(business.address) }}
+      <!-- Business Cards Grid -->
+      <div
+        v-if="filteredBusinesses.length"
+        class="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3"
+      >
+        <Card
+          v-for="business in paginatedBusinesses"
+          :key="business.id"
+          class="flex flex-col overflow-hidden transition-all duration-300 hover:shadow-2xl group"
+        >
+          <!-- Business Image/Logo -->
+          <NuxtLink
+            :to="`/businesses/${business.slug}`"
+            class="relative block h-48 overflow-hidden bg-gray-100"
+          >
+            <img
+              :src="getBusinessImage(business)"
+              :alt="business.name"
+              class="object-cover w-full h-full transition-transform duration-300 group-hover:scale-110"
+              @error="replaceWithPlaceholder($event, 'Business')"
+            />
+
+            <!-- Featured Badge -->
+            <div
+              v-if="business.is_featured"
+              class="absolute px-3 py-1 text-xs font-bold text-white rounded-full top-3 right-3 bg-primary"
+            >
+              {{ featuredLabel }}
+            </div>
+
+            <!-- Open/Closed Status -->
+            <div
+              v-if="isOpenNow(business)"
+              class="absolute px-3 py-1 text-xs font-bold text-white bg-green-600 rounded-full bottom-3 left-3"
+            >
+              {{ openLabel }}
+            </div>
+          </NuxtLink>
+
+          <!-- Business Info -->
+          <div class="flex flex-col flex-grow p-6">
+            <!-- Name and Description -->
+            <div class="mb-4">
+              <NuxtLink :to="`/businesses/${business.slug}`">
+                <h3
+                  class="mb-2 text-xl font-bold transition-colors text-primary hover:text-primary/80"
+                >
+                  {{ business.name }}
+                </h3>
+              </NuxtLink>
+              <p class="text-sm text-muted-foreground line-clamp-2">
+                {{ getDescription(business) }}
               </p>
             </div>
 
-            <div v-if="business.contact?.phone">
-              <p class="font-semibold text-foreground">{{ phoneLabel }}</p>
-              <div class="flex items-center gap-2">
-                <a :href="`tel:${business.contact.phone}`" class="text-blue-600 hover:text-blue-700 hover:underline">
+            <!-- Contact Info -->
+            <div class="mt-auto space-y-2">
+              <!-- Address -->
+              <div
+                v-if="business.address"
+                class="flex items-start gap-2 text-sm"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="flex-shrink-0 w-4 h-4 mt-0.5 text-primary"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                  />
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                  />
+                </svg>
+                <span class="text-muted-foreground line-clamp-1">
+                  {{ formatAddress(business.address) }}
+                </span>
+              </div>
+
+              <!-- Phone -->
+              <div
+                v-if="business.contact?.phone"
+                class="flex items-center gap-2 text-sm"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="w-4 h-4 text-primary"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
+                  />
+                </svg>
+                <a
+                  :href="`tel:${business.contact.phone}`"
+                  class="text-muted-foreground hover:text-primary"
+                >
                   {{ business.contact.phone }}
                 </a>
-                <a :href="`https://wa.me/${formatPhoneForWhatsapp(
-                  business.contact.phone
-                )}`" target="_blank" rel="noopener noreferrer"
-                  class="flex items-center justify-center w-8 h-8 text-white transition-colors bg-green-500 rounded-full hover:bg-green-600"
-                  aria-label="Chat on WhatsApp">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
-                    fill="currentColor">
-                    <path
-                      d="M12 0C5.373 0 0 5.373 0 12c0 3.535 1.442 6.75 3.77 9.06l-.75 2.76 2.87-.75c2.31 1.25 4.96 1.95 7.09 1.95 6.627 0 12-5.373 12-12S18.627 0 12 0zm5.176 15.658c-.146.243-.75.54-.925.748-.175.208-.344.225-.632.075-.288-.15-.992-.37-1.89-1.162-.647-.565-1.076-1.265-1.206-1.465-.13-.2-.105-.375-.034-.52.071-.145.176-.38.35-.555.175-.175.26-.302.35-.502.09-.2.045-.375-.018-.502-.063-.127-.585-1.397-.8-1.928-.215-.53-.438-.456-.632-.456-.192 0-.41.015-.632.015-.222 0-.585.075-.895.45-.31.375-1.18 1.15-1.18 2.812 0 1.662 1.21 3.268 1.385 3.518.175.25 2.373 3.633 5.768 5.045 3.395 1.412 3.395.955 4.015.918.62-.038 1.69-.693 1.93-1.365.24-.672.24-1.248.165-1.36-.075-.112-.276-.177-.585-.327z" />
-                  </svg>
-                </a>
               </div>
-            </div>
 
-            <div v-if="business.contact?.email">
-              <p class="font-semibold text-foreground">{{ emailLabel }}</p>
-              <a :href="`mailto:${business.contact.email}`" class="text-sm text-blue-600 hover:underline">
-                {{ business.contact.email }}
-              </a>
-            </div>
-            <div v-if="business.contact?.website">
-              <p class="font-semibold text-foreground">{{ websiteLabel }}</p>
-              <a :href="business.contact.website" target="_blank" class="text-sm text-blue-600 hover:underline">
-                {{ business.contact.website }}
-              </a>
-            </div>
-
-            <div v-if="business.hours_of_operation" class="pt-4">
-              <h3 class="font-semibold text-foreground">{{ hoursTitle }}</h3>
-              <ul class="mt-2 space-y-1 text-sm">
-                <li v-for="(hours, day) in business.hours_of_operation" :key="day"
-                  :class="{ 'font-bold text-green-600': isCurrentDay(day) }" class="flex justify-between">
-                  <span>{{ formatDay(day) }}:</span>
-                  <span v-if="hours === 'Closed'" class="text-red-500">{{
-                    closedLabel
-                    }}</span>
-                  <span v-else>{{ hours }}</span>
-                </li>
-              </ul>
-            </div>
-          </Card>
-
-          <Card v-if="mapSrc" class="relative w-full h-[300px] overflow-hidden shadow-lg">
-            <iframe class="absolute inset-0 w-full h-full" :src="mapSrc" style="border: 0" allowfullscreen
-              loading="lazy"></iframe>
-          </Card>
-          <Card v-else
-            class="relative flex items-center justify-center w-full h-[300px] bg-gray-100 text-gray-500 shadow-lg">
-            {{ locationUnavailableText }}
-          </Card>
-        </aside>
-
-        <main class="space-y-12 lg:w-2/3">
-          <div v-if="!isPremiumMember"
-            class="flex items-center justify-center w-full h-32 bg-gray-200 rounded-lg shadow-inner">
-            <span class="text-lg font-semibold text-gray-600">[Advertisement Placeholder]</span>
-          </div>
-
-          <section v-if="isPremiumMember && businessServices.length" id="services" class="scroll-mt-20"
-            ref="setSectionRef">
-            <h2 class="pb-2 mb-6 text-2xl font-bold border-b sm:text-3xl font-heading text-primary">
-              {{ servicesTitle }}
-            </h2>
-            <ul class="grid grid-cols-1 gap-6 md:grid-cols-2">
-              <li v-for="(service, i) in businessServices" :key="i">
-                <Card class="flex h-full p-4 overflow-hidden transition-all duration-300 hover:shadow-xl group">
-                  <div class="flex-shrink-0 w-24 h-24 overflow-hidden rounded-md">
-                    <img :src="service.image" :alt="service.alt"
-                      class="object-cover w-full h-full transition-transform duration-300 group-hover:scale-105"
-                      @error="replaceWithPlaceholder($event, 'Service')" />
-                  </div>
-                  <div class="flex flex-col flex-grow ml-4">
-                    <CardTitle class="text-lg font-bold text-primary">{{
-                      service.title
-                      }}</CardTitle>
-                    <CardDescription class="mt-1 text-sm leading-relaxed text-muted-foreground">
-                      {{ service.description }}
-                    </CardDescription>
-                  </div>
-                </Card>
-              </li>
-            </ul>
-          </section>
-
-          <section v-if="isPremiumMember && businessGallery.length" id="gallery" class="scroll-mt-20"
-            ref="setSectionRef">
-            <h2 class="pb-2 mb-6 text-2xl font-bold border-b sm:text-3xl font-heading text-primary">
-              {{ galleryTitle }}
-            </h2>
-            <ModalCarousel v-if="business?.gallery?.length" :slides="business.gallery"
-              :collection-id="business?.collectionId" :propertyId="business?.id" @selected-event="openModalWithImage"
-              :aspectRatio="'aspect-video'" />
-            <Modal ref="modal">
-              <Card class="relative flex flex-row items-center justify-between p-4 bg-background">
-                <button @click="moveSlider('back')" class="left-0 gallery-nav-btn">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 mx-auto" fill="none" viewBox="0 0 24 24"
-                    stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-                  </svg>
-                </button>
-                <div class="w-full min-h-[80vh] lg:aspect-video flex items-center justify-center">
-                  <img :src="selectedImage.url" :alt="selectedImage.alt"
-                    class="object-contain max-w-full max-h-[80vh] rounded-lg shadow-lg" />
-                </div>
-                <button @click="moveSlider('next')" class="right-0 gallery-nav-btn">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 mx-auto transform rotate-180" fill="none"
-                    viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-                  </svg>
-                </button>
-              </Card>
-            </Modal>
-          </section>
-
-          <section id="menu" class="scroll-mt-20" ref="setSectionRef">
-            <Card
-              class="relative flex flex-col items-center justify-between gap-8 p-8 overflow-hidden md:flex-row">
-              <!-- Text content -->
-              <div class="z-10 flex flex-col items-center space-y-3 text-center md:items-start md:text-left">
-                <h2 class="text-3xl font-extrabold tracking-tight">
-                  {{ isSpanish ? "¡Descubre Nuestro Menú!" : "Discover Our Menu!" }}
-                </h2>
-
-                <p class="max-w-md text-muted-foreground">
+              <!-- Hours Today -->
+              <div
+                v-if="getTodayHours(business)"
+                class="flex items-center gap-2 text-sm"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="w-4 h-4 text-primary"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+                <span
+                  :class="
+                    getTodayHours(business) === 'Closed'
+                      ? 'text-red-500'
+                      : 'text-muted-foreground'
+                  "
+                >
                   {{
-                    isSpanish
-                      ? "Explora deliciosos platillos de mariscos frescos y tradicionales mexicanos."
-                      : "Explore delicious seafood dishes made with fresh, local ingredients."
+                    getTodayHours(business) === "Closed"
+                      ? closedLabel
+                      : getTodayHours(business)
                   }}
-                </p>
-
-                <NuxtLink :to="`${route.path.endsWith('/') ? route.path : `${route.path}/`}menu`">
-                  <Button class="mt-2">
-                    {{ isSpanish ? "Ver Menú Completo" : "View Full Menu" }}
-                  </Button>
-                </NuxtLink>
+                </span>
               </div>
+            </div>
 
-              <!-- Icon or background graphic -->
-              <div class="relative flex items-center justify-center w-full md:w-auto opacity-20 md:opacity-100">
-                <MenuSquare class="w-48 h-48 text-primary/70" />
-              </div>
+            <!-- Social Links -->
+            <div v-if="business.socials?.length" class="flex gap-2 mt-4">
+              <a
+                v-for="social in business.socials"
+                :key="social.platform"
+                :href="social.url"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="p-2 transition-colors rounded-full hover:bg-primary/10"
+                @click.stop
+              >
+                <component
+                  :is="getSocialIcon(social.platform)"
+                  class="w-4 h-4 text-primary"
+                />
+              </a>
+            </div>
 
-              <!-- Decorative gradient overlay -->
-              <div class="absolute inset-0 pointer-events-none bg-gradient-to-tr from-primary/5 to-transparent" />
-            </Card>
-          </section>
-
-        </main>
+            <!-- View Details Button -->
+            <NuxtLink :to="`/businesses/${business.slug}`" class="block mt-4">
+              <Button class="w-full">
+                {{ viewDetailsLabel }}
+              </Button>
+            </NuxtLink>
+          </div>
+        </Card>
       </div>
-    </template>
+
+      <!-- Empty State -->
+      <div
+        v-else
+        class="flex flex-col items-center justify-center min-h-[30vh] text-center"
+      >
+        <p class="text-lg text-muted-foreground">{{ noResultsText }}</p>
+        <Button @click="clearFilters" class="mt-4" variant="outline">
+          {{ clearFiltersLabel }}
+        </Button>
+      </div>
+
+      <!-- Pagination -->
+      <div v-if="totalPages > 1" class="flex justify-center gap-2 mt-8">
+        <Button
+          @click="currentPage--"
+          :disabled="currentPage === 1"
+          variant="outline"
+          size="sm"
+        >
+          {{ previousLabel }}
+        </Button>
+
+        <div class="flex items-center gap-2">
+          <span class="text-sm text-muted-foreground">
+            {{ pageLabel }} {{ currentPage }} {{ ofLabel }} {{ totalPages }}
+          </span>
+        </div>
+
+        <Button
+          @click="currentPage++"
+          :disabled="currentPage === totalPages"
+          variant="outline"
+          size="sm"
+        >
+          {{ nextLabel }}
+        </Button>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { Card, CardTitle, CardDescription } from "@common/components/ui/card";
+import { Card } from "@common/components/ui/card";
 import { Button } from "@common/components/ui/button";
-import Modal from "@common/components/sections/Modal.vue";
-import ModalCarousel from "@common/components/ui/modal/ModalCarousel.vue";
-// Composables
-import useBusinesses from "@common/composables/useBusiness";
-import { Facebook, Instagram, Twitter, Linkedin, MenuSquare } from "lucide-vue-next";
-import {
-  TwitterLogoIcon,
-  GithubLogoIcon,
-  LinkedinLogoIcon,
-  InstagramLogoIcon,
-} from "@radix-icons/vue";
+import { Facebook, Instagram, Twitter, Linkedin } from "lucide-vue-next";
 
-const route = useRoute();
-const { fetchBusinessBySlug } = useBusinesses();
-const business = ref<any>(null);
+import usePocketBaseCore from "@common/composables/usePocketBaseCore";
+
+const { fetchCollection } = usePocketBaseCore();
+
+const businesses = ref<any[]>([]);
 const loading = ref(true);
 const error = ref<Error | null>(null);
-const isSpanish = ref(false); // Language state
+const isSpanish = ref(false);
 
-const businessDescription = computed(() =>
-  isSpanish.value
-    ? business.value?.description_Sp
-    : business.value?.description_En
-);
+// Filter and search state
+const searchQuery = ref("");
+const showFeaturedOnly = ref(false);
+const showOpenNow = ref(false);
+const sortBy = ref("name");
+const currentPage = ref(1);
+const itemsPerPage = 9;
 
-const businessSlogan = computed(() =>
-  isSpanish.value
-    ? "¡El mejor sabor y vista al mar en San Carlos!"
-    : "The best flavor and ocean view in San Carlos!"
-);
+// --- Data Fetching Logic ---
+const loadBusinesses = async () => {
+  try {
+    loading.value = true;
+    const result = await fetchCollection(
+      "businesses",
+      1,
+      100,
+      "",
+      "-created",
+      "socials,services",
+    );
 
-const businessServices = computed(
-  () =>
-    business.value?.services
-      ?.map((s: any) => ({
-        // Use proper nested image URL if available
-        image: s.image?.url || s.image || placeholderUrl("Service"),
-        title: isSpanish.value ? s.title_es || s.title : s.title_en || s.title,
-        description: isSpanish.value
-          ? s.description_es || s.description
-          : s.description_en || s.description,
-        alt: isSpanish.value ? s.image?.alt_es : s.image?.alt_en,
-      }))
-      .filter((s: any) => s.title) || [] // Filter out empty services
-);
-
-const businessGallery = computed(
-  () =>
-    business.value?.gallery?.map((g: any) => ({
-      url: g.url || placeholderUrl("Image"),
-      alt: isSpanish.value ? g.alt_es : g.alt_en,
-    })) || []
-);
-
-const iconMap: Record<string, any> = {
-  instagram: InstagramLogoIcon,
-  twitter: TwitterLogoIcon,
-  linkedin: LinkedinLogoIcon,
-  github: GithubLogoIcon,
+    if (result.items) {
+      businesses.value = result.items;
+    } else {
+      throw new Error(
+        isSpanish.value
+          ? "No se encontraron negocios."
+          : "No businesses found.",
+      );
+    }
+  } catch (err: any) {
+    error.value = err;
+    console.error("Error loading businesses:", err);
+  } finally {
+    loading.value = false;
+  }
 };
 
-const socialLinks = computed(() => {
-  const iconMap = {
+// --- Computed Props ---
+const filteredBusinesses = computed(() => {
+  let result = [...businesses.value];
+
+  // Search filter
+  if (searchQuery.value) {
+    const query = searchQuery.value.toLowerCase();
+    result = result.filter(
+      (b) =>
+        b.name?.toLowerCase().includes(query) ||
+        b.description_En?.toLowerCase().includes(query) ||
+        b.description_Sp?.toLowerCase().includes(query) ||
+        b.address?.city?.toLowerCase().includes(query),
+    );
+  }
+
+  // Featured filter
+  if (showFeaturedOnly.value) {
+    result = result.filter((b) => b.is_featured);
+  }
+
+  // Open now filter
+  if (showOpenNow.value) {
+    result = result.filter((b) => isOpenNow(b));
+  }
+
+  // Sort
+  if (sortBy.value === "name") {
+    result.sort((a, b) => a.name.localeCompare(b.name));
+  } else if (sortBy.value === "newest") {
+    result.sort(
+      (a, b) => new Date(b.created).getTime() - new Date(a.created).getTime(),
+    );
+  } else if (sortBy.value === "featured") {
+    result.sort((a, b) => (b.is_featured ? 1 : 0) - (a.is_featured ? 1 : 0));
+  }
+
+  return result;
+});
+
+const totalPages = computed(() =>
+  Math.ceil(filteredBusinesses.value.length / itemsPerPage),
+);
+
+const paginatedBusinesses = computed(() => {
+  const start = (currentPage.value - 1) * itemsPerPage;
+  const end = start + itemsPerPage;
+  return filteredBusinesses.value.slice(start, end);
+});
+
+const pageTitle = computed(() =>
+  isSpanish.value ? "Negocios Locales" : "Local Businesses",
+);
+
+const pageDescription = computed(() =>
+  isSpanish.value
+    ? "Descubre los mejores negocios y servicios en San Carlos, Sonora"
+    : "Discover the best businesses and services in San Carlos, Sonora",
+);
+
+const loadingText = computed(() =>
+  isSpanish.value ? "Cargando negocios..." : "Loading businesses...",
+);
+
+const errorTitle = computed(() => (isSpanish.value ? "Error" : "Error"));
+
+const errorText = computed(() =>
+  isSpanish.value
+    ? "No se pudo cargar la información."
+    : "Could not load information.",
+);
+
+const searchPlaceholder = computed(() =>
+  isSpanish.value
+    ? "Buscar negocios, servicios, ubicaciones..."
+    : "Search businesses, services, locations...",
+);
+
+const featuredLabel = computed(() =>
+  isSpanish.value ? "Destacado" : "Featured",
+);
+
+const featuredOnlyLabel = computed(() =>
+  isSpanish.value ? "Solo destacados" : "Featured only",
+);
+
+const openNowLabel = computed(() =>
+  isSpanish.value ? "Abierto ahora" : "Open now",
+);
+
+const openLabel = computed(() => (isSpanish.value ? "Abierto" : "Open"));
+
+const closedLabel = computed(() => (isSpanish.value ? "Cerrado" : "Closed"));
+
+const sortByNameLabel = computed(() =>
+  isSpanish.value ? "Ordenar: Nombre" : "Sort: Name",
+);
+
+const sortByNewestLabel = computed(() =>
+  isSpanish.value ? "Ordenar: Más reciente" : "Sort: Newest",
+);
+
+const sortByFeaturedLabel = computed(() =>
+  isSpanish.value ? "Ordenar: Destacados" : "Sort: Featured",
+);
+
+const viewDetailsLabel = computed(() =>
+  isSpanish.value ? "Ver Detalles" : "View Details",
+);
+
+const noResultsText = computed(() =>
+  isSpanish.value
+    ? "No se encontraron negocios con estos filtros."
+    : "No businesses found with these filters.",
+);
+
+const clearFiltersLabel = computed(() =>
+  isSpanish.value ? "Limpiar Filtros" : "Clear Filters",
+);
+
+const previousLabel = computed(() =>
+  isSpanish.value ? "Anterior" : "Previous",
+);
+
+const nextLabel = computed(() => (isSpanish.value ? "Siguiente" : "Next"));
+
+const pageLabel = computed(() => (isSpanish.value ? "Página" : "Page"));
+
+const ofLabel = computed(() => (isSpanish.value ? "de" : "of"));
+
+const filteredBusinessCountText = computed(() => {
+  const count = filteredBusinesses.value.length;
+  const total = businesses.value.length;
+  return isSpanish.value
+    ? `${count} de ${total} negocio${total !== 1 ? "s" : ""}`
+    : `${count} of ${total} business${total !== 1 ? "es" : ""}`;
+});
+
+// --- Helper Functions ---
+function placeholderUrl(text: string) {
+  return `https://placehold.co/400x300/F0F0F0/000000?text=${encodeURIComponent(text)}`;
+}
+
+function replaceWithPlaceholder(e: Event, text: string) {
+  (e.target as HTMLImageElement).src = placeholderUrl(text);
+}
+
+function formatAddress(addr: any) {
+  if (typeof addr === "string") return addr;
+  return [addr.street, addr.city, addr.state, addr.zip, addr.country]
+    .filter(Boolean)
+    .join(", ");
+}
+
+function getDescription(business: any) {
+  return isSpanish.value
+    ? business.description_Sp ||
+        business.description_Es ||
+        business.description_En ||
+        ""
+    : business.description_En ||
+        business.description_Sp ||
+        business.description_Es ||
+        "";
+}
+
+function getTodayHours(business: any) {
+  if (!business.hours_of_operation) return null;
+  const today = new Date().toLocaleDateString("en-US", { weekday: "long" });
+  return business.hours_of_operation[today] || null;
+}
+
+function isOpenNow(business: any): boolean {
+  const hours = getTodayHours(business);
+  if (!hours || hours === "Closed") return false;
+
+  // Simple check - could be enhanced with actual time parsing
+  return true;
+}
+
+function getBusinessImage(business: any): string {
+  return (
+    business.logo ||
+    business.promoGallery?.[0]?.url ||
+    business.gallery?.[0]?.url ||
+    placeholderUrl("Business")
+  );
+}
+
+function getSocialIcon(platform: string) {
+  const iconMap: Record<string, any> = {
     facebook: Facebook,
     instagram: Instagram,
     twitter: Twitter,
     linkedin: Linkedin,
   };
-  return (business.value?.socials || []).map((s: any) => ({
-    icon: iconMap[s.platform.toLowerCase()] || Facebook,
-    href: s.url,
-  }));
+  return iconMap[platform.toLowerCase()] || Facebook;
+}
+
+function clearFilters() {
+  searchQuery.value = "";
+  showFeaturedOnly.value = false;
+  showOpenNow.value = false;
+  sortBy.value = "name";
+  currentPage.value = 1;
+}
+
+// Watch for filter changes and reset to page 1
+watch([searchQuery, showFeaturedOnly, showOpenNow, sortBy], () => {
+  currentPage.value = 1;
 });
 
-const isPremiumMember = computed(() => business.value?.is_featured || false);
-
-const zoom = 15;
-const mapSrc = computed(() => {
-  const loc = business.value?.location;
-  // Ensure we are using the correct URL for Google Maps embedding
-  return loc?.lat && loc?.lng
-    ? `https://maps.google.com/maps?q=${loc.lat},${loc.lng}&z=${zoom}&t=k&output=embed`
-    : "";
-});
-
-// Text labels
-const loadingText = computed(() =>
-  isSpanish.value ? "Cargando..." : "Loading..."
-);
-const loadingBusinessText = computed(() =>
-  isSpanish.value ? "Cargando datos del negocio..." : "Loading business data..."
-);
-const errorTitle = computed(() =>
-  isSpanish.value ? "Error al cargar el negocio" : "Error loading business"
-);
-const errorText = computed(() =>
-  isSpanish.value
-    ? "No se pudo cargar la información del negocio."
-    : "Could not load business information."
-);
-const contactTitle = computed(() =>
-  isSpanish.value ? "Información de Contacto" : "Contact Information"
-);
-const hoursTitle = computed(() =>
-  isSpanish.value ? "Horario de Operación" : "Hours of Operation"
-);
-const closedLabel = computed(() => (isSpanish.value ? "Cerrado" : "Closed"));
-const addressLabel = computed(() =>
-  isSpanish.value ? "Dirección:" : "Address:"
-);
-const phoneLabel = computed(() => (isSpanish.value ? "Teléfono:" : "Phone:"));
-const emailLabel = computed(() => (isSpanish.value ? "Correo:" : "Email:"));
-const websiteLabel = computed(() =>
-  isSpanish.value ? "Sitio Web:" : "Website:"
-);
-const locationUnavailableText = computed(() =>
-  isSpanish.value ? "Ubicación no disponible" : "Location not available"
-);
-const servicesTitle = computed(() =>
-  isSpanish.value ? "Servicios Destacados" : "Featured Services"
-);
-const galleryTitle = computed(() => (isSpanish.value ? "Galería" : "Gallery"));
-const socialTitle = computed(() =>
-  isSpanish.value ? "Redes Sociales" : "Social Media"
-);
-
-function placeholderUrl(text: string) {
-  return `https://placehold.co/400x300/F0F0F0/000000?text=${encodeURIComponent(
-    text
-  )}`;
-}
-function replaceWithPlaceholder(e: Event, text: string) {
-  (e.target as HTMLImageElement).src = placeholderUrl(text);
-}
-function formatAddress(addr: any) {
-  return [addr.street, addr.city, addr.state, addr.zip, addr.country]
-    .filter(Boolean)
-    .join(", ");
-}
-const formatPhoneForWhatsapp = (phone: string) => phone.replace(/\D/g, "");
-
-// Utility functions for Hours of Operation
-function formatDay(day: string) {
-  if (isSpanish.value) {
-    const daysEs: { [key: string]: string } = {
-      Monday: "Lunes",
-      Tuesday: "Martes",
-      Wednesday: "Miércoles",
-      Thursday: "Jueves",
-      Friday: "Viernes",
-      Saturday: "Sábado",
-      Sunday: "Domingo",
-    };
-    return daysEs[day] || day;
-  }
-  return day;
-}
-
-function isCurrentDay(day: string) {
-  const today = new Date().toLocaleDateString("en-US", { weekday: "long" });
-  return today === day;
-}
-
-// Gallery modal
-const modal = ref<any>(null);
-const selectedImageIndex = ref(0);
-const selectedImage = computed(
-  () => businessGallery.value[selectedImageIndex.value] || {}
-);
-function openModalWithImage(i: number) {
-  selectedImageIndex.value = i;
-  modal.value?.open();
-}
-function moveSlider(dir: "back" | "next") {
-  const len = businessGallery.value.length;
-  if (!len) return;
-  selectedImageIndex.value =
-    dir === "next"
-      ? (selectedImageIndex.value + 1) % len
-      : (selectedImageIndex.value - 1 + len) % len;
-}
-
-const mappedSocials = computed(() => {
-  const socials = business.value?.socials || [];
-  return socials.map((s: { platform: string; url: string }) => ({
-    href: s.url,
-    icon: iconMap[s.platform.toLowerCase()] || GithubLogoIcon,
-  }));
-});
-
-const seoData = computed(() => {
-  return {
-    title: business.value?.name || "Loading Business",
-    summary:
-      businessDescription.value || "Check out this great local business!",
-    imageUri: business.value?.logo || "",
-    pubDate: business.value?.created || "",
-    siteName: "San Carlos Insider",
-  };
-});
-
-onMounted(async () => {
-  const slug = route.params.slug as string;
-  if (!slug) {
-    error.value = new Error(
-      isSpanish.value
-        ? "Falta el slug del negocio en la URL."
-        : "Business slug missing in URL."
-    );
-    loading.value = false;
-    return;
-  }
-  try {
-    business.value = await fetchBusinessBySlug(slug);
-    if (!business.value) {
-      error.value = new Error(
-        isSpanish.value ? "Negocio no encontrado." : "Business not found."
-      );
-    }
-  } catch (err: any) {
-    error.value = err;
-  } finally {
-    loading.value = false;
-  }
-});
+onMounted(loadBusinesses);
 </script>
 
 <style scoped>
-/* Styles for the Gallery Modal Navigation */
-.gallery-nav-btn {
-  @apply text-white/80 hover:text-white transition-colors w-12 bottom-0 absolute top-0 min-h-[80vh] flex items-center justify-center z-20;
-  backdrop-filter: blur(1px);
-  background: rgba(0, 0, 0, 0.2);
+.line-clamp-1 {
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
-.gallery-nav-btn.left-0 {
-  @apply rounded-l-lg;
-}
-
-.gallery-nav-btn.right-0 {
-  @apply rounded-r-lg;
-}
-
-/* New style for sticky sidebar on large screens */
-@media (min-width: 1024px) {
-  .lg\:sticky {
-    position: sticky;
-  }
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 </style>

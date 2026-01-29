@@ -167,6 +167,7 @@
         {{ isSpanish ? "English" : "Español" }}
       </button>
     </div>
+    {{ businessSlug }}
   </div>
 </template>
 
@@ -185,30 +186,32 @@ const { fetchCollection } = usePocketBaseCore();
 const route = useRoute();
 
 const isSpanish = ref(false);
+
+const businessSlug = computed(() => route.params.businessSlug as string);
 const isPremiumUser = computed(() => {
   // For demo purposes, let's assume premium status is determined by a query param
   return data.value?.expand?.business?.is_featured || false;
 });
 
 const { data, pending, error } = await useAsyncData(
-  () => `menu-${route.params.slug}`,
+  () => `menu-${businessSlug.value}`,
   async () => {
-    if (!route?.params?.slug) return null;
+    if (!route?.params?.businessSlug) return null;
     try {
       const result = await fetchCollection(
         "menus",
         1,
         1,
-        `slug="${route.params.slug}"`,
+        `slug="${businessSlug.value}"`,
         "-created",
-        "business"
+        "",
       );
       return result.items.length ? result.items[0] : null;
     } catch (err) {
       console.error("Failed to fetch menu:", err);
       return null;
     }
-  }
+  },
 );
 
 const computedSeoData = computed(() => {
