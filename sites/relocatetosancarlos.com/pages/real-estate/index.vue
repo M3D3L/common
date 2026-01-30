@@ -241,8 +241,4 @@ const computedSeoData = computed(() => {
     keywords: isSp.value ? seo.keywords_Sp || seo.keywords : seo.keywords,
   });
 });
-
-const computedSocialLinks = computed(() => {
-  return socials.map((s) => ({ icon: s.icon, href: s.href, label: s.label }));
-});
 </script>

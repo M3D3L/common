@@ -167,7 +167,6 @@
         {{ isSpanish ? "English" : "Español" }}
       </button>
     </div>
-    {{ businessSlug }}
   </div>
 </template>
 

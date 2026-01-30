@@ -12,7 +12,7 @@
 
       <div class="flex gap-2 flex-wrap">
         <Button
-          @click="loadProperties(true)"
+          @click="loadProperties()"
           variant="outline"
           class="gap-2 shadow-sm"
         >
@@ -23,7 +23,6 @@
           <Plus class="w-4 h-4" /> Add Property
         </Button>
 
-        <!-- Safari-safe: input NOT nested inside button -->
         <label
           class="inline-flex items-center gap-2 border rounded-md px-3 py-2 cursor-pointer select-none bg-background shadow-sm"
         >
@@ -51,6 +50,7 @@
       <AtomsPropertyTable
         :properties="filteredProperties"
         :loading="loading"
+        :enriching-ids="enrichingIds"
         @edit="openEditModal"
         @delete="confirmDelete"
       />
@@ -153,6 +153,7 @@
           <Button variant="outline" @click="showModal = false">Cancel</Button>
           <Button :disabled="saving" @click="saveProperty">
             <Save v-if="!saving" class="w-4 h-4 mr-2" />
+            <Loader2 v-else class="w-4 h-4 mr-2 animate-spin" />
             {{ saving ? "Processing AI & Saving..." : "Save Property" }}
           </Button>
         </div>
@@ -186,7 +187,14 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from "vue";
-import { Plus, Save, RefreshCw } from "lucide-vue-next";
+import {
+  Plus,
+  Save,
+  RefreshCw,
+  Sparkles,
+  Loader2,
+  Trash2,
+} from "lucide-vue-next";
 import useAuth from "@common/composables/useAuth";
 import { useChatGPT } from "@common/composables/useChatGPT";
 import usePocketBaseCore from "@common/composables/usePocketBaseCore";
@@ -216,6 +224,7 @@ import {
   AlertDialogTitle,
 } from "@common/components/ui/alert-dialog";
 
+/* ---------------- Composables & State ---------------- */
 const {
   fetchCollection,
   createItem,
@@ -226,8 +235,7 @@ const {
 const { user } = useAuth();
 const { run: runChatGPT } = useChatGPT();
 
-/* ---------------- State ---------------- */
-const properties = ref({ items: [] });
+const properties = ref<{ items: any[] }>({ items: [] });
 const loading = ref(true);
 const activeFilter = ref("all");
 const showModal = ref(false);
@@ -236,10 +244,12 @@ const isEditing = ref(false);
 const saving = ref(false);
 const propertyToDelete = ref<any>(null);
 const disableAi = ref(false);
+const enrichingIds = ref(new Set<string>());
 
+/* ---------------- Lifecycle & Watchers ---------------- */
 onMounted(() => {
   try {
-    disableAi.value = localStorage.getItem("property_ai_disabled") !== "false";
+    disableAi.value = localStorage.getItem("property_ai_disabled") === "true";
   } catch {
     disableAi.value = false;
   }
@@ -252,6 +262,7 @@ watch(disableAi, (newVal) => {
   } catch {}
 });
 
+/* ---------------- Helpers ---------------- */
 const getInitialFormData = () => ({
   id: null,
   title: "",
@@ -283,12 +294,10 @@ const getInitialFormData = () => ({
 
 const formData = ref(getInitialFormData());
 
-/* ---------------- Helpers ---------------- */
 const filteredProperties = computed(() => {
-  if (activeFilter.value === "all") return properties.value.items || [];
-  return properties.value.items.filter(
-    (p: any) => p.type === activeFilter.value
-  );
+  const items = properties.value?.items || [];
+  if (activeFilter.value === "all") return items;
+  return items.filter((p: any) => p.type === activeFilter.value);
 });
 
 const getAuthorDisplay = () => {
@@ -298,7 +307,27 @@ const getAuthorDisplay = () => {
     : `ID: ${formData.value.author}`;
 };
 
-// Ensures data coming from DB is converted to the Array format the Selector expects
+const updateLocalState = (
+  record: any,
+  mode: "upsert" | "delete" = "upsert"
+) => {
+  const index = properties.value.items.findIndex(
+    (p: any) => p.id === record.id
+  );
+  if (mode === "delete") {
+    if (index !== -1) properties.value.items.splice(index, 1);
+    return;
+  }
+  if (index !== -1) {
+    properties.value.items[index] = {
+      ...properties.value.items[index],
+      ...record,
+    };
+  } else {
+    properties.value.items.unshift(record);
+  }
+};
+
 const ensureArray = (input: any) => {
   if (Array.isArray(input)) return [...input];
   if (typeof input === "string" && input.trim()) {
@@ -310,35 +339,27 @@ const ensureArray = (input: any) => {
   return [];
 };
 
-// Formats array for AI consumption
-const formatAmenitiesToString = (input: any) => {
-  if (typeof input === "string") return input;
-  if (Array.isArray(input)) return input.map((a) => a.name || a).join(", ");
-  return "";
-};
-
-const needsAIEnrichment = (data: any) => {
+const getMissingFields = (data: any) => {
   const fields = [
+    "sub_title",
     "description",
     "content",
-    "sub_title",
     "keywords",
+    "sub_title_Sp",
     "description_Sp",
     "content_Sp",
-    "sub_title_Sp",
     "keywords_Sp",
   ];
-  const hasEmptyField = fields.some(
+  const missing = fields.filter(
     (f) => !data[f] || (typeof data[f] === "string" && !data[f].trim())
   );
-  const hasEmptyAmenities =
-    !data.amenities_Sp || data.amenities_Sp.length === 0;
-
-  return hasEmptyField || hasEmptyAmenities;
+  if (!data.amenities_Sp || data.amenities_Sp.length === 0)
+    missing.push("amenities_Sp");
+  return missing;
 };
 
 /* ---------------- Actions ---------------- */
-const loadProperties = async (ignoreCache = false) => {
+const loadProperties = async () => {
   loading.value = true;
   try {
     properties.value = await fetchCollection(
@@ -347,9 +368,7 @@ const loadProperties = async (ignoreCache = false) => {
       100,
       "",
       "-created",
-      "author",
-      null,
-      ignoreCache
+      "author"
     );
   } finally {
     loading.value = false;
@@ -372,49 +391,15 @@ const openEditModal = (property: any) => {
   showModal.value = true;
 };
 
+const confirmDelete = (p: any) => {
+  propertyToDelete.value = p;
+  showDeleteModal.value = true;
+};
+
 const saveProperty = async () => {
   if (!formData.value.title) return;
   saving.value = true;
-
   try {
-    if (needsAIEnrichment(formData.value) && !disableAi.value) {
-      try {
-        const aiContext = {
-          title: formData.value.title,
-          sub_title: formData.value.sub_title,
-          description: formData.value.description,
-          content: formData.value.content,
-          amenities_list: formatAmenitiesToString(formData.value.amenities),
-        };
-
-        const instruction = `You are a Real Estate SEO Expert. 
-        Return ONLY a JSON object with keys: sub_title, description, content, keywords, sub_title_Sp, description_Sp, content_Sp, keywords_Sp, amenities_Sp.
-        CRITICAL: amenities_Sp MUST be a JSON array of objects like: [{"name": "Alberca"}]`;
-
-        const aiResult = await runChatGPT(instruction, aiContext);
-
-        const start = aiResult?.indexOf("{");
-        const end = aiResult?.lastIndexOf("}");
-        if (start !== -1 && end !== -1) {
-          const parsed = JSON.parse(aiResult.slice(start, end + 1));
-          Object.keys(parsed).forEach((key) => {
-            const currentVal = formData.value[key];
-            const isEmpty =
-              !currentVal ||
-              (Array.isArray(currentVal)
-                ? currentVal.length === 0
-                : !currentVal.toString().trim());
-
-            if (isEmpty) {
-              formData.value[key] = parsed[key];
-            }
-          });
-        }
-      } catch (err) {
-        console.warn("AI enrichment failed", err);
-      }
-    }
-
     const folderMap: Record<string, string> = {
       property: "properties",
       rental: "rentals",
@@ -428,8 +413,6 @@ const saveProperty = async () => {
 
     const payload = {
       ...formData.value,
-      amenities: formData.value.amenities,
-      amenities_Sp: formData.value.amenities_Sp,
       slug: `/${folder}/${titleSlug}`,
       author:
         typeof formData.value.author === "object"
@@ -437,15 +420,21 @@ const saveProperty = async () => {
           : formData.value.author || user.value?.id,
     };
 
+    let savedRecord;
     if (isEditing.value) {
-      await updateItem("properties", formData.value.id, payload);
+      savedRecord = await updateItem("properties", formData.value.id, payload);
     } else {
-      await createItem("properties", payload);
+      savedRecord = await createItem("properties", payload);
     }
 
-    ["properties", "rentals", "lots"].forEach(invalidateCollectionCache);
-    await loadProperties(true);
+    updateLocalState(savedRecord);
     showModal.value = false;
+
+    const missing = getMissingFields(payload);
+    if (missing.length > 0 && !disableAi.value) {
+      runBackgroundEnrichment(savedRecord.id, payload, missing);
+    }
+    ["properties", "rentals", "lots"].forEach(invalidateCollectionCache);
   } catch (err: any) {
     alert(err.message || "Save failed");
   } finally {
@@ -453,18 +442,49 @@ const saveProperty = async () => {
   }
 };
 
-const confirmDelete = (p: any) => {
-  propertyToDelete.value = p;
-  showDeleteModal.value = true;
+const runBackgroundEnrichment = async (
+  id: string,
+  currentData: any,
+  missingFields: string[]
+) => {
+  enrichingIds.value.add(id);
+  try {
+    const instruction = `You are a Real Estate SEO Expert. Return ONLY a JSON object for these missing keys: ${missingFields.join(
+      ", "
+    )}. 
+    CRITICAL: For amenities_Sp, use a JSON array of objects like: [{"name": "Alberca"}]. 
+    Base content on the title: "${currentData.title}" and these amenities: ${(
+      currentData.amenities || []
+    )
+      .map((a: any) => a.name || a)
+      .join(", ")}`;
+
+    const aiResult = await runChatGPT(instruction, {
+      title: currentData.title,
+    });
+    const jsonMatch = aiResult?.match(/\{[\s\S]*\}/);
+
+    if (jsonMatch) {
+      const parsed = JSON.parse(jsonMatch[0]);
+      const enrichedRecord = await updateItem("properties", id, parsed);
+      updateLocalState(enrichedRecord);
+    }
+  } catch (err) {
+    console.warn("Background enrichment failed", err);
+  } finally {
+    enrichingIds.value.delete(id);
+  }
 };
 
 const deleteProperty = async () => {
   if (!propertyToDelete.value) return;
+  const id = propertyToDelete.value.id;
   try {
-    await deleteItem("properties", propertyToDelete.value.id);
-    await loadProperties(true);
+    await deleteItem("properties", id);
+    updateLocalState({ id }, "delete");
     showDeleteModal.value = false;
-  } finally {
+  } catch (err: any) {
+    alert(err.message || "Delete failed");
   }
 };
 
