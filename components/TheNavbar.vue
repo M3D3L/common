@@ -24,15 +24,24 @@
 
       <!-- Desktop nav -->
       <nav class="ml-auto mr-6 hidden items-center gap-8 lg:flex">
-        <NuxtLink
-          v-for="link in links"
-          :key="link.href"
-          :to="link.href"
-          class="text-sm font-medium text-foreground/70 transition-colors md:hover:text-primary"
-          active-class="text-primary font-semibold"
-        >
-          {{ link.label }}
-        </NuxtLink>
+        <template v-for="link in links" :key="link.href">
+          <a
+            v-if="link.download"
+            :href="link.href"
+            download
+            class="text-sm font-medium text-foreground/70 transition-colors md:hover:text-primary"
+          >
+            {{ link.label }}
+          </a>
+          <NuxtLink
+            v-else
+            :to="link.href"
+            class="text-sm font-medium text-foreground/70 transition-colors md:hover:text-primary"
+            active-class="text-primary font-semibold"
+          >
+            {{ link.label }}
+          </NuxtLink>
+        </template>
         <slot name="extra-links" />
       </nav>
 

@@ -298,6 +298,7 @@ export const contactSection = {
 export const siteMap = [
   { label: "Blog", href: "/blog" },
   { label: "Contact", href: "/#contact" },
+  { label: "Download Resume", href: "/resume.pdf", download: true },
 ];
 
 // --- Socials ---
