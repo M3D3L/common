@@ -4,6 +4,7 @@
       <nuxt-link
         v-if="content && content?.slug && content?.cover_image"
         :to="baseUrl + content?.slug"
+        target="_blank"
         class="w-full"
       >
         <div class="relative w-full h-auto aspect-video">
@@ -35,6 +36,7 @@
           <nuxt-link
             v-if="content?.slug"
             :external="true"
+            target="_blank"
             :to="baseUrl + content?.slug"
             class="w-full transition-colors hover:text-primary"
           >
@@ -76,6 +78,7 @@
           <nuxt-link
             v-if="content?.slug"
             :external="true"
+            target="_blank"
             :to="baseUrl + content?.slug"
             class="w-full"
           >
@@ -98,7 +101,7 @@ import { useRuntimeConfig } from "#imports";
 
 const config = useRuntimeConfig();
 
-defineProps<{
+const props = defineProps<{
   content: {
     id: number;
     title: string;
@@ -109,6 +112,7 @@ defineProps<{
     caseStudy?: string;
     tags?: string[];
     tech?: string[];
+    target?: string;
     collectionId?: string;
   } | null;
   removeSpacing?: boolean;

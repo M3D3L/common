@@ -285,6 +285,13 @@ export const contactSection = {
   formAction: "https://formsubmit.co/7cbfcf8a8143c9f8708006416b2a0aae",
   contactEmail: "GuillermoMedel@GuillermoMedel.com",
   contactPhone: "+52 (644) 194-2391",
+  header: "Get in Touch",
+  subHeader: "Fill out the form or reach out directly.",
+  follow: "Follow Us",
+  call: "Call Us",
+  email: "Email Us",
+  message: "Message",
+  submit: "Send Message",
   videoArray: [
     "https://www.pexels.com/download/video/33792753/",
     "https://www.pexels.com/download/video/32926637/",

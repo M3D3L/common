@@ -22,12 +22,22 @@
         type="posts"
         v-bind="blogSection"
         :title="blogSection.title"
-        :newsLetterModule
       />
       <SectionsContact
         :contactInfo
         :social-links="socials"
         v-bind="contactSection"
+        :componentText="{
+          header: 'Let’s work together',
+          subHeader:
+            'I’m currently open to new opportunities and collaborations. Feel free to reach out if you have a project in mind or just want to connect.',
+          follow: 'Stay connected',
+          call: 'Contact me',
+          email: 'Send me a message',
+          message:
+            'Need a developer? I’m here to help bring your ideas to life. Whether you have a specific project in mind or just want to chat about potential collaborations, don’t hesitate to reach out.',
+          submit: 'Send Message',
+        }"
       />
     </div>
 

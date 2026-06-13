@@ -9,7 +9,7 @@
               id="newsletter-email"
               v-model="form.email"
               type="email"
-              placeholder="..."
+              placeholder=""
               required
               class="bg-white/10 border-white/20 focus:ring-2 focus:ring-primary-500"
             />
@@ -20,7 +20,7 @@
               id="newsletter-name"
               v-model="form.name"
               type="text"
-              placeholder="..."
+              placeholder=""
               class="bg-white/10 border-white/20 focus:ring-2 focus:ring-primary-500"
             />
           </div>
@@ -54,7 +54,7 @@
             :disabled="isSubmitting"
             type="submit"
           >
-            {{ isSubmitting ? "..." : buttonLabel }}
+            {{ isSubmitting ? "" : buttonLabel }}
           </Button>
         </form>
 

@@ -1,5 +1,6 @@
 <template>
-  <motion.div id="portfolio"
+  <motion.div
+    id="portfolio"
     class="container grid w-full grid-cols-1 gap-6 mx-auto mt-12 sm:grid-cols-2 lg:grid-cols-3 scroll-mt-96"
     initial="hidden"
     whileInView="visible"
@@ -19,6 +20,7 @@
       :image="project.cover_image"
       :removeSpacing="false"
       :content="project"
+      baseUrl=""
     ></CardsBaseCard>
   </motion.div>
 </template>

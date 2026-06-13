@@ -80,7 +80,7 @@
               id="message"
               v-model="message"
               name="message"
-              placeholder="..."
+              placeholder="Your message...""
               class="min-h-[140px] rounded-lg border border-input bg-background focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-300 resize-none hover:border-primary/50"
               :class="{
                 'border-destructive focus:ring-destructive/20 focus:border-destructive':
@@ -273,16 +273,16 @@ const validateEmail = () => {
   emailError.value = !email.value
     ? "Email is required"
     : !emailRegex.test(email.value)
-    ? "Invalid email"
-    : "";
+      ? "Invalid email"
+      : "";
 };
 
 const validateMessage = () => {
   messageError.value = !message.value
     ? "Message is required"
     : message.value.length < 10
-    ? "Too short"
-    : "";
+      ? "Too short"
+      : "";
 };
 
 const handleSubmit = async () => {
