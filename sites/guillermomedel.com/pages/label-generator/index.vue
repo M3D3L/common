@@ -11,6 +11,16 @@
       </Badge>
     </div>
 
+    <div class="max-w-2xl mx-auto mb-6">
+      <button
+        @click="router.push('/labels')"
+        class="text-[9px] text-neutral-600 hover:text-amber-400 transition-colors tracking-widest uppercase flex items-center gap-1"
+      >
+        <Package class="w-3.5 h-3.5" />
+        Ver todas las etiquetas
+      </button>
+    </div>
+
     <div class="max-w-2xl mx-auto space-y-4">
       <Card>
         <CardHeader class="pb-3">
@@ -208,6 +218,7 @@ import {
 } from "lucide-vue-next";
 
 // ── State ──────────────────────────────────────────────────────────────────
+const router = useRouter();
 const recipeName = ref("");
 const recipeText = ref("");
 // Default to null so a blank field means "derive it from the recipe".
