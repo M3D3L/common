@@ -343,18 +343,24 @@ function printLabel(label: any) {
           rel="stylesheet"
         />
         <style>
-          body {
-            background: #fff;
-            display: flex;
-            justify-content: center;
-            align-items: flex-start;
-            padding: 12mm;
-            font-family: 'Barlow', Arial, sans-serif;
+          /* 1. Reset margins and paddings completely */
+          html, body {
+            margin: 0;
+            padding: 0;
+            background: transparent;
           }
 
-          @page { margin: 0; size: auto; }
+          /* 2. Force the @page box size to tightly match your card's exact aspect ratio */
+          @page { 
+            margin: 0; 
+            size: 230px 350px; 
+          }
 
-          .label-card { font-family: 'Barlow', Arial, sans-serif; }
+          /* 3. Keep the template styles */
+          .label-card { 
+            font-family: 'Barlow', Arial, sans-serif; 
+            box-shadow: none !important; /* Shadows look messy on single printout sheets */
+          }
           .label-card .font-black { font-family: 'Oswald', Impact, sans-serif; }
 
           td, th {
