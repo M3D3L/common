@@ -8,6 +8,16 @@
       <p class="text-neutral-500 text-[8px] tracking-widest uppercase">
         Nutritional Labels
       </p>
+
+      <Button
+        variant="outline"
+        size="sm"
+        class="mt-4"
+        @click="router.push('/label-generator')"
+      >
+        <UtensilsCrossed class="w-4 h-4 mr-2" />
+        Generar nueva etiqueta
+      </Button>
     </div>
 
     <BreezyLabels :labelData="labelData" />
@@ -17,11 +27,14 @@
 <script lang="ts" setup>
 import BreezyLabels from "~/components/atoms/BreezyLabels.vue";
 import { useNutritionalLabels } from "~/composables/useNutritionalLabels";
+import { Button } from "@common/components/ui/button";
+import { UtensilsCrossed } from "lucide-vue-next";
 
 definePageMeta({
   layout: "none",
 });
 
+const router = useRouter();
 const { fetchCollection } = usePocketBaseCore();
 const { transformRecord } = useNutritionalLabels();
 
