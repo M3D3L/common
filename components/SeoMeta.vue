@@ -1,10 +1,12 @@
 <script setup lang="ts">
 interface Props {
   seoData?: Record<string, any>;
+  follow?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
   seoData: undefined,
+  follow: true,
 });
 
 const headConfig = computed(() => {
@@ -24,7 +26,7 @@ const headConfig = computed(() => {
       ...base.meta,
       {
         name: "robots",
-        content: "index, follow",
+        content: props.follow ? "index, follow" : "noindex, nofollow",
       },
     ],
     link: [...(base.link || [])],

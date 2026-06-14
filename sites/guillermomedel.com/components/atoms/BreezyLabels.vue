@@ -1,85 +1,64 @@
 <template>
-  <div class="page-root min-h-screen bg-neutral-800 p-4">
-    <!-- Toolbar (hidden when printing) -->
-    <div class="no-print flex justify-center mb-4">
-      <button
-        @click="downloadPdf"
-        class="inline-flex items-center gap-2 rounded-md bg-white px-4 py-2 text-xs font-semibold text-neutral-900 shadow hover:bg-neutral-200 transition-colors"
-      >
-        <Printer class="w-4 h-4" />
-        Descargar PDF
-      </button>
-    </div>
-
-    <!-- Page Header -->
-    <div class="no-print text-center mb-5">
-      <Badge
-        variant="outline"
-        class="mb-2 text-neutral-400 border-neutral-600 tracking-widest text-[9px] uppercase px-3"
-      >
-        <UtensilsCrossed class="w-2.5 h-2.5 mr-1" />
-        NOM-051-SCFI/SSA1-2010
-      </Badge>
-      <h1
-        class="font-black text-white text-lg tracking-[0.2em] uppercase mb-0.5"
-      >
-        Breezy Meals
-      </h1>
-      <p class="text-neutral-500 text-[8px] tracking-widest uppercase">
-        Etiquetas Nutricionales · 150 g por porción
-      </p>
-    </div>
-
-    <!-- Stats Bar -->
-    <div class="no-print flex justify-center gap-2 mb-5">
-      <Badge variant="secondary" class="text-[8px] gap-1 px-2 py-0.5">
-        <Package class="w-2.5 h-2.5" />
-        {{ labels.length }} productos
-      </Badge>
-      <Badge variant="secondary" class="text-[8px] gap-1 px-2 py-0.5">
-        <Flame class="w-2.5 h-2.5" />
-        150 g / porción
-      </Badge>
-      <Badge variant="secondary" class="text-[8px] gap-1 px-2 py-0.5">
-        <Snowflake class="w-2.5 h-2.5" />
-        −18 °C
-      </Badge>
-    </div>
-
-    <!-- Label Grid -->
-    <div class="label-grid flex flex-wrap gap-3 justify-center">
+  <div class="label-grid flex flex-wrap gap-3 justify-center">
+    <MoleculesButtonWrapper
+      v-for="label in labels"
+      :key="label.id"
+      @edit="editLabel(label)"
+      @print="printLabel(label)"
+    >
       <Card
-        v-for="label in labels"
-        :key="label.id"
+        :ref="
+          (el) => {
+            if (el) cardRefs[label.id] = el as HTMLElement;
+          }
+        "
+        :id="label.id"
         class="label-card bg-[#ede8d8] text-[#111] flex flex-col overflow-hidden rounded-sm p-0"
         style="width: 230px; height: 350px; border: 1.5px solid #444"
       >
         <CardHeader
           class="p-0 flex-shrink-0 border-b-2 border-[#111] space-y-0"
         >
-          <div class="px-2 pt-1 pb-1">
-            <!-- Warning seals -->
-            <div class="flex justify-center gap-1 mb-1">
+          <div class="px-1.5 pb-1">
+            <div class="flex justify-end gap-1 mb-2 mt-1.5 h-7">
+              <div class="flex items-center gap-0.5 px-1 mr-auto">
+                <AlertTriangle
+                  class="w-2 h-2 text-amber-700 flex-shrink-0 mt-px"
+                />
+                <p class="text-[5px] leading-[1.25] text-[#555] m-0">
+                  <strong class="font-bold">Alérgenos:</strong> {{ label.alg }}
+                </p>
+              </div>
               <TooltipProvider v-for="(seal, i) in label.seals" :key="i">
                 <Tooltip>
                   <TooltipTrigger as-child>
                     <svg
                       class="flex-shrink-0 cursor-default"
-                      width="27"
-                      height="27"
+                      width="30"
+                      height="30"
                       viewBox="0 0 44 44"
                       xmlns="http://www.w3.org/2000/svg"
                     >
+                      <!-- White border -->
+                      <polygon
+                        points="12,0 32,0 44,12 44,32 32,44 12,44 0,32 0,12"
+                        fill="white"
+                      />
+
+                      <!-- Black octagon -->
                       <polygon
                         points="13,1 31,1 43,13 43,31 31,43 13,43 1,31 1,13"
                         fill="#111"
                       />
+
                       <text
                         v-for="(line, li) in seal.lines"
                         :key="li"
                         :x="22"
                         :y="seal.ys[li]"
-                        :font-size="seal.sizes[li]"
+                        :font-size="
+                          line.toLowerCase().includes('saturada') ? 4.5 : 6
+                        "
                         text-anchor="middle"
                         fill="white"
                         font-weight="bold"
@@ -96,14 +75,52 @@
               </TooltipProvider>
             </div>
 
-            <!-- Brand -->
+            <svg
+              version="1.0"
+              xmlns="http://www.w3.org/2000/svg"
+              width="450.000000pt"
+              height="150.000000pt"
+              viewBox="0 0 450.000000 150.000000"
+              preserveAspectRatio="xMidYMid meet"
+              class="w-24 h-auto mx-auto"
+            >
+              <g
+                transform="translate(0.000000,150.000000) scale(0.100000,-0.100000)"
+                fill="#000000"
+                stroke="none"
+              >
+                <path
+                  d="M2243 1378 c-11 -13 -37 -69 -58 -124 l-37 -102 -56 3 c-50 2 -57 5
+-65 28 -29 88 -116 -3 -131 -138 -4 -33 -16 -79 -28 -102 -29 -63 -142 -162
+-243 -213 -47 -25 -114 -70 -149 -101 -53 -47 -79 -61 -162 -90 -55 -18 -169
+-68 -255 -111 -162 -81 -237 -104 -298 -94 -60 9 -170 -14 -266 -56 -49 -22
+-121 -52 -160 -65 -72 -26 -72 -26 -222 -6 -60 7 -113 -12 -113 -42 0 -23 0
+-23 50 -8 40 12 61 12 101 4 96 -21 130 -15 312 55 l172 67 132 7 132 6 153
+77 c84 42 206 96 270 121 64 24 128 52 141 62 13 11 48 38 76 61 29 24 87 61
+130 83 142 74 239 182 262 290 21 103 32 140 45 151 13 11 22 -11 42 -106 15
+-73 49 -51 67 43 7 36 8 36 36 21 33 -17 63 11 89 83 12 34 34 88 47 118 22
+50 26 53 37 37 8 -9 16 -36 20 -58 9 -57 39 -111 78 -141 23 -18 43 -49 66
+-107 27 -64 39 -82 58 -87 29 -7 56 13 74 57 23 55 34 37 92 -156 39 -132 59
+-162 123 -190 29 -13 78 -46 110 -74 32 -28 74 -55 93 -60 37 -11 98 -2 171
+23 74 27 89 22 209 -64 62 -44 130 -89 152 -100 47 -24 116 -26 167 -5 40 17
+90 19 125 6 13 -5 71 -47 130 -94 136 -108 193 -136 310 -148 50 -5 116 -16
+148 -24 73 -19 72 -19 68 7 -4 28 -48 43 -189 62 -139 20 -189 42 -299 136
+-47 39 -105 81 -130 92 -53 25 -127 26 -189 4 -24 -9 -54 -16 -67 -16 -21 0
+-90 44 -264 166 -59 41 -69 45 -110 41 -25 -3 -73 -15 -107 -27 -86 -31 -119
+-23 -193 45 -33 30 -72 57 -87 61 -66 15 -110 84 -144 220 -27 109 -52 161
+-84 176 -30 14 -50 0 -70 -50 -8 -18 -20 -32 -27 -30 -6 2 -24 35 -40 74 -20
+50 -40 80 -73 109 -39 35 -47 49 -65 119 -12 44 -23 83 -26 88 -10 16 -61 8
+-81 -14z"
+                />
+              </g>
+            </svg>
+
             <div
               class="text-center font-black text-[13px] tracking-[0.15em] leading-none mb-0.5"
             >
               BREEZY MEALS
             </div>
 
-            <!-- Product name -->
             <div class="flex items-center gap-1 justify-center">
               <Separator class="flex-1 max-w-[12px] bg-[#111]" />
               <span
@@ -114,72 +131,81 @@
               <Separator class="flex-1 max-w-[12px] bg-[#111]" />
             </div>
 
-            <!-- Subtitle -->
             <p
-              class="text-center text-[5.5px] text-[#555] mt-0.5 italic leading-tight m-0"
+              class="text-center text-[5.5px] text-[#555] mt-0.5 italic leading-tight mx-0 mb-1"
             >
               {{ label.sub }}
             </p>
+
+            <div
+              v-if="label.leyendas && label.leyendas.length > 0"
+              class="flex flex-col gap-1 px-1"
+            >
+              <div
+                v-for="(leyenda, i) in label.leyendas"
+                :key="i"
+                class="bg-black border border-white text-white px-1 py-0.5 text-center uppercase tracking-wide font-bold"
+                style="box-shadow: 0 0 0 1px black"
+              >
+                <p class="text-[5px] leading-none m-0">
+                  {{ leyenda.text }}
+                </p>
+              </div>
+            </div>
           </div>
         </CardHeader>
 
         <CardContent
           class="flex-1 flex flex-col gap-0.5 px-1.5 py-1 overflow-hidden p-0"
         >
-          <!-- Ingredients -->
-          <p class="text-[5.5px] leading-[1.3] text-[#111] m-0 px-1">
+          <p class="text-[5.5px] leading-[1.3] text-[#111] mt-1 mx-0 px-1">
             <strong class="font-bold">Ingredientes:</strong> {{ label.ing }}
           </p>
 
-          <!-- Allergens -->
-          <div class="flex items-start gap-0.5 px-1">
-            <AlertTriangle class="w-2 h-2 text-amber-700 flex-shrink-0 mt-px" />
-            <p class="text-[5px] leading-[1.25] text-[#555] m-0">
-              <strong class="font-bold">Alérgenos:</strong> {{ label.alg }}
-            </p>
-          </div>
-
-          <!-- Pairing -->
-          <div
-            class="flex items-center gap-0.5 border-t border-b border-dashed border-[#aaa] py-0.5 px-1"
-          >
-            <UtensilsCrossed class="w-2 h-2 text-[#888] flex-shrink-0" />
-            <p class="text-[5px] text-[#666] italic m-0 leading-tight">
-              {{ label.pair }}
-            </p>
-          </div>
-
-          <!-- NOM Table -->
           <Table
-            class="nom-table w-full text-[5.5px]"
+            class="nom-table w-full text-[6.5px]"
             style="border: 1px solid #111; border-collapse: collapse"
           >
-            <TableHeader>
-              <TableRow class="border-0">
-                <TableHead
-                  colspan="2"
-                  class="text-left text-[6px] font-bold tracking-wide px-1 py-0.5 text-white h-auto leading-tight"
-                  style="background: #111; border: none"
+            <TableRow class="border-0">
+              <TableHead
+                colspan="4"
+                class="px-1 py-0.5 text-[#111] h-auto leading-tight"
+                style="background: #d8d2c0; border-bottom: 1px solid #111"
+              >
+                <div
+                  class="flex justify-between w-full font-normal text-[5.8px]"
                 >
-                  INFORMACIÓN NUTRICIONAL
-                </TableHead>
-                <TableHead
-                  class="text-right text-[6px] font-bold px-1 py-0.5 text-white w-5 h-auto leading-tight"
-                  style="background: #111; border: none"
-                >
-                  % VD*
-                </TableHead>
-              </TableRow>
-              <TableRow class="border-0">
-                <TableHead
-                  colspan="3"
-                  class="px-1 py-0.5 font-semibold text-[5.5px] text-[#111] h-auto leading-tight"
-                  style="background: #d8d2c0; border-bottom: 1px solid #111"
-                >
-                  Porción: 1 (150 g) · Porciones: 1
-                </TableHead>
-              </TableRow>
-            </TableHeader>
+                  <span
+                    >Cont. neto: <strong>{{ label.total_size }} g</strong></span
+                  >
+                  <span
+                    >Porciones por envase:
+                    <strong>{{
+                      label.total_size && label.portion_size
+                        ? Math.round(label.total_size / label.portion_size)
+                        : 1
+                    }}</strong></span
+                  >
+                  <span
+                    >Porción: <strong>{{ label.portion_size }} g</strong></span
+                  >
+                </div>
+              </TableHead>
+            </TableRow>
+            <TableRow style="background: #eee; border-bottom: 1px solid #111">
+              <TableCell class="px-1 py-0.5 font-bold text-left"
+                >Declaración Nutrimental</TableCell
+              >
+              <TableCell class="px-1 py-0.5 font-bold text-right w-14"
+                >Por 100 g</TableCell
+              >
+              <TableCell class="px-1 py-0.5 font-bold text-right w-14"
+                >Por porción</TableCell
+              >
+              <TableCell class="px-1 py-0.5 font-bold text-right w-10"
+                >% VNR*</TableCell
+              >
+            </TableRow>
             <TableBody>
               <TableRow
                 v-for="row in label.rows"
@@ -189,396 +215,178 @@
                   borderBottom: row.last
                     ? '1px solid #111'
                     : row.sub
-                      ? '0.4px solid #ccc'
+                      ? '0.4px solid #eee'
                       : '0.75px solid #111',
                 }"
               >
                 <TableCell
-                  colspan="2"
                   class="px-1 m-0 leading-tight"
                   :class="
                     row.sub
-                      ? 'text-[5px] text-[#444]'
-                      : 'text-[5.5px] font-semibold'
+                      ? 'text-[6px] text-[#555]'
+                      : 'text-[6.5px] font-semibold'
                   "
                   :style="{
                     paddingLeft:
                       row.indent === 2
-                        ? '13px'
+                        ? '10px'
                         : row.indent === 1
-                          ? '8px'
-                          : '4px',
+                          ? '6px'
+                          : '2px',
                   }"
                 >
                   <strong v-if="!row.sub">{{ row.label }}</strong>
                   <span v-else>{{ row.label }}</span>
                 </TableCell>
-                <TableCell
-                  class="text-right font-bold w-5 px-1 leading-tight"
-                  :class="row.sub ? 'text-[5px]' : 'text-[5.5px]'"
-                >
-                  {{ row.pct }}
+
+                <TableCell class="text-right font-medium px-1 leading-tight">
+                  {{ row.val100g }}
                 </TableCell>
-              </TableRow>
-              <TableRow class="border-0">
                 <TableCell
-                  colspan="3"
-                  class="text-[4.5px] leading-[1.25] px-1 py-0.5 text-[#777]"
-                  style="background: #ddd8c8; border-top: 0.5px solid #999"
+                  class="text-right font-bold px-1 leading-tight text-neutral-800"
                 >
-                  *% VD basados en dieta de 2,000 kcal.
+                  {{ row.valPortion }}
+                </TableCell>
+                <TableCell
+                  class="text-right font-medium px-1 leading-tight text-neutral-500"
+                >
+                  {{ row.vdr }}
                 </TableCell>
               </TableRow>
             </TableBody>
           </Table>
+
+          <p class="text-[4.5px] text-[#777] italic px-1 mt-0.5 leading-tight">
+            *% del Valor Diario de Referencia con base en una dieta de 2,000
+            kcal. Sus necesidades diarias pueden ser mayores o menores.
+          </p>
         </CardContent>
 
-        <!-- Footer (minimal) -->
         <CardFooter class="flex-shrink-0 p-0" style="background: #111">
           <div class="w-full px-2 py-1 leading-none">
             <div
               class="flex justify-between text-[4px] text-neutral-400 leading-none"
             >
-              <span>Lote: ______</span>
-              <span>Prod: ______</span>
-              <span>Vence: ______</span>
+              <span>Lote: {{ generateLot(label) }}</span>
+              <span>Caducidad: {{ generateExpiration(label) }}</span>
             </div>
-            <p
-              class="text-[3.5px] text-neutral-600 text-center tracking-wide leading-none m-0 mt-0.5"
-            >
-              BREEZY MEALS · México · Sin conservadores · −18 °C · NOM-051
-            </p>
           </div>
         </CardFooter>
       </Card>
-    </div>
+    </MoleculesButtonWrapper>
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
+import { computed, ref } from "vue";
+import { useRouter } from "vue-router";
 import {
   Card,
   CardHeader,
   CardContent,
   CardFooter,
-} from "@/components/ui/card";
+} from "@common/components/ui/card";
 import {
   Table,
-  TableHeader,
   TableBody,
   TableRow,
   TableHead,
   TableCell,
-} from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
+} from "@common/components/ui/table";
+import { Separator } from "@common/components/ui/separator";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@/components/ui/tooltip";
+} from "@common/components/ui/tooltip";
+import { AlertTriangle } from "lucide-vue-next";
 import {
-  UtensilsCrossed,
-  Flame,
-  Snowflake,
-  Package,
-  AlertTriangle,
-  Printer,
-} from "lucide-vue-next";
+  generateLot,
+  generateExpiration,
+} from "~/composables/useNutritionalLabels";
 
-// ── actions ────────────────────────────────────────────────
-function downloadPdf() {
-  // Opens the browser's print dialog — choose "Save as PDF" (or
-  // "Microsoft Print to PDF") as the destination to get a file.
-  window.print();
+const props = defineProps<{
+  labelData: any[];
+}>();
+
+const router = useRouter();
+const cardRefs = ref<Record<string, HTMLElement>>({});
+const labels = computed(() => props.labelData);
+
+function editLabel(label: any) {
+  router.push(`/label-generator/${label.id}`);
 }
 
-// ── helpers ────────────────────────────────────────────────
-function makeSeal(rawLines) {
-  const lines = rawLines.split("\n");
-  const n = lines.length;
-  const configs = {
-    1: { ys: [26], sizes: [9] },
-    2: { ys: [19, 30], sizes: [6, 8] },
-    3: { ys: [15, 24, 33], sizes: [5.5, 7, 7] },
+function printLabel(label: any) {
+  const el = cardRefs.value[label.id];
+  if (!el) return;
+
+  const node = (el as any).$el ?? el;
+  const html = node.outerHTML;
+
+  const iframe = document.createElement("iframe");
+  iframe.style.cssText = "position:fixed;width:0;height:0;border:0;opacity:0;";
+  document.body.appendChild(iframe);
+
+  const doc = iframe.contentDocument!;
+  doc.open();
+  doc.write(`
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <meta charset="utf-8" />
+        <script src="https://cdn.tailwindcss.com"><\/script>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Oswald:wght@700&family=Barlow:wght@400;600&display=swap"
+          rel="stylesheet"
+        />
+        <style>
+          body {
+            background: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 12mm;
+            font-family: 'Barlow', Arial, sans-serif;
+          }
+
+          @page { margin: 0; size: auto; }
+
+          .label-card { font-family: 'Barlow', Arial, sans-serif; }
+          .label-card .font-black { font-family: 'Oswald', Impact, sans-serif; }
+
+          td, th {
+            border: none !important;
+            height: auto !important;
+            padding-top: 0.5px !important;
+            padding-bottom: 0.5px !important;
+            line-height: 1.15 !important;
+            vertical-align: middle;
+          }
+
+          tr { border: none; }
+
+          * {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
+        </style>
+      </head>
+      <body>${html}</body>
+    </html>
+  `);
+  doc.close();
+
+  iframe.onload = () => {
+    setTimeout(() => {
+      iframe.contentWindow!.focus();
+      iframe.contentWindow!.print();
+      setTimeout(() => document.body.removeChild(iframe), 1000);
+    }, 800);
   };
-  return { lines, ...configs[n] };
 }
-
-function nameSize(name) {
-  const n = name.length;
-  if (n <= 8) return "12px";
-  if (n <= 16) return "9px";
-  if (n <= 22) return "7.5px";
-  return "6px";
-}
-
-function rows({
-  kcal,
-  kj,
-  pkcal,
-  prot,
-  pprot,
-  fat,
-  pfat,
-  sat,
-  psat,
-  trans,
-  carb,
-  pcarb,
-  sugt,
-  suga,
-  psuga,
-  fib,
-  sod,
-  psod,
-}) {
-  return [
-    { label: `Energía: ${kcal} kcal (${kj} kJ)`, pct: `${pkcal}%`, sub: false },
-    { label: `Proteínas: ${prot} g`, pct: `${pprot}%`, sub: false },
-    { label: `Grasas totales: ${fat} g`, pct: `${pfat}%`, sub: false },
-    { label: `— saturadas: ${sat} g`, pct: `${psat}%`, sub: true, indent: 1 },
-    { label: `— trans: ${trans} g`, pct: "", sub: true, indent: 1 },
-    { label: `Carbohidratos: ${carb} g`, pct: `${pcarb}%`, sub: false },
-    { label: `— azúcares tot.: ${sugt} g`, pct: "", sub: true, indent: 1 },
-    {
-      label: `— azúcares añadidos: ${suga} g`,
-      pct: `${psuga}%`,
-      sub: true,
-      indent: 2,
-    },
-    { label: `— fibra: ${fib} g`, pct: "", sub: true, indent: 1 },
-    { label: `Sodio: ${sod} mg`, pct: `${psod}%`, sub: false, last: true },
-  ];
-}
-
-// ── data ───────────────────────────────────────────────────
-const rawLabels = [
-  {
-    id: "birria",
-    name: "BIRRIA DE RES",
-    sub: "Guiso de Res / Shredded Beef",
-    pair: "Frijoles Rancheros + Vegetales Rostizados",
-    ing: "Diezmillo de res, chile guajillo seco, chile ancho seco, caldo de res, ajo, orégano mexicano, comino molido, sal yodada.",
-    alg: "Contiene: Apio. Puede contener trazas de: Gluten, lácteos.",
-    seals: ["EXCESO\nSODIO", "EXCESO\nGRASAS\nSATURADAS", "EXCESO\nCALORÍAS"],
-    kcal: "315",
-    kj: "1,317",
-    pkcal: "16",
-    prot: "28.0",
-    pprot: "56",
-    fat: "21.0",
-    pfat: "27",
-    sat: "8.4",
-    psat: "42",
-    trans: "0.0",
-    carb: "5.0",
-    pcarb: "2",
-    sugt: "2.0",
-    suga: "0.0",
-    psuga: "0",
-    fib: "1.0",
-    sod: "890",
-    psod: "39",
-  },
-  {
-    id: "cochinita",
-    name: "COCHINITA PIBIL",
-    sub: "Guiso de Cerdo / Shredded Pork",
-    pair: "Frijoles Rancheros + Vegetales Rostizados",
-    ing: "Espaldilla de cerdo, pasta de achiote (axiote, especias, vinagre, sal), jugo de naranja agria, ajo, orégano mexicano, comino molido, sal yodada.",
-    alg: "Puede contener trazas de: Gluten, lácteos, huevo.",
-    seals: ["EXCESO\nSODIO", "EXCESO\nGRASAS\nSATURADAS", "EXCESO\nCALORÍAS"],
-    kcal: "300",
-    kj: "1,255",
-    pkcal: "15",
-    prot: "24.0",
-    pprot: "48",
-    fat: "19.0",
-    pfat: "25",
-    sat: "7.0",
-    psat: "35",
-    trans: "0.0",
-    carb: "8.0",
-    pcarb: "3",
-    sugt: "4.0",
-    suga: "0.0",
-    psuga: "0",
-    fib: "0.0",
-    sod: "750",
-    psod: "33",
-  },
-  {
-    id: "lasagna",
-    name: "LASAÑA DE CALABACITA",
-    sub: "Lasaña con Carne / Zucchini Lasagna",
-    pair: "Puré de Papa + Vegetales Rostizados",
-    ing: "Carne molida de res, calabacita italiana, queso mozzarella (leche pasteurizada de vaca, sal, cultivos lácticos, cuajo), puré de tomate, zanahoria, cebolla blanca, apio, ajo, orégano, albahaca, sal, pimienta negra, azúcar.",
-    alg: "Contiene: Gluten (trigo), Leche. Puede contener: Huevo, soya.",
-    seals: ["EXCESO\nSODIO", "EXCESO\nGRASAS\nSATURADAS"],
-    kcal: "280",
-    kj: "1,171",
-    pkcal: "14",
-    prot: "18.0",
-    pprot: "36",
-    fat: "17.0",
-    pfat: "22",
-    sat: "8.0",
-    psat: "40",
-    trans: "0.0",
-    carb: "10.0",
-    pcarb: "4",
-    sugt: "3.0",
-    suga: "1.0",
-    psuga: "2",
-    fib: "2.0",
-    sod: "520",
-    psod: "23",
-  },
-  {
-    id: "meatloaf",
-    name: "HOME-STYLE MEATLOAF",
-    sub: "Pastel de Carne / Meat Loaf",
-    pair: "Puré de Papa + Vegetales Rostizados",
-    ing: "Carne molida mixta (res, cerdo), pan molido (harina de trigo, sal, levadura), huevo entero pasteurizado, catsup, miel de abeja, mostaza amarilla, ajo en polvo, cebolla en polvo, sal, pimienta negra.",
-    alg: "Contiene: Gluten (trigo), Huevo, Mostaza, Leche. Puede contener: Soya.",
-    seals: ["EXCESO\nSODIO", "EXCESO\nGRASAS\nSATURADAS", "EXCESO\nCALORÍAS"],
-    kcal: "320",
-    kj: "1,338",
-    pkcal: "16",
-    prot: "22.0",
-    pprot: "44",
-    fat: "20.0",
-    pfat: "26",
-    sat: "9.0",
-    psat: "45",
-    trans: "0.3",
-    carb: "12.0",
-    pcarb: "4",
-    sugt: "5.0",
-    suga: "3.0",
-    psuga: "6",
-    fib: "0.0",
-    sod: "720",
-    psod: "31",
-  },
-  {
-    id: "chipotle",
-    name: "CHIPOTLE CREAM CHICKEN",
-    sub: "Pollo en Crema Chipotle / Chipotle Chicken",
-    pair: "Arroz Mexicano + Vegetales Rostizados",
-    ing: "Pechuga de pollo, crema para cocinar (leche descremada pasteurizada, grasa de leche), queso crema, chile chipotle en adobo, cebolla blanca, ajo, comino molido, sal, pimienta negra.",
-    alg: "Contiene: Leche (lácteos). Puede contener: Gluten, huevo, soya.",
-    seals: ["EXCESO\nSODIO", "EXCESO\nGRASAS\nSATURADAS", "EXCESO\nCALORÍAS"],
-    kcal: "310",
-    kj: "1,297",
-    pkcal: "16",
-    prot: "26.0",
-    pprot: "52",
-    fat: "19.0",
-    pfat: "25",
-    sat: "9.0",
-    psat: "45",
-    trans: "0.0",
-    carb: "6.0",
-    pcarb: "2",
-    sugt: "2.0",
-    suga: "0.0",
-    psuga: "0",
-    fib: "0.0",
-    sod: "600",
-    psod: "26",
-  },
-  {
-    id: "mushroom",
-    name: "MUSHROOM BACON CREAM",
-    sub: "Pollo con Champiñones / Bacon Mushroom Chicken",
-    pair: "Puré de Papa + Vegetales Rostizados",
-    ing: "Pechuga de pollo, champiñones blancos, tocino (carne de cerdo curada, sal, azúcar, nitritos de sodio), crema para cocinar, queso crema, ajo, cebolla blanca, tomillo seco, sal, pimienta negra.",
-    alg: "Contiene: Leche (lácteos). Puede contener: Gluten, huevo, soya.",
-    seals: ["EXCESO\nSODIO", "EXCESO\nGRASAS\nSATURADAS", "EXCESO\nCALORÍAS"],
-    kcal: "350",
-    kj: "1,464",
-    pkcal: "18",
-    prot: "24.0",
-    pprot: "48",
-    fat: "25.0",
-    pfat: "32",
-    sat: "13.0",
-    psat: "65",
-    trans: "0.0",
-    carb: "4.0",
-    pcarb: "1",
-    sugt: "1.0",
-    suga: "0.0",
-    psuga: "0",
-    fib: "0.0",
-    sod: "650",
-    psod: "28",
-  },
-  {
-    id: "bistec",
-    name: "BISTEC RANCHERO",
-    sub: "Guiso de Res con Papa / Beef and Potato",
-    pair: "Sopa de Lentejas + Vegetales Rostizados",
-    ing: "Milanesa bola de res, papa blanca, jitomate bola, cebolla blanca, chile serrano, ajo, caldo de res, sal yodada, pimienta negra molida.",
-    alg: "Contiene: Apio. Puede contener: Gluten, lácteos, huevo.",
-    seals: ["EXCESO\nSODIO"],
-    kcal: "260",
-    kj: "1,088",
-    pkcal: "13",
-    prot: "22.0",
-    pprot: "44",
-    fat: "9.0",
-    pfat: "12",
-    sat: "3.5",
-    psat: "18",
-    trans: "0.0",
-    carb: "18.0",
-    pcarb: "7",
-    sugt: "4.0",
-    suga: "0.0",
-    psuga: "0",
-    fib: "2.0",
-    sod: "680",
-    psod: "30",
-  },
-  {
-    id: "chicharron",
-    name: "CHICHARRÓN EN SALSA VERDE",
-    sub: "Estilo Casero / Pork Rinds in Green Sauce",
-    pair: "Arroz Mexicano + Frijoles Rancheros + Vegetales",
-    ing: "Chicharrón de cerdo (piel de cerdo frita, sal yodada), tomatillo verde fresco, cebolla blanca, chile serrano, cilantro fresco, ajo, sal yodada, pimienta negra molida.",
-    alg: "Contiene: Apio. Puede contener: Gluten, lácteos, huevo, soya.",
-    seals: ["EXCESO\nSODIO", "EXCESO\nGRASAS\nSATURADAS", "EXCESO\nCALORÍAS"],
-    kcal: "380",
-    kj: "1,590",
-    pkcal: "19",
-    prot: "22.0",
-    pprot: "44",
-    fat: "28.0",
-    pfat: "36",
-    sat: "10.0",
-    psat: "50",
-    trans: "0.0",
-    carb: "8.0",
-    pcarb: "3",
-    sugt: "3.0",
-    suga: "0.0",
-    psuga: "0",
-    fib: "2.0",
-    sod: "780",
-    psod: "34",
-  },
-];
-
-const labels = rawLabels.map((d) => ({
-  ...d,
-  nameSize: nameSize(d.name),
-  seals: d.seals.map(makeSeal),
-  rows: rows(d),
-}));
 </script>
 
 <style scoped>
@@ -593,12 +401,6 @@ const labels = rawLabels.map((d) => ({
   font-family: "Oswald", Impact, sans-serif;
 }
 
-/* ── Table reset ───────────────────────────────────────────
-   shadcn's Table base sets line-height via `text-sm` (~20px),
-   which the arbitrary text-[5.5px] sizes do NOT override (they
-   only set font-size). That inherited line-height is what blew
-   the table up. Force a tight line-height + minimal vertical
-   padding and kill shadcn's default cell borders/heights. */
 .label-card :deep(td),
 .label-card :deep(th) {
   border: none !important;
@@ -615,53 +417,6 @@ const labels = rawLabels.map((d) => ({
 
 .label-card :deep(.nom-table) {
   line-height: 1.15;
-}
-
-/* The shadcn Table wrapper adds overflow-auto; with everything
-   fitting we don't want a stray scrollbar. */
-.label-card :deep(.nom-table) {
   overflow: visible;
-}
-
-@media print {
-  @page {
-    margin: 12mm;
-  }
-
-  /* Hide on-screen-only chrome (toolbar, header, stats) */
-  .no-print {
-    display: none !important;
-  }
-
-  /* Neutralize the dark page shell */
-  .page-root {
-    background: #fff !important;
-    padding: 0 !important;
-    min-height: 0 !important;
-  }
-
-  /* Collapse the wrapped grid into a single centered column */
-  .label-grid {
-    display: flex !important;
-    flex-direction: column !important;
-    flex-wrap: nowrap !important;
-    align-items: center !important;
-    gap: 6mm !important;
-  }
-
-  /* Keep each label intact across page boundaries */
-  .label-card {
-    break-inside: avoid;
-    page-break-inside: avoid;
-    box-shadow: none !important;
-    border: 1.5px solid #444 !important;
-  }
-
-  /* Force backgrounds/black bars to actually print */
-  .label-card,
-  .label-card * {
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
-  }
 }
 </style>
