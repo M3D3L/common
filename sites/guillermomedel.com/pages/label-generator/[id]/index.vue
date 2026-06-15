@@ -289,7 +289,8 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import BreezyLabels from "~/components/atoms/BreezyLabels.vue";
-import { NOM051_COMMAND } from "~/assets/configs/NOM051_COMMAND.js";
+// Slim resolver prompt replaces the heavy all-in-one NOM051_COMMAND.
+import { NOM051_RESOLVE } from "~/lib/nom051-resolve";
 import {
   UtensilsCrossed,
   Sparkles,
@@ -309,7 +310,7 @@ const id = route.params.id;
 
 // ── Composables ───────────────────────────────────────────────────────────
 const { fetchRecord, updateItem, deleteItem } = usePocketBaseCore();
-const { transformRecord } = useNutritionalLabels();
+const { transformRecord, buildRecordFromResolution } = useNutritionalLabels();
 
 // ── Fetch state ───────────────────────────────────────────────────────────
 const fetching = ref(true);
@@ -366,58 +367,59 @@ async function regenerateLabel() {
   saveError.value = null;
   updatedLabelData.value = null;
 
+  // On the edit page both fields always carry a value, so treat them as the
+  // explicit user overrides the engine should honor verbatim.
   const activePortion = Number(portionSize.value);
   const activeTotal = Number(totalSize.value);
 
   const payload = {
     recipeName: recipeName.value.trim(),
     portionGrams: activePortion,
+    totalGrams: activeTotal,
     ingredients: originalInputText,
   };
 
-  // 1. Call AI
-  let data;
+  // 1. LLM RESOLUTION ONLY — maps each line to { key, grams } and writes the
+  //    Spanish label texts. No nutrition math comes from the model anymore.
+  let resolution;
   try {
-    const raw = await run(NOM051_COMMAND, payload);
+    const raw = await run(NOM051_RESOLVE, payload);
     const clean = raw.replace(/```json|```/g, "").trim();
-    data = JSON.parse(clean);
+    resolution = JSON.parse(clean);
+    // TEMP DEBUG — paste this console output back. Remove once verified.
+    console.log("RESOLVED:", JSON.stringify(resolution.resolved, null, 2));
+    console.log(
+      "LEYENDAS keys:",
+      resolution.resolved?.map((r) => r.key),
+    );
+    if (
+      !Array.isArray(resolution.resolved) ||
+      resolution.resolved.length === 0
+    ) {
+      throw new Error("Resolver returned no ingredients");
+    }
   } catch (e) {
-    console.error("AI/parse error:", e);
+    console.error("AI resolver parse error:", e);
     saveError.value =
       "Error al analizar la receta con Inteligencia Artificial.";
     return;
   }
 
-  // 2. Build a raw record and run it through the shared transformRecord so
-  //    rows and vdr values are computed identically to every other page.
-  const rawRecord = {
-    id,
-    name: data.name || recipeName.value,
-    sub: data.sub,
-    ing: data.ing,
-    alg: data.alg,
-    pair: data.pair,
-    seals: data.seals ?? [],
-    portion_size: activePortion,
-    total_size: activeTotal,
-    energia_kcal_100g: data.energia_kcal_100g ?? 0,
-    energia_kj_100g: data.energia_kj_100g ?? 0,
-    proteina_g_100g: data.proteina_g_100g ?? 0,
-    grasas_totales_g_100g: data.grasas_totales_g_100g ?? 0,
-    grasas_saturadas_g_100g: data.grasas_saturadas_g_100g ?? 0,
-    grasas_trans_g_100g: data.grasas_trans_g_100g ?? 0,
-    carbohidratos_disponibles_g_100g:
-      data.carbohidratos_disponibles_g_100g ?? 0,
-    azucares_totales_g_100g: data.azucares_totales_g_100g ?? 0,
-    azucares_anadidos_g_100g: data.azucares_anadidos_g_100g ?? 0,
-    fibra_g_100g: data.fibra_g_100g ?? 0,
-    sodio_mg_100g: data.sodio_mg_100g ?? 0,
-  };
+  // 2. DETERMINISTIC ENGINE — aggregation, rounding, seals, legends.
+  //    User-supplied portion/total are honored verbatim.
+  const rawRecord = buildRecordFromResolution(resolution, {
+    portionGrams: activePortion,
+    totalGrams: activeTotal,
+    fallbackName: recipeName.value,
+  });
+  // Preserve the record id so the update targets the right row.
+  rawRecord.id = id;
 
-  // Show immediate visual preview with vdr column populated
+  // Show immediate visual preview with vdr column populated.
   updatedLabelData.value = transformRecord(rawRecord);
 
-  // 3. Persist to PocketBase
+  // 3. Persist to PocketBase. Keep recipe_text so future edits reload the
+  //    original input rather than the stripped ingredient list.
   saving.value = true;
   try {
     const updated = await updateItem("labels", id, {
@@ -426,7 +428,7 @@ async function regenerateLabel() {
       rows: [],
     });
 
-    // Swap the live record so currentLabelData recomputes via transformRecord
+    // Swap the live record so currentLabelData recomputes via transformRecord.
     record.value = updated;
     updatedLabelData.value = null;
   } catch (e) {

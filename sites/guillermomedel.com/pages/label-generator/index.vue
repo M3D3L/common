@@ -195,8 +195,11 @@
 <script setup lang="ts">
 import { useChatGPT } from "@common/composables/useChatGPT";
 import usePocketBaseCore from "@common/composables/usePocketBaseCore";
-import { useNutritionalLabels } from "~/composables/useNutritionalLabels";
-import { NOM051_COMMAND } from "~/assets/configs/NOM051_COMMAND";
+import {
+  useNutritionalLabels,
+  type ResolveResult,
+} from "~/composables/useNutritionalLabels";
+import { NOM051_RESOLVE } from "~/lib/nom051-resolve";
 import {
   Card,
   CardHeader,
@@ -231,90 +234,66 @@ const saveError = ref<string | null>(null);
 
 const { run, loading, error } = useChatGPT();
 const { createItem } = usePocketBaseCore();
-const { transformRecord } = useNutritionalLabels();
+const { transformRecord, buildRecordFromResolution } = useNutritionalLabels();
 
 // ── Generate + Save Pipeline ──────────────────────────────────────────────
 async function generateLabel() {
   if (!recipeText.value.trim() || !recipeName.value.trim()) return;
   saveError.value = null;
 
-  // Blank / non-positive input = let the model derive it from the recipe.
+  // Blank / non-positive input = let the engine derive it from the recipe.
   const hasPortion = portionSize.value != null && Number(portionSize.value) > 0;
   const hasTotal = totalSize.value != null && Number(totalSize.value) > 0;
 
   const payload = {
     recipeName: recipeName.value.trim(),
-    // Send null when left blank so the model knows to derive it.
     portionGrams: hasPortion ? portionSize.value : null,
     totalGrams: hasTotal ? totalSize.value : null,
     ingredients: recipeText.value.trim(),
   };
 
-  // 1. Process via LLM endpoint
-  let data: any;
+  // 1. LLM RESOLUTION ONLY — maps each line to { key, grams } and writes the
+  //    Spanish label texts. No nutrition math comes from the model anymore.
+  let resolution: ResolveResult;
   try {
-    const raw = await run(NOM051_COMMAND, payload);
+    const raw = await run(NOM051_RESOLVE, payload);
     const cleaned = raw.replace(/```json|```/g, "").trim();
-    data = JSON.parse(cleaned);
+    resolution = JSON.parse(cleaned);
+    console.log("RESOLVED:", JSON.stringify(resolution.resolved, null, 2));
+    if (
+      !Array.isArray(resolution.resolved) ||
+      resolution.resolved.length === 0
+    ) {
+      throw new Error("Resolver returned no ingredients");
+    }
   } catch (e) {
-    console.error("AI composition parser breakdown error:", e);
+    console.error("AI resolver parse error:", e);
+    saveError.value = "No se pudo interpretar la receta. Revisa la consola.";
     return;
   }
 
-  // 2. Resolve portion / total: user input wins, otherwise fall back to the
-  //    values the model derived from the recipe.
-  //      - total  = sum of ingredient weights when not provided
-  //      - portion = a sensible single serving chosen by the model
-  //    IMPORTANT: when portion is auto, the model's rows / %VDR are already
-  //    computed against data.portion_size, so we MUST adopt that same value.
-  const activePortion = hasPortion
-    ? Number(portionSize.value)
-    : Number(data.portion_size) || 0;
-  const activeTotal = hasTotal
-    ? Number(totalSize.value)
-    : Number(data.total_size) || 0;
+  // 2. DETERMINISTIC ENGINE — all aggregation, rounding, seals, legends, and
+  //    portion/total resolution happen on the frontend. User-supplied
+  //    portion/total override the engine's auto values.
+  const rawRecord = buildRecordFromResolution(resolution, {
+    portionGrams: hasPortion ? Number(portionSize.value) : null,
+    totalGrams: hasTotal ? Number(totalSize.value) : null,
+    fallbackName: recipeName.value,
+  });
 
-  // 3. Build a raw record matching the PocketBase shape, then run it through
-  //    the shared transformRecord so rows are generated identically to every
-  //    other page that uses BreezyLabels.
-  const rawRecord = {
-    id: null,
-    name: data.name || recipeName.value,
-    sub: data.sub,
-    ing: data.ing,
-    alg: data.alg,
-    pair: data.pair,
-    portion_size: activePortion,
-    total_size: activeTotal,
-    nameSize: "11px",
-    seals: data.seals ?? [],
-    leyendas: data.leyendas ?? [],
-    energia_kcal_100g: data.energia_kcal_100g ?? 0,
-    energia_kj_100g: data.energia_kj_100g ?? 0,
-    proteina_g_100g: data.proteina_g_100g ?? 0,
-    grasas_totales_g_100g: data.grasas_totales_g_100g ?? 0,
-    grasas_saturadas_g_100g: data.grasas_saturadas_g_100g ?? 0,
-    grasas_trans_g_100g: data.grasas_trans_g_100g ?? 0,
-    carbohidratos_disponibles_g_100g:
-      data.carbohidratos_disponibles_g_100g ?? 0,
-    azucares_totales_g_100g: data.azucares_totales_g_100g ?? 0,
-    azucares_anadidos_g_100g: data.azucares_anadidos_g_100g ?? 0,
-    fibra_g_100g: data.fibra_g_100g ?? 0,
-    sodio_mg_100g: data.sodio_mg_100g ?? 0,
-  };
-
+  // 3. Build display rows via the shared transformer (single rounding site).
   const entry = { ...transformRecord(rawRecord), pbId: null as string | null };
 
-  // 4. Push to top of list immediately (optimistic)
+  // 4. Push to top of list immediately (optimistic).
   generatedLabels.value.unshift(entry);
 
-  // Reset form
+  // Reset form.
   recipeName.value = "";
   recipeText.value = "";
   portionSize.value = null;
   totalSize.value = null;
 
-  // 5. Persist to PocketBase
+  // 5. Persist to PocketBase (unchanged shape; values now come from the engine).
   saving.value = true;
   try {
     const record = await createItem("labels", {
