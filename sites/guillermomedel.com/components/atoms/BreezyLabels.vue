@@ -13,20 +13,18 @@
           }
         "
         :id="label.id"
-        class="label-card bg-[#ede8d8] text-[#111] flex flex-col overflow-hidden rounded-sm p-0"
-        style="width: 230px; height: 350px; border: 1.5px solid #444"
+        class="label-card bg-white text-black flex flex-col overflow-hidden rounded-sm p-0"
+        style="width: 230px; height: 350px; border: 2px solid #000"
       >
-        <CardHeader
-          class="p-0 flex-shrink-0 border-b-2 border-[#111] space-y-0"
-        >
+        <CardHeader class="p-0 flex-shrink-0 border-b-2 border-black space-y-0">
           <div class="px-1.5 pb-1">
-            <div class="flex justify-end gap-1 mb-2 mt-1.5 h-7">
+            <div class="flex justify-end gap-1 mb-6 mt-1.5 h-7">
               <div class="flex items-center gap-0.5 px-1 mr-auto">
                 <AlertTriangle
                   class="w-2 h-2 text-amber-700 flex-shrink-0 mt-px"
                 />
-                <p class="text-[5px] leading-[1.25] text-[#555] m-0">
-                  <strong class="font-bold">Alérgenos:</strong> {{ label.alg }}
+                <p class="text-[5px] leading-[1.25] text-black m-0 font-bold">
+                  <strong class="font-black">Alérgenos:</strong> {{ label.alg }}
                 </p>
               </div>
               <TooltipProvider v-for="(seal, i) in label.seals" :key="i">
@@ -34,21 +32,19 @@
                   <TooltipTrigger as-child>
                     <svg
                       class="flex-shrink-0 cursor-default"
-                      width="30"
-                      height="30"
+                      width="36"
+                      height="36"
                       viewBox="0 0 44 44"
                       xmlns="http://www.w3.org/2000/svg"
                     >
-                      <!-- White border -->
                       <polygon
                         points="12,0 32,0 44,12 44,32 32,44 12,44 0,32 0,12"
                         fill="white"
                       />
 
-                      <!-- Black octagon -->
                       <polygon
                         points="13,1 31,1 43,13 43,31 31,43 13,43 1,31 1,13"
-                        fill="#111"
+                        fill="#000"
                       />
 
                       <text
@@ -61,14 +57,17 @@
                         "
                         text-anchor="middle"
                         fill="white"
-                        font-weight="bold"
+                        font-weight="900"
                         font-family="Oswald, Arial, sans-serif"
                       >
                         {{ line }}
                       </text>
                     </svg>
                   </TooltipTrigger>
-                  <TooltipContent side="top" class="text-[9px]">
+                  <TooltipContent
+                    side="top"
+                    class="text-[9px] font-bold bg-black text-white"
+                  >
                     {{ seal.lines.join(" ") }}
                   </TooltipContent>
                 </Tooltip>
@@ -116,23 +115,23 @@
             </svg>
 
             <div
-              class="text-center font-black text-[13px] tracking-[0.15em] leading-none mb-0.5"
+              class="text-center font-black text-[13px] tracking-[0.15em] leading-none mb-0.5 text-black"
             >
               BREEZY MEALS
             </div>
 
             <div class="flex items-center gap-1 justify-center">
-              <Separator class="flex-1 max-w-[12px] bg-[#111]" />
+              <Separator class="flex-1 max-w-[12px] bg-black" />
               <span
-                class="font-black tracking-[0.1em] leading-tight text-center"
+                class="font-black tracking-[0.1em] leading-tight text-center text-black"
                 :style="{ fontSize: label.nameSize }"
                 >{{ label.name }}</span
               >
-              <Separator class="flex-1 max-w-[12px] bg-[#111]" />
+              <Separator class="flex-1 max-w-[12px] bg-black" />
             </div>
 
             <p
-              class="text-center text-[5.5px] text-[#555] mt-0.5 italic leading-tight mx-0 mb-1"
+              class="text-center text-[5.5px] text-black mt-0.5 font-bold italic leading-tight mx-0 mb-1"
             >
               {{ label.sub }}
             </p>
@@ -144,7 +143,7 @@
               <div
                 v-for="(leyenda, i) in label.leyendas"
                 :key="i"
-                class="bg-black border border-white text-white px-1 py-0.5 text-center uppercase tracking-wide font-bold"
+                class="bg-black border border-white text-white px-1 py-0.5 text-center uppercase tracking-wide font-black"
                 style="box-shadow: 0 0 0 1px black"
               >
                 <p class="text-[5px] leading-none m-0">
@@ -156,24 +155,26 @@
         </CardHeader>
 
         <CardContent
-          class="flex-1 flex flex-col gap-0.5 px-1.5 py-1 overflow-hidden p-0"
+          class="flex-1 flex flex-col gap-0.5 px-1.5 py-1 overflow-hidden p-0 bg-white"
         >
-          <p class="text-[5.5px] leading-[1.3] text-[#111] mt-1 mx-0 px-1">
-            <strong class="font-bold">Ingredientes:</strong> {{ label.ing }}
+          <p
+            class="text-[5.5px] leading-[1.3] text-black mt-1 mx-0 px-1 font-semibold"
+          >
+            <strong class="font-black">Ingredientes:</strong> {{ label.ing }}
           </p>
 
           <Table
             class="nom-table w-full text-[6.5px]"
-            style="border: 1px solid #111; border-collapse: collapse"
+            style="border: 1.5px solid #000; border-collapse: collapse"
           >
             <TableRow class="border-0">
               <TableHead
                 colspan="4"
-                class="px-1 py-0.5 text-[#111] h-auto leading-tight"
-                style="background: #d8d2c0; border-bottom: 1px solid #111"
+                class="px-1 py-0.5 text-white h-auto leading-tight bg-black"
+                style="border-bottom: 1.5px solid #000"
               >
                 <div
-                  class="flex justify-between w-full font-normal text-[5.8px]"
+                  class="flex justify-between w-full font-black text-[5.8px]"
                 >
                   <span
                     >Cont. neto: <strong>{{ label.total_size }} g</strong></span
@@ -192,17 +193,20 @@
                 </div>
               </TableHead>
             </TableRow>
-            <TableRow style="background: #eee; border-bottom: 1px solid #111">
-              <TableCell class="px-1 py-0.5 font-bold text-left"
+            <TableRow style="background: #fff; border-bottom: 1.5px solid #000">
+              <TableCell class="px-1 py-0.5 font-black text-left text-black"
                 >Declaración Nutrimental</TableCell
               >
-              <TableCell class="px-1 py-0.5 font-bold text-right w-14"
+              <TableCell
+                class="px-1 py-0.5 font-black text-right w-14 text-black"
                 >Por 100 g</TableCell
               >
-              <TableCell class="px-1 py-0.5 font-bold text-right w-14"
+              <TableCell
+                class="px-1 py-0.5 font-black text-right w-14 text-black"
                 >Por porción</TableCell
               >
-              <TableCell class="px-1 py-0.5 font-bold text-right w-10"
+              <TableCell
+                class="px-1 py-0.5 font-black text-right w-10 text-black"
                 >% VNR*</TableCell
               >
             </TableRow>
@@ -213,18 +217,16 @@
                 class="border-0"
                 :style="{
                   borderBottom: row.last
-                    ? '1px solid #111'
+                    ? '1.5px solid #000'
                     : row.sub
-                      ? '0.4px solid #eee'
-                      : '0.75px solid #111',
+                      ? '0.5px solid #000'
+                      : '1.25px solid #000',
                 }"
               >
                 <TableCell
-                  class="px-1 m-0 leading-tight"
+                  class="px-1 m-0 leading-tight text-black"
                   :class="
-                    row.sub
-                      ? 'text-[6px] text-[#555]'
-                      : 'text-[6.5px] font-semibold'
+                    row.sub ? 'text-[6px] font-bold' : 'text-[6.5px] font-black'
                   "
                   :style="{
                     paddingLeft:
@@ -239,16 +241,18 @@
                   <span v-else>{{ row.label }}</span>
                 </TableCell>
 
-                <TableCell class="text-right font-medium px-1 leading-tight">
+                <TableCell
+                  class="text-right font-bold px-1 leading-tight text-black"
+                >
                   {{ row.val100g }}
                 </TableCell>
                 <TableCell
-                  class="text-right font-bold px-1 leading-tight text-neutral-800"
+                  class="text-right font-black px-1 leading-tight text-black"
                 >
                   {{ row.valPortion }}
                 </TableCell>
                 <TableCell
-                  class="text-right font-medium px-1 leading-tight text-neutral-500"
+                  class="text-right font-bold px-1 leading-tight text-black"
                 >
                   {{ row.vdr }}
                 </TableCell>
@@ -256,16 +260,18 @@
             </TableBody>
           </Table>
 
-          <p class="text-[4.5px] text-[#777] italic px-1 mt-0.5 leading-tight">
+          <p
+            class="text-[5px] text-black font-bold italic px-1 mt-0.5 leading-tight"
+          >
             *% del Valor Diario de Referencia con base en una dieta de 2,000
             kcal. Sus necesidades diarias pueden ser mayores o menores.
           </p>
         </CardContent>
 
-        <CardFooter class="flex-shrink-0 p-0" style="background: #111">
+        <CardFooter class="flex-shrink-0 p-0 bg-black">
           <div class="w-full px-2 py-1 leading-none">
             <div
-              class="flex justify-between text-[4px] text-neutral-400 leading-none"
+              class="flex justify-between text-[6px] text-white font-black leading-none"
             >
               <span>Lote: {{ generateLot(label) }}</span>
               <span>Caducidad: {{ generateExpiration(label) }}</span>
@@ -343,24 +349,31 @@ function printLabel(label: any) {
           rel="stylesheet"
         />
         <style>
-          /* 1. Reset margins and paddings completely */
+          /* 1. Ensure the canvas fills the viewport completely without scrollbars */
           html, body {
-            margin: 0;
-            padding: 0;
-            background: transparent;
+            margin: 0 !important;
+            padding: 0 !important;
+            width: 100%;
+            height: 100%;
+            background: #transparent;
+            overflow: hidden;
           }
 
-          /* 2. Force the @page box size to tightly match your card's exact aspect ratio */
+          /* 2. Define a clean physical size (230:350 aspect ratio fits perfectly in 65mm x 99mm) */
           @page { 
             margin: 0; 
-            size: 230px 350px; 
+            size: 65mm 99mm; 
           }
 
-          /* 3. Keep the template styles */
+          /* 3. Force your card element to disregard fixed pixels and stretch to 100% of the print canvas */
           .label-card { 
             font-family: 'Barlow', Arial, sans-serif; 
-            box-shadow: none !important; /* Shadows look messy on single printout sheets */
+            width: 100% !important;
+            height: 100% !important;
+            box-shadow: none !important;
+            border: none !important; /* Optional: remove outer border if your sticker edge defines the boundary */
           }
+          
           .label-card .font-black { font-family: 'Oswald', Impact, sans-serif; }
 
           td, th {
