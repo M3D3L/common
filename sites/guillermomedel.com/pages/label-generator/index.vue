@@ -259,7 +259,6 @@ async function generateLabel() {
     const raw = await run(NOM051_RESOLVE, payload);
     const cleaned = raw.replace(/```json|```/g, "").trim();
     resolution = JSON.parse(cleaned);
-    console.log("RESOLVED:", JSON.stringify(resolution.resolved, null, 2));
     if (
       !Array.isArray(resolution.resolved) ||
       resolution.resolved.length === 0
