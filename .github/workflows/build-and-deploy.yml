@@ -15,7 +15,34 @@ env:
   WHATSAPP_NUMBER: ${{ vars.WHATSAPP_NUMBER }}
 
 jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      guillermomedel: ${{ steps.filter.outputs.guillermomedel }}
+      relocatetosancarlos: ${{ steps.filter.outputs.relocatetosancarlos }}
+      vivirensancarlos: ${{ steps.filter.outputs.vivirensancarlos }}
+      common: ${{ steps.filter.outputs.common }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Detect changed paths
+        id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            common:
+              - 'common/**'
+              - 'package.json'
+              - 'package-lock.json'
+              - '.github/workflows/**'
+            guillermomedel:
+              - 'sites/guillermomedel.com/**'
+            relocatetosancarlos:
+              - 'sites/relocatetosancarlos.com/**'
+            vivirensancarlos:
+              - 'sites/vivirensancarlos.com/**'
+
   build-and-deploy:
+    needs: detect-changes
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -25,59 +52,55 @@ jobs:
             domain: guillermomedel.com
             repo: M3D3L/guillermomedel.com
             path: ./sites/guillermomedel.com
-            filter_path: "sites/guillermomedel.com/**"
           - site: relocatetosancarlos
             domain: relocatetosancarlos.com
             repo: M3D3L/relocatetosancarlos.com
             path: ./sites/relocatetosancarlos.com
-            filter_path: "sites/relocatetosancarlos.com/**"
           - site: vivirensancarlos
             domain: vivirensancarlos.com
             repo: M3D3L/vivirensancarlos.com
             path: ./sites/vivirensancarlos.com
-            filter_path: "sites/vivirensancarlos.com/**"
 
     steps:
-      - uses: actions/checkout@v4
-        with:
-          lfs: true
-
-      - name: Check for changes
-        id: changes
-        uses: dorny/paths-filter@v3
-        with:
-          filters: |
-            current_site:
-              - '${{ matrix.filter_path }}'
-            common:
-              - 'package-lock.json'
-              - '.github/workflows/**'
-              - 'common/**' # Assuming you have a common folder
-            relocate_dependency:
-              - 'sites/relocatetosancarlos.com/**'
-
       - name: Determine if build is needed
-        id: check_skip
+        id: check
         run: |
-          # Default to false
+          COMMON="${{ needs.detect-changes.outputs.common }}"
+          SITE="${{ needs.detect-changes.outputs[matrix.site] }}"
+          RELOCATE="${{ needs.detect-changes.outputs.relocatetosancarlos }}"
+          VIVIR="${{ needs.detect-changes.outputs.vivirensancarlos }}"
+          DISPATCH="${{ github.event_name == 'workflow_dispatch' }}"
+
           SHOULD_BUILD=false
 
-          # Build if common files changed, workflow manually dispatched, or site itself changed
-          if [ "${{ steps.changes.outputs.current_site }}" = "true" ] || \
-             [ "${{ steps.changes.outputs.common }}" = "true" ] || \
-             [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+          # Always build on manual dispatch or common changes
+          if [ "$DISPATCH" = "true" ] || [ "$COMMON" = "true" ]; then
             SHOULD_BUILD=true
           fi
 
-          # Special rule: If relocate changed, vivirensancarlos MUST build
-          if [ "${{ matrix.site }}" = "vivirensancarlos" ] && [ "${{ steps.changes.outputs.relocate_dependency }}" = "true" ]; then
+          # Build if this specific site changed
+          if [ "$SITE" = "true" ]; then
+            SHOULD_BUILD=true
+          fi
+
+          # relocate and vivir are the same site in different languages — build both if either changes
+          if [ "${{ matrix.site }}" = "vivirensancarlos" ] && [ "$RELOCATE" = "true" ]; then
+            SHOULD_BUILD=true
+          fi
+          if [ "${{ matrix.site }}" = "relocatetosancarlos" ] && [ "$VIVIR" = "true" ]; then
             SHOULD_BUILD=true
           fi
 
           echo "should_build=$SHOULD_BUILD" >> $GITHUB_OUTPUT
+          echo "Site: ${{ matrix.site }} | common=$COMMON site=$SITE dispatch=$DISPATCH → build=$SHOULD_BUILD"
+
+      - uses: actions/checkout@v4
+        if: steps.check.outputs.should_build == 'true'
+        with:
+          lfs: true
 
       - name: Setup Node
-        if: steps.check_skip.outputs.should_build == 'true'
+        if: steps.check.outputs.should_build == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
@@ -85,15 +108,15 @@ jobs:
           cache-dependency-path: "./package-lock.json"
 
       - name: Install dependencies
-        if: steps.check_skip.outputs.should_build == 'true'
+        if: steps.check.outputs.should_build == 'true'
         run: npm ci
 
       - name: Prepare Base Site (Dependency)
-        if: steps.check_skip.outputs.should_build == 'true' && matrix.site == 'vivirensancarlos'
+        if: steps.check.outputs.should_build == 'true' && matrix.site == 'vivirensancarlos'
         run: npx nuxi prepare sites/relocatetosancarlos.com
 
       - name: Build ${{ matrix.domain }}
-        if: steps.check_skip.outputs.should_build == 'true'
+        if: steps.check.outputs.should_build == 'true'
         run: |
           npx nuxi prepare
           npm run generate
@@ -102,12 +125,10 @@ jobs:
           POCKETBASE_URL: ${{ env.POCKETBASE_URL }}
           WHATSAPP_NUMBER: ${{ env.WHATSAPP_NUMBER }}
 
-      - name: Prepare deploy folder
-        if: steps.check_skip.outputs.should_build == 'true'
+      - name: Deploy ${{ matrix.domain }}
+        if: steps.check.outputs.should_build == 'true'
         run: |
           SITE_PATH="${{ matrix.path }}"
-          DEPLOY_DIR="deploy_${{ matrix.site }}"
-
           if [ -d "$SITE_PATH/.output/public" ]; then
             BUILD_OUTPUT="$SITE_PATH/.output/public"
           elif [ -d "$SITE_PATH/dist" ]; then
@@ -115,17 +136,16 @@ jobs:
           else
             BUILD_OUTPUT="$SITE_PATH/build"
           fi
+          mkdir -p deploy
+          cp -a "$BUILD_OUTPUT"/. deploy/
+          echo "${{ matrix.domain }}" > deploy/CNAME
 
-          mkdir -p "$DEPLOY_DIR"
-          cp -a "$BUILD_OUTPUT"/. "$DEPLOY_DIR/"
-          echo "${{ matrix.domain }}" > "$DEPLOY_DIR/CNAME"
-
-      - name: Deploy ${{ matrix.domain }}
-        if: steps.check_skip.outputs.should_build == 'true'
+      - name: Push to GitHub Pages
+        if: steps.check.outputs.should_build == 'true'
         uses: JamesIves/github-pages-deploy-action@v4
         with:
           repository-name: ${{ matrix.repo }}
           branch: gh-pages
-          folder: deploy_${{ matrix.site }}
+          folder: deploy
           clean: true
           token: ${{ secrets.DEPLOY_TOKEN }}
