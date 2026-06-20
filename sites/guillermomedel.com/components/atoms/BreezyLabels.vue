@@ -30,39 +30,7 @@
               <TooltipProvider v-for="(seal, i) in label.seals" :key="i">
                 <Tooltip>
                   <TooltipTrigger as-child>
-                    <svg
-                      class="flex-shrink-0 cursor-default"
-                      width="36"
-                      height="36"
-                      viewBox="0 0 44 44"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <polygon
-                        points="12,0 32,0 44,12 44,32 32,44 12,44 0,32 0,12"
-                        fill="white"
-                      />
-
-                      <polygon
-                        points="13,1 31,1 43,13 43,31 31,43 13,43 1,31 1,13"
-                        fill="#000"
-                      />
-
-                      <text
-                        v-for="(line, li) in seal.lines"
-                        :key="li"
-                        :x="22"
-                        :y="seal.ys[li]"
-                        :font-size="
-                          line.toLowerCase().includes('saturada') ? 4.5 : 6
-                        "
-                        text-anchor="middle"
-                        fill="white"
-                        font-weight="900"
-                        font-family="Oswald, Arial, sans-serif"
-                      >
-                        {{ line }}
-                      </text>
-                    </svg>
+                    <MoleculesSeal :seal="seal" />
                   </TooltipTrigger>
                   <TooltipContent
                     side="top"
@@ -74,45 +42,9 @@
               </TooltipProvider>
             </div>
 
-            <svg
-              version="1.0"
-              xmlns="http://www.w3.org/2000/svg"
-              width="450.000000pt"
-              height="150.000000pt"
-              viewBox="0 0 450.000000 150.000000"
-              preserveAspectRatio="xMidYMid meet"
-              class="w-24 h-auto mx-auto"
-            >
-              <g
-                transform="translate(0.000000,150.000000) scale(0.100000,-0.100000)"
-                fill="#000000"
-                stroke="none"
-              >
-                <path
-                  d="M2243 1378 c-11 -13 -37 -69 -58 -124 l-37 -102 -56 3 c-50 2 -57 5
--65 28 -29 88 -116 -3 -131 -138 -4 -33 -16 -79 -28 -102 -29 -63 -142 -162
--243 -213 -47 -25 -114 -70 -149 -101 -53 -47 -79 -61 -162 -90 -55 -18 -169
--68 -255 -111 -162 -81 -237 -104 -298 -94 -60 9 -170 -14 -266 -56 -49 -22
--121 -52 -160 -65 -72 -26 -72 -26 -222 -6 -60 7 -113 -12 -113 -42 0 -23 0
--23 50 -8 40 12 61 12 101 4 96 -21 130 -15 312 55 l172 67 132 7 132 6 153
-77 c84 42 206 96 270 121 64 24 128 52 141 62 13 11 48 38 76 61 29 24 87 61
-130 83 142 74 239 182 262 290 21 103 32 140 45 151 13 11 22 -11 42 -106 15
--73 49 -51 67 43 7 36 8 36 36 21 33 -17 63 11 89 83 12 34 34 88 47 118 22
-50 26 53 37 37 8 -9 16 -36 20 -58 9 -57 39 -111 78 -141 23 -18 43 -49 66
--107 27 -64 39 -82 58 -87 29 -7 56 13 74 57 23 55 34 37 92 -156 39 -132 59
--162 123 -190 29 -13 78 -46 110 -74 32 -28 74 -55 93 -60 37 -11 98 -2 171
-23 74 27 89 22 209 -64 62 -44 130 -89 152 -100 47 -24 116 -26 167 -5 40 17
-90 19 125 6 13 -5 71 -47 130 -94 136 -108 193 -136 310 -148 50 -5 116 -16
-148 -24 73 -19 72 -19 68 7 -4 28 -48 43 -189 62 -139 20 -189 42 -299 136
--47 39 -105 81 -130 92 -53 25 -127 26 -189 4 -24 -9 -54 -16 -67 -16 -21 0
--90 44 -264 166 -59 41 -69 45 -110 41 -25 -3 -73 -15 -107 -27 -86 -31 -119
--23 -193 45 -33 30 -72 57 -87 61 -66 15 -110 84 -144 220 -27 109 -52 161
--84 176 -30 14 -50 0 -70 -50 -8 -18 -20 -32 -27 -30 -6 2 -24 35 -40 74 -20
-50 -40 80 -73 109 -39 35 -47 49 -65 119 -12 44 -23 83 -26 88 -10 16 -61 8
--81 -14z"
-                />
-              </g>
-            </svg>
+            <div class="w-20 mx-auto mb-1">
+              <MoleculesSvg src="/icons/tetakawi.svg" />
+            </div>
 
             <div
               class="text-center font-black text-[13px] tracking-[0.15em] leading-none mb-0.5 text-black"
@@ -271,9 +203,15 @@
         <CardFooter class="flex-shrink-0 p-0 bg-black">
           <div class="w-full px-2 py-1 leading-none">
             <div
-              class="flex justify-between text-[6px] text-white font-black leading-none"
+              class="flex justify-between text-[6px] gap-4 text-white font-black leading-none"
             >
               <span>Lote: {{ generateLot(label) }}</span>
+
+              <MoleculesBarcode
+                :value="internalEan13(label.sku ?? label.id)"
+                :height="15"
+                :width="0.9"
+              />
               <span>Caducidad: {{ generateExpiration(label) }}</span>
             </div>
           </div>
@@ -309,6 +247,7 @@ import {
   generateLot,
   generateExpiration,
 } from "~/composables/useNutritionalLabels";
+import { internalEan13 } from "~/composables/useBarcode";
 
 const props = defineProps<{
   labelData: any[];
@@ -358,20 +297,20 @@ function printLabel(label: any) {
           }
 
           /* 2. Define a clean physical size (230:350 aspect ratio fits perfectly in 65mm x 99mm) */
-          @page { 
-            margin: 0; 
-            size: 65mm 99mm; 
+          @page {
+            margin: 0;
+            size: 65mm 99mm;
           }
 
           /* 3. Force your card element to disregard fixed pixels and stretch to 100% of the print canvas */
-          .label-card { 
-            font-family: 'Barlow', Arial, sans-serif; 
+          .label-card {
+            font-family: 'Barlow', Arial, sans-serif;
             width: 100% !important;
             height: 100% !important;
             box-shadow: none !important;
             border: none !important; /* Optional: remove outer border if your sticker edge defines the boundary */
           }
-          
+
           .label-card .font-black { font-family: 'Oswald', Impact, sans-serif; }
 
           td, th {
