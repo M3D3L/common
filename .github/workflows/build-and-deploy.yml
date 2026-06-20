@@ -24,13 +24,28 @@ jobs:
       common: ${{ steps.filter.outputs.common }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Detect changed paths
         id: filter
         uses: dorny/paths-filter@v3
         with:
           filters: |
             common:
-              - 'common/**'
+              - 'app.vue'
+              - 'nuxt.config.ts'
+              - 'tailwind.config.js'
+              - 'tsconfig.json'
+              - 'components.json'
+              - 'assets/**'
+              - 'components/**'
+              - 'composables/**'
+              - 'layouts/**'
+              - 'lib/**'
+              - 'pages/**'
+              - 'public/**'
+              - 'server/**'
+              - 'store/**'
               - 'package.json'
               - 'package-lock.json'
               - '.github/workflows/**'
