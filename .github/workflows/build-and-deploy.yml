@@ -119,8 +119,16 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: npm
           cache-dependency-path: "./package-lock.json"
+
+      - name: Cache node_modules
+        if: steps.check.outputs.should_build == 'true'
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-node-v2-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-v2-
 
       - name: Install dependencies
         if: steps.check.outputs.should_build == 'true'
