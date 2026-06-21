@@ -5,253 +5,22 @@
       :key="label.id"
       @edit="editLabel(label)"
       @print="printLabel(label)"
+      @download="downloadLabelAsPng(label)"
     >
-      <Card
+      <div
         :ref="
           (el) => {
             if (el) cardRefs[label.id] = el as HTMLElement;
           }
         "
-        :id="label.id"
-        class="label-card bg-white text-black flex flex-col overflow-hidden rounded-sm p-0"
-        style="width: 230px; height: 350px; border: 2px solid #000"
       >
-        <CardHeader class="p-0 flex-shrink-0 border-b-2 border-black space-y-0">
-          <div class="px-1.5 pb-1">
-            <div class="flex justify-end gap-1 mb-6 mt-1.5 h-7">
-              <div class="flex items-center gap-0.5 px-1 mr-auto">
-                <AlertTriangle
-                  class="w-2 h-2 text-amber-700 flex-shrink-0 mt-px"
-                />
-                <p class="text-[5px] leading-[1.25] text-black m-0 font-bold">
-                  <strong class="font-black">Alérgenos:</strong> {{ label.alg }}
-                </p>
-              </div>
-              <TooltipProvider v-for="(seal, i) in label.seals" :key="i">
-                <Tooltip>
-                  <TooltipTrigger as-child>
-                    <MoleculesSeal :seal="seal" />
-                  </TooltipTrigger>
-                  <TooltipContent
-                    side="top"
-                    class="text-[9px] font-bold bg-black text-white"
-                  >
-                    {{ seal.lines.join(" ") }}
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </div>
-
-            <div class="w-20 mx-auto mb-1">
-              <MoleculesSvg src="/icons/tetakawi.svg" />
-            </div>
-
-            <div
-              class="text-center font-black text-[13px] tracking-[0.15em] leading-none mb-0.5 text-black"
-            >
-              BREEZY MEALS
-            </div>
-
-            <div class="flex items-center gap-1 justify-center">
-              <Separator class="flex-1 max-w-[12px] bg-black" />
-              <span
-                class="font-black tracking-[0.1em] leading-tight text-center text-black"
-                :style="{ fontSize: label.nameSize }"
-                >{{ label.name }}</span
-              >
-              <Separator class="flex-1 max-w-[12px] bg-black" />
-            </div>
-
-            <p
-              class="text-center text-[5.5px] text-black mt-0.5 font-bold italic leading-tight mx-0 mb-1"
-            >
-              {{ label.sub }}
-            </p>
-
-            <div
-              v-if="label.leyendas && label.leyendas.length > 0"
-              class="flex flex-col gap-1 px-1"
-            >
-              <div
-                v-for="(leyenda, i) in label.leyendas"
-                :key="i"
-                class="bg-black border border-white text-white px-1 py-0.5 text-center uppercase tracking-wide font-black"
-                style="box-shadow: 0 0 0 1px black"
-              >
-                <p class="text-[5px] leading-none m-0">
-                  {{ leyenda.text }}
-                </p>
-              </div>
-            </div>
-          </div>
-        </CardHeader>
-
-        <CardContent
-          class="flex-1 flex flex-col gap-0.5 px-1.5 py-1 overflow-hidden p-0 bg-white"
-        >
-          <p
-            class="text-[5.5px] leading-[1.3] text-black mt-1 mx-0 px-1 font-semibold"
-          >
-            <strong class="font-black">Ingredientes:</strong> {{ label.ing }}
-          </p>
-
-          <Table
-            class="nom-table w-full text-[6.5px]"
-            style="border: 1.5px solid #000; border-collapse: collapse"
-          >
-            <TableRow class="border-0">
-              <TableHead
-                colspan="4"
-                class="px-1 py-0.5 text-white h-auto leading-tight bg-black"
-                style="border-bottom: 1.5px solid #000"
-              >
-                <div
-                  class="flex justify-between w-full font-black text-[5.8px]"
-                >
-                  <span
-                    >Cont. neto: <strong>{{ label.total_size }} g</strong></span
-                  >
-                  <span
-                    >Porciones por envase:
-                    <strong>{{
-                      label.total_size && label.portion_size
-                        ? Math.round(label.total_size / label.portion_size)
-                        : 1
-                    }}</strong></span
-                  >
-                  <span
-                    >Porción: <strong>{{ label.portion_size }} g</strong></span
-                  >
-                </div>
-              </TableHead>
-            </TableRow>
-            <TableRow style="background: #fff; border-bottom: 1.5px solid #000">
-              <TableCell class="px-1 py-0.5 font-black text-left text-black"
-                >Declaración Nutrimental</TableCell
-              >
-              <TableCell
-                class="px-1 py-0.5 font-black text-right w-14 text-black"
-                >Por 100 g</TableCell
-              >
-              <TableCell
-                class="px-1 py-0.5 font-black text-right w-14 text-black"
-                >Por porción</TableCell
-              >
-              <TableCell
-                class="px-1 py-0.5 font-black text-right w-10 text-black"
-                >% VNR*</TableCell
-              >
-            </TableRow>
-            <TableBody>
-              <TableRow
-                v-for="row in label.rows"
-                :key="row.label"
-                class="border-0"
-                :style="{
-                  borderBottom: row.last
-                    ? '1.5px solid #000'
-                    : row.sub
-                      ? '0.5px solid #000'
-                      : '1.25px solid #000',
-                }"
-              >
-                <TableCell
-                  class="px-1 m-0 leading-tight text-black"
-                  :class="
-                    row.sub ? 'text-[6px] font-bold' : 'text-[6.5px] font-black'
-                  "
-                  :style="{
-                    paddingLeft:
-                      row.indent === 2
-                        ? '10px'
-                        : row.indent === 1
-                          ? '6px'
-                          : '2px',
-                  }"
-                >
-                  <strong v-if="!row.sub">{{ row.label }}</strong>
-                  <span v-else>{{ row.label }}</span>
-                </TableCell>
-
-                <TableCell
-                  class="text-right font-bold px-1 leading-tight text-black"
-                >
-                  {{ row.val100g }}
-                </TableCell>
-                <TableCell
-                  class="text-right font-black px-1 leading-tight text-black"
-                >
-                  {{ row.valPortion }}
-                </TableCell>
-                <TableCell
-                  class="text-right font-bold px-1 leading-tight text-black"
-                >
-                  {{ row.vdr }}
-                </TableCell>
-              </TableRow>
-            </TableBody>
-          </Table>
-
-          <p
-            class="text-[5px] text-black font-bold italic px-1 mt-0.5 leading-tight"
-          >
-            *% del Valor Diario de Referencia con base en una dieta de 2,000
-            kcal. Sus necesidades diarias pueden ser mayores o menores.
-          </p>
-        </CardContent>
-
-        <CardFooter class="flex-shrink-0 p-0 bg-black">
-          <div class="w-full px-2 py-1 leading-none">
-            <div
-              class="flex justify-between items-center text-[6px] gap-4 text-white font-black leading-none"
-            >
-              <span>Lote: {{ generateLot(label) }}</span>
-
-              <MoleculesBarcode
-                :value="internalEan13(label.sku ?? label.id)"
-                :height="15"
-                :width="0.9"
-              />
-              <span
-                >Caducidad:
-                {{ label?.expiration || generateExpiration(label) }}</span
-              >
-            </div>
-          </div>
-        </CardFooter>
-      </Card>
+        <AtomsStandardLabel :label="label" />
+      </div>
     </MoleculesButtonWrapper>
   </div>
 </template>
 
 <script setup lang="ts">
-import {
-  Card,
-  CardHeader,
-  CardContent,
-  CardFooter,
-} from "@common/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableRow,
-  TableHead,
-  TableCell,
-} from "@common/components/ui/table";
-import { Separator } from "@common/components/ui/separator";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@common/components/ui/tooltip";
-import { AlertTriangle } from "lucide-vue-next";
-import {
-  generateLot,
-  generateExpiration,
-} from "~/composables/useNutritionalLabels";
-import { internalEan13 } from "~/composables/useBarcode";
-
 const props = defineProps<{
   labelData: any[];
 }>();
@@ -264,15 +33,30 @@ function editLabel(label: any) {
   router.push(`/label-generator/${label.id}`);
 }
 
-function printLabel(label: any) {
-  const el = cardRefs.value[label.id];
-  if (!el) return;
+// Helper function to inject fonts into any document
+function injectFonts(doc: Document) {
+  const link1 = doc.createElement("link");
+  link1.rel = "preconnect";
+  link1.href = "https://fonts.googleapis.com";
+  doc.head.appendChild(link1);
 
-  const node = (el as any).$el ?? el;
-  const html = node.outerHTML;
+  const link2 = doc.createElement("link");
+  link2.rel = "preconnect";
+  link2.href = "https://fonts.gstatic.com";
+  link2.crossOrigin = "anonymous";
+  doc.head.appendChild(link2);
 
+  const link3 = doc.createElement("link");
+  link3.href =
+    "https://fonts.googleapis.com/css2?family=Oswald:wght@700&family=Barlow:wght@400;600&display=swap";
+  link3.rel = "stylesheet";
+  doc.head.appendChild(link3);
+}
+
+function createPrintIframe(html: string): HTMLIFrameElement {
   const iframe = document.createElement("iframe");
-  iframe.style.cssText = "position:fixed;width:0;height:0;border:0;opacity:0;";
+  iframe.style.cssText =
+    "position:fixed;width:65mm;height:99mm;border:0;opacity:0;top:0;left:0;pointer-events:none;z-index:-9999;";
   document.body.appendChild(iframe);
 
   const doc = iframe.contentDocument!;
@@ -283,67 +67,187 @@ function printLabel(label: any) {
       <head>
         <meta charset="utf-8" />
         <script src="https://cdn.tailwindcss.com"><\/script>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Oswald:wght@700&family=Barlow:wght@400;600&display=swap"
-          rel="stylesheet"
-        />
         <style>
-          /* 1. Ensure the canvas fills the viewport completely without scrollbars */
-          html, body {
-            margin: 0 !important;
-            padding: 0 !important;
-            width: 100%;
-            height: 100%;
-            background: #transparent;
-            overflow: hidden;
-          }
-
-          /* 2. Define a clean physical size (230:350 aspect ratio fits perfectly in 65mm x 99mm) */
-          @page {
-            margin: 0;
-            size: 65mm 99mm;
-          }
-
-          /* 3. Force your card element to disregard fixed pixels and stretch to 100% of the print canvas */
-          .label-card {
-            font-family: 'Barlow', Arial, sans-serif;
-            width: 100% !important;
-            height: 100% !important;
-            box-shadow: none !important;
-            border: none !important; /* Optional: remove outer border if your sticker edge defines the boundary */
-          }
-
-          .label-card .font-black { font-family: 'Oswald', Impact, sans-serif; }
-
-          td, th {
-            border: none !important;
-            height: auto !important;
-            padding-top: 0.5px !important;
-            padding-bottom: 0.5px !important;
-            line-height: 1.15 !important;
-            vertical-align: middle;
-          }
-
+          html, body { margin: 0 !important; padding: 0 !important; width: 65mm !important; height: 99mm !important; background: transparent; overflow: hidden !important; }
+          @page { margin: 0; size: 65mm 99mm; }
+          .label-card { font-family: 'Barlow', Arial, sans-serif !important; width: 65mm !important; height: 99mm !important; box-shadow: none !important; border: none !important; box-sizing: border-box !important; }
+          .label-card .font-black { font-family: 'Oswald', sans-serif !important; font-weight: 700 !important; }
+          td, th { border: none !important; height: auto !important; padding-top: 0.5px !important; padding-bottom: 0.5px !important; line-height: 1.15 !important; vertical-align: middle; }
           tr { border: none; }
-
-          * {
-            -webkit-print-color-adjust: exact !important;
-            print-color-adjust: exact !important;
-          }
+          * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; overflow: visible !important; }
+          .label-card .seal-container { display: flex !important; }
+          .label-card .leyenda-item { box-shadow: 0 0 0 1px black !important; }
         </style>
       </head>
-      <body>${html}</body>
+      <body><div class="label-grid">${html}</div></body>
     </html>
   `);
+
+  // Inject fonts into the iframe
+  injectFonts(doc);
   doc.close();
+  return iframe;
+}
+
+async function downloadLabelAsPng(label: any) {
+  const el = cardRefs.value[label.id];
+  if (!el) return;
+
+  const node = (el as any).$el ?? el;
+
+  // Create a container with proper font loading
+  const pngContainer = document.createElement("div");
+  pngContainer.style.cssText = `
+    position: fixed;
+    top: -9999px;
+    left: -9999px;
+    width: 227px;
+    height: 350px;
+    padding: 0;
+    margin: 0;
+    overflow: hidden;
+    z-index: -9999;
+    background: white;
+  `;
+
+  // Clone the node
+  const clonedCard = node.cloneNode(true) as HTMLElement;
+
+  // Apply PNG-specific root overrides
+  clonedCard.style.width = "227px";
+  clonedCard.style.height = "350px";
+  clonedCard.style.border = "2px solid #000";
+  clonedCard.style.boxShadow = "none";
+  clonedCard.style.margin = "0";
+  clonedCard.style.padding = "0";
+  clonedCard.style.boxSizing = "border-box";
+  clonedCard.style.background = "#ffffff";
+
+  // INJECT EXPLICIT COMPACT STYLE PATRICES FOR TABLE CELLS AND SCROLLBAR ANNIHILATION
+  const pngStyleOverride = document.createElement("style");
+  pngStyleOverride.textContent = `
+    /* Nuke browser scrollbar displays entirely */
+    * { scrollbar-width: none !important; -ms-overflow-style: none !important; }
+    *::-webkit-scrollbar { display: none !important; width: 0 !important; height: 0 !important; }
+    
+    /* Strict font-family map fallback for isolated clone environment */
+    .print-label, .label-card, * { font-family: 'Barlow', Arial, sans-serif !important; }
+    .font-black, strong { font-family: 'Oswald', Impact, sans-serif !important; font-weight: 700 !important; }
+
+    /* Enforce downscaled rendering matrix on nutritional table values */
+    .nom-table { width: 100% !important; table-layout: fixed !important; border-collapse: collapse !important; margin: 0 !important; }
+    .nom-table th, .nom-table td { 
+      padding-top: 0.25px !important; 
+      padding-bottom: 0.25px !important; 
+      line-height: 1.1 !important;
+      font-size: 5.2px !important; 
+    }
+    .nom-table th span, .nom-table th div { font-size: 4.8px !important; }
+    .nom-table td.text-\\[6\\.5px\\] { font-size: 5.2px !important; }
+    .nom-table td.text-\\[6px\\] { font-size: 4.8px !important; }
+
+    /* CRITICAL FIX FOR LEYENDAS CUTOFF: Let black headers spill box shadows cleanly */
+    .bg-black { overflow: visible !important; }
+  `;
+  pngContainer.appendChild(pngStyleOverride);
+
+  // Clean elements and cascade targeted structural overflows
+  const allElements = clonedCard.querySelectorAll("*");
+  allElements.forEach((el) => {
+    const element = el as HTMLElement;
+
+    // Check if the node is an ancestor/part of the top header or leyendas layout
+    if (element.closest("thead") || element.closest(".nom-table")) {
+      element.style.overflow = "hidden";
+    } else {
+      // Allow general structural elements like seals, headers, and barcodes to render fully
+      element.style.overflow = "visible";
+    }
+
+    if (element.classList.contains("font-black")) {
+      element.style.fontFamily = "'Oswald', sans-serif";
+    }
+  });
+
+  const tables = clonedCard.querySelectorAll(".nom-table, table");
+  tables.forEach((table) => {
+    const t = table as HTMLElement;
+    t.style.width = "100%";
+    t.style.tableLayout = "fixed";
+    t.style.borderCollapse = "collapse";
+    t.style.overflow = "hidden";
+  });
+
+  // Inject font link directly into clone scope
+  const fontLink = document.createElement("link");
+  fontLink.href =
+    "https://fonts.googleapis.com/css2?family=Oswald:wght@700&family=Barlow:wght@400;600&display=swap";
+  fontLink.rel = "stylesheet";
+  clonedCard.prepend(fontLink);
+
+  pngContainer.appendChild(clonedCard);
+  document.body.appendChild(pngContainer);
+
+  try {
+    const { toPng } = await import("html-to-image");
+
+    // Wait explicitly for layouts and styling vectors to settle
+    await document.fonts.ready;
+    await new Promise((resolve) => setTimeout(resolve, 250));
+
+    const dataUrl = await toPng(clonedCard, {
+      pixelRatio: 4,
+      cacheBust: true,
+      width: 227,
+      height: 350,
+      backgroundColor: "#ffffff",
+      skipFonts: false,
+      style: {
+        transform: "scale(1)",
+        width: "227px",
+        height: "350px",
+      },
+    });
+
+    const a = document.createElement("a");
+    a.href = dataUrl;
+    a.download = `${label.name ?? label.id}-label.png`;
+    a.click();
+  } catch (err) {
+    console.error("Failed to generate PNG:", err);
+  } finally {
+    document.body.removeChild(pngContainer);
+  }
+}
+
+function printLabel(label: any) {
+  const el = cardRefs.value[label.id];
+  if (!el) return;
+
+  const node = (el as any).$el ?? el;
+  let html = node.outerHTML;
+
+  // Add font link to the HTML
+  const fontHtml = `
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@700&family=Barlow:wght@400;600&display=swap" rel="stylesheet">
+  `;
+
+  // Insert font link before the closing head tag
+  html = html.replace("</head>", fontHtml + "</head>");
+
+  // Ensure print-specific classes and attributes
+  html = html.replace(/class="/g, 'class="print-label ');
+
+  const iframe = createPrintIframe(html);
 
   iframe.onload = () => {
     setTimeout(() => {
       iframe.contentWindow!.focus();
       iframe.contentWindow!.print();
       setTimeout(() => document.body.removeChild(iframe), 1000);
-    }, 800);
+    }, 1000);
   };
 }
 </script>
@@ -351,6 +255,7 @@ function printLabel(label: any) {
 <style scoped>
 @import url("https://fonts.googleapis.com/css2?family=Oswald:wght@700&family=Barlow:wght@400;600&display=swap");
 
+/* Display styles */
 .label-card {
   font-family: "Barlow", Arial, sans-serif;
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
@@ -358,6 +263,7 @@ function printLabel(label: any) {
 
 .label-card .font-black {
   font-family: "Oswald", Impact, sans-serif;
+  font-weight: 700;
 }
 
 .label-card :deep(td),
@@ -377,5 +283,15 @@ function printLabel(label: any) {
 .label-card :deep(.nom-table) {
   line-height: 1.15;
   overflow: visible;
+}
+
+/* Print-specific styles */
+@media print {
+  .label-card {
+    width: 65mm !important;
+    height: 99mm !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
 }
 </style>

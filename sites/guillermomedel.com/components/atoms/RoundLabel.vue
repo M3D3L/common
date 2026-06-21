@@ -5,6 +5,7 @@
       :key="label.id"
       @edit="editLabel(label)"
       @print="printLabel(label)"
+      @download="downloadLabelAsPng(label)"
     >
       <Card
         :ref="
@@ -17,10 +18,10 @@
         style="width: 192px; height: 192px"
       >
         <div
-          class="justify-center flex gap-0.5 bg-gray-100 p-1 left-8 absolute top-7 rounded-full"
+          class="justify-center flex gap-0.5 text-center items-center bg-gray-100 p-1 left-8 absolute top-7 rounded-full"
         >
-          <AlertTriangle class="w-1.5 h-1.5 text-amber-700 flex-shrink-0" />
-          <p class="text-[4.5px] leading-tight text-black m-0 font-bold">
+          <AlertTriangle class="w-2 h-2 text-amber-700" />
+          <p class="text-[6px] leading-tight text-black font-black">
             <strong class="font-black">Alérgenos:</strong>
             {{ label.alg || "Ninguno" }}
           </p>
@@ -29,7 +30,7 @@
           <div class="flex justify-between items-center w-full px-2 h-5 mb-0.5">
             <div
               v-if="label.seals && label.seals.length > 0"
-              class="flex-shrink-0 absolute top-4 right-9 mt-1 mr-1"
+              class="flex-shrink-0 absolute top-4 right-7 mt-1 mr-1"
             >
               <MoleculesSeal
                 width="32"
@@ -99,7 +100,6 @@
           Cont. Neto: {{ label.total_size }} g
         </div>
 
-        <!-- Footer: lot | barcode | expiration -->
         <div
           class="flex flex-col space-y-0! justify-between items-center text-[4.5px] w-full px-4 text-black font-bold"
         >
@@ -130,7 +130,7 @@ import {
   generateLot,
   generateExpiration,
 } from "~/composables/useNutritionalLabels";
-import { internalEan13 } from "~/composables/useBarcode"; // ← added
+import { internalEan13 } from "~/composables/useBarcode";
 
 const props = defineProps<{
   labelData: any[];
@@ -150,6 +150,46 @@ function sellosSeal(count: number): { lines: string[]; ys: number[] } {
 
 function editLabel(label: any) {
   router.push(`/label-generator/${label.id}`);
+}
+
+async function downloadLabelAsPng(label: any) {
+  const el = cardRefs.value[label.id];
+  if (!el) return;
+  const node = (el as any).$el ?? el;
+
+  // Wait for web fonts so the capture doesn't fall back to Arial
+  await (document as any).fonts?.ready;
+
+  // foreignObject-based capture: the browser renders the node itself,
+  // so the PNG matches exactly what's on screen (flex, gap, max-w, oklch, etc.)
+  const { toCanvas } = await import("html-to-image");
+  const canvas = await toCanvas(node, {
+    pixelRatio: 4, // 192 * 4 = 768px output
+    cacheBust: true,
+  });
+
+  // Clip the square capture into a perfect circle
+  const size = Math.min(canvas.width, canvas.height);
+  const offscreen = document.createElement("canvas");
+  offscreen.width = size;
+  offscreen.height = size;
+  const ctx = offscreen.getContext("2d")!;
+
+  ctx.beginPath();
+  ctx.arc(size / 2, size / 2, size / 2, 0, Math.PI * 2);
+  ctx.closePath();
+  ctx.clip();
+  ctx.drawImage(canvas, 0, 0);
+
+  offscreen.toBlob((blob) => {
+    if (!blob) return;
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${label.name ?? label.id}-label.png`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }, "image/png");
 }
 
 function printLabel(label: any) {
@@ -177,35 +217,44 @@ function printLabel(label: any) {
           html, body {
             margin: 0 !important;
             padding: 0 !important;
-            width: 100%;
-            height: 100%;
             background: transparent;
             overflow: hidden;
+            width: 2in;
+            height: 2in;
           }
-
           @page {
             margin: 0;
             size: 2in 2in;
           }
-
+          .print-clip {
+            width: 2in;
+            height: 2in;
+            border-radius: 50%;
+            overflow: hidden;
+            clip-path: circle(50% at 50% 50%);
+            position: relative;
+          }
           .label-card {
             font-family: 'Barlow', Arial, sans-serif;
-            width: 100% !important;
-            height: 100% !important;
-            box-shadow: none !important;
-            border: none !important;
+            width: 2in !important;
+            height: 2in !important;
             border-radius: 50% !important;
+            overflow: hidden !important;
+            box-shadow: none !important;
+            border: 2px solid black !important;
           }
-
           .label-card .font-black { font-family: 'Oswald', Impact, sans-serif; }
-
           * {
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
           }
         </style>
       </head>
-      <body>${html}</body>
+      <body>
+        <div class="print-clip">
+          ${html}
+        </div>
+      </body>
     </html>
   `);
   doc.close();
