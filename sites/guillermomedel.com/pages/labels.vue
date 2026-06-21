@@ -20,12 +20,15 @@
       </Button>
     </div>
 
+    <RoundLabel :labelData="labelData" class="mb-4" />
+
     <BreezyLabels :labelData="labelData" />
   </section>
 </template>
 
 <script lang="ts" setup>
 import BreezyLabels from "~/components/atoms/BreezyLabels.vue";
+import RoundLabel from "~/components/atoms/RoundLabel.vue";
 import { useNutritionalLabels } from "~/composables/useNutritionalLabels";
 import { Button } from "@common/components/ui/button";
 import { UtensilsCrossed } from "lucide-vue-next";

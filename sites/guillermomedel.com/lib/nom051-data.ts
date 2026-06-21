@@ -1,6 +1,4 @@
-// nom051-data.ts
 // Single source of truth for NOM-051 nutrition data.
-// Transcribed verbatim from the original NOM051_COMMAND embedded table.
 // No logic here — only data. The engine consumes this.
 
 export interface Profile {
@@ -16,8 +14,6 @@ export interface Profile {
   sodium: number; // mg per 100 g
 }
 
-// Helper so the table below reads like the prompt's columns:
-// kcal | protein | fat | sat | trans | carb | sugars | added | fiber | sodium
 const P = (
   kcal: number,
   protein: number,
@@ -153,8 +149,110 @@ export const TABLE: TableRow[] = [
     syn: ["broccoli"],
     profile: P(34, 2.8, 0.4, 0.0, 0, 4.0, 1.7, 0, 2.6, 33),
   },
+  {
+    key: "nopal",
+    syn: ["cactus paddle", "nopales"],
+    profile: P(16, 1.3, 0.1, 0.0, 0, 2.0, 1.1, 0, 2.2, 30),
+  },
+  {
+    key: "coliflor",
+    syn: ["cauliflower"],
+    profile: P(25, 1.9, 0.3, 0.0, 0, 4.0, 1.9, 0, 2.0, 30),
+  },
+  {
+    key: "betabel",
+    syn: ["betarraga", "beet", "remolacha"],
+    profile: P(43, 1.6, 0.2, 0.0, 0, 8.0, 6.8, 0, 2.8, 78),
+  },
+  {
+    key: "pepino",
+    syn: ["cucumber"],
+    profile: P(15, 0.7, 0.1, 0.0, 0, 2.2, 1.7, 0, 0.7, 2),
+  },
+  {
+    key: "camote",
+    syn: ["sweet potato", "batata", "camote blanco"],
+    profile: P(86, 1.6, 0.1, 0.0, 0, 19.0, 4.2, 0, 3.0, 55),
+  },
+  {
+    key: "jicama",
+    syn: ["yam bean"],
+    profile: P(38, 0.7, 0.1, 0.0, 0, 7.0, 1.8, 0, 4.9, 4),
+  },
+  {
+    key: "taro",
+    syn: ["malanga", "dasheen"],
+    profile: P(112, 1.5, 0.2, 0.0, 0, 25.0, 0.5, 0, 4.1, 11),
+  },
 
-  // GRAINS / STARCHES
+  // SNACK / EXPANDED PRODUCTS
+  {
+    key: "maiz nixtamalizado inflado",
+    syn: ["maicitos", "maiz inflado", "puffed corn", "maiz nixtamal"],
+    profile: P(370, 8.0, 2.5, 0.4, 0, 74.0, 1.0, 0, 5.0, 10),
+  },
+  {
+    key: "chips de camote",
+    syn: ["camote deshidratado", "sweet potato chips"],
+    profile: P(341, 3.9, 0.4, 0.1, 0, 75.0, 16.0, 0, 9.5, 72),
+  },
+  {
+    key: "chips de jicama",
+    syn: ["jicama deshidratada", "jicama chips"],
+    profile: P(298, 3.2, 0.3, 0.1, 0, 64.0, 9.0, 0, 24.0, 18),
+  },
+  {
+    key: "chips de betabel",
+    syn: ["betabel deshidratado", "beet chips"],
+    profile: P(325, 6.5, 0.8, 0.1, 0, 63.0, 25.0, 0, 13.5, 310),
+  },
+  {
+    key: "chips de coliflor",
+    syn: ["coliflor deshidratada", "cauliflower chips"],
+    profile: P(310, 9.5, 1.5, 0.2, 0, 54.0, 8.5, 0, 18.0, 150),
+  },
+  {
+    key: "chips de taro",
+    syn: ["taro chips", "taro deshidratado"],
+    profile: P(356, 5.9, 0.8, 0.2, 0, 73.0, 2.0, 0, 16.0, 45),
+  },
+  {
+    key: "chips de platano",
+    syn: ["platano deshidratado", "banana chips", "platano seco"],
+    profile: P(374, 2.3, 1.8, 0.8, 0, 82.0, 42.0, 0, 7.7, 3),
+  },
+  {
+    key: "puff de garbanzo",
+    syn: ["garbanzo inflado", "chicharron de garbanzo", "garbanzo puff"],
+    profile: P(378, 19.0, 5.5, 0.6, 0, 55.0, 3.5, 0, 16.5, 25),
+  },
+  {
+    key: "churro de nopal",
+    syn: ["churrito de nopal", "nopal extrudido"],
+    profile: P(360, 7.0, 2.0, 0.3, 0, 69.0, 3.0, 0, 12.0, 35),
+  },
+  {
+    key: "churro de amaranto",
+    syn: ["churrito de amaranto", "amaranto extrudido"],
+    profile: P(375, 10.0, 4.5, 0.8, 0, 66.0, 2.5, 0, 8.0, 30),
+  },
+  {
+    key: "churro de garbanzo",
+    syn: ["churrito de garbanzo", "garbanzo extrudido"],
+    profile: P(365, 17.0, 4.0, 0.5, 0, 60.0, 2.0, 0, 14.0, 28),
+  },
+
+  // GRAINS / SEEDS / SUPERFOODS
+  {
+    key: "amaranto",
+    syn: ["amaranth", "grano de amaranto", "harina de amaranto"],
+    profile: P(371, 13.6, 7.0, 1.7, 0, 60.0, 1.7, 0, 6.7, 21),
+  },
+  {
+    key: "garbanzo",
+    syn: ["chickpea", "garbanzo cocido", "harina de garbanzo"],
+    profile: P(164, 8.9, 2.6, 0.3, 0, 22.0, 3.9, 0, 7.6, 7),
+  },
   {
     key: "arroz cocido",
     syn: ["arroz", "rice cooked"],
@@ -296,6 +394,51 @@ export const TABLE: TableRow[] = [
     syn: ["pimienta negra", "black pepper"],
     profile: P(251, 10.0, 3.3, 1.4, 0, 39.0, 0.6, 0, 25.0, 20),
   },
+  {
+    key: "chile en polvo",
+    syn: ["chili powder", "polvo de chile"],
+    profile: P(282, 13.0, 14.0, 2.4, 0, 25.0, 4.0, 0, 34.0, 1010),
+  },
+  {
+    key: "limon en polvo",
+    syn: ["citric acid powder", "polvo de limon"],
+    profile: P(315, 0, 0, 0, 0, 82.0, 0, 0, 0, 0),
+  },
+  {
+    key: "saborizante adobado",
+    syn: ["adobo", "adobo seasoning", "sazon adobado"],
+    profile: P(200, 5.0, 2.0, 0.4, 0, 38.0, 2.0, 0, 8.0, 4500),
+  },
+  {
+    key: "saborizante flaming hot",
+    syn: ["flaming hot seasoning", "polvo flaming hot"],
+    profile: P(220, 3.0, 2.5, 0.5, 0, 45.0, 3.0, 0, 5.0, 3800),
+  },
+  {
+    key: "saborizante jalapeno",
+    syn: ["jalapeno seasoning", "polvo jalapeno"],
+    profile: P(180, 4.0, 2.0, 0.3, 0, 35.0, 3.0, 0, 10.0, 3200),
+  },
+  {
+    key: "saborizante ranchero",
+    syn: ["ranchero seasoning", "polvo ranchero"],
+    profile: P(190, 4.5, 2.5, 0.5, 0, 36.0, 3.5, 0, 7.0, 3500),
+  },
+  {
+    key: "saborizante queso chile",
+    syn: ["queso chile seasoning", "polvo queso chile"],
+    profile: P(280, 7.0, 10.0, 3.0, 0, 38.0, 4.0, 0, 3.0, 3600),
+  },
+  {
+    key: "saborizante salsas negras",
+    syn: ["salsas negras seasoning", "polvo salsas negras"],
+    profile: P(160, 3.0, 1.5, 0.3, 0, 32.0, 8.0, 0, 4.0, 3300),
+  },
+  {
+    key: "extracto de pepino",
+    syn: ["cucumber extract", "pepino extract"],
+    profile: P(10, 0.3, 0.1, 0.0, 0, 1.5, 1.0, 0, 0.2, 5),
+  },
 
   // SWEETENERS — CALORIC
   {
@@ -323,6 +466,21 @@ export const TABLE: TableRow[] = [
     syn: ["panela"],
     profile: P(380, 0, 0, 0, 0, 98.0, 97.0, 97.0, 0, 30),
   },
+  {
+    key: "cajeta",
+    syn: ["caramel sauce", "dulce de leche"],
+    profile: P(310, 6.5, 7.5, 4.5, 0, 55.0, 52.0, 48.0, 0, 120),
+  },
+  {
+    key: "chocolate sin azucar",
+    syn: ["chocolate amargo", "dark chocolate unsweetened", "choco obleas"],
+    profile: P(530, 12.0, 40.0, 24.0, 0, 30.0, 1.5, 0, 15.0, 10),
+  },
+  {
+    key: "mazapan",
+    syn: ["marzipan", "mazapan de cacahuate"],
+    profile: P(478, 13.0, 22.0, 3.5, 0, 58.0, 42.0, 38.0, 3.5, 25),
+  },
 
   // SWEETENERS — NON-CALORIC
   { key: "estevia", syn: ["stevia"], profile: P(0, 0, 0, 0, 0, 0, 0, 0, 0, 0) },
@@ -347,7 +505,7 @@ export const TABLE: TableRow[] = [
     profile: P(0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
   },
 
-  // FRUITS
+  // FRUITS / BERRIES / SUPERFOODS
   {
     key: "manzana",
     syn: ["apple"],
@@ -368,6 +526,21 @@ export const TABLE: TableRow[] = [
     syn: ["jugo de naranja", "orange"],
     profile: P(45, 0.7, 0.2, 0, 0, 10.0, 8.0, 0, 0.2, 1),
   },
+  {
+    key: "frutos rojos",
+    syn: ["mixed berries", "berry mix", "berries"],
+    profile: P(57, 0.8, 0.4, 0.0, 0, 11.0, 7.5, 0, 3.0, 1),
+  },
+  {
+    key: "mora azul",
+    syn: ["arandano", "blueberry", "blueberries"],
+    profile: P(57, 0.7, 0.3, 0.0, 0, 12.0, 8.0, 0, 2.4, 1),
+  },
+  {
+    key: "coco",
+    syn: ["coconut", "coco rallado", "shredded coconut"],
+    profile: P(354, 3.3, 33.5, 29.7, 0, 6.2, 2.8, 0, 9.0, 20),
+  },
 
   // CAFFEINE SOURCES
   {
@@ -382,6 +555,16 @@ export const TABLE: TableRow[] = [
     profile: P(228, 19.6, 13.7, 8.0, 0, 13.0, 1.7, 0, 33.0, 21),
   },
   { key: "matcha", syn: [], profile: P(1, 0, 0, 0, 0, 0.3, 0, 0, 0, 3) },
+  {
+    key: "capuchino",
+    syn: ["cappuccino", "cafe capuchino"],
+    profile: P(40, 2.0, 1.5, 0.9, 0, 5.0, 4.0, 3.0, 0, 40),
+  },
+  {
+    key: "pink chai",
+    syn: ["chai", "masala chai", "te chai"],
+    profile: P(30, 1.0, 1.0, 0.5, 0, 5.0, 3.0, 2.0, 0.5, 15),
+  },
 
   // NUTS
   {
@@ -432,15 +615,28 @@ export const FALLBACK: Record<string, Profile> = {
   "Fresh herb/aromatic": P(25, 2.0, 0.5, 0.0, 0, 2.0, 1.0, 0, 2.5, 30),
   "Caloric sweetener/syrup": P(350, 0, 0, 0, 0, 90.0, 85.0, 85.0, 0, 10),
   "Non-caloric sweetener": P(0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+  "Snack/chip/expanded (savory)": P(
+    380,
+    7.0,
+    3.0,
+    0.5,
+    0,
+    70.0,
+    3.0,
+    0,
+    8.0,
+    300,
+  ),
 };
 
 // ─── INGREDIENT CLASS SETS ──────────────────────────────────────────────────
-// Membership is by RESOLVED key / fallback category name — never raw text.
 export const CAFFEINE_SOURCE = new Set([
   "cafe",
   "te",
   "cacao",
   "matcha",
+  "capuchino",
+  "pink chai",
   "guarana",
   "mate",
   "nuez de cola",
@@ -453,7 +649,7 @@ export const NONCALORIC_SWEETENER = new Set([
   "eritritol",
   "xilitol",
   "monk fruit",
-  "Non-caloric sweetener", // fallback category
+  "Non-caloric sweetener",
 ]);
 
 export const ADDED_CALORIC_SUGAR = new Set([
@@ -463,7 +659,39 @@ export const ADDED_CALORIC_SUGAR = new Set([
   "maple",
   "piloncillo",
   "salsa inglesa",
+  "cajeta",
+  "mazapan",
   "Caloric sweetener/syrup",
+]);
+
+export const ADDED_FAT = new Set([
+  "aceite",
+  "aceite de oliva",
+  "aceite de sesamo",
+  "mantequilla",
+  "margarina",
+  "manteca",
+  "crema",
+  "Oil/pure fat",
+]);
+
+export const ADDED_SODIUM = new Set([
+  "sal",
+  "sal con ajo",
+  "salsa de soya",
+  "salsa inglesa",
+  "caldo de pollo",
+  "consome en polvo",
+  "jamon",
+  "saborizante adobado",
+  "saborizante flaming hot",
+  "saborizante jalapeno",
+  "saborizante ranchero",
+  "saborizante queso chile",
+  "saborizante salsas negras",
+  "chile en polvo",
+  "Condiment/sauce (savory)",
+  "Fatty meat/processed meat",
 ]);
 
 // ─── VDR (2000 kcal reference diet) ─────────────────────────────────────────

@@ -1,26 +1,48 @@
 // useNutritionalLabels.ts
-// Display/transform layer. The row builder, lot/expiration helpers, and VDR are
-// UNCHANGED — they remain the single rounding site for the label. New: a thin
-// bridge that runs the deterministic engine over an LLM resolution result.
+// Composable for nutritional label transformation and helpers.
+//
+// KEY DESIGN DECISION:
+//   seals and leyendas are NEVER stored in the database.
+//   They are fully derivable from the nutrient values (seals) and the `ing`
+//   string (leyendas). Computing them at render time means:
+//     • NOM-051 threshold changes are reflected on all existing records instantly.
+//     • The DB schema stays lean (no JSON columns for seals/leyendas).
+//     • There is no risk of stale seal data diverging from nutrient values.
 
-import { aggregate, type ResolvedIngredient } from "~/lib/nom051-engine";
+import {
+  aggregate,
+  computeSeals,
+  computeLeyendasFromKeys,
+  computeLeyendasFromIng,
+  type ResolvedIngredient,
+} from "~/lib/nom051-engine";
 import { VDR as ENGINE_VDR } from "~/lib/nom051-data";
+
+export { computeSeals, computeLeyendasFromIng };
+
+// ─── VDR ─────────────────────────────────────────────────────────────────────
 
 export const VDR: Record<string, number | null> = ENGINE_VDR;
 
-// %VDR is computed against the PER-PORTION value:
-// round((value_per_portion / VDR) * 100). Kept in lockstep with the engine.
 export const pct = (valuePortion: number, vdr: number | null): string => {
   if (vdr === null) return "—";
   return `${Math.round((valuePortion / vdr) * 100)} %`;
 };
 
+// ─── Rounding helpers ─────────────────────────────────────────────────────────
+
 const roundTo = (num: number, decimals = 0): number => {
   const factor = Math.pow(10, decimals);
   return Math.round((num + Number.EPSILON) * factor) / factor;
 };
-const g1 = (num: number): string => roundTo(num, 1).toFixed(1);
-const int = (num: number): string => `${Math.round(num)}`;
+
+const formatG1 = (num: number): string => roundTo(num, 1).toFixed(1);
+const formatInt = (num: number): string => `${Math.round(num)}`;
+
+// ─── Row builder ──────────────────────────────────────────────────────────────
+//
+// Converts a stored (or freshly computed) nutrient record into the rows array
+// that BreezyLabels.vue renders. This is the single rounding site for display.
 
 export function transformNutrientsToNOMRows(record: any) {
   const portionSize = Number(record.portion_size ?? 150);
@@ -28,125 +50,118 @@ export function transformNutrientsToNOMRows(record: any) {
   const factor = portionSize / 100;
   const totalFactor = totalSize / 100;
 
-  const kcal100g = roundTo(Number(record.energia_kcal_100g ?? 0));
-  const kj100g = roundTo(Number(record.energia_kj_100g ?? 0));
-  const proteina = roundTo(Number(record.proteina_g_100g ?? 0), 1);
-  const grasas = roundTo(Number(record.grasas_totales_g_100g ?? 0), 1);
-  const sat = roundTo(Number(record.grasas_saturadas_g_100g ?? 0), 1);
-  const trans = roundTo(Number(record.grasas_trans_g_100g ?? 0), 1);
-  const carbs = roundTo(
-    Number(record.carbohidratos_disponibles_g_100g ?? 0),
-    1,
-  );
-  const azucar = roundTo(Number(record.azucares_totales_g_100g ?? 0), 1);
-  const azucarAnadido = roundTo(
-    Number(record.azucares_anadidos_g_100g ?? 0),
-    1,
-  );
-  const fibra = roundTo(Number(record.fibra_g_100g ?? 0), 1);
-  const sodio = roundTo(Number(record.sodio_mg_100g ?? 0));
+  const kcalRaw = Number(record.energia_kcal_100g ?? 0);
+  const kjRaw = Number(record.energia_kj_100g ?? 0);
+  const protRaw = Number(record.proteina_g_100g ?? 0);
+  const grasasRaw = Number(record.grasas_totales_g_100g ?? 0);
+  const satRaw = Number(record.grasas_saturadas_g_100g ?? 0);
+  const transRaw = Number(record.grasas_trans_g_100g ?? 0);
+  const carbsRaw = Number(record.carbohidratos_disponibles_g_100g ?? 0);
+  const azucarRaw = Number(record.azucares_totales_g_100g ?? 0);
+  const azucarAnadidoRaw = Number(record.azucares_anadidos_g_100g ?? 0);
+  const fibraRaw = Number(record.fibra_g_100g ?? 0);
+  const sodioRaw = Number(record.sodio_mg_100g ?? 0);
 
   return [
     {
       label: "Contenido Energético",
-      val100g: `${int(kcal100g)} kcal`,
-      valPortion: `${int(kcal100g * factor)} kcal`,
-      valTotal: `${int(kcal100g * totalFactor)} kcal`,
-      vdr: pct(kcal100g * factor, VDR.kcal),
+      val100g: `${formatInt(kcalRaw)} kcal`,
+      valPortion: `${formatInt(kcalRaw * factor)} kcal`,
+      valTotal: `${formatInt(kcalRaw * totalFactor)} kcal`,
+      vdr: pct(kcalRaw * factor, VDR.kcal),
       sub: false,
     },
     {
       label: "Contenido Energético kJ",
-      val100g: `${int(kj100g)} kJ`,
-      valPortion: `${int(kj100g * factor)} kJ`,
-      valTotal: `${int(kj100g * totalFactor)} kJ`,
+      val100g: `${formatInt(kjRaw)} kJ`,
+      valPortion: `${formatInt(kjRaw * factor)} kJ`,
+      valTotal: `${formatInt(kjRaw * totalFactor)} kJ`,
       vdr: "—",
       sub: true,
       indent: 1,
     },
     {
       label: "Proteínas",
-      val100g: `${g1(proteina)} g`,
-      valPortion: `${g1(proteina * factor)} g`,
-      valTotal: `${g1(proteina * totalFactor)} g`,
-      vdr: pct(proteina * factor, VDR.proteina),
+      val100g: `${formatG1(protRaw)} g`,
+      valPortion: `${formatG1(protRaw * factor)} g`,
+      valTotal: `${formatG1(protRaw * totalFactor)} g`,
+      vdr: pct(protRaw * factor, VDR.proteina),
       sub: false,
     },
     {
       label: "Grasas Totales",
-      val100g: `${g1(grasas)} g`,
-      valPortion: `${g1(grasas * factor)} g`,
-      valTotal: `${g1(grasas * totalFactor)} g`,
-      vdr: pct(grasas * factor, VDR.grasas),
+      val100g: `${formatG1(grasasRaw)} g`,
+      valPortion: `${formatG1(grasasRaw * factor)} g`,
+      valTotal: `${formatG1(grasasRaw * totalFactor)} g`,
+      vdr: pct(grasasRaw * factor, VDR.grasas),
       sub: false,
     },
     {
       label: "Grasas Saturadas",
-      val100g: `${g1(sat)} g`,
-      valPortion: `${g1(sat * factor)} g`,
-      valTotal: `${g1(sat * totalFactor)} g`,
-      vdr: pct(sat * factor, VDR.sat),
+      val100g: `${formatG1(satRaw)} g`,
+      valPortion: `${formatG1(satRaw * factor)} g`,
+      valTotal: `${formatG1(satRaw * totalFactor)} g`,
+      vdr: pct(satRaw * factor, VDR.sat),
       sub: true,
       indent: 1,
     },
     {
       label: "Grasas Trans",
-      val100g: `${g1(trans)} g`,
-      valPortion: `${g1(trans * factor)} g`,
-      valTotal: `${g1(trans * totalFactor)} g`,
+      val100g: `${formatG1(transRaw)} g`,
+      valPortion: `${formatG1(transRaw * factor)} g`,
+      valTotal: `${formatG1(transRaw * totalFactor)} g`,
       vdr: "—",
       sub: true,
       indent: 1,
     },
     {
       label: "Hidratos de Carbono Disp.",
-      val100g: `${g1(carbs)} g`,
-      valPortion: `${g1(carbs * factor)} g`,
-      valTotal: `${g1(carbs * totalFactor)} g`,
-      vdr: pct(carbs * factor, VDR.carbs),
+      val100g: `${formatG1(carbsRaw)} g`,
+      valPortion: `${formatG1(carbsRaw * factor)} g`,
+      valTotal: `${formatG1(carbsRaw * totalFactor)} g`,
+      vdr: pct(carbsRaw * factor, VDR.carbs),
       sub: false,
     },
     {
       label: "Azúcares Totales",
-      val100g: `${g1(azucar)} g`,
-      valPortion: `${g1(azucar * factor)} g`,
-      valTotal: `${g1(azucar * totalFactor)} g`,
+      val100g: `${formatG1(azucarRaw)} g`,
+      valPortion: `${formatG1(azucarRaw * factor)} g`,
+      valTotal: `${formatG1(azucarRaw * totalFactor)} g`,
       vdr: "—",
       sub: true,
       indent: 1,
     },
     {
       label: "Azúcares Añadidos",
-      val100g: `${g1(azucarAnadido)} g`,
-      valPortion: `${g1(azucarAnadido * factor)} g`,
-      valTotal: `${g1(azucarAnadido * totalFactor)} g`,
+      val100g: `${formatG1(azucarAnadidoRaw)} g`,
+      valPortion: `${formatG1(azucarAnadidoRaw * factor)} g`,
+      valTotal: `${formatG1(azucarAnadidoRaw * totalFactor)} g`,
       vdr: "—",
       sub: true,
       indent: 2,
     },
     {
       label: "Fibra Dietética",
-      val100g: `${g1(fibra)} g`,
-      valPortion: `${g1(fibra * factor)} g`,
-      valTotal: `${g1(fibra * totalFactor)} g`,
-      vdr: pct(fibra * factor, VDR.fibra),
+      val100g: `${formatG1(fibraRaw)} g`,
+      valPortion: `${formatG1(fibraRaw * factor)} g`,
+      valTotal: `${formatG1(fibraRaw * totalFactor)} g`,
+      vdr: pct(fibraRaw * factor, VDR.fibra),
       sub: false,
     },
     {
       label: "Sodio",
-      val100g: `${int(sodio)} mg`,
-      valPortion: `${int(sodio * factor)} mg`,
-      valTotal: `${int(sodio * totalFactor)} mg`,
-      vdr: pct(sodio * factor, VDR.sodio),
+      val100g: `${formatInt(sodioRaw)} mg`,
+      valPortion: `${formatInt(sodioRaw * factor)} mg`,
+      valTotal: `${formatInt(sodioRaw * totalFactor)} mg`,
+      vdr: pct(sodioRaw * factor, VDR.sodio),
       sub: false,
       last: true,
     },
   ];
 }
 
-// Takes the resolver JSON ({ name, sub, ing, alg, pair, dishType, resolved })
-// plus optional user portion/total overrides, runs the deterministic engine,
-// and returns a record in the same shape transformRecord expects.
+// ─── Types ────────────────────────────────────────────────────────────────────
+
 export interface ResolveResult {
   name: string;
   sub: string;
@@ -156,6 +171,12 @@ export interface ResolveResult {
   dishType?: string | null;
   resolved: ResolvedIngredient[];
 }
+
+// ─── buildRecordFromResolution ────────────────────────────────────────────────
+//
+// Runs the deterministic engine and returns a record ready for the DB save
+// (no seals/leyendas) and for immediate display (seals/leyendas attached but
+// not persisted).
 
 export function buildRecordFromResolution(
   res: ResolveResult,
@@ -172,6 +193,11 @@ export function buildRecordFromResolution(
     dishType: (res.dishType as any) ?? "main",
   });
 
+  // Seals derived from engine output; leyendas from canonical keys.
+  const canonicalKeys = (res.resolved ?? []).map((r) => r.key);
+  const seals = computeSeals(engine);
+  const leyendas = computeLeyendasFromKeys(canonicalKeys);
+
   return {
     id: null,
     name: res.name || opts.fallbackName || "Platillo",
@@ -179,11 +205,10 @@ export function buildRecordFromResolution(
     ing: res.ing,
     alg: res.alg,
     pair: res.pair,
+    nameSize: "11px",
     portion_size: engine.portion_size,
     total_size: engine.total_size,
-    nameSize: "11px",
-    seals: engine.seals,
-    leyendas: engine.leyendas,
+    // ── Nutrient values (stored in DB) ──
     energia_kcal_100g: engine.energia_kcal_100g,
     energia_kj_100g: engine.energia_kj_100g,
     proteina_g_100g: engine.proteina_g_100g,
@@ -195,8 +220,57 @@ export function buildRecordFromResolution(
     azucares_anadidos_g_100g: engine.azucares_anadidos_g_100g,
     fibra_g_100g: engine.fibra_g_100g,
     sodio_mg_100g: engine.sodio_mg_100g,
+    // ── Derived at runtime, NOT stored ──
+    seals,
+    leyendas,
   };
 }
+
+// ─── transformRecord ──────────────────────────────────────────────────────────
+//
+// Converts a raw DB record into a full display record.
+// Seals and leyendas are (re)computed here from stored nutrient values and the
+// `ing` string — never read from the database.
+
+export function transformRecord(record: any) {
+  const portion_size = Number(record.portion_size ?? 150);
+  const total_size = Number(record.total_size ?? portion_size);
+  const {
+    rows: _savedRows,
+    seals: _storedSeals,
+    leyendas: _storedLeyendas,
+    ...cleanRecord
+  } = record;
+
+  // Recompute from nutrient values (no ing scan needed for seals).
+  const seals = computeSeals({
+    energia_kcal_100g: Number(cleanRecord.energia_kcal_100g ?? 0),
+    grasas_saturadas_g_100g: Number(cleanRecord.grasas_saturadas_g_100g ?? 0),
+    grasas_trans_g_100g: Number(cleanRecord.grasas_trans_g_100g ?? 0),
+    azucares_anadidos_g_100g: Number(cleanRecord.azucares_anadidos_g_100g ?? 0),
+    sodio_mg_100g: Number(cleanRecord.sodio_mg_100g ?? 0),
+  });
+
+  // Leyendas need the ingredient identity — derive from the stored `ing` string.
+  const leyendas = computeLeyendasFromIng(cleanRecord.ing ?? "");
+
+  return {
+    ...cleanRecord,
+    portion_size,
+    total_size,
+    seals,
+    leyendas,
+    nameSize: cleanRecord.nameSize ?? "11px",
+    rows: transformNutrientsToNOMRows({
+      ...cleanRecord,
+      portion_size,
+      total_size,
+    }),
+    expiration: record?.expiration || generateExpiration(record),
+  };
+}
+
+// ─── Lot / expiration helpers ─────────────────────────────────────────────────
 
 export function generateLot(label: any): string {
   const now = new Date();
@@ -218,10 +292,7 @@ export function generateLot(label: any): string {
   return `${initials}-${datePart}-${checksum}`;
 }
 
-export function generateExpiration(
-  label: any,
-  monthsValid: number = 12,
-): string {
+export function generateExpiration(label: any, monthsValid = 12): string {
   const now = new Date();
   const expDate = new Date(
     now.getFullYear(),
@@ -241,32 +312,9 @@ export function generateExpiration(
   return `${datePart}-${checksum}`;
 }
 
+// ─── Composable ───────────────────────────────────────────────────────────────
+
 export function useNutritionalLabels() {
-  function transformRecord(record: any) {
-    const portion_size = Number(record.portion_size ?? 150);
-    const total_size = Number(record.total_size ?? portion_size);
-    const { rows: _savedRows, ...cleanRecord } = record;
-
-    return {
-      id: cleanRecord.id,
-      name: cleanRecord.name,
-      sub: cleanRecord.sub,
-      ing: cleanRecord.ing,
-      alg: cleanRecord.alg,
-      pair: cleanRecord.pair,
-      portion_size,
-      total_size,
-      seals: cleanRecord.seals ?? [],
-      leyendas: cleanRecord.leyendas ?? [],
-      nameSize: cleanRecord.nameSize ?? "11px",
-      rows: transformNutrientsToNOMRows({
-        ...cleanRecord,
-        portion_size,
-        total_size,
-      }),
-    };
-  }
-
   return {
     transformRecord,
     buildRecordFromResolution,

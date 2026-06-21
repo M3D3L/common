@@ -1,10 +1,9 @@
 // nom051-engine.ts
 // Deterministic NOM-051 calculation engine. Pure functions, no side effects,
 // no LLM. Given resolved ingredients ({ key, grams }), produces the full
-// nutritional aggregate, warning seals, and precautionary legends.
-//
-// The LLM's ONLY job upstream is to map each freeform recipe line to a table
-// key and a gram weight (resolution). All arithmetic lives here.
+// nutritional aggregate. Seals and legends are also exported as standalone
+// functions so the label renderer can recompute them at render time from
+// stored nutrient values — they are never persisted to the database.
 
 import {
   TABLE,
@@ -21,7 +20,9 @@ import {
   type Seal,
 } from "./nom051-data";
 
-// What the resolver (LLM or frontend) hands the engine per ingredient.
+// ─── Types ───────────────────────────────────────────────────────────────────
+
+/** What the resolver (LLM or frontend) hands the engine per ingredient. */
 export interface ResolvedIngredient {
   ing: string; // display name (Spanish), no numbers
   key: string; // a TABLE key, a TABLE synonym, or a FALLBACK category name
@@ -33,13 +34,17 @@ export interface EngineInput {
   ingredients: ResolvedIngredient[];
   portionGrams?: number | null;
   totalGrams?: number | null;
-  dishType?: keyof typeof PORTION_MIDPOINTS | null; // for auto portion
+  dishType?: keyof typeof PORTION_MIDPOINTS | null;
 }
 
+/**
+ * The engine output intentionally OMITS seals and leyendas — those are
+ * computed at render time via computeSeals() / computeLeyendas() and are
+ * never stored in the database.
+ */
 export interface EngineOutput {
   portion_size: number;
   total_size: number;
-  // Unrounded per-100g values. The row transformer is the single rounding site.
   energia_kcal_100g: number;
   energia_kj_100g: number;
   proteina_g_100g: number;
@@ -51,21 +56,16 @@ export interface EngineOutput {
   azucares_anadidos_g_100g: number;
   fibra_g_100g: number;
   sodio_mg_100g: number;
-  seals: Seal[];
-  leyendas: { text: string }[];
 }
 
-// ─── Lookup ─────────────────────────────────────────────────────────────────
-// Build a fast index once. Keys and synonyms both map to a profile + the
-// canonical key (which drives class membership).
+// ─── Lookup index ────────────────────────────────────────────────────────────
+
 interface Resolved {
   profile: Profile;
   canonicalKey: string;
 }
 
-// Normalize a key for tolerant matching: lowercase, strip accents, collapse
-// whitespace. The resolver occasionally returns "Estevia", "estevia " or a
-// synonym; without this, class-set membership (legends) silently misses.
+/** Normalize for tolerant matching: lowercase, strip accents, collapse spaces. */
 const norm = (s: string): string =>
   s
     .toLowerCase()
@@ -82,7 +82,6 @@ const INDEX: Map<string, Resolved> = (() => {
       m.set(norm(s), { profile: row.profile, canonicalKey: row.key });
     }
   }
-  // Fallback category names resolve to themselves.
   for (const [name, profile] of Object.entries(FALLBACK)) {
     m.set(norm(name), { profile, canonicalKey: name });
   }
@@ -93,23 +92,21 @@ function resolveKey(key: string, override?: Profile): Resolved {
   if (override) return { profile: override, canonicalKey: key };
   const hit = INDEX.get(norm(key ?? ""));
   if (hit) return hit;
-  // Defensive: an unknown key falls back to generic vegetable rather than
-  // throwing. In practice the resolver should only emit valid keys.
   return {
     profile: FALLBACK["Vegetable (generic)"],
     canonicalKey: "Vegetable (generic)",
   };
 }
 
-// ─── Rounding (half-up) ─────────────────────────────────────────────────────
-// Single rounding helper used both to finalize engine output and (inside
-// computeSeals) to evaluate thresholds on the same values the label prints.
-const roundTo = (n: number, d = 0) => {
+// ─── Rounding ────────────────────────────────────────────────────────────────
+
+export const roundTo = (n: number, d = 0): number => {
   const f = Math.pow(10, d);
   return Math.round((n + Number.EPSILON) * f) / f;
 };
 
-// ─── Aggregation ────────────────────────────────────────────────────────────
+// ─── Aggregation ─────────────────────────────────────────────────────────────
+
 const NUTRIENT_KEYS: (keyof Profile)[] = [
   "kcal",
   "protein",
@@ -126,19 +123,13 @@ const NUTRIENT_KEYS: (keyof Profile)[] = [
 export function aggregate(input: EngineInput): EngineOutput {
   const { ingredients } = input;
 
-  // Batch totals: sum of (per100g / 100 * grams) for each nutrient.
   const batch: Record<string, number> = Object.fromEntries(
     NUTRIENT_KEYS.map((k) => [k, 0]),
   );
   let totalWeight = 0;
-  const canonicalKeys: string[] = [];
 
   for (const item of ingredients) {
-    const { profile, canonicalKey } = resolveKey(
-      item.key,
-      item.profileOverride,
-    );
-    canonicalKeys.push(canonicalKey);
+    const { profile } = resolveKey(item.key, item.profileOverride);
     const g = Number(item.grams) || 0;
     totalWeight += g;
     for (const k of NUTRIENT_KEYS) {
@@ -146,27 +137,9 @@ export function aggregate(input: EngineInput): EngineOutput {
     }
   }
 
-  // Per-100g = batch / totalWeight * 100. Guard against empty recipe.
   const per100 = (v: number) => (totalWeight > 0 ? (v / totalWeight) * 100 : 0);
 
   const kcal = per100(batch.kcal);
-  const out: EngineOutput = {
-    portion_size: 0, // filled below
-    total_size: 0,
-    energia_kcal_100g: kcal,
-    energia_kj_100g: kcal * 4.184,
-    proteina_g_100g: per100(batch.protein),
-    grasas_totales_g_100g: per100(batch.fat),
-    grasas_saturadas_g_100g: per100(batch.sat),
-    grasas_trans_g_100g: per100(batch.trans),
-    carbohidratos_disponibles_g_100g: per100(batch.carb),
-    azucares_totales_g_100g: per100(batch.sugars),
-    azucares_anadidos_g_100g: per100(batch.added),
-    fibra_g_100g: per100(batch.fiber),
-    sodio_mg_100g: per100(batch.sodium),
-    seals: [],
-    leyendas: [],
-  };
 
   // ── Portion / total resolution ──
   const total =
@@ -180,40 +153,39 @@ export function aggregate(input: EngineInput): EngineOutput {
     const mid = input.dishType ? PORTION_MIDPOINTS[input.dishType] : 200;
     portion = Math.min(mid ?? 200, total > 0 ? total : (mid ?? 200));
   }
-  out.total_size = total;
-  out.portion_size = portion;
 
-  // ── Seals + legends, computed on the UNROUNDED values via computeSeals,
-  //    which rounds internally to match the printed label. Order matters:
-  //    evaluate seals BEFORE we overwrite out.* with rounded numbers, so the
-  //    threshold math uses the same rounded values computeSeals derives.
-  out.seals = computeSeals(out);
-  out.leyendas = computeLegends(canonicalKeys);
-
-  // ── Round every per-100g field so no raw float ever reaches the label or
-  //    the database. The row transformer rounds again (harmlessly) on display;
-  //    this guarantees correctness even if a raw engine record is rendered
-  //    directly without going through transformNutrientsToNOMRows.
-  out.energia_kcal_100g = roundTo(out.energia_kcal_100g);
-  out.energia_kj_100g = roundTo(out.energia_kj_100g);
-  out.proteina_g_100g = roundTo(out.proteina_g_100g, 1);
-  out.grasas_totales_g_100g = roundTo(out.grasas_totales_g_100g, 1);
-  out.grasas_saturadas_g_100g = roundTo(out.grasas_saturadas_g_100g, 1);
-  out.grasas_trans_g_100g = roundTo(out.grasas_trans_g_100g, 1);
-  out.carbohidratos_disponibles_g_100g = roundTo(
-    out.carbohidratos_disponibles_g_100g,
-    1,
-  );
-  out.azucares_totales_g_100g = roundTo(out.azucares_totales_g_100g, 1);
-  out.azucares_anadidos_g_100g = roundTo(out.azucares_anadidos_g_100g, 1);
-  out.fibra_g_100g = roundTo(out.fibra_g_100g, 1);
-  out.sodio_mg_100g = roundTo(out.sodio_mg_100g);
-
-  return out;
+  return {
+    portion_size: portion,
+    total_size: total,
+    // Round every per-100g field once here so the database receives clean values.
+    energia_kcal_100g: roundTo(kcal),
+    energia_kj_100g: roundTo(kcal * 4.184),
+    proteina_g_100g: roundTo(per100(batch.protein), 1),
+    grasas_totales_g_100g: roundTo(per100(batch.fat), 1),
+    grasas_saturadas_g_100g: roundTo(per100(batch.sat), 1),
+    grasas_trans_g_100g: roundTo(per100(batch.trans), 1),
+    carbohidratos_disponibles_g_100g: roundTo(per100(batch.carb), 1),
+    azucares_totales_g_100g: roundTo(per100(batch.sugars), 1),
+    azucares_anadidos_g_100g: roundTo(per100(batch.added), 1),
+    fibra_g_100g: roundTo(per100(batch.fiber), 1),
+    sodio_mg_100g: roundTo(per100(batch.sodium)),
+  };
 }
 
-// ─── Seal logic ─────────────────────────────────────────────────────────────
-export function computeSeals(o: EngineOutput): Seal[] {
+// ─── Seal logic (client-side, computed at render time) ───────────────────────
+//
+// Call this with the stored per-100g values when rendering a label.
+// Do NOT persist the result to the database.
+
+export interface SealInput {
+  energia_kcal_100g: number;
+  grasas_saturadas_g_100g: number;
+  grasas_trans_g_100g: number;
+  azucares_anadidos_g_100g: number;
+  sodio_mg_100g: number;
+}
+
+export function computeSeals(o: SealInput): Seal[] {
   const kcal = roundTo(o.energia_kcal_100g);
   const sat = roundTo(o.grasas_saturadas_g_100g, 1);
   const trans = roundTo(o.grasas_trans_g_100g, 1);
@@ -222,36 +194,62 @@ export function computeSeals(o: EngineOutput): Seal[] {
 
   const seals: Seal[] = [];
 
-  // 1. Calorías
   if (kcal >= 275) seals.push(SEAL_CALORIAS);
 
-  // 2. Azúcares: (added*4 / kcal) * 100 >= 10
   if (kcal > 0 && ((added * 4) / kcal) * 100 >= 10) seals.push(SEAL_AZUCARES);
 
-  // 3. Grasas saturadas: (sat*9 / kcal) * 100 >= 10
   if (kcal > 0 && ((sat * 9) / kcal) * 100 >= 10) seals.push(SEAL_SATURADAS);
 
-  // 4. Grasas trans: (trans*9 / kcal) * 100 >= 1
   if (kcal > 0 && ((trans * 9) / kcal) * 100 >= 1) seals.push(SEAL_TRANS);
 
-  // 5. Sodio: sodium >= 300 OR (sodium / kcal) >= 1
   if (sodium >= 300 || (kcal > 0 && sodium / kcal >= 1)) seals.push(SEAL_SODIO);
 
-  return seals; // already in canonical order
+  return seals;
 }
 
-// ─── Legend logic ───────────────────────────────────────────────────────────
-// Pre-normalized class sets so membership tests are immune to case/accents.
+// ─── Legend logic (client-side, computed at render time) ─────────────────────
+//
+// Two variants:
+//   computeLeyendasFromKeys  — preferred when canonical keys are available
+//                              (new labels, coming straight from aggregate()).
+//   computeLeyendasFromIng   — fallback for records loaded from the database
+//                              where only the comma-separated `ing` string is stored.
+//
+// Neither result should be persisted.
+
 const NONCALORIC_NORM = new Set([...NONCALORIC_SWEETENER].map(norm));
 const CAFFEINE_NORM = new Set([...CAFFEINE_SOURCE].map(norm));
 
-export function computeLegends(canonicalKeys: string[]): { text: string }[] {
-  const out: { text: string }[] = [];
+/** Use when you have the array of canonical keys from the resolver. */
+export function computeLeyendasFromKeys(
+  canonicalKeys: string[],
+): { text: string }[] {
   const keys = canonicalKeys.map(norm);
-  const hasNoncaloric = keys.some((k) => NONCALORIC_NORM.has(k));
-  const hasCaffeine = keys.some((k) => CAFFEINE_NORM.has(k));
-  if (hasNoncaloric)
+  const out: { text: string }[] = [];
+  if (keys.some((k) => NONCALORIC_NORM.has(k)))
     out.push({ text: "Contiene edulcorantes, no recomendable en niños" });
-  if (hasCaffeine) out.push({ text: "Contiene cafeína, evitar en niños" });
+  if (keys.some((k) => CAFFEINE_NORM.has(k)))
+    out.push({ text: "Contiene cafeína, evitar en niños" });
   return out;
+}
+
+/**
+ * Use when only the stored `ing` string is available (e.g. loading from DB).
+ * Splits on commas and checks each token against the full index so it matches
+ * the same keys as the resolver — no ad-hoc substring scanning.
+ */
+export function computeLeyendasFromIng(ing: string): { text: string }[] {
+  const tokens = ing.split(",").map((t) => norm(t.trim()));
+  const keys: string[] = [];
+  for (const token of tokens) {
+    const hit = INDEX.get(token);
+    if (hit) keys.push(hit.canonicalKey);
+    else keys.push(token); // keep as-is; set membership will simply miss
+  }
+  return computeLeyendasFromKeys(keys);
+}
+
+/** @deprecated Use computeLeyendasFromKeys. Kept for backwards compat. */
+export function computeLegends(canonicalKeys: string[]): { text: string }[] {
+  return computeLeyendasFromKeys(canonicalKeys);
 }

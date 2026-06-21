@@ -203,7 +203,7 @@
         <CardFooter class="flex-shrink-0 p-0 bg-black">
           <div class="w-full px-2 py-1 leading-none">
             <div
-              class="flex justify-between text-[6px] gap-4 text-white font-black leading-none"
+              class="flex justify-between items-center text-[6px] gap-4 text-white font-black leading-none"
             >
               <span>Lote: {{ generateLot(label) }}</span>
 
@@ -212,7 +212,10 @@
                 :height="15"
                 :width="0.9"
               />
-              <span>Caducidad: {{ generateExpiration(label) }}</span>
+              <span
+                >Caducidad:
+                {{ label?.expiration || generateExpiration(label) }}</span
+              >
             </div>
           </div>
         </CardFooter>

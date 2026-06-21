@@ -23,7 +23,7 @@ export default {
 				},
 				signal: controller.signal,
 				body: JSON.stringify({
-					model: 'gpt-4o-mini',
+					model: 'gpt-4o',
 					messages: [
 						{ role: 'system', content: command },
 						{ role: 'user', content: typeof data === 'string' ? data : JSON.stringify(data) },

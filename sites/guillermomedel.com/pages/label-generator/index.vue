@@ -113,27 +113,92 @@
               </div>
             </div>
 
-            <button
-              @click="generateLabel"
-              :disabled="
-                loading || saving || !recipeText.trim() || !recipeName.trim()
-              "
-              class="flex-1 inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-xs font-bold tracking-widest uppercase transition-all bg-amber-400 text-neutral-900 hover:bg-amber-300 disabled:opacity-40 disabled:cursor-not-allowed disabled:bg-neutral-700 disabled:text-neutral-500"
-            >
-              <Loader2
-                v-if="loading || saving"
-                class="w-3.5 h-3.5 animate-spin"
-              />
-              <Sparkles v-else class="w-3.5 h-3.5" />
-              {{
-                loading
-                  ? "Analizando…"
-                  : saving
-                    ? "Guardando…"
-                    : "Generar Etiqueta"
-              }}
-            </button>
+            <!-- ── Expiration date ── -->
+            <div class="space-y-1.5 flex-1">
+              <label
+                class="text-[10px] text-neutral-400 tracking-widest uppercase font-semibold"
+              >
+                Fecha de Caducidad
+                <span class="text-neutral-600 normal-case tracking-normal"
+                  >· opcional</span
+                >
+              </label>
+
+              <!-- Preset dropdown -->
+              <div class="relative">
+                <CalendarClock
+                  class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-neutral-500 z-10 pointer-events-none"
+                />
+                <ChevronDown
+                  class="absolute right-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-neutral-500 z-10 pointer-events-none"
+                />
+                <select
+                  v-model="expirationPreset"
+                  @change="handlePresetChange"
+                  class="w-full appearance-none bg-neutral-800 border border-neutral-700 rounded-md text-xs pl-7 pr-7 py-2 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500/20 transition-colors"
+                  :class="
+                    expirationPreset === '' ? 'text-neutral-600' : 'text-white'
+                  "
+                >
+                  <option value="">Sin fecha de caducidad</option>
+                  <option value="1w">1 semana</option>
+                  <option value="2w">2 semanas</option>
+                  <option value="1m">1 mes</option>
+                  <option value="3m">3 meses</option>
+                  <option value="6m">6 meses</option>
+                  <option value="1y">1 año</option>
+                  <option value="custom">Personalizada…</option>
+                </select>
+              </div>
+
+              <!-- Custom date input — shown only when "Personalizada…" is selected -->
+              <div v-if="expirationPreset === 'custom'" class="relative mt-2">
+                <CalendarClock
+                  class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-neutral-500"
+                />
+                <Input
+                  v-model="expirationDate"
+                  type="text"
+                  placeholder="DD/MM/AAAA"
+                  maxlength="10"
+                  @input="formatExpirationDate"
+                  class="bg-neutral-800 border-neutral-700 text-white text-xs pl-7 placeholder:text-neutral-600 focus:border-amber-500 focus:ring-amber-500/20"
+                  :class="
+                    expirationDateError
+                      ? 'border-red-700 focus:border-red-500'
+                      : ''
+                  "
+                />
+                <p
+                  v-if="expirationDateError"
+                  class="text-[9px] text-red-400 mt-1"
+                >
+                  {{ expirationDateError }}
+                </p>
+              </div>
+            </div>
           </div>
+
+          <button
+            @click="generateLabel"
+            :disabled="
+              loading || saving || !recipeText.trim() || !recipeName.trim()
+            "
+            class="w-full inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-xs font-bold tracking-widest uppercase transition-all bg-amber-400 text-neutral-900 hover:bg-amber-300 disabled:opacity-40 disabled:cursor-not-allowed disabled:bg-neutral-700 disabled:text-neutral-500"
+          >
+            <Loader2
+              v-if="loading || saving"
+              class="w-3.5 h-3.5 animate-spin"
+            />
+            <Sparkles v-else class="w-3.5 h-3.5" />
+            {{
+              loading
+                ? "Analizando…"
+                : saving
+                  ? "Guardando…"
+                  : "Generar Etiqueta"
+            }}
+          </button>
 
           <div
             v-if="error || saveError"
@@ -218,32 +283,111 @@ import {
   Package,
   AlertTriangle,
   Loader2,
+  CalendarClock,
+  ChevronDown,
 } from "lucide-vue-next";
 
-// ── State ──────────────────────────────────────────────────────────────────
+// ── State ──────────────────────────────────────────────────────────────────────
 const router = useRouter();
 const recipeName = ref("");
 const recipeText = ref("");
-// Default to null so a blank field means "derive it from the recipe".
 const portionSize = ref<number | null>(null);
 const totalSize = ref<number | null>(null);
+const expirationPreset = ref<string>("");
+const expirationDate = ref<string>("");
+const expirationDateError = ref<string | null>(null);
 const generatedLabels = ref<any[]>([]);
-
 const saving = ref(false);
 const saveError = ref<string | null>(null);
 
+// ── Expiration helpers ─────────────────────────────────────────────────────────
+function addDays(n: number): Date {
+  const d = new Date();
+  d.setDate(d.getDate() + n);
+  return d;
+}
+function addMonths(n: number): Date {
+  const d = new Date();
+  d.setMonth(d.getMonth() + n);
+  return d;
+}
+function addYears(n: number): Date {
+  const d = new Date();
+  d.setFullYear(d.getFullYear() + n);
+  return d;
+}
+function fmtDate(d: Date): string {
+  const dd = String(d.getDate()).padStart(2, "0");
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  return `${dd}/${mm}/${d.getFullYear()}`;
+}
+
+function handlePresetChange() {
+  expirationDate.value = "";
+  expirationDateError.value = null;
+
+  const presetMap: Record<string, Date> = {
+    "1w": addDays(7),
+    "2w": addDays(14),
+    "1m": addMonths(1),
+    "3m": addMonths(3),
+    "6m": addMonths(6),
+    "1y": addYears(1),
+  };
+
+  if (expirationPreset.value in presetMap) {
+    expirationDate.value = fmtDate(presetMap[expirationPreset.value]);
+  }
+  // "custom" and "" leave expirationDate empty — custom waits for manual input
+}
+
+function formatExpirationDate(e: Event) {
+  const input = e.target as HTMLInputElement;
+  let digits = input.value.replace(/\D/g, "").slice(0, 8);
+  let formatted = digits;
+  if (digits.length > 2) formatted = digits.slice(0, 2) + "/" + digits.slice(2);
+  if (digits.length > 4)
+    formatted = formatted.slice(0, 5) + "/" + formatted.slice(5);
+  expirationDate.value = formatted;
+  expirationDateError.value = null;
+}
+
+function validateExpirationDate(): boolean {
+  const val = expirationDate.value.trim();
+  if (!val) return true;
+  const match = val.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (!match) {
+    expirationDateError.value = "Formato inválido. Usa DD/MM/AAAA.";
+    return false;
+  }
+  const [, dd, mm, yyyy] = match;
+  const date = new Date(Date.UTC(Number(yyyy), Number(mm) - 1, Number(dd)));
+  if (
+    isNaN(date.getTime()) ||
+    date.getUTCDate() !== Number(dd) ||
+    date.getUTCMonth() + 1 !== Number(mm)
+  ) {
+    expirationDateError.value = "Fecha inválida.";
+    return false;
+  }
+  expirationDateError.value = null;
+  return true;
+}
+
+// ── Composables ────────────────────────────────────────────────────────────────
 const { run, loading, error } = useChatGPT();
 const { createItem } = usePocketBaseCore();
 const { transformRecord, buildRecordFromResolution } = useNutritionalLabels();
 
-// ── Generate + Save Pipeline ──────────────────────────────────────────────
+// ── Generate + Save Pipeline ───────────────────────────────────────────────────
 async function generateLabel() {
   if (!recipeText.value.trim() || !recipeName.value.trim()) return;
+  if (!validateExpirationDate()) return;
   saveError.value = null;
 
-  // Blank / non-positive input = let the engine derive it from the recipe.
   const hasPortion = portionSize.value != null && Number(portionSize.value) > 0;
   const hasTotal = totalSize.value != null && Number(totalSize.value) > 0;
+  const hasExpiration = expirationDate.value.trim() !== "";
 
   const payload = {
     recipeName: recipeName.value.trim(),
@@ -252,8 +396,8 @@ async function generateLabel() {
     ingredients: recipeText.value.trim(),
   };
 
-  // 1. LLM RESOLUTION ONLY — maps each line to { key, grams } and writes the
-  //    Spanish label texts. No nutrition math comes from the model anymore.
+  // 1. LLM resolves each line to { key, grams } + writes Spanish label texts.
+  //    No nutrition math comes from the model.
   let resolution: ResolveResult;
   try {
     const raw = await run(NOM051_RESOLVE, payload);
@@ -271,19 +415,23 @@ async function generateLabel() {
     return;
   }
 
-  // 2. DETERMINISTIC ENGINE — all aggregation, rounding, seals, legends, and
-  //    portion/total resolution happen on the frontend. User-supplied
-  //    portion/total override the engine's auto values.
+  // 2. Deterministic engine — aggregation, rounding, seals, leyendas.
+  //    seals and leyendas are attached to rawRecord for immediate display
+  //    but are intentionally excluded from the DB write below.
   const rawRecord = buildRecordFromResolution(resolution, {
     portionGrams: hasPortion ? Number(portionSize.value) : null,
     totalGrams: hasTotal ? Number(totalSize.value) : null,
     fallbackName: recipeName.value,
   });
 
-  // 3. Build display rows via the shared transformer (single rounding site).
-  const entry = { ...transformRecord(rawRecord), pbId: null as string | null };
+  // 3. Build display rows (single rounding site).
+  const entry = {
+    ...transformRecord(rawRecord),
+    pbId: null as string | null,
+    expiration_date: hasExpiration ? expirationDate.value : null,
+  };
 
-  // 4. Push to top of list immediately (optimistic).
+  // 4. Optimistic push to list.
   generatedLabels.value.unshift(entry);
 
   // Reset form.
@@ -291,8 +439,13 @@ async function generateLabel() {
   recipeText.value = "";
   portionSize.value = null;
   totalSize.value = null;
+  expirationPreset.value = "";
+  expirationDate.value = "";
+  expirationDateError.value = null;
 
-  // 5. Persist to PocketBase (unchanged shape; values now come from the engine).
+  // 5. Persist to PocketBase.
+  //    seals and leyendas are intentionally NOT saved — they are recomputed
+  //    at render time by transformRecord() from the nutrient values and `ing`.
   saving.value = true;
   try {
     const record = await createItem("labels", {
@@ -304,8 +457,8 @@ async function generateLabel() {
       portion_size: entry.portion_size,
       total_size: entry.total_size,
       nameSize: entry.nameSize,
-      seals: entry.seals,
-      leyendas: entry.leyendas,
+      expiration: entry.expiration_date,
+      // ── Nutrient values (the only things that need to be stored) ──
       energia_kcal_100g: rawRecord.energia_kcal_100g,
       energia_kj_100g: rawRecord.energia_kj_100g,
       proteina_g_100g: rawRecord.proteina_g_100g,
@@ -318,14 +471,14 @@ async function generateLabel() {
       azucares_anadidos_g_100g: rawRecord.azucares_anadidos_g_100g,
       fibra_g_100g: rawRecord.fibra_g_100g,
       sodio_mg_100g: rawRecord.sodio_mg_100g,
-      rows: [],
+      rows: [], // kept for schema compat; never read back
     });
 
     entry.pbId = record.id;
   } catch (e) {
     saveError.value =
       "No se pudo guardar en la base de datos. Revisa la consola.";
-    console.error("PocketBase write transactional breakdown:", e);
+    console.error("PocketBase write error:", e);
   } finally {
     saving.value = false;
   }

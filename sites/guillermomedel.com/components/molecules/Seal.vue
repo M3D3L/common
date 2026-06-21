@@ -1,9 +1,8 @@
-<!-- components/molecules/Seal.vue  →  <MoleculesSeal /> -->
 <template>
   <svg
     class="flex-shrink-0 cursor-default"
-    width="36"
-    height="36"
+    :width="width"
+    :height="height"
     viewBox="0 0 44 44"
     xmlns="http://www.w3.org/2000/svg"
   >
@@ -29,5 +28,15 @@
 </template>
 
 <script setup lang="ts">
-defineProps<{ seal: { lines: string[]; ys: number[] } }>();
+withDefaults(
+  defineProps<{
+    seal: { lines: string[]; ys: number[] };
+    width?: number | string;
+    height?: number | string;
+  }>(),
+  {
+    width: 36,
+    height: 36,
+  },
+);
 </script>
