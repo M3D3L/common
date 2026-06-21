@@ -8,11 +8,13 @@
       <Button
         variant="ghost"
         size="sm"
-        class="h-6 px-2 rounded-full text-[9px] font-semibold tracking-widest uppercase text-neutral-400 hover:text-white hover:bg-neutral-700"
-        @click.stop="$emit('edit')"
+        class="h-6 px-2 rounded-full text-[9px] font-semibold tracking-widest uppercase text-neutral-400 hover:text-red-400 hover:bg-neutral-700"
+        :disabled="deleting"
+        @click.stop="deleteLabel"
       >
-        <Pencil class="w-2.5 h-2.5 mr-1" />
-        Editar
+        <Loader2 v-if="deleting" class="w-2.5 h-2.5 mr-1 animate-spin" />
+        <Trash2 v-else class="w-2.5 h-2.5 mr-1" />
+        {{ deleting ? "…" : "Eliminar" }}
       </Button>
 
       <Separator orientation="vertical" class="h-3 bg-neutral-700" />
@@ -45,11 +47,34 @@
 <script lang="ts" setup>
 import { Button } from "@common/components/ui/button";
 import { Separator } from "@common/components/ui/separator";
-import { Pencil, Printer, ImageDown } from "lucide-vue-next";
+import { Printer, ImageDown, Trash2, Loader2 } from "lucide-vue-next";
+import usePocketBaseCore from "@common/composables/usePocketBaseCore";
 
-defineEmits<{
-  edit: [];
+const props = defineProps<{
+  id: string;
+}>();
+
+const emit = defineEmits<{
   print: [];
   download: [];
+  deleted: [];
 }>();
+
+const { deleteItem } = usePocketBaseCore();
+
+const deleting = ref(false);
+
+async function deleteLabel() {
+  deleting.value = true;
+  try {
+    await deleteItem("labels", props.id);
+    emit("deleted");
+    // refresh the page to update the list of labels
+    location.reload();
+  } catch (e) {
+    console.error("Delete error:", e);
+  } finally {
+    deleting.value = false;
+  }
+}
 </script>

@@ -2,7 +2,8 @@
   <div class="label-grid flex flex-wrap gap-3 justify-center">
     <MoleculesButtonWrapper
       v-for="label in labels"
-      :key="label.id"
+      :id="label?.id"
+      :key="label?.id"
       @edit="editLabel(label)"
       @print="printLabel(label)"
       @download="downloadLabelAsPng(label)"

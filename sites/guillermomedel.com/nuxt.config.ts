@@ -42,9 +42,20 @@ export default defineNuxtConfig({
   },
 
   build: {
-    transpile: ["vueuc"],
+    transpile: ["vueuc", "html-to-image"],
   },
-
+  vite: {
+    build: {
+      rollupOptions: {
+        // This ensures the library is available in your client-side bundles
+        external: [],
+      },
+    },
+    // Force optimization to prevent resolution errors
+    optimizeDeps: {
+      include: ["html-to-image"],
+    },
+  },
   alias: {
     "@common": path.resolve(__dirname, "../../"),
   },

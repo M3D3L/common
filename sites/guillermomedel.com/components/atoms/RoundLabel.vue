@@ -3,6 +3,7 @@
     <MoleculesButtonWrapper
       v-for="label in labels"
       :key="label.id"
+      :id="label.id"
       @edit="editLabel(label)"
       @print="printLabel(label)"
       @download="downloadLabelAsPng(label)"
