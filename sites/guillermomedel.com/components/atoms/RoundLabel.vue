@@ -27,6 +27,7 @@
             {{ label.alg || "Ninguno" }}
           </p>
         </div>
+
         <div class="w-full flex flex-col items-center mt-1">
           <div class="flex justify-between items-center w-full px-2 h-5 mb-0.5">
             <div
@@ -41,6 +42,7 @@
               />
             </div>
           </div>
+
           <div class="w-12 mx-auto mt-2">
             <MoleculesSvg src="/icons/tetakawi.svg" />
           </div>
@@ -64,12 +66,6 @@
             >
             <Separator class="flex-1 max-w-[8px] bg-black" />
           </div>
-
-          <!-- <p
-            class="text-[8px] text-black mt-0.5 font-bold italic leading-none mx-0"
-          >
-            {{ label.sub }}
-          </p> -->
         </div>
 
         <div class="w-full flex flex-col gap-0.5 px-2 my-auto">
@@ -102,6 +98,7 @@
           Cont. Neto: {{ label.total_size }} g
         </div>
 
+        <!-- Barcode only, no expiration/lot text here anymore -->
         <div
           class="flex flex-col space-y-0! justify-between items-center text-[4.5px] w-full px-4 text-black font-bold"
         >
@@ -110,15 +107,86 @@
             :width="0.75"
             :height="10"
           />
-          <span
-            class="flex flex-col justify-center gap-0 text-semibold text-[6px] w-full px-1"
-          >
-            <span
-              >Cad: {{ label?.expiration || generateExpiration(label) }}</span
-            >
-          </span>
-          <span class="-mt-[1.2rem]">Lote: {{ generateLot(label) }}</span>
         </div>
+
+        <!--
+          SVG covers the full 192×192 card (position absolute, inset 0).
+          Circle center = (96,96), inner text arc r=82.
+
+          Key insight: for text to curve DOWNWARD along the bottom of a circle
+          (like text printed around the bottom of a stamp/badge), the path must
+          travel in the direction the text reads, AND sweep-flag must place the
+          text baseline on the convex (outer) side of the curve.
+
+          For the bottom arc of a circle, text reads correctly when:
+            - arcLeft:  path goes LEFT-to-RIGHT from bottom-left to bottom-center
+                        sweep-flag=1 (clockwise) → text sits below the path line ✓
+            - arcRight: path goes LEFT-to-RIGHT from bottom-center to bottom-right
+                        sweep-flag=1 (clockwise) → text sits below the path line ✓
+
+          Arc points (r=82, center 96,96):
+            bottom-left  = (25, 137)
+            bottom       = (96, 178)
+            bottom-right = (167, 137)
+        -->
+        <svg
+          class="absolute left-[-8px] transform rotate-90 inset-0 w-full h-full"
+          viewBox="0 0 192 192"
+          xmlns="http://www.w3.org/2000/svg"
+          xmlns:xlink="http://www.w3.org/1999/xlink"
+          style="pointer-events: none"
+          aria-hidden="true"
+        >
+          <defs>
+            <!-- Bottom-left → bottom-center, bowing along the outer rim -->
+            <path
+              :id="`arcLeft-${label.id}`"
+              d="M 27,136 A 80,80 0 0 0 96,176"
+              fill="none"
+            />
+            <!-- Bottom-center → bottom-right, bowing along the outer rim -->
+            <path
+              :id="`arcRight-${label.id}`"
+              d="M 96,176 A 80,80 0 0 0 165,136"
+              fill="none"
+            />
+          </defs>
+
+          <!-- Expiration — curves along the bottom-left -->
+          <text
+            font-size="6"
+            font-weight="800"
+            fill="black"
+            font-family="Barlow, Arial, sans-serif"
+            letter-spacing="0.4"
+          >
+            <textPath
+              :href="`#arcLeft-${label.id}`"
+              :xlink:href="`#arcLeft-${label.id}`"
+              startOffset="26%"
+            >
+              Cad: {{ label?.expiration || generateExpiration(label) }}
+            </textPath>
+          </text>
+
+          <!-- Lot — curves along the bottom-right -->
+          <text
+            font-size="6"
+            font-weight="800"
+            fill="black"
+            font-family="Barlow, Arial, sans-serif"
+            letter-spacing="0.4"
+            text-anchor="end"
+          >
+            <textPath
+              :href="`#arcRight-${label.id}`"
+              :xlink:href="`#arcRight-${label.id}`"
+              startOffset="92%"
+            >
+              Lote: {{ generateLot(label) }}
+            </textPath>
+          </text>
+        </svg>
       </Card>
     </MoleculesButtonWrapper>
   </div>
@@ -159,18 +227,14 @@ async function downloadLabelAsPng(label: any) {
   if (!el) return;
   const node = (el as any).$el ?? el;
 
-  // Wait for web fonts so the capture doesn't fall back to Arial
   await (document as any).fonts?.ready;
 
-  // foreignObject-based capture: the browser renders the node itself,
-  // so the PNG matches exactly what's on screen (flex, gap, max-w, oklch, etc.)
   const { toCanvas } = await import("html-to-image");
   const canvas = await toCanvas(node, {
-    pixelRatio: 4, // 192 * 4 = 768px output
+    pixelRatio: 4,
     cacheBust: true,
   });
 
-  // Clip the square capture into a perfect circle
   const size = Math.min(canvas.width, canvas.height);
   const offscreen = document.createElement("canvas");
   offscreen.width = size;
@@ -214,7 +278,7 @@ function printLabel(label: any) {
         <meta charset="utf-8" />
         <script src="https://cdn.tailwindcss.com"><\/script>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@700&family=Barlow:wght@400;600&display=swap" rel="stylesheet" />
+        <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@700&family=Barlow:wght@400;600;800&display=swap" rel="stylesheet" />
         <style>
           html, body {
             margin: 0 !important;
@@ -272,7 +336,7 @@ function printLabel(label: any) {
 </script>
 
 <style scoped>
-@import url("https://fonts.googleapis.com/css2?family=Oswald:wght@700&family=Barlow:wght@400;600&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Oswald:wght@700&family=Barlow:wght@400;600;800&display=swap");
 
 .label-card {
   font-family: "Barlow", Arial, sans-serif;
