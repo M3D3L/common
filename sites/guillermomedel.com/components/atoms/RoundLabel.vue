@@ -130,7 +130,7 @@
             bottom-right = (167, 137)
         -->
         <svg
-          class="absolute left-[-8px] transform rotate-90 inset-0 w-full h-full"
+          class="absolute left-[-10px] transform rotate-90 inset-0 w-full h-full"
           viewBox="0 0 192 192"
           xmlns="http://www.w3.org/2000/svg"
           xmlns:xlink="http://www.w3.org/1999/xlink"
