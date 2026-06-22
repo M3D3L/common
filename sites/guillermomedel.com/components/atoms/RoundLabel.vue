@@ -117,7 +117,7 @@
               >Cad: {{ label?.expiration || generateExpiration(label) }}</span
             >
           </span>
-          <span class="-mt-4">Lote: {{ generateLot(label) }}</span>
+          <span class="-mt-[1.2rem]">Lote: {{ generateLot(label) }}</span>
         </div>
       </Card>
     </MoleculesButtonWrapper>
