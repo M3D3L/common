@@ -19,7 +19,7 @@
         style="width: 192px; height: 192px"
       >
         <div
-          class="justify-center flex gap-0.5 text-center items-center bg-gray-100 p-1 left-8 absolute top-7 rounded-full"
+          class="justify-center flex w-[5.5rem] gap-0.5 text-center items-center left-8 absolute top-7"
         >
           <AlertTriangle class="w-2 h-2 text-amber-700" />
           <p class="text-[6px] leading-tight text-black font-black">
@@ -64,16 +64,16 @@
             <Separator class="flex-1 max-w-[8px] bg-black" />
           </div>
 
-          <p
-            class="text-[5px] text-black mt-0.5 font-bold italic leading-none mx-0"
+          <!-- <p
+            class="text-[8px] text-black mt-0.5 font-bold italic leading-none mx-0"
           >
             {{ label.sub }}
-          </p>
+          </p> -->
         </div>
 
         <div class="w-full flex flex-col gap-0.5 px-2 my-auto">
           <p
-            class="text-[4px] leading-[1.2] text-black m-0 line-clamp-2 px-1 font-semibold"
+            class="text-[6px] leading-[1.2] text-black m-0 line-clamp-2 px-1 font-semibold"
           >
             <strong class="font-black">Ing:</strong> {{ label.ing }}
           </p>
