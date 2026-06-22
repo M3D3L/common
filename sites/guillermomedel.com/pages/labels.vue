@@ -22,26 +22,30 @@
       </div>
     </div>
 
-    <div v-if="labelType === 'round'" class="flex flex-wrap gap-6 px-4">
+    <!-- Labels Grid/List -->
+    <div
+      v-if="labelType === 'round'"
+      class="flex flex-wrap gap-6 container mx-auto"
+    >
       <div
         v-for="(label, index) in labelData"
         :key="label.id || index"
-        class="flex justify-center items-start"
+        class="mb-4"
       >
         <RoundLabel :labelData="[label]" />
       </div>
     </div>
-
-    <div v-else class="flex flex-wrap gap-6 px-4">
+    <div v-else class="flex flex-wrap gap-6 container mx-auto">
       <div
         v-for="(label, index) in labelData"
         :key="label.id || index"
-        class="flex justify-center items-start"
+        class="mb-4"
       >
         <BreezyLabels :labelData="[label]" />
       </div>
     </div>
 
+    <!-- Create Label Modal -->
     <Modal
       ref="createModal"
       title="Generar Nueva Etiqueta"
@@ -420,7 +424,7 @@ async function generateLabel() {
   // Persist to PocketBase
   saving.value = true;
   try {
-    const record = await createItem("labels", {
+    await createItem("labels", {
       name: entry.name,
       sub: entry.sub,
       ing: entry.ing,
@@ -444,20 +448,14 @@ async function generateLabel() {
       sodio_mg_100g: rawRecord.sodio_mg_100g,
       rows: [],
     });
-
-    // Update the entry with the actual ID
-    const index = labelData.value.findIndex(
-      (item) => item.pbId === null && item.name === entry.name,
-    );
-    if (index !== -1) {
-      labelData.value[index].pbId = record.id;
-    }
   } catch (e) {
     saveError.value =
       "No se pudo guardar en la base de datos. Revisa la consola.";
     console.error("PocketBase write error:", e);
   } finally {
     saving.value = false;
+    // Refresh the page
+    location.reload();
   }
 }
 
