@@ -59,7 +59,7 @@
 
         <div
           v-if="label.leyendas && label.leyendas.length > 0"
-          class="flex flex-col gap-1 px-1"
+          class="flex flex-col gap-1 px-1 mt-0.5"
         >
           <div
             v-for="(leyenda, i) in label.leyendas"
