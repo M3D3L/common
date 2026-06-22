@@ -16,7 +16,9 @@
       :key="li"
       :x="22"
       :y="seal.ys[li]"
-      :font-size="line.toLowerCase().includes('saturada') ? 4.5 : 6"
+      :font-size="
+        fontSize ?? (line.toLowerCase().includes('saturada') ? 4.5 : 6)
+      "
       text-anchor="middle"
       fill="white"
       font-weight="900"
@@ -33,6 +35,7 @@ withDefaults(
     seal: { lines: string[]; ys: number[] };
     width?: number | string;
     height?: number | string;
+    fontSize?: number | string;
   }>(),
   {
     width: 36,

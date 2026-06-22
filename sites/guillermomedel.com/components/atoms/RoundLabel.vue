@@ -36,6 +36,7 @@
               <MoleculesSeal
                 width="32"
                 height="32"
+                fontSize="8"
                 :seal="sellosSeal(label.seals.length)"
               />
             </div>

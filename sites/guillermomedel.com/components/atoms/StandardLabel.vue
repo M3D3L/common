@@ -7,8 +7,12 @@
       <div class="px-1.5 pb-1">
         <div class="flex justify-end gap-1 mb-4 mt-1.5 h-7">
           <div class="flex items-center gap-0.5 px-1 mr-auto">
-            <AlertTriangle class="w-2 h-2 text-amber-700 flex-shrink-0 mt-px" />
-            <p class="text-[5px] leading-[1.25] text-black m-0 font-bold">
+            <AlertTriangle
+              class="w-2.5 h-2.5 text-amber-700 flex-shrink-0 mt-px"
+            />
+            <p
+              class="text-[6px] leading-tight text-black font-black m-0 font-bold"
+            >
               <strong class="font-black">Alérgenos:</strong> {{ label.alg }}
             </p>
           </div>
@@ -48,7 +52,7 @@
         </div>
 
         <p
-          class="text-center text-[5.5px] text-black mt-0.5 font-bold italic leading-tight mx-0 mb-1"
+          class="text-center text-[6px] text-black mt-0.5 font-bold italic leading-tight mx-0"
         >
           {{ label.sub }}
         </p>
@@ -75,7 +79,7 @@
       class="flex-1 flex flex-col gap-0.5 px-1.5 py-1 overflow-hidden p-0 bg-white"
     >
       <p
-        class="text-[5.5px] leading-[1.3] text-black mt-1 mx-0 px-1 font-semibold"
+        class="text-[6px] leading-[1.3] text-black mt-0.5 mx-0 px-1 font-semibold"
       >
         <strong class="font-black">Ingredientes:</strong> {{ label.ing }}
       </p>
@@ -167,7 +171,7 @@
       </Table>
 
       <p
-        class="text-[5px] text-black font-bold italic px-1 mt-0.5 leading-tight"
+        class="text-[6px] text-black font-bold italic px-1 mt-0.5 leading-tight"
       >
         *% del Valor Diario de Referencia con base en una dieta de 2,000 kcal.
         Sus necesidades diarias pueden ser mayores o menores.
