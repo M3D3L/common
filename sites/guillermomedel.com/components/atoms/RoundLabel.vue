@@ -70,7 +70,8 @@
 
         <div class="w-full flex flex-col gap-0.5 px-2 my-auto">
           <p
-            class="text-[6px] leading-[1.2] text-black m-0 line-clamp-2 px-1 font-semibold"
+            :class="label.ing.length > 76 ? 'text-[5px]' : 'text-[6px]'"
+            class="leading-[1.2] text-black m-0 line-clamp-2 px-1 font-semibold"
           >
             <strong class="font-black">Ing:</strong> {{ label.ing }}
           </p>
@@ -92,21 +93,23 @@
           </div>
         </div>
 
-        <div
-          class="text-[5.5px] mt-1 font-black max-w-20 mx-auto leading-none bg-black text-white px-1.5 py-0.5 rounded-sm"
-        >
-          Cont. Neto: {{ label.total_size }} g
-        </div>
+        <div class="flex relative">
+          <div
+            class="text-[5.5px] absolute left-0 right-0 z-100 mt-1 font-black max-w-20 mx-auto leading-none bg-black text-white px-1.5 py-0.5 rounded-sm"
+          >
+            Cont. Neto: {{ label.total_size }} g
+          </div>
 
-        <!-- Barcode only, no expiration/lot text here anymore -->
-        <div
-          class="flex flex-col space-y-0! justify-between items-center text-[4.5px] w-full px-4 text-black font-bold"
-        >
-          <MoleculesBarcode
-            :value="internalEan13(label.sku ?? label.id)"
-            :width="0.75"
-            :height="10"
-          />
+          <!-- Barcode only, no expiration/lot text here anymore -->
+          <div
+            class="flex flex-col mt-2 z-1 space-y-0! justify-between items-center text-[4.5px] w-full px-4 text-black font-bold"
+          >
+            <MoleculesBarcode
+              :value="internalEan13(label.sku ?? label.id)"
+              :width="0.75"
+              :height="10"
+            />
+          </div>
         </div>
 
         <!--
