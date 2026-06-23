@@ -178,22 +178,26 @@
       </p>
     </CardContent>
 
-    <CardFooter class="flex-shrink-0 p-1 bg-black">
-      <div class="w-full px-1 py-0 leading-none">
+    <CardFooter class="flex-shrink-0">
+      <div
+        class="w-full px-1 flex relative flex-col items-center gap-1 leading-none"
+      >
         <div
-          class="flex justify-between items-center text-[5.5px] gap-1 text-white font-black leading-none"
+          class="flex justify-between w-full absolute -bottom-0.5 text-black text-[5.5px] font-black leading-none"
         >
           <span>Lote: {{ generateLot(label) }}</span>
-
-          <MoleculesBarcode
-            :value="internalEan13(label.sku ?? label.id)"
-            :height="8"
-            :width="0.6"
-          />
           <span
             >Caducidad:
             {{ label?.expiration || generateExpiration(label) }}</span
           >
+        </div>
+
+        <div class="bg-white rounded-sm px-1.5 py-0.5">
+          <MoleculesBarcode
+            :value="internalEan13(label.sku ?? label.id)"
+            :height="18"
+            :width="1.1"
+          />
         </div>
       </div>
     </CardFooter>

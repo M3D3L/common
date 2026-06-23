@@ -43,7 +43,7 @@
             </div>
           </div>
 
-          <div class="w-12 mx-auto mt-2">
+          <div class="w-12 mx-auto mt-0">
             <MoleculesSvg src="/icons/tetakawi.svg" />
           </div>
 
@@ -102,38 +102,60 @@
 
           <!-- Barcode only, no expiration/lot text here anymore -->
           <div
-            class="flex flex-col mt-2 z-1 space-y-0! justify-between items-center text-[4.5px] w-full px-4 text-black font-bold"
+            class="flex flex-col mt-2 z-1 space-y-0! justify-between items-center text-[4.5px] w-full px-1 text-black font-bold"
           >
             <MoleculesBarcode
               :value="internalEan13(label.sku ?? label.id)"
-              :width="0.75"
-              :height="10"
+              :width="1.2"
+              :height="20"
             />
           </div>
         </div>
 
-        <!--
-          SVG covers the full 192×192 card (position absolute, inset 0).
-          Circle center = (96,96), inner text arc r=82.
-
-          Key insight: for text to curve DOWNWARD along the bottom of a circle
-          (like text printed around the bottom of a stamp/badge), the path must
-          travel in the direction the text reads, AND sweep-flag must place the
-          text baseline on the convex (outer) side of the curve.
-
-          For the bottom arc of a circle, text reads correctly when:
-            - arcLeft:  path goes LEFT-to-RIGHT from bottom-left to bottom-center
-                        sweep-flag=1 (clockwise) → text sits below the path line ✓
-            - arcRight: path goes LEFT-to-RIGHT from bottom-center to bottom-right
-                        sweep-flag=1 (clockwise) → text sits below the path line ✓
-
-          Arc points (r=82, center 96,96):
-            bottom-left  = (25, 137)
-            bottom       = (96, 178)
-            bottom-right = (167, 137)
-        -->
         <svg
-          class="absolute left-[-10px] transform rotate-90 inset-0 w-full h-full"
+          class="absolute transform ml-2 rotate-[-60deg] inset-0 w-full h-full"
+          viewBox="0 0 192 192"
+          xmlns="http://www.w3.org/2000/svg"
+          xmlns:xlink="http://www.w3.org/1999/xlink"
+          style="pointer-events: none"
+          aria-hidden="true"
+        >
+          <defs>
+            <!-- Bottom-left → bottom-center, bowing along the outer rim -->
+            <path
+              :id="`arcLeft-${label.id}`"
+              d="M 27,136 A 80,80 0 0 0 96,176"
+              fill="none"
+            />
+            <!-- Bottom-center → bottom-right, bowing along the outer rim -->
+            <path
+              :id="`arcRight-${label.id}`"
+              d="M 96,176 A 80,80 0 0 0 165,136"
+              fill="none"
+            />
+          </defs>
+
+          <!-- Lot — curves along the bottom-right -->
+          <text
+            font-size="6"
+            font-weight="800"
+            fill="black"
+            font-family="Barlow, Arial, sans-serif"
+            letter-spacing="0.4"
+            text-anchor="end"
+          >
+            <textPath
+              :href="`#arcRight-${label.id}`"
+              :xlink:href="`#arcRight-${label.id}`"
+              startOffset="92%"
+            >
+              Lote: {{ generateLot(label) }}
+            </textPath>
+          </text>
+        </svg>
+
+        <svg
+          class="absolute left-[-8px] transform rotate-[60deg] inset-0 w-full h-full"
           viewBox="0 0 192 192"
           xmlns="http://www.w3.org/2000/svg"
           xmlns:xlink="http://www.w3.org/1999/xlink"
@@ -169,24 +191,6 @@
               startOffset="26%"
             >
               Cad: {{ label?.expiration || generateExpiration(label) }}
-            </textPath>
-          </text>
-
-          <!-- Lot — curves along the bottom-right -->
-          <text
-            font-size="6"
-            font-weight="800"
-            fill="black"
-            font-family="Barlow, Arial, sans-serif"
-            letter-spacing="0.4"
-            text-anchor="end"
-          >
-            <textPath
-              :href="`#arcRight-${label.id}`"
-              :xlink:href="`#arcRight-${label.id}`"
-              startOffset="92%"
-            >
-              Lote: {{ generateLot(label) }}
             </textPath>
           </text>
         </svg>
