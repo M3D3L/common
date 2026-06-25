@@ -50,13 +50,10 @@ const props = withDefaults(
 );
 
 const sealData = computed(() => {
-  // use the size prop to reformat the seal data for different sizes
   const { size, seal } = props;
   if (size === "small") {
-    // I want to make it so it says Exceso top line forllowed by the number of seals and the word Sellos on the second line
     return {
-      lines: ["Exceso", `${seal.lines.length} Sellos`],
-      ys: [seal.ys[0], seal.ys[1]],
+      lines: ["Exceso", `${seal?.lines?.[0]} Sellos`],
     };
   } else {
     return {
