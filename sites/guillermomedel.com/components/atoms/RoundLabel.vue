@@ -22,7 +22,8 @@
           <MoleculesSeal
             width="32"
             height="32"
-            fontSize="10"
+            fontSize="8"
+            size="small"
             :seal="sellosSeal(label.seals.length)"
           />
         </div>
