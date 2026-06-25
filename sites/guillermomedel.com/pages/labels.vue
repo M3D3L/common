@@ -32,7 +32,7 @@
         :key="label.id || index"
         class="mb-4"
       >
-        <RoundLabel :labelData="[label]" />
+        <OrganismsRoundGrid :labelData="[label]" />
       </div>
     </div>
     <div v-else class="flex flex-wrap gap-6 container mx-auto">
@@ -41,7 +41,7 @@
         :key="label.id || index"
         class="mb-4"
       >
-        <LabelGrid :labelData="[label]" />
+        <OrganismsLabelGrid :labelData="[label]" />
       </div>
     </div>
 
@@ -221,8 +221,6 @@
 </template>
 
 <script lang="ts" setup>
-import LabelGrid from "~/components/organisms/LabelGrid.vue";
-import RoundLabel from "~/components/atoms/RoundLabel.vue";
 import Modal from "@common/components/ui/modal/Modal.vue";
 import { useNutritionalLabels } from "~/composables/useNutritionalLabels";
 import { useChatGPT } from "@common/composables/useChatGPT";
