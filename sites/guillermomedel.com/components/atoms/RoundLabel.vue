@@ -43,7 +43,7 @@
             </div>
           </div>
 
-          <div class="w-12 mx-auto mt-0">
+          <div class="w-12 mx-auto mt-2">
             <MoleculesSvg src="/icons/tetakawi.svg" />
           </div>
 

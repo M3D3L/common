@@ -162,6 +162,20 @@ export function transformNutrientsToNOMRows(record: any) {
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
+export interface NutritionOverride {
+  energia_kcal_100g?: number | null;
+  energia_kj_100g?: number | null;
+  proteina_g_100g?: number | null;
+  grasas_totales_g_100g?: number | null;
+  grasas_saturadas_g_100g?: number | null;
+  grasas_trans_g_100g?: number | null;
+  carbohidratos_disponibles_g_100g?: number | null;
+  azucares_totales_g_100g?: number | null;
+  azucares_anadidos_g_100g?: number | null;
+  fibra_g_100g?: number | null;
+  sodio_mg_100g?: number | null;
+}
+
 export interface ResolveResult {
   name: string;
   sub: string;
@@ -170,6 +184,7 @@ export interface ResolveResult {
   pair: string;
   dishType?: string | null;
   resolved: ResolvedIngredient[];
+  nutrition_override?: NutritionOverride | null;
 }
 
 // ─── buildRecordFromResolution ────────────────────────────────────────────────
@@ -177,6 +192,10 @@ export interface ResolveResult {
 // Runs the deterministic engine and returns a record ready for the DB save
 // (no seals/leyendas) and for immediate display (seals/leyendas attached but
 // not persisted).
+//
+// If the resolver found explicit nutritional values in the user's text
+// (res.nutrition_override), those values replace the engine-computed ones
+// before seals are evaluated — so seals always reflect the final numbers.
 
 export function buildRecordFromResolution(
   res: ResolveResult,
@@ -193,9 +212,38 @@ export function buildRecordFromResolution(
     dishType: (res.dishType as any) ?? "main",
   });
 
-  // Seals derived from engine output; leyendas from canonical keys.
+  // Start from engine output, then apply any user-supplied overrides.
+  const nutrients = {
+    energia_kcal_100g: engine.energia_kcal_100g,
+    energia_kj_100g: engine.energia_kj_100g,
+    proteina_g_100g: engine.proteina_g_100g,
+    grasas_totales_g_100g: engine.grasas_totales_g_100g,
+    grasas_saturadas_g_100g: engine.grasas_saturadas_g_100g,
+    grasas_trans_g_100g: engine.grasas_trans_g_100g,
+    carbohidratos_disponibles_g_100g: engine.carbohidratos_disponibles_g_100g,
+    azucares_totales_g_100g: engine.azucares_totales_g_100g,
+    azucares_anadidos_g_100g: engine.azucares_anadidos_g_100g,
+    fibra_g_100g: engine.fibra_g_100g,
+    sodio_mg_100g: engine.sodio_mg_100g,
+  };
+
+  const ov = res.nutrition_override;
+  if (ov) {
+    for (const key of Object.keys(nutrients) as (keyof typeof nutrients)[]) {
+      const val = ov[key];
+      if (val != null && !isNaN(val)) {
+        nutrients[key] = val;
+      }
+    }
+    // Auto-derive kJ when the user only provided kcal
+    if (ov.energia_kcal_100g != null && ov.energia_kj_100g == null) {
+      nutrients.energia_kj_100g = nutrients.energia_kcal_100g * 4.184;
+    }
+  }
+
+  // Seals and leyendas computed from final (possibly overridden) nutrients.
   const canonicalKeys = (res.resolved ?? []).map((r) => r.key);
-  const seals = computeSeals(engine);
+  const seals = computeSeals(nutrients);
   const leyendas = computeLeyendasFromKeys(canonicalKeys);
 
   return {
@@ -209,17 +257,7 @@ export function buildRecordFromResolution(
     portion_size: engine.portion_size,
     total_size: engine.total_size,
     // ── Nutrient values (stored in DB) ──
-    energia_kcal_100g: engine.energia_kcal_100g,
-    energia_kj_100g: engine.energia_kj_100g,
-    proteina_g_100g: engine.proteina_g_100g,
-    grasas_totales_g_100g: engine.grasas_totales_g_100g,
-    grasas_saturadas_g_100g: engine.grasas_saturadas_g_100g,
-    grasas_trans_g_100g: engine.grasas_trans_g_100g,
-    carbohidratos_disponibles_g_100g: engine.carbohidratos_disponibles_g_100g,
-    azucares_totales_g_100g: engine.azucares_totales_g_100g,
-    azucares_anadidos_g_100g: engine.azucares_anadidos_g_100g,
-    fibra_g_100g: engine.fibra_g_100g,
-    sodio_mg_100g: engine.sodio_mg_100g,
+    ...nutrients,
     // ── Derived at runtime, NOT stored ──
     seals,
     leyendas,

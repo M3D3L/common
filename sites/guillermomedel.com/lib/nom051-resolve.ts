@@ -21,8 +21,48 @@ by the frontend engine after you return.
   "dishType": "one of: main | soup | side | sauce | snack | baked | beverage",
   "resolved": [
     { "ing": "display name in Spanish", "key": "canonical table key", "grams": 0 }
-  ]
+  ],
+  "nutrition_override": {
+    "energia_kcal_100g": number or null,
+    "energia_kj_100g": number or null,
+    "proteina_g_100g": number or null,
+    "grasas_totales_g_100g": number or null,
+    "grasas_saturadas_g_100g": number or null,
+    "grasas_trans_g_100g": number or null,
+    "carbohidratos_disponibles_g_100g": number or null,
+    "azucares_totales_g_100g": number or null,
+    "azucares_anadidos_g_100g": number or null,
+    "fibra_g_100g": number or null,
+    "sodio_mg_100g": number or null
+  }
 }
+
+## nutrition_override rules
+
+Scan the entire input text for any directly stated nutritional values.
+They may appear in ANY format mixed anywhere in the text, for example:
+
+  "Energía: 180 kcal, proteínas 22g, grasa 8g"
+  "150 cal per 100g / 15g protein / 5g carbs"
+  "Por 100g: 200kcal | 18g prot | 10g fat | 2g fiber | 400mg sodium"
+  "Calorías 250, carbohidratos 30g, azúcares 5g, sodio 600mg"
+
+When nutritional data IS present in the input:
+  - Parse every value you can find, map to the correct field key
+  - Values must be per 100g. If the user wrote "per serving" with a serving size,
+    convert: value_per_100g = (value_per_serving / serving_g) * 100
+  - Set any unprovided fields to null
+  - If kJ is not stated but kcal is, set energia_kj_100g to null
+    (the engine will derive it automatically)
+  - Sodium: if given in g, multiply by 1000 to get mg
+  - Include nutrition_override in the output
+
+When NO nutritional data is present (only ingredient lines):
+  - Set ALL nutrition_override fields to null
+  - Still include the nutrition_override object so the schema is consistent
+
+Ingredient lines and nutritional lines can coexist in the same input.
+Parse ingredient lines normally; treat nutrition lines as override data only.
 
 ## dishType rules (pick ONE, deterministically)
   main     — full meals, guisados, protein + side
