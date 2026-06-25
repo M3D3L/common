@@ -1,4 +1,3 @@
-// useNutritionalLabels.ts
 // Composable for nutritional label transformation and helpers.
 //
 // KEY DESIGN DECISION:
@@ -42,7 +41,7 @@ const formatInt = (num: number): string => `${Math.round(num)}`;
 // ─── Row builder ──────────────────────────────────────────────────────────────
 //
 // Converts a stored (or freshly computed) nutrient record into the rows array
-// that BreezyLabels.vue renders. This is the single rounding site for display.
+// that LabelGenerator.vue renders. This is the single rounding site for display.
 
 export function transformNutrientsToNOMRows(record: any) {
   const portionSize = Number(record.portion_size ?? 150);

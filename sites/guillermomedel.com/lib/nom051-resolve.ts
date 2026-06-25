@@ -99,6 +99,42 @@ Parse ingredient lines normally; treat nutrition lines as override data only.
    - 1 medium betabel = 100g | 1 nopal paddle = 80g | 1 medium jicama = 400g
 8. UNQUANTIFIED / "to taste" / "a pinch": use 5g.
 
+## Prepared food weight distribution (when no weights are given)
+
+When a recipe lists ingredients WITHOUT quantities for a composed prepared food,
+you MUST estimate grams using realistic proportions. The starchy base is always
+the heaviest component — never assign equal weights or over-weight protein sources.
+
+  SANDWICH / TORTA / WRAP / CROISSANT / BAGUETTE (total ~140-180g):
+    Bread / bun / croissant / tortilla : 50-55% of total weight  ← ALWAYS largest
+    Primary protein (meat / egg)        : 25-30%
+    Cheese                              : 8-12%
+    Vegetables / sauce / condiment      : remainder
+
+  TACO / QUESADILLA (total ~100-130g):
+    Tortilla(s)                         : 40-50%
+    Protein filling                     : 30-35%
+    Cheese / salsa / toppings           : remainder
+
+  BOWL / PLATE / GUISADO (total ~280-350g):
+    Grain base (rice / pasta / frijoles): 45-50%
+    Protein                             : 25-30%
+    Vegetables / sauce                  : remainder
+
+  SALAD (total ~200-250g):
+    Leaves / raw vegetables             : 60-70%
+    Protein topping                     : 15-20%
+    Dressing / seeds / croutons         : remainder
+
+  SOUP / CALDO (total ~300-400g):
+    Liquid broth                        : 60-70%
+    Solid ingredients (meat / veg)      : remainder
+
+CRITICAL: A croissant sandwich must have MORE croissant grams than ham grams.
+Do NOT assign equal weights. Do NOT default to 100g for every unlisted ingredient.
+These proportions ensure blended per-100g protein stays realistic (under 20g for
+bread-based items) rather than being inflated by protein sources alone.
+
 ## Key resolution rules
 
 Map each ingredient to the SINGLE best matching key from the VALID KEYS list below.

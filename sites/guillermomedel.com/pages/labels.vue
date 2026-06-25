@@ -41,7 +41,7 @@
         :key="label.id || index"
         class="mb-4"
       >
-        <BreezyLabels :labelData="[label]" />
+        <LabelGrid :labelData="[label]" />
       </div>
     </div>
 
@@ -221,7 +221,7 @@
 </template>
 
 <script lang="ts" setup>
-import BreezyLabels from "~/components/atoms/BreezyLabels.vue";
+import LabelGrid from "~/components/organisms/LabelGrid.vue";
 import RoundLabel from "~/components/atoms/RoundLabel.vue";
 import Modal from "@common/components/ui/modal/Modal.vue";
 import { useNutritionalLabels } from "~/composables/useNutritionalLabels";
@@ -243,7 +243,6 @@ import {
 } from "lucide-vue-next";
 import { NOM051_RESOLVE } from "~/lib/nom051-resolve";
 import type { ResolveResult } from "~/composables/useNutritionalLabels";
-
 definePageMeta({
   layout: "none",
 });
