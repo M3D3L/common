@@ -36,9 +36,9 @@
         </div>
 
         <div
-          class="text-center font-black text-[13px] tracking-[0.15em] leading-none mb-0.5 text-black"
+          class="text-center uppercase font-black text-[13px] tracking-[0.15em] leading-none mb-0.5 text-black"
         >
-          BREEZY MEALS
+          BREEZY {{ label?.type + "s" }}
         </div>
 
         <div class="flex items-center gap-1 justify-center">
