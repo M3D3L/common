@@ -54,7 +54,7 @@
     </div>
 
     <!-- Label Modal -->
-    <OrganismsLabelModal
+    <OrganismsModalLabels
       ref="createModalRef"
       :selectedLabel
       :type

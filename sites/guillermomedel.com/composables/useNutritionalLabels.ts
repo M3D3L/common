@@ -28,6 +28,31 @@ export const pct = (valuePortion: number, vdr: number | null): string => {
   return `${Math.round((valuePortion / vdr) * 100)} %`;
 };
 
+// ─── NUTRITION_KEYS (single source of truth) ──────────────────────────────────
+
+export const NUTRITION_KEYS = [
+  "energia_kcal_100g",
+  "energia_kj_100g",
+  "proteina_g_100g",
+  "grasas_totales_g_100g",
+  "grasas_saturadas_g_100g",
+  "grasas_trans_g_100g",
+  "carbohidratos_disponibles_g_100g",
+  "azucares_totales_g_100g",
+  "azucares_anadidos_g_100g",
+  "fibra_g_100g",
+  "sodio_mg_100g",
+] as const;
+
+export type NutritionKey = (typeof NUTRITION_KEYS)[number];
+export type ManualNutrition = Record<NutritionKey, number | null>;
+
+export function emptyManualNutrition(): ManualNutrition {
+  return Object.fromEntries(
+    NUTRITION_KEYS.map((k) => [k, null]),
+  ) as ManualNutrition;
+}
+
 // ─── Rounding helpers ─────────────────────────────────────────────────────────
 
 const roundTo = (num: number, decimals = 0): number => {
@@ -39,9 +64,6 @@ const formatG1 = (num: number): string => roundTo(num, 1).toFixed(1);
 const formatInt = (num: number): string => `${Math.round(num)}`;
 
 // ─── Row builder ──────────────────────────────────────────────────────────────
-//
-// Converts a stored (or freshly computed) nutrient record into the rows array
-// that LabelGenerator.vue renders. This is the single rounding site for display.
 
 export function transformNutrientsToNOMRows(record: any) {
   const portionSize = Number(record.portion_size ?? 150);
@@ -186,15 +208,89 @@ export interface ResolveResult {
   nutrition_override?: NutritionOverride | null;
 }
 
+// ─── mergePer100g ─────────────────────────────────────────────────────────────
+//
+// Priority: manual user input > stored DB values (when ingredients unchanged)
+// > AI-computed values. This is the single merge site for all three sources.
+
+export function mergePer100g(opts: {
+  manualNutrition: ManualNutrition;
+  isEditMode: boolean;
+  ingredientsChanged: boolean;
+  storedLabel?: any;
+  aiOverride?: Record<string, number | null>;
+}): Record<NutritionKey, number | null> {
+  const {
+    manualNutrition,
+    isEditMode,
+    ingredientsChanged,
+    storedLabel,
+    aiOverride = {},
+  } = opts;
+  const merged = {} as Record<NutritionKey, number | null>;
+
+  for (const key of NUTRITION_KEYS) {
+    const manualVal = manualNutrition[key];
+    const storedVal = isEditMode ? (storedLabel?.[key] ?? null) : null;
+
+    if (manualVal !== null && manualVal !== undefined) {
+      merged[key] = manualVal;
+    } else if (
+      !ingredientsChanged &&
+      storedVal !== null &&
+      storedVal !== undefined
+    ) {
+      merged[key] = storedVal;
+    } else {
+      merged[key] = aiOverride[key] ?? null;
+    }
+  }
+  return merged;
+}
+
+// ─── buildLocalRecord ─────────────────────────────────────────────────────────
+//
+// Constructs a record from existing/manual values without calling the AI.
+// Used in edit mode when only portions or manual values changed, not ingredients.
+
+export function buildLocalRecord(opts: {
+  manualNutrition: ManualNutrition;
+  isEditMode: boolean;
+  ingredientsChanged: boolean;
+  storedLabel?: any;
+  recipeName: string;
+  recipeText: string;
+  portionSize: number | null;
+  totalSize: number | null;
+  hasPortion: boolean;
+  hasTotal: boolean;
+}): any {
+  const base = mergePer100g(opts);
+
+  // Auto-derive kJ when only kcal was provided
+  if (base.energia_kcal_100g != null && base.energia_kj_100g == null) {
+    base.energia_kj_100g = base.energia_kcal_100g * 4.184;
+  }
+
+  return {
+    id: opts.storedLabel?.id ?? null,
+    name: opts.recipeName.trim(),
+    sub: opts.storedLabel?.sub ?? "",
+    ing: opts.recipeText.trim(),
+    alg: opts.storedLabel?.alg ?? "",
+    pair: opts.storedLabel?.pair ?? "",
+    nameSize: opts.storedLabel?.nameSize ?? "11px",
+    portion_size: opts.hasPortion
+      ? Number(opts.portionSize)
+      : (opts.storedLabel?.portion_size ?? null),
+    total_size: opts.hasTotal
+      ? Number(opts.totalSize)
+      : (opts.storedLabel?.total_size ?? null),
+    ...base,
+  };
+}
+
 // ─── buildRecordFromResolution ────────────────────────────────────────────────
-//
-// Runs the deterministic engine and returns a record ready for the DB save
-// (no seals/leyendas) and for immediate display (seals/leyendas attached but
-// not persisted).
-//
-// If the resolver found explicit nutritional values in the user's text
-// (res.nutrition_override), those values replace the engine-computed ones
-// before seals are evaluated — so seals always reflect the final numbers.
 
 export function buildRecordFromResolution(
   res: ResolveResult,
@@ -211,7 +307,6 @@ export function buildRecordFromResolution(
     dishType: (res.dishType as any) ?? "main",
   });
 
-  // Start from engine output, then apply any user-supplied overrides.
   const nutrients = {
     energia_kcal_100g: engine.energia_kcal_100g,
     energia_kj_100g: engine.energia_kj_100g,
@@ -234,13 +329,11 @@ export function buildRecordFromResolution(
         nutrients[key] = val;
       }
     }
-    // Auto-derive kJ when the user only provided kcal
     if (ov.energia_kcal_100g != null && ov.energia_kj_100g == null) {
       nutrients.energia_kj_100g = nutrients.energia_kcal_100g * 4.184;
     }
   }
 
-  // Seals and leyendas computed from final (possibly overridden) nutrients.
   const canonicalKeys = (res.resolved ?? []).map((r) => r.key);
   const seals = computeSeals(nutrients);
   const leyendas = computeLeyendasFromKeys(canonicalKeys);
@@ -255,19 +348,13 @@ export function buildRecordFromResolution(
     nameSize: "11px",
     portion_size: engine.portion_size,
     total_size: engine.total_size,
-    // ── Nutrient values (stored in DB) ──
     ...nutrients,
-    // ── Derived at runtime, NOT stored ──
     seals,
     leyendas,
   };
 }
 
 // ─── transformRecord ──────────────────────────────────────────────────────────
-//
-// Converts a raw DB record into a full display record.
-// Seals and leyendas are (re)computed here from stored nutrient values and the
-// `ing` string — never read from the database.
 
 export function transformRecord(record: any) {
   const portion_size = Number(record.portion_size ?? 150);
@@ -279,7 +366,6 @@ export function transformRecord(record: any) {
     ...cleanRecord
   } = record;
 
-  // Recompute from nutrient values (no ing scan needed for seals).
   const seals = computeSeals({
     energia_kcal_100g: Number(cleanRecord.energia_kcal_100g ?? 0),
     grasas_saturadas_g_100g: Number(cleanRecord.grasas_saturadas_g_100g ?? 0),
@@ -288,7 +374,6 @@ export function transformRecord(record: any) {
     sodio_mg_100g: Number(cleanRecord.sodio_mg_100g ?? 0),
   });
 
-  // Leyendas need the ingredient identity — derive from the stored `ing` string.
   const leyendas = computeLeyendasFromIng(cleanRecord.ing ?? "");
 
   return {
@@ -355,6 +440,9 @@ export function useNutritionalLabels() {
   return {
     transformRecord,
     buildRecordFromResolution,
+    buildLocalRecord,
+    mergePer100g,
+    emptyManualNutrition,
     generateLot,
     generateExpiration,
     VDR,
