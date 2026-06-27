@@ -4,7 +4,7 @@
       v-for="label in labels"
       :key="label.id"
       :id="label.id"
-      @edit="editLabel(label)"
+      @edit="$emit('edit', $event)"
       @print="printLabel(label)"
       @download="downloadLabelAsPng(label)"
     >
@@ -29,10 +29,6 @@ const props = defineProps<{
 const router = useRouter();
 const cardRefs = ref<Record<string, HTMLElement>>({});
 const labels = computed(() => props.labelData);
-
-function editLabel(label: any) {
-  router.push(`/label-generator/${label.id}`);
-}
 
 async function downloadLabelAsPng(label: any) {
   const el = cardRefs.value[label.id];
@@ -145,4 +141,9 @@ function printLabel(label: any) {
     }, 800);
   };
 }
+
+// define emit
+const emit = defineEmits<{
+  (e: "edit", id: any): void;
+}>();
 </script>

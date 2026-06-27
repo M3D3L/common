@@ -1,11 +1,14 @@
 <template>
   <Modal
     ref="createModal"
-    title="Generar Nueva Etiqueta"
-    description="Ingresa los ingredientes y el tamaño de porción para generar la etiqueta nutritional."
+    :title="isEditMode ? 'Editar Etiqueta' : 'Generar Nueva Etiqueta'"
+    :description="
+      isEditMode
+        ? 'Modifica los ingredientes, porciones o valores manuales de la etiqueta.'
+        : 'Ingresa los ingredientes y el tamaño de porción para generar la etiqueta nutrimental.'
+    "
   >
     <div class="space-y-3">
-      <!-- Dish name -->
       <Card>
         <CardContent class="pt-4 pb-3 px-4 space-y-1.5">
           <label
@@ -20,7 +23,6 @@
         </CardContent>
       </Card>
 
-      <!-- Type chips -->
       <Card>
         <CardContent class="pt-4 pb-3 px-4 space-y-2">
           <label
@@ -47,7 +49,6 @@
         </CardContent>
       </Card>
 
-      <!-- Ingredients -->
       <Card>
         <CardContent class="pt-4 pb-3 px-4 space-y-1.5">
           <label
@@ -64,7 +65,6 @@
         </CardContent>
       </Card>
 
-      <!-- Sizes row -->
       <div class="grid grid-cols-2 gap-3">
         <Card>
           <CardContent class="pt-4 pb-3 px-4 space-y-1.5">
@@ -111,7 +111,6 @@
         </Card>
       </div>
 
-      <!-- Expiration -->
       <Card>
         <CardContent class="pt-4 pb-3 px-4 space-y-2">
           <label
@@ -153,7 +152,7 @@
           </div>
 
           <div
-            v-if="expirationPreset && expirationPreset !== 'custom'"
+            v-if="expirationDate && expirationPreset !== 'custom'"
             class="flex items-center gap-1.5"
           >
             <Badge
@@ -163,7 +162,7 @@
               <CalendarClock class="w-2.5 h-2.5 mr-1" />
               {{ expirationDate }}
             </Badge>
-            <button @click="setExpirationPreset('')" class="text-neutral-600">
+            <button @click="clearExpiration" class="text-neutral-600">
               <X class="w-3 h-3" />
             </button>
           </div>
@@ -194,7 +193,6 @@
         </CardContent>
       </Card>
 
-      <!-- Manual nutrition (collapsible card) -->
       <Card class="overflow-hidden">
         <CardHeader
           class="px-4 py-2.5 cursor-pointer"
@@ -387,15 +385,14 @@
         </template>
       </Card>
 
-      <!-- Submit -->
       <Button
         class="w-full text-[10px] tracking-widest uppercase"
-        @click="generateLabel"
+        @click="processLabel"
         :disabled="isLoading || !recipeText.trim() || !recipeName.trim()"
       >
         <Loader2 v-if="isLoading" class="w-3.5 h-3.5 animate-spin" />
         <Sparkles v-else class="w-3.5 h-3.5" />
-        {{ loadingLabel }}
+        {{ buttonLabel }}
       </Button>
 
       <div
@@ -442,13 +439,20 @@ import { useNutritionalLabels } from "~/composables/useNutritionalLabels";
 import { NOM051_RESOLVE } from "~/lib/nom051-resolve";
 import type { ResolveResult } from "~/composables/useNutritionalLabels";
 
+// ─── Define Props ────────────────────────────────────────────────────────────
+const props = defineProps<{
+  selectedLabel: any | null;
+  type: "create" | "edit";
+}>();
+
 // ─── Emits ────────────────────────────────────────────────────────────────────
 const emit = defineEmits<{
   created: [entry: any];
+  updated: [entry: any];
 }>();
 
 // ─── Composables ─────────────────────────────────────────────────────────────
-const { createItem } = usePocketBaseCore();
+const { createItem, updateItem } = usePocketBaseCore();
 const { transformRecord, buildRecordFromResolution } = useNutritionalLabels();
 const { run, loading, error } = useChatGPT();
 
@@ -481,12 +485,16 @@ const emptyManualNutrition = () => ({
 });
 const manualNutrition = ref(emptyManualNutrition());
 
-// ─── Computed ─────────────────────────────────────────────────────────────────
+// ─── Computed Mode Detection ─────────────────────────────────────────────────
+const isEditMode = computed(
+  () => props.type === "edit" && !!props.selectedLabel,
+);
 const isLoading = computed(() => loading.value || saving.value);
-const loadingLabel = computed(() => {
+
+const buttonLabel = computed(() => {
   if (loading.value) return "Analizando…";
   if (saving.value) return "Guardando…";
-  return "Generar Etiqueta";
+  return isEditMode.value ? "Guardar Cambios" : "Generar Etiqueta";
 });
 
 // ─── Type options ─────────────────────────────────────────────────────────────
@@ -508,17 +516,51 @@ const expirationOptions = [
 
 // ─── Public API ───────────────────────────────────────────────────────────────
 function open() {
-  recipeName.value = "";
-  recipeText.value = "";
-  portionSize.value = null;
-  totalSize.value = null;
-  selectedType.value = "";
-  expirationPreset.value = "";
-  expirationDate.value = "";
-  expirationDateError.value = null;
   saveError.value = null;
-  showManualNutrition.value = false;
-  manualNutrition.value = emptyManualNutrition();
+  expirationDateError.value = null;
+
+  if (isEditMode.value && props.selectedLabel) {
+    // Populate with existing data for editing
+    recipeName.value = props.selectedLabel.name || "";
+    recipeText.value = props.selectedLabel.ing || "";
+    portionSize.value = props.selectedLabel.portion_size ?? null;
+    totalSize.value = props.selectedLabel.total_size ?? null;
+    selectedType.value = props.selectedLabel.type || "";
+    expirationDate.value = props.selectedLabel.expiration || "";
+    expirationPreset.value = props.selectedLabel.expiration ? "custom" : "";
+    showManualNutrition.value = true; // Show manual context to reflect DB inputs
+
+    // Map DB values back to the manual nutrition object fields
+    manualNutrition.value = {
+      energia_kcal_100g: props.selectedLabel.energia_kcal_100g ?? null,
+      energia_kj_100g: props.selectedLabel.energia_kj_100g ?? null,
+      proteina_g_100g: props.selectedLabel.proteina_g_100g ?? null,
+      grasas_totales_g_100g: props.selectedLabel.grasas_totales_g_100g ?? null,
+      grasas_saturadas_g_100g:
+        props.selectedLabel.grasas_saturadas_g_100g ?? null,
+      grasas_trans_g_100g: props.selectedLabel.grasas_trans_g_100g ?? null,
+      carbohidratos_disponibles_g_100g:
+        props.selectedLabel.carbohidratos_disponibles_g_100g ?? null,
+      azucares_totales_g_100g:
+        props.selectedLabel.azucares_totales_g_100g ?? null,
+      azucares_anadidos_g_100g:
+        props.selectedLabel.azucares_anadidos_g_100g ?? null,
+      fibra_g_100g: props.selectedLabel.fibra_g_100g ?? null,
+      sodio_mg_100g: props.selectedLabel.sodio_mg_100g ?? null,
+    };
+  } else {
+    // Reset fields for creation mode
+    recipeName.value = "";
+    recipeText.value = "";
+    portionSize.value = null;
+    totalSize.value = null;
+    selectedType.value = "";
+    expirationPreset.value = "";
+    expirationDate.value = "";
+    showManualNutrition.value = false;
+    manualNutrition.value = emptyManualNutrition();
+  }
+
   createModal.value?.toggleModal(true);
 }
 
@@ -559,6 +601,12 @@ function setExpirationPreset(value: string) {
   if (value in presetMap) expirationDate.value = fmtDate(presetMap[value]);
 }
 
+function clearExpiration() {
+  expirationPreset.value = "";
+  expirationDate.value = "";
+  expirationDateError.value = null;
+}
+
 function formatExpirationDate(e: Event) {
   const input = e.target as HTMLInputElement;
   let digits = input.value.replace(/\D/g, "").slice(0, 8);
@@ -592,8 +640,8 @@ function validateExpirationDate(): boolean {
   return true;
 }
 
-// ─── Generate label ───────────────────────────────────────────────────────────
-async function generateLabel() {
+// ─── Core Logic Processing ────────────────────────────────────────────────────
+async function processLabel() {
   if (!recipeText.value.trim() || !recipeName.value.trim()) return;
   if (!validateExpirationDate()) return;
   saveError.value = null;
@@ -659,17 +707,17 @@ async function generateLabel() {
 
   const entry = {
     ...transformRecord(rawRecord),
-    pbId: null as string | null,
+    pbId: isEditMode.value ? props.selectedLabel.id : null,
     expiration_date: hasExpiration ? expirationDate.value : null,
     type: selectedType.value || null,
   };
 
-  emit("created", entry);
+  emit(isEditMode.value ? "updated" : "created", entry);
   createModal.value?.toggleModal(false);
 
   saving.value = true;
   try {
-    await createItem("labels", {
+    const recordPayload = {
       name: entry.name,
       sub: entry.sub,
       ing: entry.ing,
@@ -692,15 +740,21 @@ async function generateLabel() {
       azucares_anadidos_g_100g: rawRecord.azucares_anadidos_g_100g,
       fibra_g_100g: rawRecord.fibra_g_100g,
       sodio_mg_100g: rawRecord.sodio_mg_100g,
-      rows: [],
-    });
+      rows: entry.rows || [],
+    };
+
+    if (isEditMode.value) {
+      await updateItem("labels", props.selectedLabel.id, recordPayload);
+    } else {
+      await createItem("labels", recordPayload);
+    }
   } catch (e) {
     saveError.value =
       "No se pudo guardar en la base de datos. Revisa la consola.";
     console.error("PocketBase write error:", e);
   } finally {
     saving.value = false;
-    // location.reload();
+    location.reload();
   }
 }
 </script>

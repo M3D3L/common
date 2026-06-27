@@ -4,7 +4,7 @@
       v-for="label in labels"
       :id="label?.id"
       :key="label?.id"
-      @edit="editLabel(label)"
+      @edit="$emit('edit', $event)"
       @print="printLabel(label)"
       @download="downloadLabelAsPng(label)"
     >
@@ -29,10 +29,6 @@ const props = defineProps<{
 const router = useRouter();
 const cardRefs = ref<Record<string, HTMLElement>>({});
 const labels = computed(() => props.labelData);
-
-function editLabel(label: any) {
-  router.push(`/label-generator/${label.id}`);
-}
 
 // Helper function to inject fonts into any document
 function injectFonts(doc: Document) {
@@ -251,6 +247,11 @@ function printLabel(label: any) {
     }, 1000);
   };
 }
+
+// define emit
+const emit = defineEmits<{
+  (e: "edit", id: any): void;
+}>();
 </script>
 
 <style scoped>
