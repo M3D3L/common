@@ -32,7 +32,7 @@
         />
       </template>
 
-      <!-- Single small: per-seal border (unchanged) -->
+      <!-- Single small: per-seal border -->
       <template v-else-if="size === 'small'">
         <path
           d="M 12,0.5 L 32,0.5 L 43.5,12 L 43.5,50.5 L 0.5,50.5 L 0.5,12 Z"
@@ -83,7 +83,7 @@
         </text>
       </g>
 
-      <!-- Firma — one, spanning the full width -->
+      <!-- Firma — spans the full width -->
       <text
         v-if="grouped || size"
         :x="vbWidth / 2"
@@ -105,7 +105,7 @@
 type Seal = { lines: string[]; ys: number[] };
 
 // Octagon black fill spans x=3..41 (~38 wide). Stride must be >= that
-// to prevent adjacent octagons from overlapping. 40 leaves a hair of gap.
+// to prevent adjacent octagons from overlapping. 37 = touching edge-to-edge.
 const STRIDE = 37;
 
 const props = withDefaults(
@@ -127,7 +127,6 @@ const vbWidth = computed(() =>
   props.grouped ? 44 + STRIDE * (list.value.length - 1) : 44,
 );
 
-// Self-sizes in grouped mode at the original 0.62 scale unless overridden
 const renderWidth = computed(
   () => props.width ?? (props.grouped ? vbWidth.value * 0.62 : 36),
 );
@@ -136,19 +135,14 @@ const renderHeight = computed(
 );
 
 const renderSeals = computed<Seal[]>(() => {
-  if (props.grouped) {
-    return list.value.map((s) => ({
-      lines: s.lines.map((l) => l.toUpperCase()),
-      ys: s.ys.map((y) => y + 2),
-    }));
-  }
-  const s = props.seal!;
-  if (props.size === "small") {
+  if (props.size === "small" && !props.grouped) {
+    const s = props.seal!;
     return [{ lines: [String(s?.lines?.[0]), "SELLOS"], ys: [18, 27] }];
   }
-  return [
-    { lines: s.lines.map((l) => l.toUpperCase()), ys: s.ys.map((y) => y + 2) },
-  ];
+  return list.value.map((s) => ({
+    lines: s.lines.map((l) => l.toUpperCase()),
+    ys: s.ys.map((y) => y + 2),
+  }));
 });
 
 function mainFontSize(line: string): number {
