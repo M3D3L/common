@@ -2,29 +2,58 @@
   <div class="grid content-center relative group">
     <slot />
 
-    <!-- Polished translucent floating menu panel -->
     <div
       class="absolute top-1/2 gap-1 -right-4 -translate-y-1/2 flex flex-col items-center p-1 rounded-xl bg-neutral-950/95 backdrop-blur-md border border-neutral-800/60 shadow-xl opacity-0 group-hover:opacity-100 translate-x-1 group-hover:translate-x-0 transition-all duration-200 pointer-events-none group-hover:pointer-events-auto z-10 whitespace-nowrap min-w-[76px]"
     >
-      <!-- Buttons utilize a balanced internal grid layout for consistent visual alignment -->
-      <Button
-        variant="ghost"
-        size="sm"
-        class="h-5.5 w-full px-2 rounded-md text-[8px] font-bold tracking-wider uppercase text-neutral-400 hover:text-red-400 hover:bg-neutral-800/60 transition-colors"
-        :disabled="deleting"
-        @click.stop="deleteLabel"
-      >
-        <span class="grid grid-cols-[auto_1fr] items-center gap-1.5 w-full">
-          <Loader2
-            v-if="deleting"
-            class="w-2 h-2 animate-spin justify-self-center"
-          />
-          <Trash2 v-else class="w-2 h-2 justify-self-center" />
-          <span class="text-left font-sans text-[7.5px]">{{
-            deleting ? "…" : "Borrar"
-          }}</span>
-        </span>
-      </Button>
+      <AlertDialog>
+        <AlertDialogTrigger as-child>
+          <Button
+            variant="ghost"
+            size="sm"
+            class="h-5.5 w-full px-2 rounded-md text-[8px] font-bold tracking-wider uppercase text-neutral-400 hover:text-red-400 hover:bg-neutral-800/60 transition-colors"
+            :disabled="deleting"
+            @click.stop
+          >
+            <span class="grid grid-cols-[auto_1fr] items-center gap-1.5 w-full">
+              <Loader2
+                v-if="deleting"
+                class="w-2 h-2 animate-spin justify-self-center"
+              />
+              <Trash2 v-else class="w-2 h-2 justify-self-center" />
+              <span class="text-left font-sans text-[7.5px]">{{
+                deleting ? "…" : "Borrar"
+              }}</span>
+            </span>
+          </Button>
+        </AlertDialogTrigger>
+
+        <AlertDialogContent
+          class="max-w-md bg-neutral-950 border border-neutral-800 text-neutral-200"
+        >
+          <AlertDialogHeader>
+            <AlertDialogTitle class="text-lg font-semibold text-neutral-100"
+              >¿Confirmar eliminación?</AlertDialogTitle
+            >
+            <AlertDialogDescription class="text-sm text-neutral-400">
+              Esta acción no se puede deshacer. Esto eliminará permanentemente
+              la etiqueta.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter class="gap-2 sm:gap-0">
+            <AlertDialogCancel
+              class="border-neutral-800 bg-transparent text-neutral-400 hover:bg-neutral-900 hover:text-neutral-200"
+            >
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              class="bg-red-600 text-white hover:bg-red-700"
+              @click="deleteLabel"
+            >
+              Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <Button
         variant="ghost"
@@ -67,10 +96,19 @@
 
 <script lang="ts" setup>
 import { Button } from "@common/components/ui/button";
-import { Separator } from "@common/components/ui/separator";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@common/components/ui/alert-dialog";
 import { Printer, ImageDown, Trash2, Loader2, Pencil } from "lucide-vue-next";
 import usePocketBaseCore from "@common/composables/usePocketBaseCore";
-import { ref } from "vue";
 
 const props = defineProps<{
   id: string;

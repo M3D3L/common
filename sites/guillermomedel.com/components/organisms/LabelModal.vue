@@ -385,6 +385,88 @@
         </template>
       </Card>
 
+      <!-- ─── Live proportional preview ──────────────────────────────────────
+           Per-100g values are the portion-independent base. The Porción / Total
+           columns are derived here by pure proportion (value × grams / 100),
+           using the SAME rounding as transformNutrientsToNOMRows so the preview
+           matches the printed label. No AI / engine call. -->
+      <Card v-if="nutritionPreview.hasAny" class="overflow-hidden">
+        <CardHeader class="px-4 py-2.5">
+          <div class="flex items-center justify-between">
+            <div
+              class="flex items-center gap-2 text-[10px] text-neutral-400 tracking-widest uppercase font-semibold"
+            >
+              <Scale class="w-3 h-3" />
+              Vista Previa Nutrimental
+            </div>
+            <span
+              class="text-[9px] text-neutral-600 normal-case tracking-normal"
+            >
+              se recalcula al cambiar la porción
+            </span>
+          </div>
+        </CardHeader>
+        <Separator />
+        <CardContent class="px-4 pt-3 pb-4">
+          <div
+            class="grid grid-cols-[1.5fr_1fr_1fr_1fr] gap-x-2 gap-y-1.5 items-center"
+          >
+            <span></span>
+            <span
+              class="text-[9px] text-neutral-500 uppercase tracking-wider text-right"
+              >100 g</span
+            >
+            <span
+              class="text-[9px] text-amber-500/80 uppercase tracking-wider text-right"
+            >
+              Porción<template v-if="nutritionPreview.portion">
+                ({{ nutritionPreview.portion }}g)</template
+              >
+            </span>
+            <span
+              class="text-[9px] text-neutral-500 uppercase tracking-wider text-right"
+            >
+              Total<template v-if="nutritionPreview.total">
+                ({{ nutritionPreview.total }}g)</template
+              >
+            </span>
+
+            <template v-for="row in nutritionPreview.rows" :key="row.key">
+              <template v-if="row.has">
+                <span class="text-[11px] text-neutral-300">{{
+                  row.label
+                }}</span>
+                <span
+                  class="text-[11px] text-neutral-400 text-right tabular-nums"
+                >
+                  {{ row.per100Str }} {{ row.unit }}
+                </span>
+                <span
+                  class="text-[11px] text-amber-400 text-right tabular-nums font-medium"
+                >
+                  {{ row.perPortionStr
+                  }}<template v-if="row.perPortionStr !== '—'">
+                    {{ row.unit }}</template
+                  >
+                </span>
+                <span
+                  class="text-[11px] text-neutral-400 text-right tabular-nums"
+                >
+                  {{ row.perTotalStr
+                  }}<template v-if="row.perTotalStr !== '—'">
+                    {{ row.unit }}</template
+                  >
+                </span>
+              </template>
+            </template>
+          </div>
+          <p class="text-[9px] text-neutral-500 leading-relaxed mt-3">
+            Los valores por 100 g son la base y no cambian con la porción; solo
+            las columnas de porción y total se escalan proporcionalmente.
+          </p>
+        </CardContent>
+      </Card>
+
       <Button
         class="w-full text-[10px] tracking-widest uppercase"
         @click="processLabel"
@@ -394,6 +476,14 @@
         <Sparkles v-else class="w-3.5 h-3.5" />
         {{ buttonLabel }}
       </Button>
+
+      <p
+        v-if="isEditMode && !ingredientsChanged"
+        class="text-[9px] text-neutral-500 text-center leading-snug"
+      >
+        Sin cambios en los ingredientes: se reescalan los valores existentes sin
+        volver a consultar la IA.
+      </p>
 
       <div
         v-if="error || saveError"
@@ -456,6 +546,25 @@ const { createItem, updateItem } = usePocketBaseCore();
 const { transformRecord, buildRecordFromResolution } = useNutritionalLabels();
 const { run, loading, error } = useChatGPT();
 
+// ─── Per-100g nutrition keys (single source of truth) ────────────────────────
+// Portion-INDEPENDENT values. Everything per portion / per total is derived
+// from these by proportion inside transformNutrientsToNOMRows.
+const NUTRITION_KEYS = [
+  "energia_kcal_100g",
+  "energia_kj_100g",
+  "proteina_g_100g",
+  "grasas_totales_g_100g",
+  "grasas_saturadas_g_100g",
+  "grasas_trans_g_100g",
+  "carbohidratos_disponibles_g_100g",
+  "azucares_totales_g_100g",
+  "azucares_anadidos_g_100g",
+  "fibra_g_100g",
+  "sodio_mg_100g",
+] as const;
+
+type NutritionKey = (typeof NUTRITION_KEYS)[number];
+
 // ─── Refs ─────────────────────────────────────────────────────────────────────
 const createModal = ref<InstanceType<typeof Modal> | null>(null);
 const recipeName = ref("");
@@ -497,6 +606,123 @@ const buttonLabel = computed(() => {
   return isEditMode.value ? "Guardar Cambios" : "Generar Etiqueta";
 });
 
+// Did the recipe composition actually change?
+// If not, the per-100g base must stay fixed and we can skip the AI entirely:
+// transformRecord rebuilds rows/seals/leyendas deterministically from the
+// stored nutrients + the new portion/total.
+const originalIngredients = computed(() =>
+  String(props.selectedLabel?.ing ?? "").trim(),
+);
+const ingredientsChanged = computed(
+  () =>
+    !isEditMode.value || recipeText.value.trim() !== originalIngredients.value,
+);
+
+// ─── Proportional scaling helpers ────────────────────────────────────────────
+//   amount_for(grams) = value_per_100g × grams / 100
+function scaleFromPer100g(
+  per100g: number | null | undefined,
+  grams: number | null,
+): number | null {
+  if (per100g == null || grams == null || grams <= 0) return null;
+  return (per100g * grams) / 100;
+}
+
+function fmtScaled(
+  per100g: number | null | undefined,
+  grams: number | null,
+  decimals: number,
+): string {
+  const v = scaleFromPer100g(per100g, grams);
+  return v == null ? "—" : v.toFixed(decimals);
+}
+
+// Per-100g values in effect: manual entry > stored (edit) > none.
+const effectivePer100g = computed<Record<NutritionKey, number | null>>(() => {
+  const out = {} as Record<NutritionKey, number | null>;
+  for (const key of NUTRITION_KEYS) {
+    const manualVal = manualNutrition.value[key];
+    const storedVal = isEditMode.value
+      ? (props.selectedLabel?.[key] ?? null)
+      : null;
+    out[key] =
+      manualVal != null
+        ? Number(manualVal)
+        : storedVal != null
+          ? Number(storedVal)
+          : null;
+  }
+  return out;
+});
+
+// Preview rows. Rounding mirrors transformNutrientsToNOMRows:
+//   kcal & sodio → integer, everything else → 1 decimal.
+const PREVIEW_FIELDS: {
+  key: NutritionKey;
+  label: string;
+  unit: string;
+  decimals: number;
+}[] = [
+  { key: "energia_kcal_100g", label: "Energía", unit: "kcal", decimals: 0 },
+  { key: "proteina_g_100g", label: "Proteínas", unit: "g", decimals: 1 },
+  {
+    key: "grasas_totales_g_100g",
+    label: "Grasas totales",
+    unit: "g",
+    decimals: 1,
+  },
+  {
+    key: "grasas_saturadas_g_100g",
+    label: "Grasas saturadas",
+    unit: "g",
+    decimals: 1,
+  },
+  {
+    key: "azucares_totales_g_100g",
+    label: "Azúcares totales",
+    unit: "g",
+    decimals: 1,
+  },
+  {
+    key: "azucares_anadidos_g_100g",
+    label: "Azúcares añadidos",
+    unit: "g",
+    decimals: 1,
+  },
+  {
+    key: "carbohidratos_disponibles_g_100g",
+    label: "Carbohidratos disp.",
+    unit: "g",
+    decimals: 1,
+  },
+  { key: "fibra_g_100g", label: "Fibra", unit: "g", decimals: 1 },
+  { key: "sodio_mg_100g", label: "Sodio", unit: "mg", decimals: 0 },
+];
+
+const nutritionPreview = computed(() => {
+  const per100 = effectivePer100g.value;
+  const portion =
+    portionSize.value && portionSize.value > 0 ? portionSize.value : null;
+  const total = totalSize.value && totalSize.value > 0 ? totalSize.value : null;
+  const hasAny = NUTRITION_KEYS.some((k) => per100[k] != null);
+
+  return {
+    hasAny,
+    portion,
+    total,
+    rows: PREVIEW_FIELDS.map((f) => {
+      const base = per100[f.key];
+      return {
+        ...f,
+        has: base != null,
+        per100Str: base == null ? "—" : base.toFixed(f.decimals),
+        perPortionStr: fmtScaled(base, portion, f.decimals),
+        perTotalStr: fmtScaled(base, total, f.decimals),
+      };
+    }),
+  };
+});
+
 // ─── Type options ─────────────────────────────────────────────────────────────
 const typeOptions = [
   { value: "meal", label: "Comida", icon: Utensils },
@@ -520,7 +746,6 @@ function open() {
   expirationDateError.value = null;
 
   if (isEditMode.value && props.selectedLabel) {
-    // Populate with existing data for editing
     recipeName.value = props.selectedLabel.name || "";
     recipeText.value = props.selectedLabel.ing || "";
     portionSize.value = props.selectedLabel.portion_size ?? null;
@@ -528,9 +753,8 @@ function open() {
     selectedType.value = props.selectedLabel.type || "";
     expirationDate.value = props.selectedLabel.expiration || "";
     expirationPreset.value = props.selectedLabel.expiration ? "custom" : "";
-    showManualNutrition.value = true; // Show manual context to reflect DB inputs
+    showManualNutrition.value = true;
 
-    // Map DB values back to the manual nutrition object fields
     manualNutrition.value = {
       energia_kcal_100g: props.selectedLabel.energia_kcal_100g ?? null,
       energia_kj_100g: props.selectedLabel.energia_kj_100g ?? null,
@@ -549,7 +773,6 @@ function open() {
       sodio_mg_100g: props.selectedLabel.sodio_mg_100g ?? null,
     };
   } else {
-    // Reset fields for creation mode
     recipeName.value = "";
     recipeText.value = "";
     portionSize.value = null;
@@ -640,16 +863,37 @@ function validateExpirationDate(): boolean {
   return true;
 }
 
-// ─── Core Logic Processing ────────────────────────────────────────────────────
-async function processLabel() {
-  if (!recipeText.value.trim() || !recipeName.value.trim()) return;
-  if (!validateExpirationDate()) return;
-  saveError.value = null;
+// ─── Merge per-100g base: manual > stored (edit) > AI/engine ──────────────────
+function mergePer100g(
+  aiOverride: Record<string, number | null> = {},
+): Record<string, number | null> {
+  const merged: Record<string, number | null> = {};
+  for (const key of NUTRITION_KEYS) {
+    const manualVal = manualNutrition.value[key];
+    const storedVal = isEditMode.value
+      ? (props.selectedLabel?.[key] ?? null)
+      : null;
 
-  const hasPortion = portionSize.value != null && Number(portionSize.value) > 0;
-  const hasTotal = totalSize.value != null && Number(totalSize.value) > 0;
-  const hasExpiration = expirationDate.value.trim() !== "";
+    if (manualVal !== null && manualVal !== undefined) {
+      merged[key] = manualVal;
+    } else if (
+      !ingredientsChanged.value &&
+      storedVal !== null &&
+      storedVal !== undefined
+    ) {
+      merged[key] = storedVal;
+    } else {
+      merged[key] = aiOverride[key] ?? null;
+    }
+  }
+  return merged;
+}
 
+// ─── AI path: composition changed (or creating) ──────────────────────────────
+async function resolveAndBuild(
+  hasPortion: boolean,
+  hasTotal: boolean,
+): Promise<any | null> {
   const payload = {
     recipeName: recipeName.value.trim(),
     portionGrams: hasPortion ? portionSize.value : null,
@@ -671,39 +915,68 @@ async function processLabel() {
   } catch (e) {
     console.error("AI resolver parse error:", e);
     saveError.value = "No se pudo interpretar la receta. Revisa la consola.";
-    return;
+    return null;
   }
 
-  const aiOverride = resolution.nutrition_override ?? {};
-  const mergedOverride: Record<string, number | null> = {};
-  const nutritionKeys = [
-    "energia_kcal_100g",
-    "energia_kj_100g",
-    "proteina_g_100g",
-    "grasas_totales_g_100g",
-    "grasas_saturadas_g_100g",
-    "grasas_trans_g_100g",
-    "carbohidratos_disponibles_g_100g",
-    "azucares_totales_g_100g",
-    "azucares_anadidos_g_100g",
-    "fibra_g_100g",
-    "sodio_mg_100g",
-  ] as const;
+  resolution.nutrition_override = mergePer100g(
+    resolution.nutrition_override ?? {},
+  ) as any;
 
-  for (const key of nutritionKeys) {
-    const manualVal = manualNutrition.value[key];
-    mergedOverride[key] =
-      manualVal !== null && manualVal !== undefined
-        ? manualVal
-        : (aiOverride[key] ?? null);
-  }
-  resolution.nutrition_override = mergedOverride as any;
-
-  const rawRecord = buildRecordFromResolution(resolution, {
+  return buildRecordFromResolution(resolution, {
     portionGrams: hasPortion ? Number(portionSize.value) : null,
     totalGrams: hasTotal ? Number(totalSize.value) : null,
     fallbackName: recipeName.value,
   });
+}
+
+// ─── Local path: ingredients unchanged → pure proportional rescale ────────────
+// No AI, no engine. transformRecord rebuilds rows/seals/leyendas from these
+// nutrients + the new portion/total.
+function buildLocalRecord(hasPortion: boolean, hasTotal: boolean): any {
+  const base = mergePer100g();
+
+  // Mirror the engine: derive kJ from kcal if only kcal is known.
+  if (base.energia_kcal_100g != null && base.energia_kj_100g == null) {
+    base.energia_kj_100g = base.energia_kcal_100g * 4.184;
+  }
+
+  return {
+    id: props.selectedLabel?.id ?? null,
+    name: recipeName.value.trim(),
+    sub: props.selectedLabel?.sub ?? "",
+    ing: recipeText.value.trim(),
+    alg: props.selectedLabel?.alg ?? "",
+    pair: props.selectedLabel?.pair ?? "",
+    nameSize: props.selectedLabel?.nameSize ?? "11px",
+    portion_size: hasPortion
+      ? Number(portionSize.value)
+      : (props.selectedLabel?.portion_size ?? null),
+    total_size: hasTotal
+      ? Number(totalSize.value)
+      : (props.selectedLabel?.total_size ?? null),
+    ...base,
+  };
+}
+
+// ─── Core Logic Processing ────────────────────────────────────────────────────
+async function processLabel() {
+  if (!recipeText.value.trim() || !recipeName.value.trim()) return;
+  if (!validateExpirationDate()) return;
+  saveError.value = null;
+
+  const hasPortion = portionSize.value != null && Number(portionSize.value) > 0;
+  const hasTotal = totalSize.value != null && Number(totalSize.value) > 0;
+  const hasExpiration = expirationDate.value.trim() !== "";
+
+  // Only call the AI when the composition genuinely changed (or on create).
+  // Otherwise rescale locally — instant, free, and drift-proof.
+  let rawRecord: any;
+  if (ingredientsChanged.value) {
+    rawRecord = await resolveAndBuild(hasPortion, hasTotal);
+    if (!rawRecord) return; // error already surfaced
+  } else {
+    rawRecord = buildLocalRecord(hasPortion, hasTotal);
+  }
 
   const entry = {
     ...transformRecord(rawRecord),
