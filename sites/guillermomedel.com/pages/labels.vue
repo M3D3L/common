@@ -6,7 +6,7 @@
       <h1 class="font-black text-lg tracking-[0.2em] uppercase mb-0.5 mt-8">
         Breezy Meals
       </h1>
-      {{ selectedLabel || "Ninguna etiqueta seleccionada" }}
+
       <p class="text-neutral-500 text-[8px] tracking-widest uppercase">
         Nutritional Labels
       </p>
