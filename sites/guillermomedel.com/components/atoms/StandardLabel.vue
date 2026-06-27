@@ -16,19 +16,10 @@
               <strong class="font-black">Alérgenos:</strong> {{ label.alg }}
             </p>
           </div>
-          <TooltipProvider v-for="(seal, i) in label.seals" :key="i">
-            <Tooltip>
-              <TooltipTrigger as-child>
-                <MoleculesSeal :seal="seal" />
-              </TooltipTrigger>
-              <TooltipContent
-                side="top"
-                class="text-[9px] font-bold bg-black text-white"
-              >
-                {{ seal.lines.join(" ") }}
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+
+          <div class="relative flex space-x-6">
+            <MoleculesSeal :seals="label.seals" grouped />
+          </div>
         </div>
 
         <div class="w-20 mx-auto mb-1">

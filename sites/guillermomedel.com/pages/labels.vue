@@ -35,7 +35,7 @@
         <OrganismsRoundGrid :labelData="[label]" />
       </div>
     </div>
-    <div v-else class="flex flex-wrap gap-6 container mx-auto">
+    <div v-else class="flex flex-wrap gap-4 container mx-auto">
       <div
         v-for="(label, index) in labelData"
         :key="label.id || index"
