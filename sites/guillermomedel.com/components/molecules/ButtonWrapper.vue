@@ -2,66 +2,64 @@
   <div class="grid content-center relative group">
     <slot />
 
-    <!-- Container is now narrower and has a fixed minimum width to enforce uniformity -->
+    <!-- Polished translucent floating menu panel -->
     <div
-      class="absolute top-1/2 -right-3 -translate-y-1/2 flex flex-col items-center gap-0.5 px-1 py-1 rounded-2xl bg-neutral-900 border border-neutral-700 shadow-lg opacity-0 group-hover:opacity-100 translate-x-1 group-hover:translate-x-0 transition-all duration-200 pointer-events-none group-hover:pointer-events-auto z-10 whitespace-nowrap min-w-[70px]"
+      class="absolute top-1/2 gap-1 -right-4 -translate-y-1/2 flex flex-col items-center p-1 rounded-xl bg-neutral-950/95 backdrop-blur-md border border-neutral-800/60 shadow-xl opacity-0 group-hover:opacity-100 translate-x-1 group-hover:translate-x-0 transition-all duration-200 pointer-events-none group-hover:pointer-events-auto z-10 whitespace-nowrap min-w-[76px]"
     >
-      <!-- w-full and justify-start keeps layout uniform while aligning text/icons cleanly -->
+      <!-- Buttons utilize a balanced internal grid layout for consistent visual alignment -->
       <Button
         variant="ghost"
         size="sm"
-        class="h-5 w-full px-1.5 py-0.5 justify-start rounded-md text-[8px] font-semibold tracking-widest uppercase text-neutral-400 hover:text-red-400 hover:bg-neutral-700"
+        class="h-5.5 w-full px-2 rounded-md text-[8px] font-bold tracking-wider uppercase text-neutral-400 hover:text-red-400 hover:bg-neutral-800/60 transition-colors"
         :disabled="deleting"
         @click.stop="deleteLabel"
       >
-        <Loader2 v-if="deleting" class="w-2 h-2 mr-1 animate-spin" />
-        <Trash2 v-else class="w-2 h-2 mr-1" />
-        {{ deleting ? "…" : "Borrar" }}
+        <span class="grid grid-cols-[auto_1fr] items-center gap-1.5 w-full">
+          <Loader2
+            v-if="deleting"
+            class="w-2 h-2 animate-spin justify-self-center"
+          />
+          <Trash2 v-else class="w-2 h-2 justify-self-center" />
+          <span class="text-left font-sans text-[7.5px]">{{
+            deleting ? "…" : "Borrar"
+          }}</span>
+        </span>
       </Button>
-
-      <Separator
-        orientation="horizontal"
-        class="w-4 bg-neutral-800 opacity-50"
-      />
 
       <Button
         variant="ghost"
         size="sm"
-        class="h-5 w-full px-1.5 py-0.5 justify-start rounded-md text-[8px] font-semibold tracking-widest uppercase text-neutral-400 hover:text-sky-400 hover:bg-neutral-700"
+        class="h-5.5 w-full px-2 rounded-md text-[8px] font-bold tracking-wider uppercase text-neutral-400 hover:text-sky-400 hover:bg-neutral-800/60 transition-colors"
         @click.stop="$emit('edit', props.id)"
       >
-        <Pencil class="w-2 h-2 mr-1" />
-        Editar
+        <span class="grid grid-cols-[auto_1fr] items-center gap-1.5 w-full">
+          <Pencil class="w-2 h-2 justify-self-center" />
+          <span class="text-left font-sans text-[7.5px]">Editar</span>
+        </span>
       </Button>
-
-      <Separator
-        orientation="horizontal"
-        class="w-4 bg-neutral-800 opacity-50"
-      />
 
       <Button
         variant="ghost"
         size="sm"
-        class="h-5 w-full px-1.5 py-0.5 justify-start rounded-md text-[8px] font-semibold tracking-widest uppercase text-neutral-400 hover:text-amber-400 hover:bg-neutral-700"
+        class="h-5.5 w-full px-2 rounded-md text-[8px] font-bold tracking-wider uppercase text-neutral-400 hover:text-amber-400 hover:bg-neutral-800/60 transition-colors"
         @click.stop="$emit('print')"
       >
-        <Printer class="w-2 h-2 mr-1" />
-        Imprimir
+        <span class="grid grid-cols-[auto_1fr] items-center gap-1.5 w-full">
+          <Printer class="w-2 h-2 justify-self-center" />
+          <span class="text-left font-sans text-[7.5px]">Imprimir</span>
+        </span>
       </Button>
-
-      <Separator
-        orientation="horizontal"
-        class="w-4 bg-neutral-800 opacity-50"
-      />
 
       <Button
         variant="ghost"
         size="sm"
-        class="h-5 w-full px-1.5 py-0.5 justify-start rounded-md text-[8px] font-semibold tracking-widest uppercase text-neutral-400 hover:text-emerald-400 hover:bg-neutral-700"
+        class="h-5.5 w-full px-2 rounded-md text-[8px] font-bold tracking-wider uppercase text-neutral-400 hover:text-emerald-400 hover:bg-neutral-800/60 transition-colors"
         @click.stop="$emit('download')"
       >
-        <ImageDown class="w-2 h-2 mr-1" />
-        PNG
+        <span class="grid grid-cols-[auto_1fr] items-center gap-1.5 w-full">
+          <ImageDown class="w-2 h-2 justify-self-center" />
+          <span class="text-left font-sans text-[7.5px]">PNG</span>
+        </span>
       </Button>
     </div>
   </div>

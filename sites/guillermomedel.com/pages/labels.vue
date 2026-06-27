@@ -12,7 +12,7 @@
       </p>
 
       <div class="mt-4 flex justify-center gap-2">
-        <Button variant="outline" size="sm" @click="toggleCreate">
+        <Button variant="outline" size="sm" @click="toggle('create')">
           <UtensilsCrossed class="w-4 h-4 mr-2" />
           Generar nueva etiqueta
         </Button>
@@ -34,7 +34,10 @@
         :key="label.id || index"
         class="mb-4"
       >
-        <OrganismsRoundGrid @edit="toggleEdit" :labelData="[label]" />
+        <OrganismsRoundGrid
+          @edit="toggle('edit', label.id)"
+          :labelData="[label]"
+        />
       </div>
     </div>
     <div v-else class="flex flex-wrap gap-4 container mx-auto">
@@ -43,7 +46,10 @@
         :key="label.id || index"
         class="mb-4"
       >
-        <OrganismsLabelGrid @edit="toggleEdit" :labelData="[label]" />
+        <OrganismsLabelGrid
+          @edit="toggle('edit', label.id)"
+          :labelData="[label]"
+        />
       </div>
     </div>
 
@@ -71,9 +77,7 @@ const { transformRecord } = useNutritionalLabels();
 // ─── State ────────────────────────────────────────────────────────────────────
 const labelData = ref<any[]>([]);
 const labelType = ref<"round" | "standard">("round");
-const createModalRef = ref<InstanceType<typeof OrganismsLabelModal> | null>(
-  null,
-);
+const createModalRef = ref<any>(null);
 const selectedLabel = ref<any | null>(null);
 const type = ref<"create" | "edit">("create");
 
@@ -106,27 +110,20 @@ onMounted(() => {
   fetchLabels();
 });
 
-const toggleEdit = async (id: any) => {
-  selectedLabel.value = labelData.value.find((l) => l.id === id) || null;
-  type.value = "edit";
+const toggle = async (action: "create" | "edit", id: any = null) => {
+  if (id && action === "edit") {
+    selectedLabel.value = labelData.value.find((l) => l.id === id) || null;
+  } else {
+    selectedLabel.value = null;
+  }
+
+  type.value = action;
 
   // Wait for Vue to flush the state change down to the modal component's props
   await nextTick();
 
   if (createModalRef.value) {
     createModalRef.value.open(selectedLabel.value);
-  }
-};
-
-const toggleCreate = async () => {
-  selectedLabel.value = null;
-  type.value = "create";
-
-  // Wait for Vue to flush the state change down to the modal component's props
-  await nextTick();
-
-  if (createModalRef.value) {
-    createModalRef.value.open();
   }
 };
 </script>
