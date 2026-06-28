@@ -186,7 +186,6 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, computed, onMounted, watch, nextTick } from "vue";
 import { Button } from "@common/components/ui/button";
 import { Badge } from "@common/components/ui/badge";
 import { Input } from "@common/components/ui/input";

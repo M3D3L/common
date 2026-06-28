@@ -128,12 +128,10 @@
         @toggle="showManualNutrition = !showManualNutrition"
       />
 
-      <NutritionPreviewTable
-        :manual-nutrition="manualNutrition"
-        :portion-size="portionSize"
-        :total-size="totalSize"
-        :stored-label="selectedLabel"
-        :is-edit-mode="isEditMode"
+      <NutritionalTable
+        :rows="selectedLabel?.rows ?? []"
+        :total-size="totalSize ?? 0"
+        :portion-size="portionSize ?? 0"
       />
 
       <Button
@@ -188,8 +186,8 @@ import {
 } from "lucide-vue-next";
 import ExpirationPicker from "./ExpirationPicker.vue";
 import ManualNutritionForm from "./ManualNutritionForm.vue";
-import NutritionPreviewTable from "./NutritionPreviewTable.vue";
 import { useCreateLabelForm } from "~/composables/useCreateLabelForm";
+import NutritionalTable from "~/components/atoms/NutritionalTable.vue";
 
 const TYPE_OPTIONS = [
   { value: "meal", label: "Comida", icon: Utensils },
