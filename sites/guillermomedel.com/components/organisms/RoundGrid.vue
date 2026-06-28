@@ -22,37 +22,20 @@
 </template>
 
 <script setup lang="ts">
+import { useLabelExport } from "~/composables/useLabelExport";
+
 const props = defineProps<{
   labelData: any[];
 }>();
 
-const router = useRouter();
 const cardRefs = ref<Record<string, HTMLElement>>({});
 const labels = computed(() => props.labelData);
 
 const FONT_EMBED_API_URL =
   "https://fonts.googleapis.com/css2?family=Oswald:wght@700&family=Barlow:wght@400;600;800&display=swap";
 
-// Cache base64 fonts so we only fetch once per session
-const fontEmbedCache = ref<string | null>(null);
-
-function injectFonts(doc: Document) {
-  const link1 = doc.createElement("link");
-  link1.rel = "preconnect";
-  link1.href = "https://fonts.googleapis.com";
-  doc.head.appendChild(link1);
-
-  const link2 = doc.createElement("link");
-  link2.rel = "preconnect";
-  link2.href = "https://fonts.gstatic.com";
-  link2.crossOrigin = "anonymous";
-  doc.head.appendChild(link2);
-
-  const link3 = doc.createElement("link");
-  link3.href = FONT_EMBED_API_URL;
-  link3.rel = "stylesheet";
-  doc.head.appendChild(link3);
-}
+const { injectFonts, ensureFontsLoaded, getFontEmbedCSS } =
+  useLabelExport(FONT_EMBED_API_URL);
 
 function createPrintIframe(html: string): HTMLIFrameElement {
   const iframe = document.createElement("iframe");
@@ -118,63 +101,6 @@ function createPrintIframe(html: string): HTMLIFrameElement {
   return iframe;
 }
 
-// Loads fonts into the parent document so html-to-image can access them
-async function ensureFontsLoaded(): Promise<void> {
-  if (document.fonts.check("700 1em Oswald")) return;
-
-  const style = document.createElement("style");
-  style.textContent = `@import url('${FONT_EMBED_API_URL}');`;
-  document.head.appendChild(style);
-
-  await document.fonts.ready;
-}
-
-// Fetches Google Fonts CSS, downloads each woff2, and returns fully embedded CSS
-async function getFontEmbedCSS(): Promise<string> {
-  if (fontEmbedCache.value) return fontEmbedCache.value;
-
-  // 1. Fetch the Google Fonts CSS to get the real, current woff2 URLs
-  const cssRes = await fetch(FONT_EMBED_API_URL, {
-    headers: {
-      "User-Agent":
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-    },
-  });
-  const cssText = await cssRes.text();
-
-  // 2. Extract all woff2 URLs from the CSS
-  const urlMatches = [
-    ...cssText.matchAll(
-      /url\((https:\/\/fonts\.gstatic\.com\/[^)]+\.woff2)\)/g,
-    ),
-  ];
-  const woff2Urls = urlMatches.map((m) => m[1]);
-
-  if (woff2Urls.length === 0) {
-    console.error("No woff2 URLs found in Google Fonts CSS response");
-    return "";
-  }
-
-  // 3. Fetch and base64-encode each font file
-  const base64Fonts = await Promise.all(
-    woff2Urls.map(async (url) => {
-      const res = await fetch(url);
-      const buf = await res.arrayBuffer();
-      const b64 = btoa(String.fromCharCode(...new Uint8Array(buf)));
-      return { url, b64 };
-    }),
-  );
-
-  // 4. Replace the original URLs in the CSS with base64 data URIs
-  let embeddedCSS = cssText;
-  for (const { url, b64 } of base64Fonts) {
-    embeddedCSS = embeddedCSS.replace(url, `data:font/woff2;base64,${b64}`);
-  }
-
-  fontEmbedCache.value = embeddedCSS;
-  return embeddedCSS;
-}
-
 async function downloadLabelAsPng(label: any) {
   const el = cardRefs.value[label.id];
   if (!el) return;
@@ -182,20 +108,17 @@ async function downloadLabelAsPng(label: any) {
   const node = (el as any).$el ?? el;
   const html = node.outerHTML;
 
-  // Pre-load fonts in the parent document and build embed CSS in parallel
   const [, fontEmbedCSS] = await Promise.all([
     ensureFontsLoaded(),
     getFontEmbedCSS(),
   ]);
 
-  // Use the same iframe as print for identical rendering
   const iframe = createPrintIframe(html);
 
   await new Promise<void>((resolve) => {
     iframe.onload = () => setTimeout(resolve, 1200);
   });
 
-  // Also wait for fonts inside the iframe itself
   await iframe.contentDocument?.fonts.ready;
 
   const { toPng } = await import("html-to-image");
