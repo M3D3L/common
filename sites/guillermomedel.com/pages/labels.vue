@@ -132,13 +132,15 @@
 
       <div
         v-else-if="loading"
-        class="flex flex-wrap justify-center sm:justify-start gap-4 md:gap-5"
+        class="flex flex-wrap justify-center sm:justify-start gap-4 md:gap-5 w-full"
       >
-        <BaseSkeleton
-          v-for="n in 4"
-          :key="n"
-          class="rounded-xl w-[160px] h-[220px]"
-        />
+        <div v-for="i in 4" :key="i" class="flex flex-col gap-3 p-4">
+          <Skeleton
+            :class="
+              labelType === 'round' ? 'w-48 h-48 rounded-full' : 'w-44 h-64'
+            "
+          />
+        </div>
       </div>
 
       <div
@@ -188,7 +190,7 @@ import { ref, computed, onMounted, watch, nextTick } from "vue";
 import { Button } from "@common/components/ui/button";
 import { Badge } from "@common/components/ui/badge";
 import { Input } from "@common/components/ui/input";
-import BaseSkeleton from "@common/components/atoms/BaseSkeleton.vue";
+import { Skeleton } from "@common/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@common/components/ui/tabs";
 import {
   UtensilsCrossed,
