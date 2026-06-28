@@ -8,7 +8,7 @@
         <div class="flex justify-end gap-1 mb-4 mt-1.5 h-7">
           <div class="flex items-center gap-0.5 px-1 mr-auto">
             <AlertTriangle
-              class="w-2.5 h-2.5 text-amber-700 flex-shrink-0 mt-px"
+              class="w-2.5 h-2.5 text-black font-bold flex-shrink-0 mt-px"
             />
             <p
               class="text-[6px] leading-tight text-black font-black m-0 font-bold"

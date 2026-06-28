@@ -6,7 +6,7 @@
     <div
       class="justify-center flex w-[5.5rem] gap-0.5 text-center items-center left-8 absolute top-7"
     >
-      <AlertTriangle class="w-2 h-2 text-amber-700" />
+      <AlertTriangle class="w-2.5 h-2.5 text-black font-bold" />
       <p class="text-[6px] leading-tight text-black font-black">
         <strong class="font-black">Alérgenos:</strong>
         {{ label.alg || "Ninguno" }}

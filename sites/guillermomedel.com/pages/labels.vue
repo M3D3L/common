@@ -33,11 +33,7 @@
             </div>
           </div>
 
-          <Tabs
-            :default-value="labelType"
-            @update:model-value="labelType = $event as any"
-            class="no-print md:hidden"
-          >
+          <Tabs v-model="labelType" class="no-print md:hidden">
             <TabsList>
               <TabsTrigger value="round" class="gap-1.5 px-2.5 h-8">
                 <CircleDot class="w-3.5 h-3.5" />
@@ -75,11 +71,7 @@
             </button>
           </div>
 
-          <Tabs
-            :default-value="labelType"
-            @update:model-value="labelType = $event as any"
-            class="no-print hidden md:block"
-          >
+          <Tabs v-model="labelType" class="no-print hidden md:block">
             <TabsList>
               <TabsTrigger value="round" class="gap-1.5">
                 <CircleDot class="w-3 h-3" />
@@ -192,6 +184,7 @@
 </template>
 
 <script lang="ts" setup>
+import { ref, computed, onMounted, watch, nextTick } from "vue";
 import { Button } from "@common/components/ui/button";
 import { Badge } from "@common/components/ui/badge";
 import { Input } from "@common/components/ui/input";
@@ -252,7 +245,17 @@ const fetchLabels = async () => {
   }
 };
 
+// ─── LocalStorage Persistence ─────────────────────────────────────────────────
+watch(labelType, (newValue) => {
+  localStorage.setItem("breezy_meals_label_type", newValue);
+});
+
 onMounted(() => {
+  const savedLabelType = localStorage.getItem("breezy_meals_label_type");
+  if (savedLabelType === "round" || savedLabelType === "standard") {
+    labelType.value = savedLabelType;
+  }
+
   fetchLabels();
 });
 
