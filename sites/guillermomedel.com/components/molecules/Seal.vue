@@ -7,7 +7,6 @@
       :viewBox="`0 0 ${vbWidth} 52`"
       xmlns="http://www.w3.org/2000/svg"
     >
-      <!-- Grouped: ONE chamfered outline wrapping all octagons + firma -->
       <template v-if="grouped">
         <path
           :d="`M 12,0.5
@@ -32,7 +31,6 @@
         />
       </template>
 
-      <!-- Single small: per-seal border -->
       <template v-else-if="size === 'small'">
         <path
           d="M 12,0.5 L 32,0.5 L 43.5,12 L 43.5,50.5 L 0.5,50.5 L 0.5,12 Z"
@@ -51,7 +49,6 @@
         />
       </template>
 
-      <!-- Octagons -->
       <g
         v-for="(s, si) in renderSeals"
         :key="si"
@@ -83,7 +80,6 @@
         </text>
       </g>
 
-      <!-- Firma — spans the full width -->
       <text
         v-if="grouped || size"
         :x="vbWidth / 2"
@@ -102,10 +98,12 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from "vue";
+
 type Seal = { lines: string[]; ys: number[] };
 
 // Octagon black fill spans x=3..41 (~38 wide). Stride must be >= that
-// to prevent adjacent octagons from overlapping. 37 = touching edge-to-edge.
+// to prevent adjacent octagons from overlapping. 40 leaves a hair of gap.
 const STRIDE = 37;
 
 const props = withDefaults(
@@ -127,22 +125,29 @@ const vbWidth = computed(() =>
   props.grouped ? 44 + STRIDE * (list.value.length - 1) : 44,
 );
 
+// Self-sizes in grouped mode bumped from 0.62 to 0.75, and single mode bumped from 36 to 44
 const renderWidth = computed(
-  () => props.width ?? (props.grouped ? vbWidth.value * 0.62 : 36),
+  // (52 * 0.75 = 39px height equivalent for comparison)
+  () => props.width ?? (props.grouped ? vbWidth.value * 0.75 : 44),
 );
 const renderHeight = computed(
-  () => props.height ?? (props.grouped ? 52 * 0.62 : 36),
+  () => props.height ?? (props.grouped ? 52 * 0.75 : 44),
 );
 
 const renderSeals = computed<Seal[]>(() => {
-  if (props.size === "small" && !props.grouped) {
-    const s = props.seal!;
+  if (props.grouped) {
+    return list.value.map((s) => ({
+      lines: s.lines.map((l) => l.toUpperCase()),
+      ys: s.ys.map((y) => y + 2),
+    }));
+  }
+  const s = props.seal!;
+  if (props.size === "small") {
     return [{ lines: [String(s?.lines?.[0]), "SELLOS"], ys: [18, 27] }];
   }
-  return list.value.map((s) => ({
-    lines: s.lines.map((l) => l.toUpperCase()),
-    ys: s.ys.map((y) => y + 2),
-  }));
+  return [
+    { lines: s.lines.map((l) => l.toUpperCase()), ys: s.ys.map((y) => y + 2) },
+  ];
 });
 
 function mainFontSize(line: string): number {

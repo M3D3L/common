@@ -75,91 +75,11 @@
         <strong class="font-black">Ingredientes:</strong> {{ label.ing }}
       </p>
 
-      <Table
-        class="nom-table w-full text-[6.5px]"
-        style="border: 1.5px solid #000; border-collapse: collapse"
-      >
-        <TableRow class="border-0">
-          <TableHead
-            colspan="4"
-            class="px-1 py-0.5 text-white h-auto leading-tight bg-black"
-            style="border-bottom: 1.5px solid #000"
-          >
-            <div class="flex justify-between w-full font-black text-[5.8px]">
-              <span
-                >Cont. neto: <strong>{{ label.total_size }} g</strong></span
-              >
-              <span
-                >Porciones por envase:
-                <strong>{{
-                  label.total_size && label.portion_size
-                    ? Math.round(label.total_size / label.portion_size)
-                    : 1
-                }}</strong>
-                <strong class="ml-1">({{ label.portion_size }} g)</strong>
-              </span>
-            </div>
-          </TableHead>
-        </TableRow>
-        <TableRow style="background: #fff; border-bottom: 1.5px solid #000">
-          <TableCell class="px-1 py-0.5 font-black text-left text-black"
-            >Declaración Nutrimental</TableCell
-          >
-          <TableCell class="px-1 py-0.5 font-black text-right w-14 text-black"
-            >Por 100 g</TableCell
-          >
-          <TableCell class="px-1 py-0.5 font-black text-right w-14 text-black"
-            >Por porción</TableCell
-          >
-          <TableCell class="px-1 py-0.5 font-black text-right w-10 text-black"
-            >% VNR*</TableCell
-          >
-        </TableRow>
-        <TableBody>
-          <TableRow
-            v-for="row in label.rows"
-            :key="row.label"
-            class="border-0"
-            :style="{
-              borderBottom: row.last
-                ? '1.5px solid #000'
-                : row.sub
-                  ? '0.5px solid #000'
-                  : '1.25px solid #000',
-            }"
-          >
-            <TableCell
-              class="px-1 m-0 leading-tight text-black"
-              :class="
-                row.sub ? 'text-[6px] font-bold' : 'text-[6.5px] font-black'
-              "
-              :style="{
-                paddingLeft:
-                  row.indent === 2 ? '10px' : row.indent === 1 ? '6px' : '2px',
-              }"
-            >
-              <strong v-if="!row.sub">{{ row.label }}</strong>
-              <span v-else>{{ row.label }}</span>
-            </TableCell>
-
-            <TableCell
-              class="text-right font-bold px-1 leading-tight text-black"
-            >
-              {{ row.val100g }}
-            </TableCell>
-            <TableCell
-              class="text-right font-black px-1 leading-tight text-black"
-            >
-              {{ row.valPortion }}
-            </TableCell>
-            <TableCell
-              class="text-right font-bold px-1 leading-tight text-black"
-            >
-              {{ row.vdr }}
-            </TableCell>
-          </TableRow>
-        </TableBody>
-      </Table>
+      <NutritionalTable
+        :rows="label.rows"
+        :total-size="label.total_size"
+        :portion-size="label.portion_size"
+      />
 
       <p
         class="text-[6px] text-black font-bold italic px-1 mt-0.5 leading-tight"
@@ -202,26 +122,14 @@ import {
   CardContent,
   CardFooter,
 } from "@common/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableRow,
-  TableHead,
-  TableCell,
-} from "@common/components/ui/table";
 import { Separator } from "@common/components/ui/separator";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@common/components/ui/tooltip";
 import { AlertTriangle } from "lucide-vue-next";
 import {
   generateLot,
   generateExpiration,
 } from "~/composables/useNutritionalLabels";
 import { internalEan13 } from "~/composables/useBarcode";
+import NutritionalTable from "~/components/atoms/NutritionalTable.vue";
 
 const props = defineProps<{
   label: any;
@@ -229,15 +137,12 @@ const props = defineProps<{
 </script>
 
 <style scoped>
-/* IMPORTANT: Add font imports here */
 @import url("https://fonts.googleapis.com/css2?family=Oswald:wght@700&family=Barlow:wght@400;600&display=swap");
 
-/* Force font-family on the entire card */
 .label-card {
   font-family: "Barlow", Arial, sans-serif !important;
 }
 
-/* Force Oswald font on all elements with font-black class */
 .label-card .font-black,
 .label-card .font-black *,
 .label-card strong,
@@ -247,12 +152,10 @@ const props = defineProps<{
   font-weight: 700 !important;
 }
 
-/* Ensure all text elements use the correct fonts */
 .label-card * {
   font-family: inherit;
 }
 
-/* Specific fixes for table headers and cells */
 .label-card th,
 .label-card td {
   font-family: "Barlow", Arial, sans-serif !important;

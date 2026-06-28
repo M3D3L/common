@@ -30,7 +30,12 @@ const router = useRouter();
 const cardRefs = ref<Record<string, HTMLElement>>({});
 const labels = computed(() => props.labelData);
 
-// Helper function to inject fonts into any document
+const FONT_EMBED_API_URL =
+  "https://fonts.googleapis.com/css2?family=Oswald:wght@700&family=Barlow:wght@400;600&display=swap";
+
+// Cache base64 fonts so we only fetch once per session
+const fontEmbedCache = ref<string | null>(null);
+
 function injectFonts(doc: Document) {
   const link1 = doc.createElement("link");
   link1.rel = "preconnect";
@@ -44,8 +49,7 @@ function injectFonts(doc: Document) {
   doc.head.appendChild(link2);
 
   const link3 = doc.createElement("link");
-  link3.href =
-    "https://fonts.googleapis.com/css2?family=Oswald:wght@700&family=Barlow:wght@400;600&display=swap";
+  link3.href = FONT_EMBED_API_URL;
   link3.rel = "stylesheet";
   doc.head.appendChild(link3);
 }
@@ -80,10 +84,66 @@ function createPrintIframe(html: string): HTMLIFrameElement {
     </html>
   `);
 
-  // Inject fonts into the iframe
   injectFonts(doc);
   doc.close();
   return iframe;
+}
+
+// Loads fonts into the parent document so html-to-image can access them
+async function ensureFontsLoaded(): Promise<void> {
+  if (document.fonts.check("700 1em Oswald")) return;
+
+  const style = document.createElement("style");
+  style.textContent = `@import url('${FONT_EMBED_API_URL}');`;
+  document.head.appendChild(style);
+
+  await document.fonts.ready;
+}
+
+// Fetches Google Fonts CSS, downloads each woff2, and returns fully embedded CSS
+async function getFontEmbedCSS(): Promise<string> {
+  if (fontEmbedCache.value) return fontEmbedCache.value;
+
+  // 1. Fetch the Google Fonts CSS to get the real, current woff2 URLs
+  const cssRes = await fetch(FONT_EMBED_API_URL, {
+    headers: {
+      "User-Agent":
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    },
+  });
+  const cssText = await cssRes.text();
+
+  // 2. Extract all woff2 URLs from the CSS
+  const urlMatches = [
+    ...cssText.matchAll(
+      /url\((https:\/\/fonts\.gstatic\.com\/[^)]+\.woff2)\)/g,
+    ),
+  ];
+  const woff2Urls = urlMatches.map((m) => m[1]);
+
+  if (woff2Urls.length === 0) {
+    console.error("No woff2 URLs found in Google Fonts CSS response");
+    return "";
+  }
+
+  // 3. Fetch and base64-encode each font file
+  const base64Fonts = await Promise.all(
+    woff2Urls.map(async (url) => {
+      const res = await fetch(url);
+      const buf = await res.arrayBuffer();
+      const b64 = btoa(String.fromCharCode(...new Uint8Array(buf)));
+      return { url, b64 };
+    }),
+  );
+
+  // 4. Replace the original URLs in the CSS with base64 data URIs
+  let embeddedCSS = cssText;
+  for (const { url, b64 } of base64Fonts) {
+    embeddedCSS = embeddedCSS.replace(url, `data:font/woff2;base64,${b64}`);
+  }
+
+  fontEmbedCache.value = embeddedCSS;
+  return embeddedCSS;
 }
 
 async function downloadLabelAsPng(label: any) {
@@ -91,119 +151,42 @@ async function downloadLabelAsPng(label: any) {
   if (!el) return;
 
   const node = (el as any).$el ?? el;
+  const html = node.outerHTML;
 
-  // Create a container with proper font loading
-  const pngContainer = document.createElement("div");
-  pngContainer.style.cssText = `
-    position: fixed;
-    top: -9999px;
-    left: -9999px;
-    width: 227px;
-    height: 350px;
-    padding: 0;
-    margin: 0;
-    overflow: hidden;
-    z-index: -9999;
-    background: white;
-  `;
+  // Pre-load fonts in the parent document and build embed CSS in parallel
+  const [, fontEmbedCSS] = await Promise.all([
+    ensureFontsLoaded(),
+    getFontEmbedCSS(),
+  ]);
 
-  // Clone the node
-  const clonedCard = node.cloneNode(true) as HTMLElement;
+  // Use the same iframe as print for identical rendering
+  const iframe = createPrintIframe(html);
 
-  // Apply PNG-specific root overrides
-  clonedCard.style.width = "227px";
-  clonedCard.style.height = "350px";
-  clonedCard.style.border = "2px solid #000";
-  clonedCard.style.boxShadow = "none";
-  clonedCard.style.margin = "0";
-  clonedCard.style.padding = "0";
-  clonedCard.style.boxSizing = "border-box";
-  clonedCard.style.background = "#ffffff";
-
-  // INJECT EXPLICIT COMPACT STYLE PATRICES FOR TABLE CELLS AND SCROLLBAR ANNIHILATION
-  const pngStyleOverride = document.createElement("style");
-  pngStyleOverride.textContent = `
-    /* Nuke browser scrollbar displays entirely */
-    * { scrollbar-width: none !important; -ms-overflow-style: none !important; }
-    *::-webkit-scrollbar { display: none !important; width: 0 !important; height: 0 !important; }
-    
-    /* Strict font-family map fallback for isolated clone environment */
-    .print-label, .label-card, * { font-family: 'Barlow', Arial, sans-serif !important; }
-    .font-black, strong { font-family: 'Oswald', Impact, sans-serif !important; font-weight: 700 !important; }
-
-    /* Enforce downscaled rendering matrix on nutritional table values */
-    .nom-table { width: 100% !important; table-layout: fixed !important; border-collapse: collapse !important; margin: 0 !important; }
-    .nom-table th, .nom-table td { 
-      padding-top: 0.25px !important; 
-      padding-bottom: 0.25px !important; 
-      line-height: 1.1 !important;
-      font-size: 5.2px !important; 
-    }
-    .nom-table th span, .nom-table th div { font-size: 4.8px !important; }
-    .nom-table td.text-\\[6\\.5px\\] { font-size: 5.2px !important; }
-    .nom-table td.text-\\[6px\\] { font-size: 4.8px !important; }
-
-    /* CRITICAL FIX FOR LEYENDAS CUTOFF: Let black headers spill box shadows cleanly */
-    .bg-black { overflow: visible !important; }
-  `;
-  pngContainer.appendChild(pngStyleOverride);
-
-  // Clean elements and cascade targeted structural overflows
-  const allElements = clonedCard.querySelectorAll("*");
-  allElements.forEach((el) => {
-    const element = el as HTMLElement;
-
-    // Check if the node is an ancestor/part of the top header or leyendas layout
-    if (element.closest("thead") || element.closest(".nom-table")) {
-      element.style.overflow = "hidden";
-    } else {
-      // Allow general structural elements like seals, headers, and barcodes to render fully
-      element.style.overflow = "visible";
-    }
-
-    if (element.classList.contains("font-black")) {
-      element.style.fontFamily = "'Oswald', sans-serif";
-    }
+  await new Promise<void>((resolve) => {
+    iframe.onload = () => setTimeout(resolve, 1200);
   });
 
-  const tables = clonedCard.querySelectorAll(".nom-table, table");
-  tables.forEach((table) => {
-    const t = table as HTMLElement;
-    t.style.width = "100%";
-    t.style.tableLayout = "fixed";
-    t.style.borderCollapse = "collapse";
-    t.style.overflow = "hidden";
-  });
+  // Also wait for fonts inside the iframe itself
+  await iframe.contentDocument?.fonts.ready;
 
-  // Inject font link directly into clone scope
-  const fontLink = document.createElement("link");
-  fontLink.href =
-    "https://fonts.googleapis.com/css2?family=Oswald:wght@700&family=Barlow:wght@400;600&display=swap";
-  fontLink.rel = "stylesheet";
-  clonedCard.prepend(fontLink);
+  const { toPng } = await import("html-to-image");
+  const targetEl = iframe.contentDocument!.querySelector(
+    ".label-card",
+  ) as HTMLElement;
 
-  pngContainer.appendChild(clonedCard);
-  document.body.appendChild(pngContainer);
+  if (!targetEl) {
+    console.error("Could not find .label-card inside iframe");
+    document.body.removeChild(iframe);
+    return;
+  }
 
   try {
-    const { toPng } = await import("html-to-image");
-
-    // Wait explicitly for layouts and styling vectors to settle
-    await document.fonts.ready;
-    await new Promise((resolve) => setTimeout(resolve, 250));
-
-    const dataUrl = await toPng(clonedCard, {
-      pixelRatio: 4,
-      cacheBust: true,
-      width: 227,
-      height: 350,
+    const dataUrl = await toPng(targetEl, {
+      pixelRatio: 3,
+      width: targetEl.offsetWidth,
+      height: targetEl.offsetHeight,
       backgroundColor: "#ffffff",
-      skipFonts: false,
-      style: {
-        transform: "scale(1)",
-        width: "227px",
-        height: "350px",
-      },
+      fontEmbedCSS,
     });
 
     const a = document.createElement("a");
@@ -213,7 +196,7 @@ async function downloadLabelAsPng(label: any) {
   } catch (err) {
     console.error("Failed to generate PNG:", err);
   } finally {
-    document.body.removeChild(pngContainer);
+    document.body.removeChild(iframe);
   }
 }
 
@@ -224,17 +207,13 @@ function printLabel(label: any) {
   const node = (el as any).$el ?? el;
   let html = node.outerHTML;
 
-  // Add font link to the HTML
   const fontHtml = `
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@700&family=Barlow:wght@400;600&display=swap" rel="stylesheet">
+    <link href="${FONT_EMBED_API_URL}" rel="stylesheet">
   `;
 
-  // Insert font link before the closing head tag
   html = html.replace("</head>", fontHtml + "</head>");
-
-  // Ensure print-specific classes and attributes
   html = html.replace(/class="/g, 'class="print-label ');
 
   const iframe = createPrintIframe(html);
@@ -248,7 +227,6 @@ function printLabel(label: any) {
   };
 }
 
-// define emit
 const emit = defineEmits<{
   (e: "edit", id: any): void;
 }>();
@@ -257,7 +235,6 @@ const emit = defineEmits<{
 <style scoped>
 @import url("https://fonts.googleapis.com/css2?family=Oswald:wght@700&family=Barlow:wght@400;600&display=swap");
 
-/* Display styles */
 .label-card {
   font-family: "Barlow", Arial, sans-serif;
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
@@ -287,7 +264,6 @@ const emit = defineEmits<{
   overflow: visible;
 }
 
-/* Print-specific styles */
 @media print {
   .label-card {
     width: 65mm !important;
