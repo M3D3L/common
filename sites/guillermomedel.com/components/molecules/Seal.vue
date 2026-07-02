@@ -2,9 +2,9 @@
   <div class="flex flex-col items-center" style="display: inline-flex">
     <svg
       class="flex-shrink-0 cursor-default"
-      :width="renderWidth"
-      :height="renderHeight"
-      :viewBox="`0 0 ${vbWidth} 52`"
+      :width="size === 'small' ? renderWidth * 1.1 : renderWidth"
+      :height="size === 'small' ? renderHeight * 1.1 : renderHeight"
+      :viewBox="size === 'small' ? '0 0 44 52' : `0 0 ${vbWidth} 52`"
       xmlns="http://www.w3.org/2000/svg"
     >
       <template v-if="grouped">
@@ -82,9 +82,9 @@
 
       <text
         v-if="grouped || size"
-        :x="vbWidth / 2"
+        :x="size === 'small' ? 22 : vbWidth / 2"
         y="48"
-        :font-size="grouped ? 3.5 : 3"
+        :font-size="size === 'small' ? 3.2 : 5"
         text-anchor="middle"
         fill="#000"
         :font-weight="grouped ? 700 : 800"
@@ -98,8 +98,6 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
-
 type Seal = { lines: string[]; ys: number[] };
 
 // Octagon black fill spans x=3..41 (~38 wide). Stride must be >= that
@@ -125,14 +123,19 @@ const vbWidth = computed(() =>
   props.grouped ? 44 + STRIDE * (list.value.length - 1) : 44,
 );
 
-// Self-sizes in grouped mode bumped from 0.62 to 0.75, and single mode bumped from 36 to 44
-const renderWidth = computed(
-  // (52 * 0.75 = 39px height equivalent for comparison)
-  () => props.width ?? (props.grouped ? vbWidth.value * 0.75 : 44),
-);
-const renderHeight = computed(
-  () => props.height ?? (props.grouped ? 52 * 0.75 : 44),
-);
+const renderWidth = computed(() => {
+  if (props.width) return props.width;
+  if (props.grouped) return vbWidth.value * 1.1;
+  if (props.size === "small") return 87;
+  return 87;
+});
+
+const renderHeight = computed(() => {
+  if (props.height) return props.height;
+  if (props.grouped) return 52 * 1.1;
+  if (props.size === "small") return 87;
+  return 87;
+});
 
 const renderSeals = computed<Seal[]>(() => {
   if (props.grouped) {
