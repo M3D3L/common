@@ -1,138 +1,153 @@
 <template>
-  <Card
-    class="label-card bg-white text-black flex flex-col overflow-hidden rounded-sm p-0"
-    style="width: 230px; height: 350px; border: 2px solid #000"
-  >
-    <CardHeader class="p-0 flex-shrink-0 border-b-2 border-black space-y-0">
-      <div class="px-1.5 pb-1">
-        <div class="flex justify-end gap-1 mb-4 mt-1.5 h-7">
-          <div class="flex items-center gap-0.5 px-1 mr-auto">
-            <AlertTriangle
-              class="w-2.5 h-2.5 text-black font-bold flex-shrink-0 mt-px"
-            />
-            <p
-              class="text-[6px] leading-tight text-black font-black m-0 font-bold"
-            >
-              <strong class="font-black">Alérgenos:</strong> {{ label.alg }}
-            </p>
-          </div>
-
-          <div class="relative flex space-x-6">
-            <MoleculesSeal :seals="label.seals" grouped />
-          </div>
-        </div>
-
-        <div class="w-20 mx-auto mb-1">
-          <MoleculesSvg src="/icons/tetakawi.svg" />
-        </div>
-
-        <div
-          class="text-center uppercase font-black text-[13px] tracking-[0.15em] leading-none mb-0.5 text-black"
-        >
-          BREEZY {{ label?.type + "s" }}
-        </div>
-
-        <div class="flex items-center gap-1 justify-center">
-          <Separator class="flex-1 max-w-[12px] bg-black" />
-          <span
-            class="font-black tracking-[0.1em] leading-tight text-center text-black"
-            :style="{ fontSize: label.nameSize }"
-            >{{ label.name }}</span
-          >
-          <Separator class="flex-1 max-w-[12px] bg-black" />
-        </div>
-
-        <p
-          class="text-center text-[6px] text-black mt-0.5 font-bold italic leading-tight mx-0"
-        >
-          {{ label.sub }}
-        </p>
-
-        <div
-          v-if="label.leyendas && label.leyendas.length > 0"
-          class="flex flex-col gap-1 px-1 mt-0.5"
-        >
-          <div
-            v-for="(leyenda, i) in label.leyendas"
-            :key="i"
-            class="leyenda-item bg-black border border-white text-white px-1 py-0.5 text-center uppercase tracking-wide font-black"
-            style="box-shadow: 0 0 0 1px black"
-          >
-            <p class="text-[5px] leading-none m-0">
-              {{ leyenda.text }}
-            </p>
-          </div>
-        </div>
-      </div>
-    </CardHeader>
-
-    <CardContent
-      class="flex-1 flex flex-col gap-0.5 px-1.5 py-1 overflow-hidden p-0 bg-white"
+  <div class="label-grid flex flex-wrap gap-3 justify-center">
+    <MoleculesButtonWrapper
+      v-for="label in labels"
+      :key="label?.id"
+      :id="label?.id"
+      :labels="labels"
+      @edit="$emit('edit', $event)"
+      @print="printLabel(label)"
+      @download="downloadLabelAsPng(label)"
     >
-      <p
-        class="text-[6px] leading-[1.3] text-black mt-0.5 mx-0 px-1 font-semibold"
-      >
-        <strong class="font-black">Ingredientes:</strong> {{ label.ing }}
-      </p>
-
-      <NutritionalTable
-        :rows="label.rows"
-        :total-size="label.total_size"
-        :portion-size="label.portion_size"
-      />
-
-      <p
-        class="text-[6px] text-black font-bold italic px-1 mt-0.5 leading-tight"
-      >
-        *% del Valor Diario de Referencia con base en una dieta de 2,000 kcal.
-        Sus necesidades diarias pueden ser mayores o menores.
-      </p>
-    </CardContent>
-
-    <CardFooter class="flex-shrink-0">
-      <div
-        class="w-full px-1 flex relative flex-col items-center gap-1 leading-none"
-      >
+      <template #default="{ label: activeLabel, zoomed }">
         <div
-          class="flex justify-between w-full absolute -bottom-0.5 text-black text-[5.5px] font-black leading-none"
+          :ref="
+            !zoomed
+              ? (el) => {
+                  if (el) cardRefs[activeLabel.id] = el as HTMLElement;
+                }
+              : undefined
+          "
         >
-          <span>Lote: {{ generateLot(label) }}</span>
-          <span
-            >Caducidad:
-            {{ label?.expiration || generateExpiration(label) }}</span
-          >
+          <AtomsStandardLabel :label="activeLabel" />
         </div>
-
-        <div class="bg-white rounded-sm px-1.5 py-0.5">
-          <MoleculesBarcode
-            :value="internalEan13(label.sku ?? label.id)"
-            :height="18"
-            :width="1.1"
-          />
-        </div>
-      </div>
-    </CardFooter>
-  </Card>
+      </template>
+    </MoleculesButtonWrapper>
+  </div>
 </template>
 
 <script setup lang="ts">
-import {
-  Card,
-  CardHeader,
-  CardContent,
-  CardFooter,
-} from "@common/components/ui/card";
-import { Separator } from "@common/components/ui/separator";
-import { AlertTriangle } from "lucide-vue-next";
-import {
-  generateLot,
-  generateExpiration,
-} from "~/composables/useNutritionalLabels";
-import { internalEan13 } from "~/composables/useBarcode";
-import NutritionalTable from "~/components/atoms/NutritionalTable.vue";
+import { useLabelExport } from "~/composables/useLabelExport";
 
 const props = defineProps<{
-  label: any;
+  labelData: any[];
+}>();
+
+const cardRefs = ref<Record<string, HTMLElement>>({});
+const labels = computed(() => props.labelData);
+
+const FONT_EMBED_API_URL =
+  "https://fonts.googleapis.com/css2?family=Oswald:wght@700&family=Barlow:wght@400;600&display=swap";
+
+const { injectFonts, ensureFontsLoaded, getFontEmbedCSS } =
+  useLabelExport(FONT_EMBED_API_URL);
+
+function createPrintIframe(html: string): HTMLIFrameElement {
+  const iframe = document.createElement("iframe");
+  iframe.style.cssText =
+    "position:fixed;width:65mm;height:99mm;border:0;opacity:0;top:0;left:0;pointer-events:none;z-index:-9999;";
+  document.body.appendChild(iframe);
+
+  const doc = iframe.contentDocument!;
+  doc.open();
+  doc.write(`
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <meta charset="utf-8" />
+        <script src="https://cdn.tailwindcss.com"><\/script>
+        <style>
+          html, body { margin: 0 !important; padding: 0 !important; width: 65mm !important; height: 99mm !important; background: transparent; overflow: hidden !important; }
+          @page { margin: 0; size: 65mm 99mm; }
+          .label-card { font-family: 'Barlow', Arial, sans-serif !important; width: 65mm !important; height: 99mm !important; box-shadow: none !important; border: none !important; box-sizing: border-box !important; }
+          .label-card .font-black { font-family: 'Oswald', sans-serif !important; font-weight: 700 !important; }
+          td, th { border: none !important; height: auto !important; padding-top: 0.5px !important; padding-bottom: 0.5px !important; line-height: 1.15 !important; vertical-align: middle; }
+          tr { border: none; }
+          * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; overflow: visible !important; }
+          .label-card .seal-container { display: flex !important; }
+          .label-card .leyenda-item { box-shadow: 0 0 0 1px black !important; }
+        </style>
+      </head>
+      <body><div class="label-grid">${html}</div></body>
+    </html>
+  `);
+
+  injectFonts(doc);
+  doc.close();
+  return iframe;
+}
+
+async function downloadLabelAsPng(label: any) {
+  const el = cardRefs.value[label.id];
+  if (!el) return;
+
+  const node = (el as any).$el ?? el;
+  const html = node.outerHTML;
+
+  const [, fontEmbedCSS] = await Promise.all([
+    ensureFontsLoaded(),
+    getFontEmbedCSS(),
+  ]);
+
+  const iframe = createPrintIframe(html);
+
+  await new Promise<void>((resolve) => {
+    iframe.onload = () => setTimeout(resolve, 1200);
+  });
+
+  await iframe.contentDocument?.fonts.ready;
+
+  const { toPng } = await import("html-to-image");
+  const targetEl = iframe.contentDocument!.querySelector(
+    ".label-card",
+  ) as HTMLElement;
+
+  if (!targetEl) {
+    console.error("Could not find .label-card inside iframe");
+    document.body.removeChild(iframe);
+    return;
+  }
+
+  try {
+    const dataUrl = await toPng(targetEl, {
+      pixelRatio: 3,
+      width: targetEl.offsetWidth,
+      height: targetEl.offsetHeight,
+      backgroundColor: "#ffffff",
+      fontEmbedCSS,
+    });
+
+    const a = document.createElement("a");
+    a.href = dataUrl;
+    a.download = `${label.name ?? label.id}-label.png`;
+    a.click();
+  } catch (err) {
+    console.error("Failed to generate PNG:", err);
+  } finally {
+    document.body.removeChild(iframe);
+  }
+}
+
+function printLabel(label: any) {
+  const el = cardRefs.value[label.id];
+  if (!el) return;
+
+  const node = (el as any).$el ?? el;
+  const html = node.outerHTML;
+
+  const iframe = createPrintIframe(html);
+
+  iframe.onload = () => {
+    setTimeout(() => {
+      iframe.contentWindow!.focus();
+      iframe.contentWindow!.print();
+      setTimeout(() => document.body.removeChild(iframe), 1000);
+    }, 1000);
+  };
+}
+
+const emit = defineEmits<{
+  (e: "edit", id: any): void;
 }>();
 </script>
 
@@ -140,33 +155,13 @@ const props = defineProps<{
 @import url("https://fonts.googleapis.com/css2?family=Oswald:wght@700&family=Barlow:wght@400;600&display=swap");
 
 .label-card {
-  font-family: "Barlow", Arial, sans-serif !important;
+  font-family: "Barlow", Arial, sans-serif;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
 }
 
-.label-card .font-black,
-.label-card .font-black *,
-.label-card strong,
-.label-card strong *,
-.label-card [class*="font-black"] {
-  font-family: "Oswald", sans-serif !important;
-  font-weight: 700 !important;
-}
-
-.label-card * {
-  font-family: inherit;
-}
-
-.label-card th,
-.label-card td {
-  font-family: "Barlow", Arial, sans-serif !important;
-}
-
-.label-card th.font-black,
-.label-card td.font-black,
-.label-card th .font-black,
-.label-card td .font-black {
-  font-family: "Oswald", sans-serif !important;
-  font-weight: 700 !important;
+.label-card .font-black {
+  font-family: "Oswald", Impact, sans-serif;
+  font-weight: 700;
 }
 
 .label-card :deep(td),
@@ -186,5 +181,14 @@ const props = defineProps<{
 .label-card :deep(.nom-table) {
   line-height: 1.15;
   overflow: visible;
+}
+
+@media print {
+  .label-card {
+    width: 65mm !important;
+    height: 99mm !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
 }
 </style>
