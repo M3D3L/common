@@ -2,9 +2,9 @@
   <div class="flex flex-col items-center" style="display: inline-flex">
     <svg
       class="flex-shrink-0 cursor-default"
-      :width="size === 'small' ? renderWidth * 1.1 : renderWidth"
-      :height="size === 'small' ? renderHeight * 1.1 : renderHeight"
-      :viewBox="size === 'small' ? '0 0 44 52' : `0 0 ${vbWidth} 52`"
+      :width="renderWidth"
+      :height="renderHeight"
+      :viewBox="`0 0 ${vbWidth} 52`"
       xmlns="http://www.w3.org/2000/svg"
     >
       <template v-if="grouped">
@@ -69,14 +69,14 @@
           :key="li"
           x="22"
           :y="s.ys[li]"
-          :font-size="fontSize ?? mainFontSize(line)"
+          :font-size="fontSize ?? mainFontSize(line, s.lines.length)"
           text-anchor="middle"
           fill="white"
           font-weight="900"
           font-family="Oswald, Arial Black, sans-serif"
-          letter-spacing="0.2"
-          :textLength="needsClamp(line) ? 30 : undefined"
-          :lengthAdjust="needsClamp(line) ? 'spacingAndGlyphs' : undefined"
+          letter-spacing="0.1"
+          :textLength="line.length > 7 ? '28' : undefined"
+          lengthAdjust="spacingAndGlyphs"
         >
           {{ line.toUpperCase() }}
         </text>
@@ -84,9 +84,9 @@
 
       <text
         v-if="grouped || size"
-        :x="size === 'small' ? 22 : vbWidth / 2"
+        :x="vbWidth / 2"
         y="48"
-        :font-size="size === 'small' ? 3 : 5"
+        :font-size="grouped ? 3.5 : 3"
         text-anchor="middle"
         fill="#000"
         :font-weight="grouped ? 700 : 800"
@@ -100,9 +100,12 @@
 </template>
 
 <script setup lang="ts">
-type Seal = { lines: string[]; ys?: number[] };
+import { computed } from "vue";
+
+type Seal = { lines: string[]; ys: number[] };
 
 const STRIDE = 37;
+const GROUPED_SCALE = 0.85;
 
 const props = withDefaults(
   defineProps<{
@@ -123,66 +126,69 @@ const vbWidth = computed(() =>
   props.grouped ? 44 + STRIDE * (list.value.length - 1) : 44,
 );
 
-const renderWidth = computed(() => {
-  if (props.width) return props.width;
-  if (props.grouped) return vbWidth.value * 1.1;
-  if (props.size === "small") return 87;
-  return 87;
-});
+const renderWidth = computed(
+  () => props.width ?? (props.grouped ? vbWidth.value * GROUPED_SCALE : 56),
+);
+const renderHeight = computed(
+  () => props.height ?? (props.grouped ? 52 * GROUPED_SCALE : 56),
+);
 
-const renderHeight = computed(() => {
-  if (props.height) return props.height;
-  if (props.grouped) return 52 * 1.1;
-  if (props.size === "small") return 87;
-  return 87;
-});
+/**
+ * Reverted completely to your original spacing logic parameters
+ */
+function calculateCompactYs(lines: string[]): number[] {
+  const count = lines.length;
+  if (count <= 1) return [24];
 
-/** Reduced font sizes to prevent overflow on longer text */
-function mainFontSize(line: string): number {
-  if (props.fontSize) return Number(props.fontSize);
-  const len = line.length;
-  if (len > 12) return 3.5;
-  if (len > 10) return 4;
-  if (len > 7) return 5;
-  return 6;
-}
+  const gap = count > 3 ? 5.5 : count === 3 ? 6.5 : 7.5;
+  const startY = 24 - ((count - 1) * gap) / 2;
 
-/** Rough check: would this line overflow the ~30-unit inner width? */
-function needsClamp(line: string): boolean {
-  const fs = Number(props.fontSize) || mainFontSize(line);
-  // Oswald is condensed — ~0.55 × fontSize per uppercase char
-  return line.length * fs * 0.55 > 30;
-}
-
-/** Auto-compute tighter vertical positions centred in the octagon */
-function computeYs(lines: string[]): number[] {
-  const center = 22;
-  const sizes = lines.map((l) => mainFontSize(l));
-  const gap = 1; // tight inter-line gap
-  const totalHeight =
-    sizes.reduce((a, b) => a + b, 0) + gap * (sizes.length - 1);
-  let top = center - totalHeight / 2;
-
-  return sizes.map((s) => {
-    // baseline sits ~78 % down the em square
-    const baseline = top + s * 0.78;
-    top += s + gap;
-    return baseline;
-  });
+  return lines.map((_, i) => startY + i * gap + 1.5);
 }
 
 const renderSeals = computed<Seal[]>(() => {
   if (props.grouped) {
     return list.value.map((s) => {
-      const upper = s.lines.map((l) => l.toUpperCase());
-      return { lines: upper, ys: s.ys ?? computeYs(upper) };
+      const hasLongText = s.lines.some((l) => l.length > 9);
+      return {
+        lines: s.lines.map((l) => l.toUpperCase()),
+        ys: hasLongText ? calculateCompactYs(s.lines) : s.ys.map((y) => y + 2),
+      };
     });
   }
-  const s = props.seal!;
+
   if (props.size === "small") {
+    const s = props.seal;
     return [{ lines: [String(s?.lines?.[0]), "SELLOS"], ys: [18, 27] }];
   }
-  const upper = s.lines.map((l) => l.toUpperCase());
-  return [{ lines: upper, ys: s.ys ?? computeYs(upper) }];
+
+  const s = props.seal!;
+  const hasLongText = s?.lines?.some((l) => l.length > 9);
+  return [
+    {
+      lines: (s?.lines ?? []).map((l) => l.toUpperCase()),
+      ys: hasLongText
+        ? calculateCompactYs(s.lines)
+        : (s?.ys ?? []).map((y) => y + 2),
+    },
+  ];
 });
+
+/**
+ * Actual font-size parameters dropped by ~25% overall to fix the overflow.
+ */
+function mainFontSize(line: string, totalLines: number): number {
+  let size = 5.2; // Dropped baseline down from 7.0
+
+  if (line.length > 12)
+    size = 3.0; // Dropped from 3.8
+  else if (line.length > 9)
+    size = 3.6; // Dropped from 4.5
+  else if (line.length > 6) size = 4.2; // Dropped from 5.5
+
+  if (totalLines > 3 && size > 3.6) size = 3.6;
+  else if (totalLines === 3 && size > 4.2) size = 4.2;
+
+  return size;
+}
 </script>

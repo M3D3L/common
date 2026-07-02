@@ -18,7 +18,12 @@
           </div>
 
           <div class="relative flex space-x-6">
-            <MoleculesSeal :seals="label.seals" grouped />
+            <MoleculesSeal
+              fontSize="8"
+              :seal="label"
+              :seals="label.seals"
+              grouped
+            />
           </div>
         </div>
 
