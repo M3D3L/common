@@ -75,6 +75,8 @@
           font-weight="900"
           font-family="Oswald, Arial Black, sans-serif"
           letter-spacing="0.2"
+          :textLength="needsClamp(line) ? 30 : undefined"
+          :lengthAdjust="needsClamp(line) ? 'spacingAndGlyphs' : undefined"
         >
           {{ line.toUpperCase() }}
         </text>
@@ -84,7 +86,7 @@
         v-if="grouped || size"
         :x="size === 'small' ? 22 : vbWidth / 2"
         y="48"
-        :font-size="size === 'small' ? 3.2 : 5"
+        :font-size="size === 'small' ? 3 : 5"
         text-anchor="middle"
         fill="#000"
         :font-weight="grouped ? 700 : 800"
@@ -98,10 +100,8 @@
 </template>
 
 <script setup lang="ts">
-type Seal = { lines: string[]; ys: number[] };
+type Seal = { lines: string[]; ys?: number[] };
 
-// Octagon black fill spans x=3..41 (~38 wide). Stride must be >= that
-// to prevent adjacent octagons from overlapping. 40 leaves a hair of gap.
 const STRIDE = 37;
 
 const props = withDefaults(
@@ -137,25 +137,52 @@ const renderHeight = computed(() => {
   return 87;
 });
 
+/** Reduced font sizes to prevent overflow on longer text */
+function mainFontSize(line: string): number {
+  if (props.fontSize) return Number(props.fontSize);
+  const len = line.length;
+  if (len > 12) return 3.5;
+  if (len > 10) return 4;
+  if (len > 7) return 5;
+  return 6;
+}
+
+/** Rough check: would this line overflow the ~30-unit inner width? */
+function needsClamp(line: string): boolean {
+  const fs = Number(props.fontSize) || mainFontSize(line);
+  // Oswald is condensed — ~0.55 × fontSize per uppercase char
+  return line.length * fs * 0.55 > 30;
+}
+
+/** Auto-compute tighter vertical positions centred in the octagon */
+function computeYs(lines: string[]): number[] {
+  const center = 22;
+  const sizes = lines.map((l) => mainFontSize(l));
+  const gap = 1; // tight inter-line gap
+  const totalHeight =
+    sizes.reduce((a, b) => a + b, 0) + gap * (sizes.length - 1);
+  let top = center - totalHeight / 2;
+
+  return sizes.map((s) => {
+    // baseline sits ~78 % down the em square
+    const baseline = top + s * 0.78;
+    top += s + gap;
+    return baseline;
+  });
+}
+
 const renderSeals = computed<Seal[]>(() => {
   if (props.grouped) {
-    return list.value.map((s) => ({
-      lines: s.lines.map((l) => l.toUpperCase()),
-      ys: s.ys.map((y) => y + 2),
-    }));
+    return list.value.map((s) => {
+      const upper = s.lines.map((l) => l.toUpperCase());
+      return { lines: upper, ys: s.ys ?? computeYs(upper) };
+    });
   }
   const s = props.seal!;
   if (props.size === "small") {
     return [{ lines: [String(s?.lines?.[0]), "SELLOS"], ys: [18, 27] }];
   }
-  return [
-    { lines: s.lines.map((l) => l.toUpperCase()), ys: s.ys.map((y) => y + 2) },
-  ];
+  const upper = s.lines.map((l) => l.toUpperCase());
+  return [{ lines: upper, ys: s.ys ?? computeYs(upper) }];
 });
-
-function mainFontSize(line: string): number {
-  if (line.length > 10) return 4.5;
-  if (line.length > 7) return 5.5;
-  return 7;
-}
 </script>
