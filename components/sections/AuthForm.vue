@@ -231,7 +231,7 @@ watch(
   () => route.path,
   (newPath) => {
     activeTab.value = newPath === "/register" ? "register" : "login";
-  }
+  },
 );
 
 const showSuccess = ref(false);
