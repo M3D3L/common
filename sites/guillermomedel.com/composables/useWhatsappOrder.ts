@@ -23,6 +23,8 @@ export interface FormatMenuArgs {
   sides: string[];
   bebidas: string[];
   date?: string;
+  price?: number | string;
+  cutoffTime?: string;
 }
 
 export const MODE_LABEL: Record<OrderMode, string> = {
@@ -54,7 +56,7 @@ export function useWhatsappOrder() {
     const b = bebidas.filter((n) => cart[n] > 0);
 
     if (g.length) {
-      lines.push("🍖 *Guisos*");
+      lines.push("🥘 *Guisos*");
       g.forEach((n) => lines.push(`• ${cart[n]}× ${n}`));
     }
 
@@ -86,18 +88,23 @@ export function useWhatsappOrder() {
     sides,
     bebidas,
     date,
+    price = "120.00 Por un guiso + 2 guarniciones + bebida, 180.00 Por dos guisos + 2 guarniciones + bebida",
+    cutoffTime = "04:00 PM",
   }: FormatMenuArgs): string {
-    const lines: string[] = ["📋 *Menú del día*"];
-    if (date) lines.push(date);
-    lines.push("");
+    const lines: string[] = [
+      "¡Hola! ¡Buen día! ☀️🌊 Aquí Breezy 🦭 compartiéndote el Menú del Día en Breezy Market 🌵🌮:",
+      "",
+    ];
+
+    if (date) lines.push(`📅 *${date}*`, "");
 
     if (guisos.length) {
-      lines.push("🍖 *Guisos*");
+      lines.push("✨ *Platillo Principal / Guisos*");
       guisos.forEach((n) => lines.push(`• ${n}`));
     }
 
     if (sides.length) {
-      lines.push("", "🥗 *Guarniciones*");
+      lines.push("", "🥗 *Guarniciones (Elige hasta 2)*");
       sides.forEach((n) => lines.push(`• ${n}`));
     }
 
@@ -105,6 +112,15 @@ export function useWhatsappOrder() {
       lines.push("", "🥤 *Bebidas*");
       bebidas.forEach((n) => lines.push(`• ${n}`));
     }
+
+    lines.push(
+      "",
+      `💰 *Precio:* $${price}`,
+      "",
+      "🛒 ¡HAZ TU PEDIDO POR WHATSAPP! 👇",
+      "",
+      `⏰ Asegura tu platillo calientito ordenando antes de las ${cutoffTime}. ¡Buen provecho desde San Carlos! 🌊⛰️🦭`,
+    );
 
     return lines.join("\n");
   }
