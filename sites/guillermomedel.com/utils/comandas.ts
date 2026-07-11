@@ -19,44 +19,22 @@ export interface PlacedOrder {
   createdAt: number;
 }
 
-export const MENU: Record<GroupKey, string[]> = {
-  guisos: [
-    "Birria",
-    "Cochinita",
-    "Chicharron en Salsa Verde",
-    "Machaca Ranchera",
-    "Pollo en Crema Chipotle",
-    "Pollo en Crema de Rajas",
-    "Pollo en Crema de Champinon y Tocino",
-    "Carne Molida a la Bolonesa",
-    "Caldo de Albondigas",
-    "Albondigas de Chipotle Rellenas de queso",
-    "Lasana de Calabaza",
-    "Torta de Cochinita",
-    "Quesabirria",
-    "Croissants de Jamon y Queso",
-    "Burritos de Machaca",
-    "Burritos de huevo con tocino",
-    "Bistec Ranchero",
-    "Teriyaki de Res",
-    "Teriyaki de Pollo",
-    "Marlin para Quesadillas",
-  ],
-  sides: [
-    "Spaghetti Rojo",
-    "Fettucini Alfredo",
-    "Arroz Naranja",
-    "Arroz Blanco con elotitos",
-    "Ensalada Fresca",
-    "Frijoles Rancheros",
-  ],
-  bebidas: [
-    "Agua de Melon",
-    "Agua de Pina",
-    "Limonada de limon amarillo",
-    "Limonada de fresa",
-  ],
-};
+/** Platillos agrupados, misma forma que el estado `today` del staff. */
+export type DayDishes = Record<GroupKey, string[]>;
+
+/** Registro único de la colección `menu` en PocketBase. */
+export interface MenuRecord {
+  id: string;
+  dishes: DayDishes; // catálogo completo
+  active: DayDishes; // selección disponible (lo que ve el cliente)
+  sold_out: string[]; // agotados
+  whatsapp?: string; // número del negocio (solo dígitos), si existe el campo
+  label?: string; // etiqueta opcional
+  published?: boolean; // opcional
+  day?: string; // opcional
+  created: string;
+  updated: string;
+}
 
 export const groups: { key: GroupKey; label: string }[] = [
   { key: "guisos", label: "Guisos" },
@@ -104,12 +82,20 @@ export function modeBadgeClass(m: OrderMode) {
   return "bg-orange-50 text-orange-700 dark:bg-orange-950/50 dark:text-orange-400 border-orange-200/40";
 }
 
-export function hasGroupItems(o: PlacedOrder, groupKey: GroupKey) {
-  return MENU[groupKey].some((itemName) => o.cart && o.cart[itemName] > 0);
+export function hasGroupItems(
+  o: PlacedOrder,
+  groupKey: GroupKey,
+  catalog: DayDishes,
+) {
+  return (catalog[groupKey] ?? []).some((n) => o.cart && o.cart[n] > 0);
 }
 
-export function getGroupLines(o: PlacedOrder, groupKey: GroupKey) {
-  return MENU[groupKey]
-    .filter((itemName) => o.cart && o.cart[itemName] > 0)
-    .map((itemName) => ({ name: itemName, qty: o.cart[itemName] }));
+export function getGroupLines(
+  o: PlacedOrder,
+  groupKey: GroupKey,
+  catalog: DayDishes,
+) {
+  return (catalog[groupKey] ?? [])
+    .filter((n) => o.cart && o.cart[n] > 0)
+    .map((n) => ({ name: n, qty: o.cart[n] }));
 }

@@ -23,14 +23,24 @@ export interface FormatMenuArgs {
   sides: string[];
   bebidas: string[];
   date?: string;
-  price?: number | string;
-  cutoffTime?: string;
 }
 
 export const MODE_LABEL: Record<OrderMode, string> = {
   llevar: "Para llevar",
   aqui: "Para aquí",
   domicilio: "A domicilio",
+};
+
+// Configuración del mensaje de menú (ajusta precios, horario, persona aquí).
+const MENU_BROADCAST = {
+  greeting:
+    "¡Hola! ¡Buen día! ☀️🌊 Aquí Breezy 🦭 compartiéndote el Menú del Día en Breezy Market 🌵🌮:",
+  price:
+    "💰 Precio: $120.00 Por un guiso + 2 guarniciones + bebida, 180.00 Por dos guisos + 2 guarniciones + bebida",
+  cta: "🛒 ¡HAZ TU PEDIDO POR WHATSAPP! 👇",
+  orderUrl: "https://guillermomedel.com/menu",
+  cutoff:
+    "⏰ Asegura tu platillo calientito ordenando antes de las 04:00 PM. ¡Buen provecho desde San Carlos! 🌊⛰️🦭",
 };
 
 export function useWhatsappOrder() {
@@ -56,7 +66,7 @@ export function useWhatsappOrder() {
     const b = bebidas.filter((n) => cart[n] > 0);
 
     if (g.length) {
-      lines.push("🥘 *Guisos*");
+      lines.push("🍖 *Guisos*");
       g.forEach((n) => lines.push(`• ${cart[n]}× ${n}`));
     }
 
@@ -82,44 +92,36 @@ export function useWhatsappOrder() {
     return lines.join("\n");
   }
 
-  // === FORMATO DE MENÚ DEL DÍA ===
+  // === FORMATO DE MENÚ DEL DÍA (broadcast a clientes) ===
   function formatMenu({
     guisos,
     sides,
     bebidas,
     date,
-    price = "120.00 Por un guiso + 2 guarniciones + bebida, 180.00 Por dos guisos + 2 guarniciones + bebida",
-    cutoffTime = "04:00 PM",
   }: FormatMenuArgs): string {
-    const lines: string[] = [
-      "¡Hola! ¡Buen día! ☀️🌊 Aquí Breezy 🦭 compartiéndote el Menú del Día en Breezy Market 🌵🌮:",
-      "",
-    ];
-
-    if (date) lines.push(`📅 *${date}*`, "");
+    const lines: string[] = [MENU_BROADCAST.greeting];
+    if (date) lines.push(`📅 ${date}`);
 
     if (guisos.length) {
-      lines.push("✨ *Platillo Principal / Guisos*");
-      guisos.forEach((n) => lines.push(`• ${n}`));
+      lines.push("✨ Platillo Principal / Guisos");
+      guisos.forEach((n) => lines.push(`* ${n}`));
     }
 
     if (sides.length) {
-      lines.push("", "🥗 *Guarniciones (Elige hasta 2)*");
-      sides.forEach((n) => lines.push(`• ${n}`));
+      lines.push("🥗 Guarniciones (Elige hasta 2)");
+      sides.forEach((n) => lines.push(`* ${n}`));
     }
 
     if (bebidas.length) {
-      lines.push("", "🥤 *Bebidas*");
-      bebidas.forEach((n) => lines.push(`• ${n}`));
+      lines.push("🥤 Bebidas");
+      bebidas.forEach((n) => lines.push(`* ${n}`));
     }
 
     lines.push(
-      "",
-      `💰 *Precio:* $${price}`,
-      "",
-      "🛒 ¡HAZ TU PEDIDO POR WHATSAPP! 👇",
-      "",
-      `⏰ Asegura tu platillo calientito ordenando antes de las ${cutoffTime}. ¡Buen provecho desde San Carlos! 🌊⛰️🦭`,
+      MENU_BROADCAST.price,
+      MENU_BROADCAST.cta,
+      MENU_BROADCAST.orderUrl,
+      MENU_BROADCAST.cutoff,
     );
 
     return lines.join("\n");
