@@ -39,7 +39,7 @@
       </div>
 
       <div class="space-y-2 md:col-span-1 col-span-2">
-        <Label for="price">Price (USD)</Label>
+        <Label for="price">Price (MXN)</Label>
         <Input
           id="price"
           type="number"
@@ -223,7 +223,7 @@ const emit = defineEmits(["update:modelValue", "save"]);
 
 const addAmenity = (
   field: "amenities" | "amenities_Sp",
-  payload?: { name: string }
+  payload?: { name: string },
 ) => {
   if (!props.modelValue[field]) props.modelValue[field] = [];
   const amenityName = payload?.name || "";
