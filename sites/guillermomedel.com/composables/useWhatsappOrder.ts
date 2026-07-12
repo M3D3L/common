@@ -34,13 +34,15 @@ export const MODE_LABEL: Record<OrderMode, string> = {
 // Configuración del mensaje de menú (ajusta precios, horario, persona aquí).
 const MENU_BROADCAST = {
   greeting:
-    "¡Hola! ¡Buen día! ☀️🌊 Aquí Breezy 🦭 compartiéndote el Menú del Día en Breezy Market 🌵🌮:",
-  price:
-    "💰 Precio: $120.00 Por un guiso + 2 guarniciones + bebida, 180.00 Por dos guisos + 2 guarniciones + bebida",
-  cta: "🛒 ¡HAZ TU PEDIDO POR WHATSAPP! 👇",
-  orderUrl: "https://breezy-meals/menu",
-  cutoff:
-    "⏰ Asegura tu platillo calientito ordenando antes de las 04:00 PM. ¡Buen provecho desde San Carlos! 🌊⛰️🦭",
+    "¡Hola! ¡Buen día! ☀️🌊\nAquí Breezy 🦭 compartiéndote el *Menú del Día* de *Breezy Market* 🌵🌮",
+  price: {
+    one: "$120 MXN",
+    two: "$180 MXN",
+  },
+  cta: "🛒 *¡HAZ TU PEDIDO AQUÍ!*",
+  orderUrl: "https://breezy-meals.com/menu",
+  cutoff: "⏰ _Ordena antes de las 4:00 PM para recibir tu comida calientita._",
+  footer: "🌊 ¡Buen provecho desde San Carlos! 🦭",
 };
 
 export function useWhatsappOrder() {
@@ -99,29 +101,57 @@ export function useWhatsappOrder() {
     bebidas,
     date,
   }: FormatMenuArgs): string {
-    const lines: string[] = [MENU_BROADCAST.greeting];
-    if (date) lines.push(`📅 ${date}`);
+    const lines: string[] = [];
 
+    // Encabezado
+    lines.push(MENU_BROADCAST.greeting, "", "━━━━━━━━━━━━━━━━━━━━");
+
+    if (date) {
+      lines.push(`📅 *${date}*`, "");
+    }
+
+    // Guisos
     if (guisos.length) {
-      lines.push("✨ Platillo Principal / Guisos");
-      guisos.forEach((n) => lines.push(`* ${n}`));
+      lines.push("🍖 *GUISOS DEL DÍA*");
+      guisos.forEach((n) => lines.push(`   • ${n}`));
+      lines.push("");
     }
 
+    // Guarniciones
     if (sides.length) {
-      lines.push("🥗 Guarniciones (Elige hasta 2)");
-      sides.forEach((n) => lines.push(`* ${n}`));
+      lines.push("🥗 *GUARNICIONES*");
+      lines.push("_Elige hasta 2_");
+      sides.forEach((n) => lines.push(`   • ${n}`));
+      lines.push("");
     }
 
+    // Bebidas
     if (bebidas.length) {
-      lines.push("🥤 Bebidas");
-      bebidas.forEach((n) => lines.push(`* ${n}`));
+      lines.push("🥤 *BEBIDAS*");
+      bebidas.forEach((n) => lines.push(`   • ${n}`));
+      lines.push("");
     }
 
+    // Precios
     lines.push(
-      MENU_BROADCAST.price,
+      "━━━━━━━━━━━━━━━━━━━━",
+      "",
+      "💰 *PRECIOS*",
+      "",
+      "🍽️ 1 guiso + 2 guarniciones + bebida",
+      `*${MENU_BROADCAST.price.one}*`,
+      "",
+      "🍽️🍽️ 2 guisos + 2 guarniciones + bebida",
+      `*${MENU_BROADCAST.price.two}*`,
+      "",
+      "━━━━━━━━━━━━━━━━━━━━",
+      "",
       MENU_BROADCAST.cta,
       MENU_BROADCAST.orderUrl,
+      "",
       MENU_BROADCAST.cutoff,
+      "",
+      MENU_BROADCAST.footer,
     );
 
     return lines.join("\n");
@@ -143,12 +173,18 @@ export function useWhatsappOrder() {
 
     if (mode === "domicilio" && customer) {
       msg += `\n\n🚀 *DATOS PARA EL REPARTIDOR:*`;
-      if (customer.name.trim())
+
+      if (customer.name.trim()) {
         msg += `\n👤 *Cliente:* ${customer.name.trim()}`;
-      if (customer.phone.trim())
+      }
+
+      if (customer.phone.trim()) {
         msg += `\n📱 *WhatsApp:* ${customer.phone.trim()}`;
-      if (customer.address.trim())
+      }
+
+      if (customer.address.trim()) {
         msg += `\n🏠 *Dirección:* ${customer.address.trim()}`;
+      }
     }
 
     return msg;
@@ -161,28 +197,27 @@ export function useWhatsappOrder() {
     if (cleanPhone) {
       return `https://wa.me/${cleanPhone}?text=${encoded}`;
     }
+
     return `https://api.whatsapp.com/send?text=${encoded}`;
   }
 
-  // Detecta iPhone / iPod / iPad, incluyendo iPadOS 13+ que se hace pasar
-  // por macOS (se distingue por los puntos táctiles).
   function isAppleDevice(): boolean {
     if (typeof navigator === "undefined") return false;
+
     const ua = navigator.userAgent || "";
+
     if (/iP(hone|ad|od)/.test(ua)) return true;
-    if (/Mac/.test(ua) && (navigator.maxTouchPoints || 0) > 1) return true;
+
+    if (/Mac/.test(ua) && (navigator.maxTouchPoints || 0) > 1) {
+      return true;
+    }
+
     return false;
   }
 
-  // Abre WhatsApp de forma confiable en todos los dispositivos.
-  // En iOS/iPadOS, window.open('_blank') hacia un deep link suele ser
-  // bloqueado por Safari o deja una pestaña en blanco; ahí navegamos la
-  // pestaña actual, que entrega el control a la app de WhatsApp sin fallar.
-  // En el resto conservamos el comportamiento de nueva pestaña.
-  // IMPORTANTE: debe llamarse de forma síncrona dentro del gesto del usuario
-  // (por ejemplo en un @click), sin ningún await previo, o iOS lo bloqueará.
   function openWhatsApp(text: string, phone?: string): void {
     if (typeof window === "undefined") return;
+
     const url = waLink(text, phone);
 
     if (isAppleDevice()) {
@@ -191,7 +226,10 @@ export function useWhatsappOrder() {
     }
 
     const win = window.open(url, "_blank", "noopener");
-    if (!win) window.location.href = url; // popup bloqueado → respaldo
+
+    if (!win) {
+      window.location.href = url;
+    }
   }
 
   return {

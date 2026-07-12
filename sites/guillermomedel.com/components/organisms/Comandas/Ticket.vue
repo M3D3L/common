@@ -3,6 +3,7 @@
     class="flex flex-col p-4 border-t-4"
     :class="modeBorderClass(order.mode)"
   >
+    <!-- Header remains the same -->
     <div class="flex items-center gap-2 mb-3">
       <Badge
         class="px-2.5 py-1 text-sm bg-primary/10 text-primary hover:bg-primary/10 tabular-nums"
@@ -21,6 +22,7 @@
       </span>
     </div>
 
+    <!-- Items List -->
     <div class="flex-1 space-y-3">
       <div
         v-for="g in groups"
@@ -49,6 +51,7 @@
       </div>
     </div>
 
+    <!-- Delivery Date: Using neutral gray/slate for clarity -->
     <div
       class="mt-3 pt-2 border-t border-dashed border-border flex items-center justify-between text-xs"
     >
@@ -57,7 +60,7 @@
         class="font-bold tabular-nums"
         :class="
           order.fulfillDate !== todayISO()
-            ? 'text-amber-600'
+            ? 'text-blue-600 dark:text-blue-400'
             : 'text-foreground'
         "
       >
@@ -65,17 +68,21 @@
       </span>
     </div>
 
-    <p
+    <!-- Address: Replaced purples with neutral slate-gray -->
+    <div
       v-if="order.mode === 'domicilio' && order.customer?.address"
-      class="p-2 mt-2 text-xs rounded bg-purple-50 dark:bg-purple-950/30 text-purple-900 dark:text-purple-300 font-medium border border-purple-100 dark:border-purple-900/30"
+      class="p-2 mt-2 text-xs rounded bg-slate-50 dark:bg-slate-900/50 text-slate-700 dark:text-slate-300 font-medium border border-slate-100 dark:border-slate-800"
     >
-      📍 {{ order.customer.address }}
+      <p class="flex items-start gap-1">
+        <span class="mt-0.5">📍</span> {{ order.customer.address }}
+      </p>
       <span
         v-if="order.customer.name"
-        class="font-bold block mt-0.5 text-[11px] text-purple-700 dark:text-purple-400"
-        >Cliente: {{ order.customer.name }}</span
+        class="font-bold block mt-1 text-[11px] text-slate-900 dark:text-slate-100"
       >
-    </p>
+        Cliente: {{ order.customer.name }}
+      </span>
+    </div>
 
     <p
       v-if="order.note"
@@ -84,6 +91,7 @@
       Nota: {{ order.note }}
     </p>
 
+    <!-- Footer buttons -->
     <div class="flex items-center gap-2 mt-4">
       <Button size="sm" class="flex-1" @click="completeOrder(order)">
         <ClientOnly><Check :size="15" class="mr-1.5" /></ClientOnly>
