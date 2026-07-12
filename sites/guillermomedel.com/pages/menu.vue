@@ -389,7 +389,7 @@ const { formatCustomerOrder } = useMenuLink();
 const { openWhatsApp } = useWhatsappOrder();
 
 const EMPTY_DISHES: DayDishes = { guisos: [], sides: [], bebidas: [] };
-const RESTAURANT_WHATSAPP = "526221234567";
+const RESTAURANT_WHATSAPP = "6221523259";
 
 const MODE_ICON: Record<string, any> = {
   llevar: ShoppingBag,
