@@ -1,4 +1,4 @@
-import usePocketBase from "@common/composables/usePocketbase";
+import usePocketBase from "~/composables/usePocketbase";
 
 export default defineNuxtPlugin(() => {
   const pb = usePocketBase();

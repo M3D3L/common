@@ -38,7 +38,7 @@ const MENU_BROADCAST = {
   price:
     "💰 Precio: $120.00 Por un guiso + 2 guarniciones + bebida, 180.00 Por dos guisos + 2 guarniciones + bebida",
   cta: "🛒 ¡HAZ TU PEDIDO POR WHATSAPP! 👇",
-  orderUrl: "https://guillermomedel.com/menu",
+  orderUrl: "https://breezy-meals/menu",
   cutoff:
     "⏰ Asegura tu platillo calientito ordenando antes de las 04:00 PM. ¡Buen provecho desde San Carlos! 🌊⛰️🦭",
 };
@@ -164,11 +164,43 @@ export function useWhatsappOrder() {
     return `https://api.whatsapp.com/send?text=${encoded}`;
   }
 
+  // Detecta iPhone / iPod / iPad, incluyendo iPadOS 13+ que se hace pasar
+  // por macOS (se distingue por los puntos táctiles).
+  function isAppleDevice(): boolean {
+    if (typeof navigator === "undefined") return false;
+    const ua = navigator.userAgent || "";
+    if (/iP(hone|ad|od)/.test(ua)) return true;
+    if (/Mac/.test(ua) && (navigator.maxTouchPoints || 0) > 1) return true;
+    return false;
+  }
+
+  // Abre WhatsApp de forma confiable en todos los dispositivos.
+  // En iOS/iPadOS, window.open('_blank') hacia un deep link suele ser
+  // bloqueado por Safari o deja una pestaña en blanco; ahí navegamos la
+  // pestaña actual, que entrega el control a la app de WhatsApp sin fallar.
+  // En el resto conservamos el comportamiento de nueva pestaña.
+  // IMPORTANTE: debe llamarse de forma síncrona dentro del gesto del usuario
+  // (por ejemplo en un @click), sin ningún await previo, o iOS lo bloqueará.
+  function openWhatsApp(text: string, phone?: string): void {
+    if (typeof window === "undefined") return;
+    const url = waLink(text, phone);
+
+    if (isAppleDevice()) {
+      window.location.href = url;
+      return;
+    }
+
+    const win = window.open(url, "_blank", "noopener");
+    if (!win) window.location.href = url; // popup bloqueado → respaldo
+  }
+
   return {
     formatOrder,
     formatMenu,
     formatSoldOut,
     formatReady,
     waLink,
+    isAppleDevice,
+    openWhatsApp,
   };
 }

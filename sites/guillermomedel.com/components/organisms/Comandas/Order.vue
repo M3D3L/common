@@ -176,18 +176,6 @@
       >
         Vaciar orden
       </button>
-
-      <div v-if="itemCount" class="pt-3 mt-4 border-t border-border">
-        <p
-          class="mb-2 text-[11px] font-bold tracking-wider uppercase text-muted-foreground"
-        >
-          Se envía esto
-        </p>
-        <pre
-          class="p-3 overflow-auto font-mono text-xs whitespace-pre-wrap border rounded-lg bg-muted/50 border-border max-h-44"
-          >{{ orderText }}</pre
-        >
-      </div>
     </Card>
   </section>
 </template>
