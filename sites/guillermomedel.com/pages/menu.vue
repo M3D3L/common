@@ -91,25 +91,34 @@
             <h1
               class="font-heading text-2xl font-extrabold tracking-tight text-foreground sm:text-3xl"
             >
-              Breezy Market
+              Breezy Meals
             </h1>
 
-            <p
-              class="hidden text-sm font-medium text-muted-foreground sm:block"
-            >
-              Menú de hoy
-            </p>
-
-            <p
-              class="mt-0.5 text-sm font-medium text-muted-foreground sm:hidden"
-            >
-              Menú de hoy
+            <p class="text-sm font-medium text-muted-foreground">
+              Menú de hoy / Today's Menu
             </p>
           </div>
         </div>
       </header>
 
       <main class="mx-auto max-w-lg space-y-8 px-5 pb-44 pt-6">
+        <!-- Instrucciones -->
+        <section class="rounded-lg bg-primary/5 border border-primary/10 p-4">
+          <h3 class="font-bold text-sm mb-2 flex items-center gap-2">
+            <span>💡</span> How to order / Cómo pedir
+          </h3>
+          <ol
+            class="text-xs text-muted-foreground space-y-1.5 list-decimal list-inside"
+          >
+            <li>Select your dishes / Selecciona tus platillos.</li>
+            <li>Choose delivery/pickup / Elige entrega o recoger.</li>
+            <li>
+              Fill in your name / <b>Ingresa tu nombre (required/requerido)</b>.
+            </li>
+            <li>Tap "Send" / Presiona "Enviar".</li>
+          </ol>
+        </section>
+
         <section
           v-for="group in groups"
           v-show="(active[group.key] || []).length"
@@ -189,7 +198,7 @@
           <h2
             class="mb-2 text-xs font-bold uppercase tracking-widest text-muted-foreground"
           >
-            ¿Cómo lo quieres?
+            ¿Cómo lo quieres? / How do you want it?
           </h2>
           <Tabs v-model="mode">
             <TabsList class="grid w-full grid-cols-3">
@@ -216,17 +225,17 @@
           <h2
             class="mb-2 text-xs font-bold uppercase tracking-widest text-muted-foreground"
           >
-            Tus datos
+            Tus datos / Your Info
           </h2>
           <Card class="space-y-4 p-4">
             <div class="space-y-1.5">
               <Label for="c-name" class="flex items-center gap-1">
-                Tu nombre <span class="text-destructive">*</span>
+                Tu nombre / Your name <span class="text-destructive">*</span>
               </Label>
               <Input
                 id="c-name"
                 v-model="customer.name"
-                placeholder="Ej. Juan Pérez"
+                placeholder="Ej. Juan Pérez / e.g. John Doe"
                 :class="{
                   'border-destructive focus-visible:ring-destructive':
                     itemCount > 0 && !customer.name.trim(),
@@ -236,13 +245,14 @@
                 v-if="itemCount > 0 && !customer.name.trim()"
                 class="text-[11px] text-destructive"
               >
-                Requerido para completar tu pedido.
+                Required to complete your order / Requerido para completar tu
+                pedido.
               </p>
             </div>
 
             <template v-if="mode === 'domicilio'">
               <div class="space-y-1.5">
-                <Label for="c-phone">WhatsApp</Label>
+                <Label for="c-phone">WhatsApp / Phone</Label>
                 <Input
                   id="c-phone"
                   v-model="customer.phone"
@@ -253,7 +263,7 @@
 
               <div class="space-y-1.5">
                 <Label for="c-address" class="flex items-center gap-1">
-                  Dirección de entrega <span class="text-destructive">*</span>
+                  Dirección / Address <span class="text-destructive">*</span>
                 </Label>
                 <Input
                   id="c-address"
@@ -268,23 +278,23 @@
                   v-if="itemCount > 0 && needsAddress"
                   class="text-[11px] text-destructive"
                 >
-                  Requerida para envíos a domicilio.
+                  Required for delivery / Requerida para envíos a domicilio.
                 </p>
               </div>
             </template>
 
             <div class="space-y-1.5">
-              <Label for="c-time">{{ timeLabel }} (opcional)</Label>
+              <Label for="c-time">{{ timeLabel }} (opcional/optional)</Label>
               <Input id="c-time" v-model="pickupTime" type="time" />
             </div>
 
             <div class="space-y-1.5">
-              <Label for="c-note">Nota (opcional)</Label>
+              <Label for="c-note">Nota / Note (opcional/optional)</Label>
               <Textarea
                 id="c-note"
                 v-model="note"
                 rows="2"
-                placeholder="Sin cebolla, casa roja…"
+                placeholder="Sin cebolla, casa roja / No onions, red house…"
               />
             </div>
           </Card>
@@ -304,7 +314,9 @@
                 {{ totalQty }} platillo{{ totalQty === 1 ? "" : "s" }} ·
                 {{ MODE_LABEL[mode] }}
               </template>
-              <template v-else> Tu pedido · {{ MODE_LABEL[mode] }} </template>
+              <template v-else>
+                Tu pedido / Your order · {{ MODE_LABEL[mode] }}
+              </template>
             </span>
           </div>
 
@@ -326,7 +338,7 @@
               @click="sendOrder"
             >
               <ClientOnly><Send :size="17" class="mr-2" /></ClientOnly>
-              Enviar por WhatsApp
+              Enviar / Send
             </Button>
           </div>
 
@@ -466,9 +478,9 @@ const canSend = computed(
 
 const hint = computed(() =>
   !customer.name.trim()
-    ? "Falta tu nombre para poder enviar."
+    ? "Please enter your name to proceed / Ingresa tu nombre para continuar."
     : needsAddress.value
-      ? "Falta tu dirección para el envío."
+      ? "Address is required for delivery / Se requiere dirección para el envío."
       : "",
 );
 
