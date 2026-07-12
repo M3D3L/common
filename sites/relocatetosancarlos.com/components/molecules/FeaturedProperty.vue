@@ -24,8 +24,8 @@
                   ? "Renta"
                   : "Rental"
                 : isSp
-                ? "En Venta"
-                : "For Sale"
+                  ? "En Venta"
+                  : "For Sale"
             }}
           </Badge>
         </div>
@@ -194,9 +194,9 @@ const createImgUrl = (content: PropertyContent) => {
 
 const formattedPrice = computed(() => {
   if (!props.content) return "";
-  const formatter = new Intl.NumberFormat("en-US", {
+  const formatter = new Intl.NumberFormat("es-MX", {
     style: "currency",
-    currency: "USD",
+    currency: "MXN",
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   });

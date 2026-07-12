@@ -637,7 +637,7 @@
                         {{
                           Number(it.price).toLocaleString(undefined, {
                             style: "currency",
-                            currency: "USD",
+                            currency: "MXN",
                           })
                         }}
                       </span>

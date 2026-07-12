@@ -392,7 +392,7 @@
                     <li v-for="(it, ii) in cat.items" :key="`pv-item-${ci}-${ii}`" class="flex items-start justify-between gap-2">
                       <span class="text-sm">{{ settings.previewLang === 'es' ? it.nameEs : it.nameEn }}</span>
                       <span class="text-sm font-semibold text-primary" v-if="Number.isFinite(+it.price)">
-                        {{ Number(it.price).toLocaleString(undefined, { style: 'currency', currency: 'USD' }) }}
+                        {{ Number(it.price).toLocaleString(undefined, { style: 'currency', currency: 'MXN' }) }}
                       </span>
                     </li>
                   </ul>

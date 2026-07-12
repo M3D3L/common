@@ -278,7 +278,7 @@ const getInitialFormData = () => ({
   amenities_Sp: [] as any[],
   type: "property",
   price: 0,
-  pricingType: "usd",
+  pricingType: "mxn",
   bedrooms: 0,
   bathrooms: 0,
   area: 0,
@@ -309,10 +309,10 @@ const getAuthorDisplay = () => {
 
 const updateLocalState = (
   record: any,
-  mode: "upsert" | "delete" = "upsert"
+  mode: "upsert" | "delete" = "upsert",
 ) => {
   const index = properties.value.items.findIndex(
-    (p: any) => p.id === record.id
+    (p: any) => p.id === record.id,
   );
   if (mode === "delete") {
     if (index !== -1) properties.value.items.splice(index, 1);
@@ -351,7 +351,7 @@ const getMissingFields = (data: any) => {
     "keywords_Sp",
   ];
   const missing = fields.filter(
-    (f) => !data[f] || (typeof data[f] === "string" && !data[f].trim())
+    (f) => !data[f] || (typeof data[f] === "string" && !data[f].trim()),
   );
   if (!data.amenities_Sp || data.amenities_Sp.length === 0)
     missing.push("amenities_Sp");
@@ -368,7 +368,7 @@ const loadProperties = async () => {
       100,
       "",
       "-created",
-      "author"
+      "author",
     );
   } finally {
     loading.value = false;
@@ -445,12 +445,12 @@ const saveProperty = async () => {
 const runBackgroundEnrichment = async (
   id: string,
   currentData: any,
-  missingFields: string[]
+  missingFields: string[],
 ) => {
   enrichingIds.value.add(id);
   try {
     const instruction = `You are a Real Estate SEO Expert. Return ONLY a JSON object for these missing keys: ${missingFields.join(
-      ", "
+      ", ",
     )}. 
     CRITICAL: For amenities_Sp, use a JSON array of objects like: [{"name": "Alberca"}]. 
     Base content on the title: "${currentData.title}" and these amenities: ${(
