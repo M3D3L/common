@@ -5,6 +5,7 @@ import {
   provide,
   inject,
   onMounted,
+  onBeforeUnmount,
   type InjectionKey,
 } from "vue";
 import {
@@ -17,18 +18,32 @@ import {
 } from "~/utils/comandas";
 import type { OrderMode, Customer } from "~/composables/useWhatsappOrder";
 
+/* ===== Config ===== */
 const STORAGE_KEY = "comandas";
+
+// Colección y campo JSON donde viven las órdenes en PocketBase.
+const COMANDAS_COLLECTION = "comandas";
+//    (tu mensaje decía "un solo json"; si el campo se llama `field`, ponlo aquí)
+const COMANDAS_FIELD = "data";
+
+// Cada cuánto se consulta PocketBase para mantener el tablero en vivo (ms).
+const AUTO_REFRESH_MS = 15_000;
 
 const emptyDishes = (): DayDishes => ({ guisos: [], sides: [], bebidas: [] });
 
+// Orden + id del registro de PocketBase (para poder borrarlo al completar/descartar).
+type StoredOrder = PlacedOrder & { recordId?: string };
+
 /**
- * Fuente única de verdad de Comandas. El CATÁLOGO (dishes) y la SELECCIÓN
- * (active) viven en PocketBase; las órdenes siguen siendo locales/WhatsApp.
+ * Fuente única de verdad de Comandas. El CATÁLOGO (dishes), la SELECCIÓN
+ * (active) y ahora también las ÓRDENES viven en PocketBase; localStorage
+ * queda como cache para arranque instantáneo y modo offline.
  */
 function createComandasStore() {
   const { formatOrder, formatSoldOut, formatReady, formatMenu, waLink } =
     useWhatsappOrder();
-  const { fetchCollection, createItem, updateItem } = usePocketBaseCore();
+  const { fetchCollection, createItem, updateItem, deleteItem } =
+    usePocketBaseCore();
 
   /* ===== Estado ===== */
   const view = ref<"setup" | "order" | "orders">("setup");
@@ -46,7 +61,7 @@ function createComandasStore() {
   const fulfillDate = ref<string>(todayISO());
   const filter = ref<FilterType>("all");
   const customer = reactive<Customer>({ name: "", phone: "", address: "" });
-  const orders = ref<PlacedOrder[]>([]);
+  const orders = ref<StoredOrder[]>([]);
   const pick = reactive<Record<GroupKey, Set<string>>>({
     guisos: new Set(),
     sides: new Set(),
@@ -58,6 +73,9 @@ function createComandasStore() {
   const menuLoading = ref(true);
   const savingMenu = ref(false);
   const menuRecordId = ref<string | null>(null);
+
+  // Auto-refresh en vivo
+  const isRefreshing = ref(false);
 
   /* ===== Computed ===== */
   const stats = computed(() => {
@@ -137,6 +155,20 @@ function createComandasStore() {
   const isOut = (n: string) => soldOut.value.includes(n);
   const cartGroup = (k: GroupKey) => today[k].filter((n) => cart[n] > 0);
 
+  /* ===== WhatsApp (respetando "primero BD, luego WhatsApp") =====
+   * Se abre una pestaña en blanco DENTRO del gesto del click y se le asigna la
+   * URL cuando la BD termina. Si se abriera después del await, el bloqueador de
+   * pop-ups la descartaría.
+   */
+  function openBlankTab(): Window | null {
+    return import.meta.client ? window.open("", "_blank") : null;
+  }
+  function sendToTab(tab: Window | null, text: string) {
+    const url = waLink(text);
+    if (tab) tab.location.href = url;
+    else if (import.meta.client) window.open(url, "_blank");
+  }
+
   /* ===== PocketBase: menú ===== */
   function applyRecord(r: MenuRecord) {
     menuRecordId.value = r.id;
@@ -182,6 +214,98 @@ function createComandasStore() {
       // Offline: se conserva lo que haya quedado en el cache local.
     } finally {
       menuLoading.value = false;
+    }
+  }
+
+  /* ===== PocketBase: órdenes ===== */
+  // Trae todas las órdenes activas del servidor y las fusiona con las locales
+  // que aún no se hayan sincronizado (creadas offline).
+  async function loadOrders() {
+    try {
+      const res = await fetchCollection(
+        COMANDAS_COLLECTION,
+        1,
+        200,
+        "",
+        "created",
+        null,
+        null,
+        true, // ignoreCache: en vivo siempre pega a la red
+      );
+
+      const remote: StoredOrder[] = res.items.map((rec) => ({
+        ...((rec as any)[COMANDAS_FIELD] as PlacedOrder),
+        recordId: rec.id,
+      }));
+
+      // Conserva órdenes creadas sin red (todavía sin recordId).
+      const unsynced = orders.value.filter((o) => !o.recordId);
+      orders.value = [...remote, ...unsynced];
+
+      // Mantén el contador por delante de lo que ya existe en el servidor.
+      const maxN = orders.value.reduce((m, o) => Math.max(m, o.number || 0), 0);
+      if (maxN + 1 > counter.value) counter.value = maxN + 1;
+
+      persist();
+    } catch {
+      // Sin red: se conserva el cache local.
+    }
+  }
+
+  // Refresca solo los "agotados" del menú (barato, no toca la vista actual).
+  async function refreshSoldOut() {
+    try {
+      const res = await fetchCollection(
+        "menu",
+        1,
+        1,
+        "",
+        "-created",
+        null,
+        null,
+        true,
+      );
+      const rec = res.items[0] as unknown as MenuRecord | undefined;
+      if (rec) {
+        if (!menuRecordId.value) menuRecordId.value = rec.id;
+        soldOut.value = rec.sold_out ?? [];
+      }
+    } catch {
+      /* offline */
+    }
+  }
+
+  /* ===== Auto-refresh (mantiene el tablero en vivo) ===== */
+  async function refreshLive() {
+    if (isRefreshing.value) return;
+    isRefreshing.value = true;
+    try {
+      await Promise.all([loadOrders(), refreshSoldOut()]);
+    } finally {
+      isRefreshing.value = false;
+    }
+  }
+
+  let refreshTimer: ReturnType<typeof setInterval> | undefined;
+  function onVisibility() {
+    if (import.meta.client && !document.hidden) refreshLive();
+  }
+  function startAutoRefresh() {
+    if (!import.meta.client) return;
+    stopAutoRefresh();
+    refreshTimer = setInterval(() => {
+      if (document.hidden) return; // no gastes red en segundo plano
+      refreshLive();
+    }, AUTO_REFRESH_MS);
+    document.addEventListener("visibilitychange", onVisibility);
+  }
+  function stopAutoRefresh() {
+    if (refreshTimer) {
+      clearInterval(refreshTimer);
+      refreshTimer = undefined;
+    }
+    if (import.meta.client) {
+      document.removeEventListener("visibilitychange", onVisibility);
     }
   }
 
@@ -251,21 +375,15 @@ function createComandasStore() {
     view.value = "order";
     persist();
 
-    // 1) Abrir WhatsApp con el menú del día PRIMERO, dentro del gesto del click
-    //    (si se abre después del await, el bloqueador de pop-ups lo descarta).
-    window.open(
-      waLink(
-        formatMenu({
-          guisos: activeDishes.guisos,
-          sides: activeDishes.sides,
-          bebidas: activeDishes.bebidas,
-          date: prettyDate.value,
-        }),
-      ),
-      "_blank",
-    );
+    const text = formatMenu({
+      guisos: activeDishes.guisos,
+      sides: activeDishes.sides,
+      bebidas: activeDishes.bebidas,
+      date: prettyDate.value,
+    });
+    const wa = openBlankTab(); // dentro del gesto del click
 
-    // 2) Guardar la selección en el único registro de la colección `menu`.
+    // 1) Primero la BD: guarda la selección en el único registro de `menu`.
     savingMenu.value = true;
     toast("Guardando menú…");
     try {
@@ -284,7 +402,10 @@ function createComandasStore() {
         menuRecordId.value = (created as unknown as MenuRecord).id;
       }
       toast("Menú guardado ✅");
+      // 2) Luego WhatsApp con el menú del día.
+      sendToTab(wa, text);
     } catch {
+      wa?.close();
       toast("No se pudo guardar en el servidor");
     } finally {
       savingMenu.value = false;
@@ -321,9 +442,11 @@ function createComandasStore() {
       cart[n] = 0;
     }
     persist();
-    notifyStock(n, nowAvailable); // abre WhatsApp dentro del gesto del usuario
 
-    // Sincroniza los agotados con la BD (lo ve el cliente en vivo).
+    const text = formatSoldOut(n, nowAvailable);
+    const wa = openBlankTab(); // dentro del gesto del click
+
+    // 1) Primero la BD (lo ve el cliente en vivo).
     if (menuRecordId.value) {
       try {
         await updateItem("menu", menuRecordId.value, {
@@ -333,6 +456,11 @@ function createComandasStore() {
         /* queda en cache local; se reintenta al siguiente cambio */
       }
     }
+    // 2) Luego WhatsApp.
+    sendToTab(wa, text);
+    toast(
+      nowAvailable ? `Avisando: ${n} disponible` : `Avisando: se agotó ${n}`,
+    );
   }
 
   function clearCart() {
@@ -354,8 +482,10 @@ function createComandasStore() {
     toast(msg);
   }
 
-  function send() {
-    orders.value.push({
+  async function send() {
+    if (!itemCount.value) return;
+
+    const order: StoredOrder = {
       id: `${counter.value}-${Date.now()}`,
       number: counter.value,
       cart: { ...cart },
@@ -364,30 +494,66 @@ function createComandasStore() {
       fulfillDate: fulfillDate.value,
       customer: mode.value === "domicilio" ? { ...customer } : undefined,
       createdAt: Date.now(),
-    });
+    };
 
-    const textToSend = formatOrder({
-      orderNumber: counter.value,
-      cart,
-      mode: mode.value,
+    // El texto se arma ANTES de vaciar el carrito.
+    const text = formatOrder({
+      orderNumber: order.number,
+      cart: order.cart,
+      mode: order.mode,
       guisos: today.guisos,
       sides: today.sides,
       bebidas: today.bebidas,
-      note: note.value,
-      fulfillDate: fulfillDate.value,
+      note: order.note,
+      fulfillDate: order.fulfillDate,
     });
 
-    window.open(waLink(textToSend), "_blank");
+    const wa = openBlankTab(); // dentro del gesto del click
+
+    // 1) Primero la BD.
+    try {
+      const rec = await createItem(COMANDAS_COLLECTION, {
+        [COMANDAS_FIELD]: order,
+      });
+      order.recordId = rec.id;
+    } catch {
+      toast("No se guardó en el servidor; se envía igual");
+    }
+
+    // 2) Reflejar local + cache.
+    orders.value.push(order);
+    persist();
+
+    // 3) Luego WhatsApp.
+    sendToTab(wa, text);
     advance("Abriendo WhatsApp…");
   }
 
-  function completeOrder(o: PlacedOrder) {
-    window.open(waLink(formatReady(o.number, o.mode, o.customer)), "_blank");
+  async function completeOrder(o: StoredOrder) {
+    const text = formatReady(o.number, o.mode, o.customer);
+    const wa = openBlankTab();
+
+    // 1) Primero la BD.
+    try {
+      if (o.recordId) await deleteItem(COMANDAS_COLLECTION, o.recordId);
+    } catch (e) {
+      console.error("No se pudo borrar la orden en el servidor", e);
+    }
+    // 2) Local.
     removeOrder(o.id);
+    // 3) WhatsApp.
+    sendToTab(wa, text);
     toast(`Orden #${o.number} lista`);
   }
 
-  function discardOrder(o: PlacedOrder) {
+  async function discardOrder(o: StoredOrder) {
+    // 1) Primero la BD.
+    try {
+      if (o.recordId) await deleteItem(COMANDAS_COLLECTION, o.recordId);
+    } catch (e) {
+      console.error("No se pudo borrar la orden en el servidor", e);
+    }
+    // 2) Local.
     removeOrder(o.id);
     toast(`Orden #${o.number} descartada`);
   }
@@ -397,17 +563,14 @@ function createComandasStore() {
     persist();
   }
 
-  function notifyStock(name: string, available: boolean) {
-    window.open(waLink(formatSoldOut(name, available)), "_blank");
-    toast(
-      available ? `Avisando: ${name} disponible` : `Avisando: se agotó ${name}`,
-    );
-  }
-
   onMounted(() => {
-    load(); // órdenes locales
+    load(); // órdenes locales (pintado instantáneo)
     loadMenu(); // catálogo + selección desde PocketBase
+    loadOrders(); // órdenes desde PocketBase
+    startAutoRefresh(); // polling en vivo
   });
+
+  onBeforeUnmount(stopAutoRefresh);
 
   return {
     // estado
@@ -426,7 +589,9 @@ function createComandasStore() {
     toastMsg,
     menuLoading,
     savingMenu,
+    isRefreshing,
     minDate: todayISO(),
+    autoRefreshMs: AUTO_REFRESH_MS,
     // computed
     stats,
     statCards,
@@ -449,6 +614,7 @@ function createComandasStore() {
     send,
     completeOrder,
     discardOrder,
+    refreshNow: refreshLive,
   };
 }
 
