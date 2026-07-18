@@ -17,37 +17,43 @@ import {
   type MenuRecord,
 } from "~/utils/comandas";
 import type { OrderMode, Customer } from "~/composables/useWhatsappOrder";
+import type { RecordModel } from "pocketbase";
 
 /* ===== Config ===== */
 const STORAGE_KEY = "comandas";
 
-// Colección y campo JSON donde viven las órdenes en PocketBase.
+// Colección y campo JSON donde vive el payload completo de cada orden.
 const COMANDAS_COLLECTION = "comandas";
-//    (tu mensaje decía "un solo json"; si el campo se llama `field`, ponlo aquí)
+// ⚠️ Nombre del campo JSON en tu colección `comandas`.
 const COMANDAS_FIELD = "data";
-
-// Cada cuánto se consulta PocketBase para mantener el tablero en vivo (ms).
-const AUTO_REFRESH_MS = 15_000;
 
 const emptyDishes = (): DayDishes => ({ guisos: [], sides: [], bebidas: [] });
 
-// Orden + id del registro de PocketBase (para poder borrarlo al completar/descartar).
-type StoredOrder = PlacedOrder & { recordId?: string };
+type OrderStatus = "active" | "completed" | "cancelled";
+
+// Orden + metadatos de PocketBase (id de registro y status para el soft-delete).
+type StoredOrder = PlacedOrder & {
+  recordId?: string;
+  status?: OrderStatus;
+};
 
 /**
- * Fuente única de verdad de Comandas. El CATÁLOGO (dishes), la SELECCIÓN
- * (active) y ahora también las ÓRDENES viven en PocketBase; localStorage
- * queda como cache para arranque instantáneo y modo offline.
+ * Fuente única de verdad de Comandas.
+ *  - CATÁLOGO + SELECCIÓN del turno + AGOTADOS -> registro único `menu`.
+ *  - ÓRDENES -> colección `comandas` (un registro por orden). NO se borran al
+ *    completar: se marcan `completed`/`cancelled` y dejan de mostrarse. El
+ *    tablero solo carga las `active`. El historial queda para el reporte EOD.
+ *  - Se mantiene EN VIVO con realtime (SSE) de PocketBase, sin polling.
  */
 function createComandasStore() {
   const { formatOrder, formatSoldOut, formatReady, formatMenu, waLink } =
     useWhatsappOrder();
-  const { fetchCollection, createItem, updateItem, deleteItem } =
+  const { fetchCollection, createItem, updateItem, subscribe, unsubscribe } =
     usePocketBaseCore();
 
   /* ===== Estado ===== */
   const view = ref<"setup" | "order" | "orders">("setup");
-  const catalog = ref<DayDishes>(emptyDishes()); // platillos disponibles (de la BD)
+  const catalog = ref<DayDishes>(emptyDishes());
   const today = reactive<Record<GroupKey, string[]>>({
     guisos: [],
     sides: [],
@@ -61,7 +67,7 @@ function createComandasStore() {
   const fulfillDate = ref<string>(todayISO());
   const filter = ref<FilterType>("all");
   const customer = reactive<Customer>({ name: "", phone: "", address: "" });
-  const orders = ref<StoredOrder[]>([]);
+  const orders = ref<StoredOrder[]>([]); // SOLO órdenes activas
   const pick = reactive<Record<GroupKey, Set<string>>>({
     guisos: new Set(),
     sides: new Set(),
@@ -74,8 +80,10 @@ function createComandasStore() {
   const savingMenu = ref(false);
   const menuRecordId = ref<string | null>(null);
 
-  // Auto-refresh en vivo
+  // Estado de conexión / reconciliación
   const isRefreshing = ref(false);
+  const live = ref(false); // true cuando las suscripciones están activas
+  const sending = ref(false); // evita doble-envío por doble-tap
 
   /* ===== Computed ===== */
   const stats = computed(() => {
@@ -123,7 +131,6 @@ function createComandasStore() {
     () => Object.values(cart).filter((q) => q > 0).length,
   );
 
-  // Se agrupa el carrito por la selección del turno (today), no por catálogo.
   const orderText = computed(() =>
     formatOrder({
       orderNumber: counter.value,
@@ -155,10 +162,9 @@ function createComandasStore() {
   const isOut = (n: string) => soldOut.value.includes(n);
   const cartGroup = (k: GroupKey) => today[k].filter((n) => cart[n] > 0);
 
-  /* ===== WhatsApp (respetando "primero BD, luego WhatsApp") =====
-   * Se abre una pestaña en blanco DENTRO del gesto del click y se le asigna la
-   * URL cuando la BD termina. Si se abriera después del await, el bloqueador de
-   * pop-ups la descartaría.
+  /* ===== WhatsApp (primero BD, luego WhatsApp) =====
+   * Pestaña en blanco abierta DENTRO del gesto del click; se le asigna la URL
+   * cuando la BD resuelve, para que el bloqueador de pop-ups no la mate.
    */
   function openBlankTab(): Window | null {
     return import.meta.client ? window.open("", "_blank") : null;
@@ -167,6 +173,30 @@ function createComandasStore() {
     const url = waLink(text);
     if (tab) tab.location.href = url;
     else if (import.meta.client) window.open(url, "_blank");
+  }
+
+  /* ===== Helpers de órdenes (en memoria) ===== */
+  function recordToOrder(rec: RecordModel): StoredOrder {
+    return {
+      ...((rec as any)[COMANDAS_FIELD] as PlacedOrder),
+      recordId: rec.id,
+      status: (rec as any).status as OrderStatus,
+    };
+  }
+
+  function upsertOrder(o: StoredOrder) {
+    const i = o.recordId
+      ? orders.value.findIndex((x) => x.recordId === o.recordId)
+      : orders.value.findIndex((x) => x.id === o.id);
+    if (i >= 0) orders.value.splice(i, 1, o);
+    else orders.value.push(o);
+    // Mantén el contador por delante de lo que llega de otros dispositivos.
+    if (o.number) counter.value = Math.max(counter.value, o.number + 1);
+  }
+
+  function removeByRecordId(recordId: string) {
+    if (!recordId) return;
+    orders.value = orders.value.filter((x) => x.recordId !== recordId);
   }
 
   /* ===== PocketBase: menú ===== */
@@ -193,7 +223,6 @@ function createComandasStore() {
   async function loadMenu() {
     menuLoading.value = true;
     try {
-      // Un solo registro en la colección: se trae directo, sin filtros.
       const res = await fetchCollection(
         "menu",
         1,
@@ -211,48 +240,13 @@ function createComandasStore() {
         view.value = "setup";
       }
     } catch {
-      // Offline: se conserva lo que haya quedado en el cache local.
+      // Offline: se conserva lo que haya quedado en cache local.
     } finally {
       menuLoading.value = false;
     }
   }
 
-  /* ===== PocketBase: órdenes ===== */
-  // Trae todas las órdenes activas del servidor y las fusiona con las locales
-  // que aún no se hayan sincronizado (creadas offline).
-  async function loadOrders() {
-    try {
-      const res = await fetchCollection(
-        COMANDAS_COLLECTION,
-        1,
-        200,
-        "",
-        "created",
-        null,
-        null,
-        true, // ignoreCache: en vivo siempre pega a la red
-      );
-
-      const remote: StoredOrder[] = res.items.map((rec) => ({
-        ...((rec as any)[COMANDAS_FIELD] as PlacedOrder),
-        recordId: rec.id,
-      }));
-
-      // Conserva órdenes creadas sin red (todavía sin recordId).
-      const unsynced = orders.value.filter((o) => !o.recordId);
-      orders.value = [...remote, ...unsynced];
-
-      // Mantén el contador por delante de lo que ya existe en el servidor.
-      const maxN = orders.value.reduce((m, o) => Math.max(m, o.number || 0), 0);
-      if (maxN + 1 > counter.value) counter.value = maxN + 1;
-
-      persist();
-    } catch {
-      // Sin red: se conserva el cache local.
-    }
-  }
-
-  // Refresca solo los "agotados" del menú (barato, no toca la vista actual).
+  // Solo los agotados (para reconciliar; el resto llega por realtime).
   async function refreshSoldOut() {
     try {
       const res = await fetchCollection(
@@ -275,41 +269,122 @@ function createComandasStore() {
     }
   }
 
-  /* ===== Auto-refresh (mantiene el tablero en vivo) ===== */
-  async function refreshLive() {
+  /* ===== PocketBase: órdenes ===== */
+  // Tablero: solo órdenes activas (sin importar la fecha de entrega).
+  async function loadActiveOrders() {
+    try {
+      const res = await fetchCollection(
+        COMANDAS_COLLECTION,
+        1,
+        300,
+        'status = "active"',
+        "created",
+        null,
+        null,
+        true,
+      );
+      const remote = res.items.map(recordToOrder);
+      // Conserva órdenes creadas sin red (aún sin recordId).
+      const unsynced = orders.value.filter((o) => !o.recordId);
+      orders.value = [...remote, ...unsynced];
+      persist();
+    } catch {
+      // Sin red: se conserva el cache local.
+    }
+  }
+
+  // Semilla del contador: número más alto del DÍA (cualquier status), para no
+  // reciclar números ya usados por órdenes que ya se completaron.
+  async function seedCounter() {
+    try {
+      const res = await fetchCollection(
+        COMANDAS_COLLECTION,
+        1,
+        1,
+        `biz_date = "${todayISO()}"`,
+        "-number",
+        null,
+        null,
+        true,
+      );
+      const top = res.items[0] as any;
+      const n = top ? Number(top.number) || 0 : 0;
+      counter.value = Math.max(counter.value, n + 1);
+    } catch {
+      /* offline: se usa el contador local */
+    }
+  }
+
+  /* ===== Realtime (sustituye al polling) ===== */
+  let unsubOrders: (() => void) | null = null;
+  let unsubMenu: (() => void) | null = null;
+
+  function onComandaEvent(e: { action: string; record: RecordModel }) {
+    const rec = e.record;
+    const status = (rec as any).status as OrderStatus | undefined;
+
+    if (e.action === "delete" || (status && status !== "active")) {
+      removeByRecordId(rec.id);
+    } else {
+      upsertOrder(recordToOrder(rec));
+    }
+    persist();
+  }
+
+  function onMenuEvent(e: { action: string; record: RecordModel }) {
+    if (e.action === "delete") return;
+    if (!menuRecordId.value) menuRecordId.value = e.record.id;
+    // Solo se refleja "agotados" en vivo; NO se reescribe la vista/selección
+    // para no interrumpir a quien esté armando el menú o una orden.
+    soldOut.value = ((e.record as any).sold_out as string[]) ?? [];
+  }
+
+  async function startLive() {
+    if (!import.meta.client) return;
+    try {
+      unsubOrders = await subscribe(COMANDAS_COLLECTION, onComandaEvent, "*");
+      unsubMenu = await subscribe("menu", onMenuEvent, "*");
+      live.value = true;
+    } catch {
+      live.value = false;
+    }
+  }
+
+  async function stopLive() {
+    try {
+      if (unsubOrders) unsubOrders();
+      else await unsubscribe(COMANDAS_COLLECTION);
+    } catch {
+      /* noop */
+    }
+    try {
+      if (unsubMenu) unsubMenu();
+      else await unsubscribe("menu");
+    } catch {
+      /* noop */
+    }
+    unsubOrders = null;
+    unsubMenu = null;
+    live.value = false;
+  }
+
+  // Reconciliación puntual (al recuperar foco / reconexión). No es polling:
+  // se dispara por evento, no por temporizador.
+  async function resync() {
     if (isRefreshing.value) return;
     isRefreshing.value = true;
     try {
-      await Promise.all([loadOrders(), refreshSoldOut()]);
+      await Promise.all([loadActiveOrders(), refreshSoldOut(), seedCounter()]);
     } finally {
       isRefreshing.value = false;
     }
   }
 
-  let refreshTimer: ReturnType<typeof setInterval> | undefined;
   function onVisibility() {
-    if (import.meta.client && !document.hidden) refreshLive();
-  }
-  function startAutoRefresh() {
-    if (!import.meta.client) return;
-    stopAutoRefresh();
-    refreshTimer = setInterval(() => {
-      if (document.hidden) return; // no gastes red en segundo plano
-      refreshLive();
-    }, AUTO_REFRESH_MS);
-    document.addEventListener("visibilitychange", onVisibility);
-  }
-  function stopAutoRefresh() {
-    if (refreshTimer) {
-      clearInterval(refreshTimer);
-      refreshTimer = undefined;
-    }
-    if (import.meta.client) {
-      document.removeEventListener("visibilitychange", onVisibility);
-    }
+    if (import.meta.client && !document.hidden) resync();
   }
 
-  /* ===== Persistencia local (órdenes + cache offline) ===== */
+  /* ===== Persistencia local (cache offline de las activas) ===== */
   function persist() {
     if (import.meta.server) return;
     localStorage.setItem(
@@ -335,7 +410,6 @@ function createComandasStore() {
         localStorage.removeItem(STORAGE_KEY);
         return;
       }
-      // Solo se restauran las órdenes locales; el menú lo manda la BD.
       counter.value = s.counter || 1;
       orders.value = s.orders || [];
     } catch {
@@ -381,9 +455,8 @@ function createComandasStore() {
       bebidas: activeDishes.bebidas,
       date: prettyDate.value,
     });
-    const wa = openBlankTab(); // dentro del gesto del click
+    const wa = openBlankTab();
 
-    // 1) Primero la BD: guarda la selección en el único registro de `menu`.
     savingMenu.value = true;
     toast("Guardando menú…");
     try {
@@ -393,7 +466,6 @@ function createComandasStore() {
           sold_out: soldOut.value,
         });
       } else {
-        // Solo por si la colección estuviera vacía; normalmente ya existe.
         const created = await createItem("menu", {
           dishes: catalog.value,
           active: activeDishes,
@@ -402,7 +474,6 @@ function createComandasStore() {
         menuRecordId.value = (created as unknown as MenuRecord).id;
       }
       toast("Menú guardado ✅");
-      // 2) Luego WhatsApp con el menú del día.
       sendToTab(wa, text);
     } catch {
       wa?.close();
@@ -444,9 +515,8 @@ function createComandasStore() {
     persist();
 
     const text = formatSoldOut(n, nowAvailable);
-    const wa = openBlankTab(); // dentro del gesto del click
+    const wa = openBlankTab();
 
-    // 1) Primero la BD (lo ve el cliente en vivo).
     if (menuRecordId.value) {
       try {
         await updateItem("menu", menuRecordId.value, {
@@ -456,7 +526,6 @@ function createComandasStore() {
         /* queda en cache local; se reintenta al siguiente cambio */
       }
     }
-    // 2) Luego WhatsApp.
     sendToTab(wa, text);
     toast(
       nowAvailable ? `Avisando: ${n} disponible` : `Avisando: se agotó ${n}`,
@@ -475,15 +544,9 @@ function createComandasStore() {
     customer.address = "";
   }
 
-  function advance(msg: string) {
-    counter.value += 1;
-    clearCart();
-    persist();
-    toast(msg);
-  }
-
   async function send() {
-    if (!itemCount.value) return;
+    if (!itemCount.value || sending.value) return;
+    sending.value = true;
 
     const order: StoredOrder = {
       id: `${counter.value}-${Date.now()}`,
@@ -494,9 +557,9 @@ function createComandasStore() {
       fulfillDate: fulfillDate.value,
       customer: mode.value === "domicilio" ? { ...customer } : undefined,
       createdAt: Date.now(),
+      status: "active",
     };
 
-    // El texto se arma ANTES de vaciar el carrito.
     const text = formatOrder({
       orderNumber: order.number,
       cart: order.cart,
@@ -508,69 +571,107 @@ function createComandasStore() {
       fulfillDate: order.fulfillDate,
     });
 
-    const wa = openBlankTab(); // dentro del gesto del click
+    const wa = openBlankTab();
 
-    // 1) Primero la BD.
+    // 1) Primero la BD. Payload completo en `data` + columnas denormalizadas
+    //    para el tablero (status) y el reporte EOD.
     try {
       const rec = await createItem(COMANDAS_COLLECTION, {
         [COMANDAS_FIELD]: order,
+        status: "active",
+        number: order.number,
+        mode: order.mode,
+        fulfill_date: order.fulfillDate,
+        biz_date: todayISO(),
       });
       order.recordId = rec.id;
     } catch {
       toast("No se guardó en el servidor; se envía igual");
     }
 
-    // 2) Reflejar local + cache.
-    orders.value.push(order);
-    persist();
+    // 2) Reflejar local (realtime hará el eco; upsert por recordId lo dedup.).
+    upsertOrder(order);
 
     // 3) Luego WhatsApp.
     sendToTab(wa, text);
-    advance("Abriendo WhatsApp…");
+    advanceCounter("Abriendo WhatsApp…");
+    sending.value = false;
+  }
+
+  // Igual que antes pero SIN borrar órdenes: solo avanza el contador y limpia.
+  function advanceCounter(msg: string) {
+    counter.value += 1;
+    clearCart();
+    persist();
+    toast(msg);
   }
 
   async function completeOrder(o: StoredOrder) {
     const text = formatReady(o.number, o.mode, o.customer);
     const wa = openBlankTab();
 
-    // 1) Primero la BD.
+    // 1) Primero la BD: soft-delete (queda para el reporte EOD).
     try {
-      if (o.recordId) await deleteItem(COMANDAS_COLLECTION, o.recordId);
+      if (o.recordId) {
+        await updateItem(COMANDAS_COLLECTION, o.recordId, {
+          status: "completed",
+        });
+      }
     } catch (e) {
-      console.error("No se pudo borrar la orden en el servidor", e);
+      console.error("No se pudo marcar completada en el servidor", e);
     }
-    // 2) Local.
-    removeOrder(o.id);
+    // 2) Fuera del tablero (localmente; realtime lo confirmará).
+    orders.value = orders.value.filter((x) => x.id !== o.id);
+    persist();
     // 3) WhatsApp.
     sendToTab(wa, text);
     toast(`Orden #${o.number} lista`);
   }
 
   async function discardOrder(o: StoredOrder) {
-    // 1) Primero la BD.
     try {
-      if (o.recordId) await deleteItem(COMANDAS_COLLECTION, o.recordId);
+      if (o.recordId) {
+        await updateItem(COMANDAS_COLLECTION, o.recordId, {
+          status: "cancelled",
+        });
+      }
     } catch (e) {
-      console.error("No se pudo borrar la orden en el servidor", e);
+      console.error("No se pudo cancelar en el servidor", e);
     }
-    // 2) Local.
-    removeOrder(o.id);
+    orders.value = orders.value.filter((x) => x.id !== o.id);
+    persist();
     toast(`Orden #${o.number} descartada`);
   }
 
-  function removeOrder(id: string) {
-    orders.value = orders.value.filter((x) => x.id !== id);
-    persist();
+  // Reabrir una orden completada/cancelada por error -> vuelve a `active`.
+  async function reopenOrder(recordId: string) {
+    try {
+      const rec = await updateItem(COMANDAS_COLLECTION, recordId, {
+        status: "active",
+      });
+      upsertOrder(recordToOrder(rec));
+      persist();
+      toast("Orden reabierta");
+    } catch (e) {
+      console.error("No se pudo reabrir", e);
+      toast("No se pudo reabrir");
+    }
   }
 
-  onMounted(() => {
-    load(); // órdenes locales (pintado instantáneo)
-    loadMenu(); // catálogo + selección desde PocketBase
-    loadOrders(); // órdenes desde PocketBase
-    startAutoRefresh(); // polling en vivo
+  onMounted(async () => {
+    load(); // cache local (pintado instantáneo)
+    await loadMenu(); // catálogo + selección + menuRecordId
+    await Promise.all([loadActiveOrders(), seedCounter()]);
+    await startLive(); // realtime en vez de polling
+    document.addEventListener("visibilitychange", onVisibility);
   });
 
-  onBeforeUnmount(stopAutoRefresh);
+  onBeforeUnmount(() => {
+    if (import.meta.client) {
+      document.removeEventListener("visibilitychange", onVisibility);
+    }
+    stopLive();
+  });
 
   return {
     // estado
@@ -590,8 +691,9 @@ function createComandasStore() {
     menuLoading,
     savingMenu,
     isRefreshing,
+    live,
+    sending,
     minDate: todayISO(),
-    autoRefreshMs: AUTO_REFRESH_MS,
     // computed
     stats,
     statCards,
@@ -614,7 +716,8 @@ function createComandasStore() {
     send,
     completeOrder,
     discardOrder,
-    refreshNow: refreshLive,
+    reopenOrder,
+    refreshNow: resync,
   };
 }
 

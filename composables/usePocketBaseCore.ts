@@ -8,7 +8,7 @@ import {
   clearCache,
   clearCachePattern,
 } from "./cacheSingleton";
-import type { ListResult, RecordModel } from "pocketbase";
+import type { ListResult, RecordModel, UnsubscribeFunc } from "pocketbase";
 
 export default function usePocketBaseCore() {
   const pb = usePocketBase();
@@ -55,7 +55,7 @@ export default function usePocketBaseCore() {
     expand: string | null = null,
     fields: string[] | null = null,
     ignoreCache: boolean = false,
-    options: any = {} // New parameter to handle request overrides
+    options: any = {}, // New parameter to handle request overrides
   ): Promise<ListResult<RecordModel>> => {
     const cacheKey = getCacheKey("fetchCollection", {
       collection,
@@ -93,8 +93,8 @@ export default function usePocketBaseCore() {
       if (fields) {
         response.items = response.items.map((item) =>
           Object.fromEntries(
-            Object.entries(item).filter(([k]) => fields.includes(k))
-          )
+            Object.entries(item).filter(([k]) => fields.includes(k)),
+          ),
         ) as any;
       }
 
@@ -114,7 +114,7 @@ export default function usePocketBaseCore() {
 
   const fetchRecord = async (
     collection: string,
-    id: string | number
+    id: string | number,
   ): Promise<RecordModel> => {
     const stringId = id.toString();
     const cacheKey = getCacheKey("fetchRecord", { collection, id: stringId });
@@ -137,7 +137,7 @@ export default function usePocketBaseCore() {
 
   const createItem = async (
     collection: string,
-    data: Record<string, any>
+    data: Record<string, any>,
   ): Promise<RecordModel> => {
     const record = await pb.collection(collection).create(data);
     invalidateCollectionCache(collection);
@@ -147,7 +147,7 @@ export default function usePocketBaseCore() {
   const updateItem = async (
     collection: string,
     id: string,
-    data: Record<string, any>
+    data: Record<string, any>,
   ): Promise<RecordModel> => {
     const record = await pb.collection(collection).update(id, data);
     invalidateCollectionCache(collection);
@@ -157,7 +157,7 @@ export default function usePocketBaseCore() {
 
   const deleteItem = async (
     collection: string,
-    id: string
+    id: string,
   ): Promise<boolean> => {
     await pb.collection(collection).delete(id);
     invalidateCollectionCache(collection);
@@ -169,7 +169,7 @@ export default function usePocketBaseCore() {
     file: File,
     collection: string,
     recordId: string,
-    field: string
+    field: string,
   ): Promise<RecordModel> => {
     const formData = new FormData();
     formData.append(field, file);
@@ -188,6 +188,37 @@ export default function usePocketBaseCore() {
     return pb.files.getURL(record, filename);
   };
 
+  /* ===== Realtime ===== *
+   * Wraps PocketBase SSE subscriptions. `topic` is "*" for the whole
+   * collection or a record id for a single record. The callback receives
+   * { action: "create" | "update" | "delete", record }. Returns an
+   * unsubscribe function. Client-only (no SSE during SSR).
+   */
+  const subscribe = async (
+    collection: string,
+    callback: (e: { action: string; record: RecordModel }) => void,
+    topic: string = "*",
+    options: any = {},
+  ): Promise<UnsubscribeFunc> => {
+    if (!process.client) {
+      return async () => {};
+    }
+    // A realtime change makes any cached list for this collection stale.
+    const wrapped = (e: { action: string; record: RecordModel }) => {
+      invalidateCollectionCache(collection);
+      callback(e);
+    };
+    return pb.collection(collection).subscribe(topic, wrapped, options);
+  };
+
+  const unsubscribe = async (
+    collection: string,
+    topic?: string,
+  ): Promise<void> => {
+    if (!process.client) return;
+    await pb.collection(collection).unsubscribe(topic);
+  };
+
   return {
     user,
     isValid,
@@ -200,5 +231,7 @@ export default function usePocketBaseCore() {
     invalidateCollectionCache,
     isUserVerified,
     getFileUrl,
+    subscribe,
+    unsubscribe,
   };
 }
