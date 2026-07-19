@@ -1,14 +1,5 @@
 <template>
   <div class="min-h-screen bg-background text-foreground font-body">
-    <Head>
-      <Link rel="preconnect" href="https://fonts.googleapis.com" />
-      <Link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" />
-      <Link
-        href="https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Roboto:wght@400;500;700&display=swap"
-        rel="stylesheet"
-      />
-    </Head>
-
     <SeoMeta :follow="false" />
 
     <!-- Cargando -->
@@ -61,46 +52,6 @@
 
     <template v-else>
       <!-- Hero -->
-      <header
-        class="relative overflow-hidden border-b border-border bg-card shadow-sm"
-      >
-        <div
-          class="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-transparent pointer-events-none"
-        ></div>
-
-        <div
-          class="relative mx-auto flex max-w-7xl items-center gap-5 px-5 py-4"
-        >
-          <div
-            class="shrink-0 overflow-hidden rounded-full border-2 border-background bg-muted shadow-sm"
-          >
-            <img
-              :src="logoSrc"
-              alt="Logo del restaurante"
-              class="h-16 w-16 object-cover sm:h-20 sm:w-20"
-            />
-          </div>
-
-          <div class="flex flex-col justify-center">
-            <p
-              class="mb-0.5 text-xs font-bold uppercase tracking-widest text-primary"
-            >
-              Comida corrida
-            </p>
-
-            <h1
-              class="font-heading text-2xl font-extrabold tracking-tight text-foreground sm:text-3xl"
-            >
-              Breezy Meals
-            </h1>
-
-            <p class="text-sm font-medium text-muted-foreground">
-              Menú de hoy / Today's Menu
-            </p>
-          </div>
-        </div>
-      </header>
-
       <main class="mx-auto max-w-lg space-y-8 px-5 pb-44 pt-6">
         <!-- Instrucciones -->
         <section class="rounded-lg bg-primary/5 border border-primary/10 p-4">
@@ -354,17 +305,6 @@
   </div>
 </template>
 
-<style>
-.font-body {
-  font-family: "Roboto", sans-serif;
-}
-.font-heading {
-  font-family: "Alfa Slab One", cursive !important;
-  font-weight: 300 !important;
-  color: var(--primary) !important;
-}
-</style>
-
 <script lang="ts" setup>
 import { Card } from "@common/components/ui/card";
 import { Button } from "@common/components/ui/button";
@@ -394,7 +334,7 @@ import {
 } from "~/utils/comandas";
 import { MODE_LABEL, type OrderMode } from "~/composables/useWhatsappOrder";
 
-definePageMeta({ layout: "none" });
+definePageMeta({ layout: "breezy" });
 
 const { fetchCollection } = usePocketBaseCore();
 const { formatCustomerOrder } = useMenuLink();
@@ -443,9 +383,6 @@ onMounted(load);
 const active = computed<DayDishes>(() => record.value?.active ?? EMPTY_DISHES);
 const soldOut = computed<string[]>(() => record.value?.sold_out ?? []);
 const isOut = (n: string) => soldOut.value.includes(n);
-
-const logoSrc =
-  "https://cdn.shopify.com/oxygen-v2/57245/154448/316060/3919871/assets/breezy-BBRcmAK6.png";
 
 const cart = reactive<Record<string, number>>({});
 const mode = ref<OrderMode>("llevar");
