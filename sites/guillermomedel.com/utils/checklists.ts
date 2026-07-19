@@ -1,22 +1,35 @@
 /*
- * Tipos y helpers puros para Checklists. Espeja la forma de ~/utils/comandas:
- * las PLANTILLAS viven en el registro único `checklists` (campo JSON `data`) y
- * los RESULTADOS del día ("runs") en la colección `checklist_runs`.
+ * Pure types + helpers for Checklists.
+ *
+ * TEMPLATES and RESULTS live in ONE PocketBase record (`checklists`), in the
+ * JSON `data` field:
+ *   data = { version, lists:[...], runs: { [YYYY-MM-DD]: { [checklistId]: run } } }
+ *
+ * Scheduling is per weekday: each list (and optionally each item) declares the
+ * weekdays it applies to. Sunday (0) is the closed day, so nothing schedules
+ * there by default. Weekday numbering follows JS Date.getDay(): 0=Sun .. 6=Sat.
  */
 
-export type ChecklistFrequency = "daily" | "weekly" | "shift" | "adhoc";
 export type ItemKind = "check" | "number" | "text";
 export type RunStatus = "in_progress" | "done";
 
+// Days the business is open (Mon–Sat). Sunday (0) is closed.
+export const OPEN_DAYS = [1, 2, 3, 4, 5, 6];
+
+// Short labels indexed by getDay() (0=Sun .. 6=Sat).
+export const WEEKDAY_SHORT = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
+
 export interface ChecklistItem {
-  id: string; // ESTABLE: no cambia aunque edites el label (clave del reporte).
+  id: string; // STABLE: doesn't change when you edit the label (report key).
   label: string;
   kind?: ItemKind; // default "check"
   required?: boolean;
-  unit?: string; // "°C", "kg" — para kind "number"
-  min?: number; // rango aceptable -> pass/fail
+  unit?: string; // "°C", "kg" — for kind "number"
+  min?: number; // acceptable range -> pass/fail
   max?: number;
   hint?: string;
+  // Weekdays this item runs on. Falls back to the list's `days`, then OPEN_DAYS.
+  days?: number[];
 }
 
 export interface ChecklistSection {
@@ -29,62 +42,140 @@ export interface ChecklistTemplate {
   id: string; // "apertura", "cierre"
   title: string;
   description?: string;
-  icon?: string; // nombre de icono lucide (opcional)
-  frequency: ChecklistFrequency;
-  order: number; // orden de despliegue
-  active: boolean; // ocultar sin borrar
+  icon?: string; // lucide icon name (optional)
+  order: number; // display order
+  active: boolean; // hide without deleting
+  // Default weekdays for every item in this list (item-level `days` overrides).
+  days?: number[];
   sections: ChecklistSection[];
 }
 
 export interface ChecklistsData {
   version: number;
   lists: ChecklistTemplate[];
-  // Estado de "Completadas": los ticks/resultados viven en el MISMO objeto,
-  // anidados por día operativo. runs[bizDate][checklistId].
+  // Ticks/results, nested by business day. runs[YYYY-MM-DD][checklistId].
   runs?: RunsByDate;
 }
 
-/** Resultado de un ítem dentro de un run. */
+/** Result of a single item within a run. */
 export interface ItemResult {
   done: boolean;
   value?: number | string; // kind number / text
-  at?: number; // timestamp del check
-  by?: string; // quién lo marcó
+  at?: number; // check timestamp
+  by?: string; // who marked it
 }
 
-/** Ejecución de una checklist en un día operativo. */
+/** A checklist run for one specific date. */
 export interface ChecklistRun {
   checklistId: string;
-  bizDate: string; // YYYY-MM-DD (día operativo)
+  bizDate: string; // YYYY-MM-DD
   startedAt: number;
   completedAt?: number;
   by?: string;
   status?: RunStatus;
-  results: Record<string, ItemResult>; // itemId -> resultado
+  results: Record<string, ItemResult>; // itemId -> result
 }
 
-/** runs[bizDate][checklistId] -> run del día. */
+/** runs[YYYY-MM-DD][checklistId] -> that date's run. */
 export type RunsByDate = Record<string, Record<string, ChecklistRun>>;
 
-/** Registro de PocketBase para las plantillas (colección `checklists`). */
+/** PocketBase record for the whole thing (collection `checklists`). */
 export interface ChecklistsRecord {
   id: string;
   data?: ChecklistsData;
 }
 
-export const FREQ_LABEL: Record<ChecklistFrequency, string> = {
-  daily: "Diario",
-  weekly: "Semanal",
-  shift: "Por turno",
-  adhoc: "Eventual",
-};
+/* ===== Scheduling ===== */
 
-/** Aplana todos los ítems de una plantilla. */
-export function allItems(t: ChecklistTemplate): ChecklistItem[] {
-  return t.sections.flatMap((s) => s.items);
+/** Weekdays an item runs on: item.days -> list.days -> OPEN_DAYS. */
+export function resolveDays(
+  t: ChecklistTemplate,
+  item: ChecklistItem,
+): number[] {
+  return item.days ?? t.days ?? OPEN_DAYS;
 }
 
-/** ¿El ítem cuenta como "hecho"? */
+export function itemOnDay(
+  t: ChecklistTemplate,
+  item: ChecklistItem,
+  weekday: number,
+): boolean {
+  return resolveDays(t, item).includes(weekday);
+}
+
+/** A view of the template holding only the items scheduled for `weekday`. */
+export function templateForDay(
+  t: ChecklistTemplate,
+  weekday: number,
+): ChecklistTemplate {
+  const sections = t.sections
+    .map((s) => ({
+      ...s,
+      items: s.items.filter((it) => itemOnDay(t, it, weekday)),
+    }))
+    .filter((s) => s.items.length > 0);
+  return { ...t, sections };
+}
+
+/** Does this list have any item scheduled for `weekday`? */
+export function listOnDay(t: ChecklistTemplate, weekday: number): boolean {
+  return t.sections.some((s) =>
+    s.items.some((it) => itemOnDay(t, it, weekday)),
+  );
+}
+
+/* ===== Dates (local, date-only — no timezone drift) ===== */
+
+export function isoToDate(iso: string): Date {
+  const [y, m, d] = iso.split("-").map(Number);
+  return new Date(y, m - 1, d);
+}
+export function dateToISO(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${dd}`;
+}
+/** Local calendar date (NOT UTC), so the day is correct in any timezone. */
+export function todayISO(): string {
+  return dateToISO(new Date());
+}
+export function addDaysISO(iso: string, n: number): string {
+  const d = isoToDate(iso);
+  d.setDate(d.getDate() + n);
+  return dateToISO(d);
+}
+export function weekdayOf(iso: string): number {
+  return isoToDate(iso).getDay();
+}
+export function isClosedDay(iso: string): boolean {
+  return weekdayOf(iso) === 0; // Sunday
+}
+/** Monday of the week containing `iso`. */
+export function mondayOfWeek(iso: string): string {
+  const wd = weekdayOf(iso); // 0..6
+  const diff = wd === 0 ? -6 : 1 - wd; // shift back to Monday
+  return addDaysISO(iso, diff);
+}
+/** The 7 dates (Mon..Sun) of the week containing `iso`. */
+export function weekDates(iso: string): string[] {
+  const mon = mondayOfWeek(iso);
+  return Array.from({ length: 7 }, (_, i) => addDaysISO(mon, i));
+}
+export function dayNumber(iso: string): string {
+  return String(isoToDate(iso).getDate());
+}
+export function prettyDate(iso: string): string {
+  const s = isoToDate(iso).toLocaleDateString("es-MX", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+  });
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
+/* ===== Item evaluation ===== */
+
 export function isItemDone(item: ChecklistItem, r?: ItemResult): boolean {
   if (!r) return false;
   const kind = item.kind ?? "check";
@@ -95,10 +186,8 @@ export function isItemDone(item: ChecklistItem, r?: ItemResult): boolean {
 }
 
 /**
- * Pass/fail para ítems numéricos según min/max.
- *  true  -> dentro de rango
- *  false -> fuera de rango
- *  null  -> no aplica (no numérico o sin valor)
+ * Pass/fail for numeric items against min/max.
+ *  true -> within range, false -> out of range, null -> n/a.
  */
 export function isItemInRange(
   item: ChecklistItem,
@@ -116,12 +205,13 @@ export interface Progress {
   total: number;
   reqTotal: number;
   reqDone: number;
-  complete: boolean; // todos los ítems hechos
-  requiredMet: boolean; // todos los requeridos hechos
+  complete: boolean;
+  requiredMet: boolean;
 }
 
+/** Progress over the items of `t` (pass a day-filtered template for a day view). */
 export function progress(t: ChecklistTemplate, run?: ChecklistRun): Progress {
-  const items = allItems(t);
+  const items = t.sections.flatMap((s) => s.items);
   const results = run?.results ?? {};
   let done = 0;
   let reqTotal = 0;

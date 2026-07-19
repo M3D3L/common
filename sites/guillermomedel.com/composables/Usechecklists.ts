@@ -8,9 +8,20 @@ import {
   onBeforeUnmount,
   type InjectionKey,
 } from "vue";
-import { todayISO } from "~/utils/comandas";
 import {
   progress,
+  isItemDone,
+  isItemInRange,
+  templateForDay,
+  listOnDay,
+  weekdayOf,
+  weekDates,
+  dayNumber,
+  isClosedDay,
+  addDaysISO,
+  todayISO,
+  prettyDate as prettyOf,
+  WEEKDAY_SHORT,
   type ChecklistTemplate,
   type ChecklistsData,
   type ChecklistsRecord,
@@ -24,20 +35,19 @@ import type { RecordModel } from "pocketbase";
 /* ===== Config ===== */
 const STORAGE_KEY = "checklists";
 
-// UN solo registro guarda TODO: plantillas + completadas, en el campo `data`.
-//   data = { version, lists:[...], runs: { [bizDate]: { [checklistId]: run } } }
+// A SINGLE record stores EVERYTHING in `data`:
+//   { version, lists:[...], runs: { [date]: { [checklistId]: run } } }
 const COLLECTION = "checklists";
-const FIELD = "data"; // ⚠️ nombre del campo JSON
+const FIELD = "data"; // ⚠️ JSON field name
 
-// Los ticks rápidos se agrupan antes de escribir a la BD.
+// Rapid ticks are batched before writing to the DB.
 const SAVE_DEBOUNCE_MS = 600;
 
 /**
- * Fuente única de verdad de Checklists, ahora en UN solo registro.
- *  - `lists` -> plantillas.
- *  - `runs`  -> ticks/resultados, anidados por día operativo (bizDate). Sirve
- *    como historial y se "resetea" solo (cada día es una llave distinta).
- *  - EN VIVO con realtime del registro; se rehidrata al refrescar.
+ * Single source of truth for Checklists.
+ *  - Tasks are scheduled per weekday; the active view is one selectable date.
+ *  - `runs` (ticks/results) are nested by date and double as history.
+ *  - Kept LIVE via record realtime; rehydrates on refresh.
  */
 function createChecklistsStore() {
   const {
@@ -52,69 +62,130 @@ function createChecklistsStore() {
   const me: string =
     (user as any)?.name || (user as any)?.email || (user as any)?.id || "";
 
-  /* ===== Estado ===== */
-  const view = ref<"index" | "run" | "history">("index");
+  const { formatChecklist, formatChecklistReopen, waLink } = useWhatsappOrder();
+
+  /* ===== State ===== */
   const recordId = ref<string | null>(null);
-  const version = ref(1);
+  const version = ref(2);
   const templates = ref<ChecklistTemplate[]>([]);
-  // runsByDate[bizDate][checklistId] = run  (se conserva completo para no
-  // perder historial de otros días al reescribir el registro).
+  // runsByDate[date][checklistId] = run (kept in full so we never drop history).
   const runsByDate = reactive<RunsByDate>({});
-  const activeId = ref<string | null>(null);
+  // The date currently being viewed/edited (defaults to today).
+  const selectedDate = ref<string>(todayISO());
 
   const loading = ref(true);
   const isRefreshing = ref(false);
   const live = ref(false);
   const toastMsg = ref("");
 
-  /* ===== Acceso a los runs de HOY ===== */
-  function today(): Record<string, ChecklistRun> {
-    const d = todayISO();
+  /* ===== WhatsApp (DB first, then WhatsApp; pop-up-safe) ===== */
+  function openBlankTab(): Window | null {
+    return import.meta.client ? window.open("", "_blank") : null;
+  }
+  function sendToTab(tab: Window | null, text: string) {
+    const url = waLink(text);
+    if (tab) tab.location.href = url;
+    else if (import.meta.client) window.open(url, "_blank");
+  }
+  function buildChecklistMessage(t: ChecklistTemplate, run?: ChecklistRun) {
+    const sections = t.sections.map((s) => ({
+      label: s.label,
+      lines: s.items.map((it) => {
+        const r = run?.results?.[it.id];
+        const done = isItemDone(it, r);
+        let detail: string | undefined;
+        const kind = it.kind ?? "check";
+        if (kind === "number" && typeof r?.value === "number") {
+          const range = isItemInRange(it, r);
+          const flag =
+            range === false ? " ⚠️ fuera de rango" : range === true ? " ✓" : "";
+          detail = `${r.value}${it.unit ?? ""}${flag}`;
+        } else if (kind === "text" && typeof r?.value === "string") {
+          detail = r.value;
+        }
+        return { label: it.label, done, detail, required: it.required };
+      }),
+    }));
+    const p = progress(t, run);
+    return {
+      title: t.title,
+      date: prettyOf(selectedDate.value),
+      by: run?.by,
+      sections,
+      doneCount: p.done,
+      totalCount: p.total,
+      complete: p.complete,
+    };
+  }
+
+  /* ===== Runs for the SELECTED date ===== */
+  function dayMap(): Record<string, ChecklistRun> {
+    const d = selectedDate.value;
     if (!runsByDate[d]) runsByDate[d] = {};
     return runsByDate[d];
   }
   const runFor = (id: string): ChecklistRun | undefined =>
-    runsByDate[todayISO()]?.[id];
-  const runs = computed(() => runsByDate[todayISO()] ?? {});
+    runsByDate[selectedDate.value]?.[id];
 
-  /* ===== Computed ===== */
-  const prettyDate = computed(() => {
-    const d = new Date().toLocaleDateString("es-MX", {
-      weekday: "long",
-      day: "numeric",
-      month: "long",
-    });
-    return d.charAt(0).toUpperCase() + d.slice(1);
-  });
+  function blankRun(checklistId: string): ChecklistRun {
+    return {
+      checklistId,
+      bizDate: selectedDate.value,
+      startedAt: Date.now(),
+      by: me,
+      status: "in_progress",
+      results: {},
+    };
+  }
+  function ensureRun(id: string): ChecklistRun {
+    const map = dayMap();
+    if (!map[id]) map[id] = blankRun(id);
+    return map[id];
+  }
+
+  /* ===== Week strip + day view ===== */
+  const selectedWeekday = computed(() => weekdayOf(selectedDate.value));
+  const isSelectedClosed = computed(() => isClosedDay(selectedDate.value));
+  const selectedPretty = computed(() => prettyOf(selectedDate.value));
+  const isTodaySelected = computed(() => selectedDate.value === todayISO());
+
+  const weekStrip = computed(() =>
+    weekDates(selectedDate.value).map((date) => {
+      const wd = weekdayOf(date);
+      return {
+        date,
+        weekday: wd,
+        short: WEEKDAY_SHORT[wd],
+        num: dayNumber(date),
+        isToday: date === todayISO(),
+        isSelected: date === selectedDate.value,
+        isClosed: wd === 0,
+      };
+    }),
+  );
 
   const activeTemplates = computed(() =>
     templates.value.filter((t) => t.active !== false),
   );
   const templatesEmpty = computed(() => templates.value.length === 0);
 
-  const current = computed<ChecklistTemplate | null>(() =>
-    activeId.value
-      ? (templates.value.find((t) => t.id === activeId.value) ?? null)
-      : null,
-  );
-  const currentRun = computed<ChecklistRun | null>(() =>
-    activeId.value ? (runFor(activeId.value) ?? null) : null,
-  );
-  const canComplete = computed(() =>
-    current.value
-      ? progress(current.value, currentRun.value ?? undefined).requiredMet
-      : false,
-  );
-  const completedCount = computed(
-    () =>
-      activeTemplates.value.filter((t) => statusFor(t.id) === "done").length,
+  // Templates that have tasks for the selected day, filtered down to that day.
+  const dayLists = computed(() =>
+    activeTemplates.value
+      .filter((t) => listOnDay(t, selectedWeekday.value))
+      .map((t) => templateForDay(t, selectedWeekday.value)),
   );
 
-  /* ===== Evaluadores con estado ===== */
+  const dayTotal = computed(() => dayLists.value.length);
+  const completedCount = computed(
+    () => dayLists.value.filter((t) => statusFor(t.id) === "done").length,
+  );
+
+  /* ===== Stateful evaluators (all against the selected date) ===== */
   const progressFor = (id: string) => {
     const t = templates.value.find((x) => x.id === id);
     return t
-      ? progress(t, runFor(id))
+      ? progress(templateForDay(t, selectedWeekday.value), runFor(id))
       : {
           done: 0,
           total: 0,
@@ -129,24 +200,7 @@ function createChecklistsStore() {
   const resultFor = (id: string, itemId: string): ItemResult | undefined =>
     runFor(id)?.results?.[itemId];
 
-  /* ===== Runs ===== */
-  function blankRun(checklistId: string): ChecklistRun {
-    return {
-      checklistId,
-      bizDate: todayISO(),
-      startedAt: Date.now(),
-      by: me,
-      status: "in_progress",
-      results: {},
-    };
-  }
-  function ensureRun(id: string): ChecklistRun {
-    const map = today();
-    if (!map[id]) map[id] = blankRun(id);
-    return map[id];
-  }
-
-  /* ===== Ensamblar / aplicar el objeto `data` ===== */
+  /* ===== Assemble / apply the `data` object ===== */
   function buildData(): ChecklistsData {
     return {
       version: version.value,
@@ -154,23 +208,21 @@ function createChecklistsStore() {
       runs: JSON.parse(JSON.stringify(runsByDate)),
     };
   }
-
   function applyData(rec: ChecklistsRecord) {
     recordId.value = rec.id;
     const data = ((rec as any)[FIELD] as ChecklistsData) ?? {
-      version: 1,
+      version: 2,
       lists: [],
     };
-    version.value = data.version ?? 1;
+    version.value = data.version ?? 2;
     templates.value = (data.lists ?? [])
       .slice()
       .sort((a, b) => (a.order || 0) - (b.order || 0));
-    // Reemplaza runsByDate con lo del servidor (incluye todos los días).
     Object.keys(runsByDate).forEach((k) => delete runsByDate[k]);
     Object.assign(runsByDate, data.runs ?? {});
   }
 
-  /* ===== Cargar ===== */
+  /* ===== Load ===== */
   async function loadAll() {
     loading.value = true;
     try {
@@ -191,20 +243,19 @@ function createChecklistsStore() {
         templates.value = [];
       }
     } catch {
-      // Offline: se conserva el cache local.
+      // Offline: keep the local cache.
     } finally {
       loading.value = false;
     }
   }
 
-  /* ===== Guardar (optimista + debounce; escribe TODO el registro) ===== */
+  /* ===== Save (optimistic + debounce; writes the WHOLE record) ===== */
   let saveTimer: ReturnType<typeof setTimeout> | undefined;
   function scheduleSave() {
     persistLocal();
     if (saveTimer) clearTimeout(saveTimer);
     saveTimer = setTimeout(flushSave, SAVE_DEBOUNCE_MS);
   }
-
   async function flushSave() {
     if (saveTimer) {
       clearTimeout(saveTimer);
@@ -219,22 +270,18 @@ function createChecklistsStore() {
         recordId.value = rec.id;
       }
     } catch (e) {
-      console.error("No se pudo guardar checklists", e);
-      // Queda en cache local; se reintenta al próximo cambio o en resync.
+      console.error("Could not save checklists", e);
     }
   }
 
-  /* ===== Realtime + rehidratar al refrescar ===== */
+  /* ===== Realtime + rehydrate ===== */
   let unsub: (() => void) | null = null;
-
   function onEvent(e: { action: string; record: RecordModel }) {
     if (e.action === "delete") return;
-    // Si hay un guardado local pendiente, nuestro flush debe ganar.
-    if (saveTimer) return;
+    if (saveTimer) return; // pending local save wins
     applyData(e.record as unknown as ChecklistsRecord);
     persistLocal();
   }
-
   async function startLive() {
     if (!import.meta.client) return;
     try {
@@ -254,7 +301,6 @@ function createChecklistsStore() {
     unsub = null;
     live.value = false;
   }
-
   async function resync() {
     if (isRefreshing.value) return;
     isRefreshing.value = true;
@@ -268,7 +314,7 @@ function createChecklistsStore() {
     if (import.meta.client && !document.hidden) resync();
   }
 
-  /* ===== Cache local ===== */
+  /* ===== Local cache ===== */
   function persistLocal() {
     if (import.meta.server) return;
     localStorage.setItem(
@@ -287,7 +333,7 @@ function createChecklistsStore() {
       if (!raw) return;
       const s = JSON.parse(raw);
       recordId.value = s.recordId ?? null;
-      version.value = s.version ?? 1;
+      version.value = s.version ?? 2;
       templates.value = s.templates ?? [];
       Object.assign(runsByDate, s.runsByDate ?? {});
     } catch {
@@ -305,16 +351,21 @@ function createChecklistsStore() {
     }, 1800);
   }
 
-  /* ===== Acciones ===== */
-  function open(id: string) {
-    activeId.value = id;
-    view.value = "run";
+  /* ===== Day navigation ===== */
+  function selectDay(date: string) {
+    selectedDate.value = date;
   }
-  function back() {
-    view.value = "index";
-    activeId.value = null;
+  function goToday() {
+    selectedDate.value = todayISO();
+  }
+  function prevWeek() {
+    selectedDate.value = addDaysISO(selectedDate.value, -7);
+  }
+  function nextWeek() {
+    selectedDate.value = addDaysISO(selectedDate.value, 7);
   }
 
+  /* ===== Item actions (write to the selected date's run) ===== */
   function toggleItem(checklistId: string, itemId: string) {
     const run = ensureRun(checklistId);
     const done = !run.results[itemId]?.done;
@@ -324,7 +375,6 @@ function createChecklistsStore() {
     };
     scheduleSave();
   }
-
   function setValue(
     checklistId: string,
     itemId: string,
@@ -350,9 +400,17 @@ function createChecklistsStore() {
     run.completedAt = Date.now();
     run.status = "done";
     run.by = run.by || me;
-    await flushSave();
+
+    const t = templates.value.find((x) => x.id === id);
+    const dayT = t ? templateForDay(t, selectedWeekday.value) : null;
+    const wa = openBlankTab();
+
+    await flushSave(); // DB first
+
+    if (dayT) sendToTab(wa, formatChecklist(buildChecklistMessage(dayT, run)));
+    else wa?.close();
+
     toast("Checklist completada ✅");
-    if (view.value === "run") back();
   }
 
   async function reopenChecklist(id: string) {
@@ -360,7 +418,15 @@ function createChecklistsStore() {
     if (!run) return;
     run.status = "in_progress";
     run.completedAt = undefined;
+
+    const t = templates.value.find((x) => x.id === id);
+    const wa = openBlankTab();
+
     await flushSave();
+
+    if (t) sendToTab(wa, formatChecklistReopen(t.title, run.by));
+    else wa?.close();
+
     toast("Checklist reabierta");
   }
 
@@ -370,7 +436,6 @@ function createChecklistsStore() {
     await startLive();
     document.addEventListener("visibilitychange", onVisibility);
   });
-
   onBeforeUnmount(() => {
     if (import.meta.client) {
       document.removeEventListener("visibilitychange", onVisibility);
@@ -380,31 +445,35 @@ function createChecklistsStore() {
   });
 
   return {
-    // estado
-    view,
+    // state
     templates,
-    runs,
-    activeId,
+    selectedDate,
     loading,
     isRefreshing,
     live,
     toastMsg,
-    // computed
-    prettyDate,
+    // week + day view
+    weekStrip,
+    selectedWeekday,
+    isSelectedClosed,
+    selectedPretty,
+    isTodaySelected,
     activeTemplates,
     templatesEmpty,
-    current,
-    currentRun,
-    canComplete,
+    dayLists,
+    dayTotal,
     completedCount,
-    // evaluadores
+    // evaluators
     progressFor,
     statusFor,
     resultFor,
     runFor,
-    // acciones
-    open,
-    back,
+    // navigation
+    selectDay,
+    goToday,
+    prevWeek,
+    nextWeek,
+    // item actions
     toggleItem,
     setValue,
     completeChecklist,
@@ -417,14 +486,14 @@ export type ChecklistsStore = ReturnType<typeof createChecklistsStore>;
 
 const CHECKLISTS_KEY: InjectionKey<ChecklistsStore> = Symbol("checklists");
 
-/** Se llama UNA vez, en la página. Crea el store y lo comparte con las vistas. */
+/** Called ONCE, on the page. Creates the store and shares it with the views. */
 export function provideChecklists() {
   const store = createChecklistsStore();
   provide(CHECKLISTS_KEY, store);
   return store;
 }
 
-/** Lo usan las vistas hijas para leer el mismo store. */
+/** Used by child views to read the same store. */
 export function useChecklists() {
   const store = inject(CHECKLISTS_KEY);
   if (!store) {

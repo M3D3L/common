@@ -25,6 +25,23 @@ export interface FormatMenuArgs {
   date?: string;
 }
 
+/* ===== Checklists ===== */
+export interface ChecklistLine {
+  label: string;
+  done: boolean;
+  detail?: string; // ej. "3°C ✓" o "-10°C ⚠️ fuera de rango"
+  required?: boolean;
+}
+export interface FormatChecklistArgs {
+  title: string;
+  date?: string;
+  by?: string;
+  sections: { label: string; lines: ChecklistLine[] }[];
+  doneCount: number;
+  totalCount: number;
+  complete: boolean;
+}
+
 export const MODE_LABEL: Record<OrderMode, string> = {
   llevar: "Para llevar",
   aqui: "Para aquí",
@@ -190,6 +207,61 @@ export function useWhatsappOrder() {
     return msg;
   }
 
+  // === FORMATO DE CHECKLIST (reporte de turno al completar) ===
+  function formatChecklist({
+    title,
+    date,
+    by,
+    sections,
+    doneCount,
+    totalCount,
+    complete,
+  }: FormatChecklistArgs): string {
+    const lines: string[] = [];
+
+    lines.push(
+      complete ? "✅ *Checklist completada*" : "📋 *Checklist actualizada*",
+    );
+    lines.push(`*${title}*`);
+
+    const meta: string[] = [];
+    if (date) meta.push(`📅 ${date}`);
+    if (by) meta.push(`👤 ${by}`);
+    if (meta.length) lines.push(meta.join(" · "));
+
+    lines.push(`Progreso: ${doneCount}/${totalCount}`, "");
+
+    for (const s of sections) {
+      lines.push(`*${s.label}*`);
+      for (const ln of s.lines) {
+        const box = ln.done ? "✅" : "⬜";
+        let row = `${box} ${ln.label}`;
+        if (ln.detail) row += ` (${ln.detail})`;
+        if (!ln.done && ln.required) row += " — _obligatorio_";
+        lines.push(row);
+      }
+      lines.push("");
+    }
+
+    return lines.join("\n").trimEnd();
+  }
+
+  // Aviso corto al reabrir una checklist.
+  function formatChecklistReopen(title: string, by?: string): string {
+    return `♻️ *Checklist reabierta:* ${title}${by ? `\n👤 ${by}` : ""}`;
+  }
+
+  // Aviso de un solo ítem (por si quieres notificar cada cambio).
+  function formatChecklistItem(
+    title: string,
+    itemLabel: string,
+    done: boolean,
+    detail?: string,
+  ): string {
+    const box = done ? "✅" : "⬜";
+    return `📋 *${title}*\n${box} ${itemLabel}${detail ? ` (${detail})` : ""}`;
+  }
+
   function waLink(text: string, phone?: string): string {
     const encoded = encodeURIComponent(text);
     const cleanPhone = phone?.replace(/\D/g, "");
@@ -237,6 +309,9 @@ export function useWhatsappOrder() {
     formatMenu,
     formatSoldOut,
     formatReady,
+    formatChecklist,
+    formatChecklistReopen,
+    formatChecklistItem,
     waLink,
     isAppleDevice,
     openWhatsApp,
