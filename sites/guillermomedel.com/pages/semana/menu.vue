@@ -127,17 +127,20 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, reactive, computed, onMounted } from "vue";
 import { Button } from "@common/components/ui/button";
 import { Separator } from "@common/components/ui/separator";
 import { Toggle } from "@common/components/ui/toggle";
 import { Check } from "lucide-vue-next";
+import usePocketBase from "@common/composables/usePocketbase";
 import {
   groups,
   todayISO,
   type GroupKey,
   type DayDishes,
 } from "~/utils/comandas";
+import useAuth from "@common/composables/useAuth";
+
+const auth = useAuth();
 
 // Cuántos días hacia adelante ofrecer para configurar.
 const PREORDER_DAYS_AHEAD = 7;
@@ -295,5 +298,12 @@ async function save() {
 
 onMounted(load);
 
-definePageMeta({ layout: "breezy" });
+definePageMeta({
+  layout: "breezy",
+  middleware: defineNuxtRouteMiddleware(() => {
+    const pb = usePocketBase();
+    if (!pb.authStore.isValid || pb.authStore.model?.verified !== true)
+      return navigateTo("/");
+  }),
+});
 </script>
