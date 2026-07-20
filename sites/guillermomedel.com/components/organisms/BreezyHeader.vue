@@ -113,7 +113,7 @@ const open = ref(false);
 
 const links = [
   { to: "/menu", label: "Menú" },
-  // { to: "/semana", label: "Semanal" },
+  { to: "/semana", label: "Semanal" },
 ];
 
 const isActive = (to: string) =>

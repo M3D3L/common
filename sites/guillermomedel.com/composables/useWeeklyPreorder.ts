@@ -5,23 +5,41 @@ import {
   type PlacedOrder,
   type MenuRecord,
 } from "~/utils/comandas";
+import {
+  mondayOf,
+  addDays,
+  resolveDay,
+  type RotationConfig,
+  type WeekBlock,
+} from "~/utils/rotation";
 import type { OrderMode, Customer } from "~/composables/useWhatsappOrder";
 
-/** Un día del preorden: su menú disponible + el carrito del cliente. */
+/** Un día del preorden: su menú resuelto (por rotación) + el carrito. */
 export interface PreorderDay {
   date: string; // ISO YYYY-MM-DD
   label: string; // "Lunes 21 jul"
-  menu: DayDishes; // lo disponible ese día
+  blockName: string; // semana que cubre esa fecha
+  color: string;
+  menu: DayDishes;
   cart: Record<string, number>;
 }
 
-// El menú semanal vive en el registro singleton `menu`, bajo `weekly`,
-// indexado por fecha ISO -> platillos disponibles ese día.
-type WeeklyMenu = Record<string, DayDishes>;
-type MenuRecordWithWeekly = MenuRecord & { weekly?: WeeklyMenu };
+type MenuRecordFull = MenuRecord & {
+  week_blocks?: WeekBlock[];
+  rotation?: string[];
+  rotation_anchor?: string;
+  overrides?: RotationConfig["overrides"];
+};
 
-// Igual que PlacedOrder pero marcando que fue un preorden (queda dentro de `data`).
 type PreorderPayload = PlacedOrder & { preorder: true };
+
+// Cuántas semanas ORDENABLES mostrar (se cuentan semanas válidas, no de
+// calendario, para que el número sea estable aunque la semana en curso caiga).
+const PREORDER_WEEKS = 1;
+// Corte para ordenar una semana, en días antes de su lunes:
+//   0 = se puede ordenar hasta el lunes de esa semana (después, pasa a la
+//       siguiente). 1 = hasta el domingo previo. 2 = sábado previo, etc.
+const ORDER_CUTOFF_LEAD = 0;
 
 function dayLabel(iso: string): string {
   const d = new Date(iso + "T00:00:00");
@@ -33,13 +51,6 @@ function dayLabel(iso: string): string {
   return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
-/**
- * Flujo de preórdenes semanales para el cliente.
- *  - Lee `menu.weekly` (fechas de hoy en adelante) para saber qué se puede pedir.
- *  - Al enviar crea UNA comanda por día con carrito, reutilizando el mismo
- *    formato que el flujo normal. `biz_date = fulfill_date` (la fecha del día),
- *    para que el numerado y el reporte EOD queden por día de servicio real.
- */
 export function useWeeklyPreorder() {
   const { fetchCollection, createItem } = usePocketBaseCore();
   const { formatOrder, waLink } = useWhatsappOrder();
@@ -56,22 +67,18 @@ export function useWeeklyPreorder() {
 
   const isOut = (n: string) => soldOut.value.includes(n);
 
-  // Cuántos platillos distintos con cantidad > 0 en toda la semana.
   const itemCount = computed(() =>
     days.value.reduce(
-      (sum, d) => sum + Object.values(d.cart).filter((q) => q > 0).length,
+      (s, d) => s + Object.values(d.cart).filter((q) => q > 0).length,
       0,
     ),
   );
-
-  // Total de unidades (suma de cantidades) en toda la semana.
   const totalUnits = computed(() =>
     days.value.reduce(
-      (sum, d) => sum + Object.values(d.cart).reduce((a, b) => a + b, 0),
+      (s, d) => s + Object.values(d.cart).reduce((a, b) => a + b, 0),
       0,
     ),
   );
-
   const daysWithItems = computed(() =>
     days.value.filter((d) => Object.values(d.cart).some((q) => q > 0)),
   );
@@ -82,7 +89,6 @@ export function useWeeklyPreorder() {
     if (!day) return;
     day.cart[name] = (day.cart[name] || 0) + 1;
   }
-
   function setQty(date: string, name: string, delta: number) {
     const day = days.value.find((d) => d.date === date);
     if (!day) return;
@@ -110,34 +116,62 @@ export function useWeeklyPreorder() {
         null,
         true,
       );
-      const rec = res.items[0] as unknown as MenuRecordWithWeekly | undefined;
-      if (rec) {
-        soldOut.value = rec.sold_out ?? [];
-        const weekly = rec.weekly ?? {};
-        const today = todayISO();
-        days.value = Object.keys(weekly)
-          .filter((iso) => iso >= today) // solo hoy y futuro
-          .sort()
-          .map((iso) => ({
-            date: iso,
-            label: dayLabel(iso),
-            menu: {
-              guisos: weekly[iso]?.guisos ?? [],
-              sides: weekly[iso]?.sides ?? [],
-              bebidas: weekly[iso]?.bebidas ?? [],
-            },
-            cart: {},
-          }));
+      const rec = res.items[0] as unknown as MenuRecordFull | undefined;
+      if (!rec) return;
+
+      soldOut.value = rec.sold_out ?? [];
+      const cfg: RotationConfig = {
+        blocks: rec.week_blocks ?? [],
+        rotation: rec.rotation ?? [],
+        anchor: rec.rotation_anchor ?? "",
+        overrides: rec.overrides ?? {},
+      };
+
+      // Ventana: avanza semana por semana desde la actual, incluyendo solo las
+      // que aún están dentro del corte, hasta juntar PREORDER_WEEKS ordenables.
+      const today = todayISO();
+      const out: PreorderDay[] = [];
+      let mon = mondayOf(today);
+      let weeksAdded = 0;
+      let guard = 0;
+
+      while (weeksAdded < PREORDER_WEEKS && guard < 14) {
+        guard++;
+        const cutoff = addDays(mon, -ORDER_CUTOFF_LEAD); // último día para ordenar esa semana
+        if (today <= cutoff) {
+          let anyDay = false;
+          for (let k = 0; k < 5; k++) {
+            const date = addDays(mon, k); // Lun..Vie
+            if (date < today) continue; // sin días pasados
+            const resolved = resolveDay(date, cfg);
+            if (!resolved) continue; // cerrado / vacío / fin de semana
+            out.push({
+              date,
+              label: dayLabel(date),
+              blockName: resolved.block.name,
+              color: resolved.block.color,
+              menu: {
+                guisos: resolved.menu.guisos ?? [],
+                sides: resolved.menu.sides ?? [],
+                bebidas: resolved.menu.bebidas ?? [],
+              },
+              cart: {},
+            });
+            anyDay = true;
+          }
+          if (anyDay) weeksAdded++;
+        }
+        mon = addDays(mon, 7);
       }
+      days.value = out;
     } catch {
-      /* offline: sin menú semanal disponible */
+      /* offline: sin menú disponible */
     } finally {
       loading.value = false;
     }
   }
 
-  // Número más alto del día objetivo (cualquier status) + 1, para no chocar
-  // con walk-ins que se levanten ese mismo día.
+  // Número más alto del día objetivo (+1) para no chocar con walk-ins.
   async function nextNumber(bizDate: string): Promise<number> {
     try {
       const res = await fetchCollection(
@@ -169,7 +203,7 @@ export function useWeeklyPreorder() {
     }
 
     sending.value = true;
-    const wa = openBlankTab(); // dentro del gesto del click (anti pop-up)
+    const wa = openBlankTab();
 
     const targets = daysWithItems.value;
     const texts: string[] = [];
@@ -177,7 +211,6 @@ export function useWeeklyPreorder() {
 
     for (const day of targets) {
       const number = await nextNumber(day.date);
-
       const cart: Record<string, number> = {};
       for (const [k, v] of Object.entries(day.cart)) if (v > 0) cart[k] = v;
 
@@ -195,12 +228,12 @@ export function useWeeklyPreorder() {
 
       try {
         await createItem("comandas", {
-          data: order, // payload completo (incluye preorder:true)
+          data: order,
           status: "active",
           number,
           mode: order.mode,
           fulfill_date: day.date,
-          biz_date: day.date, // fecha de negocio = el día del pedido
+          biz_date: day.date,
         });
         ok++;
       } catch {
@@ -221,7 +254,6 @@ export function useWeeklyPreorder() {
       );
     }
 
-    // Un solo mensaje de WhatsApp con toda la semana.
     const head = `🗓️ *Preorden semanal*${
       customer.name ? ` — ${customer.name.trim()}` : ""
     }${customer.phone ? ` (${customer.phone.trim()})` : ""}\n\n`;
@@ -231,10 +263,9 @@ export function useWeeklyPreorder() {
 
     if (ok === targets.length) toast("Preorden enviada ✅");
     else if (ok > 0)
-      toast(`Enviadas ${ok}/${targets.length} — revisa la conexión`);
+      toast(`Enviadas ${ok}/${targets.length} — revisa conexión`);
     else toast("No se guardó en el servidor; se abrió WhatsApp igual");
 
-    // Limpia carritos (deja cliente/modo por si quiere repetir).
     days.value.forEach((d) => {
       Object.keys(d.cart).forEach((k) => (d.cart[k] = 0));
     });
@@ -244,7 +275,6 @@ export function useWeeklyPreorder() {
   onMounted(load);
 
   return {
-    // estado
     loading,
     sending,
     days,
@@ -252,11 +282,9 @@ export function useWeeklyPreorder() {
     customer,
     note,
     toastMsg,
-    // computed
     itemCount,
     totalUnits,
     daysWithItems,
-    // acciones
     isOut,
     onTile,
     setQty,

@@ -2,6 +2,24 @@
   <section class="grid items-start grid-cols-1 gap-6 lg:grid-cols-3">
     <!-- Platillos del turno -->
     <div class="space-y-8 lg:col-span-2">
+      <!-- Indicador de origen del menú del día -->
+      <div v-if="menuSource !== 'none'" class="-mt-1">
+        <Badge
+          v-if="menuSource === 'auto'"
+          variant="secondary"
+          class="gap-1.5 font-medium"
+        >
+          <ClientOnly><Sparkles :size="13" /></ClientOnly>
+          Menú automático<template v-if="activeBlockName">
+            · {{ activeBlockName }}</template
+          >
+        </Badge>
+        <Badge v-else variant="outline" class="gap-1.5 font-medium">
+          <ClientOnly><Pencil :size="13" /></ClientOnly>
+          Menú personalizado
+        </Badge>
+      </div>
+
       <div
         v-for="group in groups"
         v-show="today[group.key].length"
@@ -185,9 +203,10 @@ import { Card } from "@common/components/ui/card";
 import { Button } from "@common/components/ui/button";
 import { Input } from "@common/components/ui/input";
 import { Label } from "@common/components/ui/label";
+import { Badge } from "@common/components/ui/badge";
 import { Separator } from "@common/components/ui/separator";
 import { Tabs, TabsList, TabsTrigger } from "@common/components/ui/tabs";
-import { Plus, Minus, Send } from "lucide-vue-next";
+import { Plus, Minus, Send, Sparkles, Pencil } from "lucide-vue-next";
 import { MODES, MODE_SHORT, groups } from "~/utils/comandas";
 
 const {
@@ -207,5 +226,7 @@ const {
   setQty,
   clearCart,
   send,
+  menuSource,
+  activeBlockName,
 } = useComandas();
 </script>

@@ -50,6 +50,24 @@
       </div>
     </div>
 
+    <!-- Sin servicio hoy (fin de semana / semana cerrada / sin menú del día) -->
+    <div
+      v-else-if="!hasMenu"
+      class="grid min-h-screen place-items-center p-6 text-center"
+    >
+      <div class="max-w-sm">
+        <p class="mb-4 text-5xl">🗓️</p>
+        <h1 class="text-xl font-bold font-heading">Hoy no hay servicio</h1>
+        <p class="mt-2 text-sm text-muted-foreground">
+          No hay menú disponible para hoy. ¿Quieres preordenar para los próximos
+          días?
+        </p>
+        <Button as-child variant="outline" size="sm" class="mt-4">
+          <NuxtLink to="/semana">Ver preórdenes</NuxtLink>
+        </Button>
+      </div>
+    </div>
+
     <template v-else>
       <!-- Hero -->
       <main class="mx-auto max-w-lg space-y-8 px-5 pb-44 pt-6">
@@ -329,9 +347,16 @@ import {
   groups,
   MODES,
   MODE_SHORT,
+  todayISO,
   type DayDishes,
   type MenuRecord,
 } from "~/utils/comandas";
+import {
+  resolveDay,
+  type RotationConfig,
+  type WeekBlock,
+  type WeekOverride,
+} from "~/utils/rotation";
 import { MODE_LABEL, type OrderMode } from "~/composables/useWhatsappOrder";
 
 definePageMeta({ layout: "breezy" });
@@ -351,7 +376,16 @@ const MODE_ICON: Record<string, any> = {
   local: Utensils,
 };
 
-const record = ref<MenuRecord | null>(null);
+// Registro `menu` con los campos de rotación.
+type MenuRecordFull = MenuRecord & {
+  week_blocks?: WeekBlock[];
+  rotation?: string[];
+  rotation_anchor?: string;
+  overrides?: Record<string, WeekOverride>;
+  active_date?: string;
+};
+
+const record = ref<MenuRecordFull | null>(null);
 const pending = ref(true);
 const loadError = ref(false);
 
@@ -369,7 +403,7 @@ async function load() {
       null,
       true,
     );
-    record.value = (res.items[0] as unknown as MenuRecord) ?? null;
+    record.value = (res.items[0] as unknown as MenuRecordFull) ?? null;
   } catch {
     loadError.value = true;
     record.value = null;
@@ -380,7 +414,39 @@ async function load() {
 
 onMounted(load);
 
-const active = computed<DayDishes>(() => record.value?.active ?? EMPTY_DISHES);
+/**
+ * Menú del día: mismo criterio que la app de comandas.
+ *  1) Si hay un `active` fijado HOY (turno iniciado o ajuste manual), ese manda
+ *     — respeta cambios del staff y refleja lo que ve la cocina.
+ *  2) Si no, se resuelve la fecha de hoy contra la rotación semanal (bloques).
+ */
+const active = computed<DayDishes>(() => {
+  const rec = record.value;
+  if (!rec) return EMPTY_DISHES;
+
+  const a = rec.active ?? EMPTY_DISHES;
+  const activeFresh =
+    rec.active_date === todayISO() &&
+    !!(a.guisos?.length || a.sides?.length || a.bebidas?.length);
+  if (activeFresh) return a;
+
+  const cfg: RotationConfig = {
+    blocks: rec.week_blocks ?? [],
+    rotation: rec.rotation ?? [],
+    anchor: rec.rotation_anchor ?? "",
+    overrides: rec.overrides ?? {},
+  };
+  const resolved = resolveDay(todayISO(), cfg);
+  return resolved ? resolved.menu : EMPTY_DISHES;
+});
+
+const hasMenu = computed(
+  () =>
+    active.value.guisos.length ||
+    active.value.sides.length ||
+    active.value.bebidas.length,
+);
+
 const soldOut = computed<string[]>(() => record.value?.sold_out ?? []);
 const isOut = (n: string) => soldOut.value.includes(n);
 
@@ -442,7 +508,7 @@ function buildNote() {
 
 function sendOrder() {
   if (!record.value || !canSend.value) return;
-  const a = record.value.active;
+  const a = active.value; // menú resuelto (rotación o `active` de hoy)
   const text = formatCustomerOrder({
     name: customer.name,
     cart,

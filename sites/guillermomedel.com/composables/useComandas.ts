@@ -1,3 +1,4 @@
+// composables/useComandas.ts
 import {
   ref,
   reactive,
@@ -16,6 +17,12 @@ import {
   type DayDishes,
   type MenuRecord,
 } from "~/utils/comandas";
+import {
+  resolveDay,
+  type RotationConfig,
+  type WeekBlock,
+  type WeekOverride,
+} from "~/utils/rotation";
 import type { OrderMode, Customer } from "~/composables/useWhatsappOrder";
 import type { RecordModel } from "pocketbase";
 
@@ -27,14 +34,46 @@ const COMANDAS_COLLECTION = "comandas";
 // ⚠️ Nombre del campo JSON en tu colección `comandas`.
 const COMANDAS_FIELD = "data";
 
+// Autoseleccionar el menú del día desde la rotación semanal cuando no hay
+// un `active` fresco (de hoy) guardado.
+const AUTO_MENU_FROM_ROTATION = true;
+// Además fijarlo en la BD (`active` + `active_date`) como menú oficial del día.
+const AUTO_PERSIST_ACTIVE = true;
+
 const emptyDishes = (): DayDishes => ({ guisos: [], sides: [], bebidas: [] });
 
+// Comparación de menús como conjuntos (ignora el orden).
+function sameSet(a: string[] = [], b: string[] = []): boolean {
+  if (a.length !== b.length) return false;
+  const s = new Set(a);
+  return b.every((x) => s.has(x));
+}
+function sameMenu(a: DayDishes, b: DayDishes): boolean {
+  return (
+    sameSet(a.guisos, b.guisos) &&
+    sameSet(a.sides, b.sides) &&
+    sameSet(a.bebidas, b.bebidas)
+  );
+}
+
 type OrderStatus = "active" | "completed" | "cancelled";
+
+// De dónde salió el menú del día que se está mostrando.
+type MenuSource = "auto" | "manual" | "none";
 
 // Orden + metadatos de PocketBase (id de registro y status para el soft-delete).
 type StoredOrder = PlacedOrder & {
   recordId?: string;
   status?: OrderStatus;
+};
+
+// Registro `menu` extendido con la rotación semanal y el sello del día.
+type MenuRecordFull = MenuRecord & {
+  week_blocks?: WeekBlock[];
+  rotation?: string[];
+  rotation_anchor?: string;
+  overrides?: Record<string, WeekOverride>;
+  active_date?: string;
 };
 
 /**
@@ -79,6 +118,15 @@ function createComandasStore() {
   const menuLoading = ref(true);
   const savingMenu = ref(false);
   const menuRecordId = ref<string | null>(null);
+
+  // Origen del menú del día (para el indicador en la pantalla de orden).
+  const menuSource = ref<MenuSource>("none");
+  const activeBlockName = ref<string>("");
+
+  // true cuando el menú del día se tomó de la rotación (para persistirlo).
+  let autoMenuApplied = false;
+  // Menú que la rotación propone para HOY (para comparar tras editar).
+  let rotationToday: { menu: DayDishes; blockName: string } | null = null;
 
   // Estado de conexión / reconciliación
   const isRefreshing = ref(false);
@@ -201,20 +249,68 @@ function createComandasStore() {
 
   /* ===== PocketBase: menú ===== */
   function applyRecord(r: MenuRecord) {
+    autoMenuApplied = false;
+    const rec = r as MenuRecordFull;
     menuRecordId.value = r.id;
     catalog.value = {
       guisos: r.dishes?.guisos ?? [],
       sides: r.dishes?.sides ?? [],
       bebidas: r.dishes?.bebidas ?? [],
     };
+    soldOut.value = r.sold_out ?? [];
+
+    // Resolver la rotación para HOY (independiente de `active`).
+    const cfg: RotationConfig = {
+      blocks: rec.week_blocks ?? [],
+      rotation: rec.rotation ?? [],
+      anchor: rec.rotation_anchor ?? "",
+      overrides: rec.overrides ?? {},
+    };
+    const resolved = AUTO_MENU_FROM_ROTATION
+      ? resolveDay(todayISO(), cfg)
+      : null;
+    rotationToday = resolved
+      ? { menu: resolved.menu, blockName: resolved.block.name }
+      : null;
+
+    // ¿Hay un menú del día ya fijado HOY?
     const a = r.active ?? emptyDishes();
-    today.guisos = a.guisos ?? [];
-    today.sides = a.sides ?? [];
-    today.bebidas = a.bebidas ?? [];
+    const activeFresh =
+      rec.active_date === todayISO() &&
+      !!(a.guisos?.length || a.sides?.length || a.bebidas?.length);
+
+    if (activeFresh) {
+      today.guisos = a.guisos ?? [];
+      today.sides = a.sides ?? [];
+      today.bebidas = a.bebidas ?? [];
+      // Coincide con la rotación -> automático; si no, alguien lo personalizó.
+      if (resolved && sameMenu(a, resolved.menu)) {
+        menuSource.value = "auto";
+        activeBlockName.value = resolved.block.name;
+      } else {
+        menuSource.value = "manual";
+        activeBlockName.value = "";
+      }
+    } else if (resolved) {
+      // Tómalo de la rotación semanal (bloque que cubre hoy).
+      today.guisos = resolved.menu.guisos ?? [];
+      today.sides = resolved.menu.sides ?? [];
+      today.bebidas = resolved.menu.bebidas ?? [];
+      autoMenuApplied = true;
+      menuSource.value = "auto";
+      activeBlockName.value = resolved.block.name;
+    } else {
+      today.guisos = [];
+      today.sides = [];
+      today.bebidas = [];
+      menuSource.value = "none";
+      activeBlockName.value = "";
+    }
+
     pick.guisos = new Set(today.guisos);
     pick.sides = new Set(today.sides);
     pick.bebidas = new Set(today.bebidas);
-    soldOut.value = r.sold_out ?? [];
+
     const hasActive =
       today.guisos.length || today.sides.length || today.bebidas.length;
     view.value = hasActive ? "order" : "setup";
@@ -234,8 +330,24 @@ function createComandasStore() {
         true,
       );
       const rec = res.items[0] as unknown as MenuRecord | undefined;
-      if (rec) applyRecord(rec);
-      else {
+      if (rec) {
+        applyRecord(rec);
+        // Si el menú del día se tomó de la rotación, déjalo fijo en la BD.
+        if (autoMenuApplied && AUTO_PERSIST_ACTIVE && menuRecordId.value) {
+          try {
+            await updateItem("menu", menuRecordId.value, {
+              active: {
+                guisos: today.guisos,
+                sides: today.sides,
+                bebidas: today.bebidas,
+              },
+              active_date: todayISO(),
+            });
+          } catch {
+            /* queda en memoria; se fijará al iniciar turno */
+          }
+        }
+      } else {
         menuRecordId.value = null;
         view.value = "setup";
       }
@@ -445,6 +557,16 @@ function createComandasStore() {
     soldOut.value = soldOut.value.filter(
       (n) => pick.guisos.has(n) || pick.sides.has(n) || pick.bebidas.has(n),
     );
+
+    // El indicador refleja si lo que se inicia coincide con la rotación de hoy.
+    if (rotationToday && sameMenu(activeDishes, rotationToday.menu)) {
+      menuSource.value = "auto";
+      activeBlockName.value = rotationToday.blockName;
+    } else {
+      menuSource.value = "manual";
+      activeBlockName.value = "";
+    }
+
     clearCart();
     view.value = "order";
     persist();
@@ -464,12 +586,14 @@ function createComandasStore() {
         await updateItem("menu", menuRecordId.value, {
           active: activeDishes,
           sold_out: soldOut.value,
+          active_date: todayISO(),
         });
       } else {
         const created = await createItem("menu", {
           dishes: catalog.value,
           active: activeDishes,
           sold_out: soldOut.value,
+          active_date: todayISO(),
         });
         menuRecordId.value = (created as unknown as MenuRecord).id;
       }
@@ -660,7 +784,7 @@ function createComandasStore() {
 
   onMounted(async () => {
     load(); // cache local (pintado instantáneo)
-    await loadMenu(); // catálogo + selección + menuRecordId
+    await loadMenu(); // catálogo + selección (auto desde rotación) + menuRecordId
     await Promise.all([loadActiveOrders(), seedCounter()]);
     await startLive(); // realtime en vez de polling
     document.addEventListener("visibilitychange", onVisibility);
@@ -693,6 +817,8 @@ function createComandasStore() {
     isRefreshing,
     live,
     sending,
+    menuSource,
+    activeBlockName,
     minDate: todayISO(),
     // computed
     stats,
