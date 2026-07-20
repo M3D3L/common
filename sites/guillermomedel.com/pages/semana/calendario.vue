@@ -239,7 +239,6 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, reactive, computed, onMounted } from "vue";
 import { Button } from "@common/components/ui/button";
 import {
   ChevronUp,
@@ -257,6 +256,7 @@ import {
   type WeekOverride,
   type RotationConfig,
 } from "~/utils/rotation";
+import usePocketBase from "@common/composables/usePocketbase";
 
 const WEEKS_AHEAD = 13; // ~3 meses
 
@@ -422,5 +422,12 @@ async function save() {
 
 onMounted(load);
 
-definePageMeta({ layout: "breezy" });
+definePageMeta({
+  layout: "breezy",
+  middleware: defineNuxtRouteMiddleware(() => {
+    const pb = usePocketBase();
+    if (!pb.authStore.isValid || pb.authStore.model?.verified !== true)
+      return navigateTo("/");
+  }),
+});
 </script>
