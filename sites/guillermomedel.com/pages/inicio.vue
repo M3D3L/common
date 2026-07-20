@@ -1,6 +1,6 @@
 <template>
   <div
-    class="max-w-3xl absolute bottom-0 left-0 right-0 mx-auto px-4 py-8 h-screen top-0 bg-blue-500 grid content-center items-center"
+    class="max-w-3xl absolute bottom-0 left-0 right-0 mx-auto px-4 py-8 h-screen top-0 grid content-center items-center"
   >
     <OrganismsClockIn :isAdmin />
   </div>

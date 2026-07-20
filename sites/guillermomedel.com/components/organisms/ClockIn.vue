@@ -33,9 +33,9 @@
     </div>
 
     <!-- ===== RELOJ (teclado) ===== -->
-    <div v-if="tab === 'reloj'" class="mt-2">
+    <div v-if="tab === 'reloj'">
       <!-- PIN -->
-      <div class="flex justify-center gap-2 mb-5 h-6">
+      <div class="flex justify-center gap-2 h-6">
         <span
           v-for="i in PIN_LENGTH"
           :key="i"
@@ -76,7 +76,7 @@
       </div>
 
       <!-- Acciones -->
-      <div class="grid grid-cols-2 gap-2.5 mt-5 pt-4">
+      <div class="grid grid-cols-2 gap-2.5 mt-5">
         <Button
           size="lg"
           class="h-12"
@@ -102,7 +102,7 @@
     <!-- ===== RESUMEN (horas + exportar) ===== -->
     <div v-else-if="tab === 'resumen'">
       <!-- Selector de periodo -->
-      <div class="flex gap-1 mt-2 mb-4">
+      <div class="flex gap-1 mb-4">
         <Button
           size="sm"
           class="flex-1"
