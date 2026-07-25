@@ -58,11 +58,35 @@ export const FILTER_OPTIONS: { label: string; value: FilterType }[] = [
 ];
 
 /* ===== Fecha ===== */
-export const todayISO = () => new Date().toISOString().slice(0, 10);
+
+/**
+ * Zona horaria del negocio. Sonora (San Carlos, Hermosillo, Bahía de Kino)
+ * usa UTC−7 todo el año y NO aplica horario de verano (corre igual que Arizona).
+ * Fijarla aquí evita que la fecha "de hoy" se adelante al día siguiente por la
+ * tarde —cuando UTC ya cambió de fecha pero localmente sigue siendo hoy—, tanto
+ * en el navegador del cliente como en el servidor.
+ */
+export const RESTAURANT_TZ = "America/Hermosillo";
+
+/**
+ * Fecha local del negocio como etiqueta YYYY-MM-DD (NO UTC).
+ * Usa formatToParts para no depender del orden de formato del locale.
+ */
+export const todayISO = (): string => {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: RESTAURANT_TZ,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(new Date());
+  const get = (type: string) => parts.find((p) => p.type === type)?.value ?? "";
+  return `${get("year")}-${get("month")}-${get("day")}`;
+};
 
 /* ===== Helpers presentacionales (sin estado) ===== */
 export function orderTime(o: PlacedOrder) {
   return new Date(o.createdAt).toLocaleTimeString("es-MX", {
+    timeZone: RESTAURANT_TZ, // hora del negocio, no la del dispositivo
     hour: "2-digit",
     minute: "2-digit",
   });
