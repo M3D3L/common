@@ -339,12 +339,13 @@ function prettyMonday(iso: string) {
     month: "long",
   });
 }
+
 function rangeLabel(monday: string) {
-  const friday = addDays(monday, 4);
+  const saturday = addDays(monday, 5);
   const m = new Date(monday + "T00:00:00");
-  const f = new Date(friday + "T00:00:00");
-  const month = f.toLocaleDateString("es-MX", { month: "short" });
-  return `${m.getDate()}–${f.getDate()} ${month}`;
+  const s = new Date(saturday + "T00:00:00");
+  const month = s.toLocaleDateString("es-MX", { month: "short" });
+  return `${m.getDate()}–${s.getDate()} ${month}`;
 }
 
 let toastTimer: ReturnType<typeof setTimeout> | undefined;

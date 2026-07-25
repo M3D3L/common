@@ -2,9 +2,9 @@ import type { DayDishes } from "~/utils/comandas";
 
 /* ===== Modelo ===== */
 
-export type WeekdayKey = "1" | "2" | "3" | "4" | "5"; // Lun..Vie
+export type WeekdayKey = "1" | "2" | "3" | "4" | "5" | "6" | "7"; // Lun..Dom
 
-/** Un "bloque de semana" reutilizable: menú de Lun–Vie del catálogo. */
+/** Un "bloque de semana" reutilizable: menú del catálogo por día. */
 export interface WeekBlock {
   id: string;
   name: string;
@@ -89,13 +89,17 @@ export function resolveWeek(
   return { monday: mondayISO, closed: false, block };
 }
 
-/** Platillos disponibles para una fecha, o null si cerrado / fin de semana / vacío. */
+/**
+ * Platillos disponibles para una fecha, o null si no hay servicio.
+ * La DATA manda: un día tiene servicio si su clave existe con menú no vacío.
+ * No hay lista fija de días hábiles — agregar/quitar un día es solo cuestión
+ * de agregar/quitar su clave en `block.days`.
+ */
 export function resolveDay(
   dateISO: string,
   cfg: RotationConfig,
 ): { block: WeekBlock; menu: DayDishes } | null {
   const wd = weekday(dateISO);
-  if (wd > 5) return null; // sábado / domingo
   const { closed, block } = resolveWeek(mondayOf(dateISO), cfg);
   if (closed || !block) return null;
   const menu = block.days[String(wd) as WeekdayKey];

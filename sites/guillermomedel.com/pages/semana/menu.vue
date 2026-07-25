@@ -210,7 +210,9 @@ const weekdays: { key: WeekdayKey; label: string }[] = [
   { key: "3", label: "Mié" },
   { key: "4", label: "Jue" },
   { key: "5", label: "Vie" },
+  { key: "6", label: "Sáb" },
 ];
+
 const palette = [
   "#ef4444",
   "#f97316",
