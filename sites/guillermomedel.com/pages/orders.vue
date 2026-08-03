@@ -71,7 +71,19 @@ import { Button } from "@common/components/ui/button";
 import { Badge } from "@common/components/ui/badge";
 import { Pencil, ClipboardList, ArrowLeft } from "lucide-vue-next";
 
-const { view, counter, orders, toastMsg, editMenu } = provideComandas();
+const store = provideComandas();
+const { view, counter, orders, toastMsg, editMenu } = store;
+
+// Si venimos de /socios con ?code=GM1234, precargar el PIN del socio y
+// mandar directo a la pantalla de orden.
+const route = useRoute();
+onMounted(() => {
+  const code = route.query.code;
+  if (typeof code === "string" && code.trim()) {
+    store.memberCode.value = code.replace(/\s+/g, "").toUpperCase();
+    view.value = "order";
+  }
+});
 
 definePageMeta({ layout: "none" });
 </script>

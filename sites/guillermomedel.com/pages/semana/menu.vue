@@ -211,6 +211,7 @@ const weekdays: { key: WeekdayKey; label: string }[] = [
   { key: "4", label: "Jue" },
   { key: "5", label: "Vie" },
   { key: "6", label: "Sáb" },
+  { key: "7", label: "Dom" },
 ];
 
 const palette = [

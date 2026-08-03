@@ -219,6 +219,27 @@
               </p>
             </div>
 
+            <!-- Código de socio (opcional). Texto plano: se estampa en el
+                 mensaje de WhatsApp; el staff valida y redime al servir. -->
+            <div class="space-y-1.5">
+              <Label for="c-code"
+                >Código de socio / Member code (opcional)</Label
+              >
+              <Input
+                id="c-code"
+                v-model="memberCode"
+                autocomplete="off"
+                placeholder="Ej. GM1234"
+                class="uppercase tracking-widest"
+                @blur="
+                  memberCode = memberCode.replace(/\s+/g, '').toUpperCase()
+                "
+              />
+              <p class="text-[11px] text-muted-foreground">
+                Si eres socio, ingresa tu código para usar una de tus comidas.
+              </p>
+            </div>
+
             <template v-if="mode === 'domicilio'">
               <div class="space-y-1.5">
                 <Label for="c-phone">WhatsApp / Phone</Label>
@@ -416,8 +437,7 @@ onMounted(load);
 
 /**
  * Menú del día: mismo criterio que la app de comandas.
- *  1) Si hay un `active` fijado HOY (turno iniciado o ajuste manual), ese manda
- *     — respeta cambios del staff y refleja lo que ve la cocina.
+ *  1) Si hay un `active` fijado HOY (turno iniciado o ajuste manual), ese manda.
  *  2) Si no, se resuelve la fecha de hoy contra la rotación semanal (bloques).
  */
 const active = computed<DayDishes>(() => {
@@ -455,6 +475,10 @@ const mode = ref<OrderMode>("llevar");
 const note = ref("");
 const pickupTime = ref("");
 const customer = reactive({ name: "", phone: "", address: "" });
+
+// Código de socio (opcional, texto plano). No se valida aquí: se estampa en el
+// mensaje de WhatsApp para que el staff lo vea y redima al servir.
+const memberCode = ref("");
 
 const timeLabel = computed(() =>
   mode.value === "domicilio" ? "Hora de entrega" : "Hora de recolección",
@@ -509,6 +533,12 @@ function buildNote() {
 function sendOrder() {
   if (!record.value || !canSend.value) return;
   const a = active.value; // menú resuelto (rotación o `active` de hoy)
+
+  // Si hay código de socio, se estampa en la nota (texto plano). El staff lo
+  // valida y descuenta la comida del lado autenticado al servir.
+  const code = memberCode.value.replace(/\s+/g, "").toUpperCase();
+  const memberTag = code ? `SOCIO ${code}` : "";
+
   const text = formatCustomerOrder({
     name: customer.name,
     cart,
@@ -516,7 +546,7 @@ function sendOrder() {
     guisos: a.guisos ?? [],
     sides: a.sides ?? [],
     bebidas: a.bebidas ?? [],
-    note: buildNote(),
+    note: [buildNote(), memberTag].filter(Boolean).join(" · "),
     phone: customer.phone,
     address: customer.address,
   });

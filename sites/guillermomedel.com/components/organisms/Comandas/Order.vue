@@ -157,6 +157,27 @@
         <Input v-model="customer.address" placeholder="Dirección" />
       </div>
 
+      <!-- Código de socio (opcional). Al enviar, descuenta una comida del mes. -->
+      <div class="mt-3 space-y-1">
+        <Label
+          for="socio-code"
+          class="text-[11px] font-bold tracking-wider uppercase text-muted-foreground"
+        >
+          Código de socio (opcional)
+        </Label>
+        <Input
+          id="socio-code"
+          v-model="memberCode"
+          autocomplete="off"
+          placeholder="Ej. GM1234"
+          class="uppercase tracking-widest"
+          @blur="memberCode = memberCode.replace(/\s+/g, '').toUpperCase()"
+        />
+        <p class="text-[11px] text-muted-foreground">
+          Si el cliente es socio, se descuenta una comida al enviar.
+        </p>
+      </div>
+
       <div class="mt-3 space-y-1">
         <Label
           for="fulfill-date"
@@ -228,5 +249,6 @@ const {
   send,
   menuSource,
   activeBlockName,
+  memberCode,
 } = useComandas();
 </script>

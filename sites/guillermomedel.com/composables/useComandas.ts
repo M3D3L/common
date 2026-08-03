@@ -3,6 +3,7 @@ import {
   ref,
   reactive,
   computed,
+  watch,
   provide,
   inject,
   onMounted,
@@ -83,12 +84,20 @@ type MenuRecordFull = MenuRecord & {
  *    completar: se marcan `completed`/`cancelled` y dejan de mostrarse. El
  *    tablero solo carga las `active`. El historial queda para el reporte EOD.
  *  - Se mantiene EN VIVO con realtime (SSE) de PocketBase, sin polling.
+ *  - SOCIOS: al enviar una orden con código de socio, se descuenta UNA comida
+ *    del mes en curso (única superficie de redención; /socios ya no redime).
  */
 function createComandasStore() {
   const { formatOrder, formatSoldOut, formatReady, formatMenu, waLink } =
     useWhatsappOrder();
   const { fetchCollection, createItem, updateItem, subscribe, unsubscribe } =
     usePocketBaseCore();
+
+  // Socios: composables de membresía (mismas que usa /socios).
+  const members = useMembers();
+  const memberships = useMemberships();
+  const redemptions = useRedemptions();
+  const { user } = usePocketBaseCore();
 
   /* ===== Estado ===== */
   const view = ref<"setup" | "order" | "orders">("setup");
@@ -113,6 +122,16 @@ function createComandasStore() {
     bebidas: new Set(),
   });
   const toastMsg = ref("");
+
+  // Socio (PIN opcional capturado por el staff en la orden).
+  const memberCode = ref("");
+  // Cache del socio resuelto por código (para prellenar domicilio desde la BD).
+  const memberInfo = ref<{
+    code: string;
+    name: string;
+    phone: string;
+    address: string;
+  } | null>(null);
 
   // Menú en la BD
   const menuLoading = ref(true);
@@ -209,6 +228,54 @@ function createComandasStore() {
   /* ===== Evaluadores con estado ===== */
   const isOut = (n: string) => soldOut.value.includes(n);
   const cartGroup = (k: GroupKey) => today[k].filter((n) => cart[n] > 0);
+
+  /* ===== Socio: prellenar domicilio desde la BD =====
+   * Perezoso: solo se busca al socio cuando el modo es "domicilio" y hay un
+   * código. Se llenan SOLO los campos vacíos (nunca pisa lo que el staff
+   * escribió). Se re-busca si cambia el código.
+   */
+  async function loadMemberForOrder() {
+    const code = memberCode.value.replace(/\s+/g, "").toUpperCase();
+    if (!code) {
+      memberInfo.value = null;
+      return;
+    }
+    // ya cacheado para este código
+    if (memberInfo.value?.code === code) return;
+    try {
+      const m = await members.getMemberByCode(code);
+      memberInfo.value = m
+        ? {
+            code,
+            name: m.name ?? "",
+            phone: m.phone ?? "",
+            address: m.address ?? "",
+          }
+        : null;
+    } catch {
+      memberInfo.value = null;
+    }
+  }
+
+  function fillDomicilioFromMember() {
+    const info = memberInfo.value;
+    if (!info) return;
+    // solo campos vacíos
+    if (!customer.name.trim() && info.name) customer.name = info.name;
+    if (!customer.phone.trim() && info.phone) customer.phone = info.phone;
+    if (!customer.address.trim() && info.address)
+      customer.address = info.address;
+  }
+
+  // Disparador perezoso: al mostrar domicilio con un código, buscar y llenar.
+  watch(
+    () => [mode.value, memberCode.value] as const,
+    async ([m]) => {
+      if (m !== "domicilio") return;
+      await loadMemberForOrder();
+      fillDomicilioFromMember();
+    },
+  );
 
   /* ===== WhatsApp (primero BD, luego WhatsApp) =====
    * Pestaña en blanco abierta DENTRO del gesto del click; se le asigna la URL
@@ -666,18 +733,73 @@ function createComandasStore() {
     customer.name = "";
     customer.phone = "";
     customer.address = "";
+    memberCode.value = "";
+    memberInfo.value = null;
   }
 
+  /**
+   * Enviar orden.
+   *  1) Si hay código de socio, intentar redimir UNA comida del mes en curso.
+   *     - Éxito -> se etiqueta con "SOCIO XXXX · N restantes" y baja el crédito.
+   *     - Sin crédito / vencida / no encontrado -> la orden IGUAL se envía,
+   *       etiquetada con el motivo, y se avisa al staff para cobrar normal.
+   *     Un problema de crédito NUNCA bloquea la orden (la cocina debe recibirla).
+   *  2) Guardar la comanda (payload + columnas denormalizadas + member_code).
+   *  3) WhatsApp.
+   */
   async function send() {
     if (!itemCount.value || sending.value) return;
     sending.value = true;
+
+    // --- Socio: intentar redimir una comida si se capturó un PIN ---
+    const code = memberCode.value.replace(/\s+/g, "").toUpperCase();
+    let memberTag = "";
+
+    if (code) {
+      try {
+        const member = await members.getMemberByCode(code);
+        if (!member) {
+          memberTag = `SOCIO ${code} · NO ENCONTRADO`;
+          toast(`Código ${code}: socio no encontrado`);
+        } else {
+          const ms = await memberships.getActiveMembership(member.id);
+          if (ms && memberships.isUsable(ms)) {
+            const { remaining } = await redemptions.redeem(ms, {
+              staffId: user?.id,
+            });
+            memberTag = `SOCIO ${code} · ${remaining} restantes`;
+            toast(
+              `Socio ${member.name}: comida registrada (${remaining} restantes)`,
+            );
+          } else {
+            const why = !ms
+              ? "sin membresía"
+              : memberships.isExpired(ms)
+                ? "vencida"
+                : "sin crédito";
+            memberTag = `SOCIO ${code} · ${why.toUpperCase()}`;
+            toast(`Socio ${member.name}: ${why} — cobra normal`);
+          }
+        }
+      } catch (e: any) {
+        // Nunca bloquear la orden por un problema de crédito.
+        console.error("socio redeem failed:", e);
+        memberTag = `SOCIO ${code} · ERROR`;
+        toast("No se pudo verificar al socio; la orden sigue");
+      }
+    }
+
+    // --- Orden (igual que antes, + nota con etiqueta de socio) ---
+    const noteWithTag = [note.value.trim(), memberTag]
+      .filter(Boolean)
+      .join(" · ");
 
     const order: StoredOrder = {
       id: `${counter.value}-${Date.now()}`,
       number: counter.value,
       cart: { ...cart },
       mode: mode.value,
-      note: note.value.trim(),
+      note: noteWithTag,
       fulfillDate: fulfillDate.value,
       customer: mode.value === "domicilio" ? { ...customer } : undefined,
       createdAt: Date.now(),
@@ -698,7 +820,7 @@ function createComandasStore() {
     const wa = openBlankTab();
 
     // 1) Primero la BD. Payload completo en `data` + columnas denormalizadas
-    //    para el tablero (status) y el reporte EOD.
+    //    para el tablero (status) y el reporte EOD. `member_code` para historial.
     try {
       const rec = await createItem(COMANDAS_COLLECTION, {
         [COMANDAS_FIELD]: order,
@@ -707,6 +829,7 @@ function createComandasStore() {
         mode: order.mode,
         fulfill_date: order.fulfillDate,
         biz_date: todayISO(),
+        member_code: code || "", // requiere columna `member_code` (text) en `comandas`
       });
       order.recordId = rec.id;
     } catch {
@@ -719,6 +842,10 @@ function createComandasStore() {
     // 3) Luego WhatsApp.
     sendToTab(wa, text);
     advanceCounter("Abriendo WhatsApp…");
+
+    // limpiar el PIN para la siguiente orden
+    memberCode.value = "";
+    memberInfo.value = null;
     sending.value = false;
   }
 
@@ -807,6 +934,7 @@ function createComandasStore() {
     mode,
     note,
     fulfillDate,
+    memberCode,
     filter,
     customer,
     orders,
