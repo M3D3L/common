@@ -21,7 +21,7 @@
     <!-- Navegación -->
     <div class="flex gap-1 mb-5">
       <Button
-        v-for="t in visibleTabs"
+        v-for="t in tabs"
         :key="t.key"
         size="sm"
         class="flex-1"
@@ -32,70 +32,60 @@
       </Button>
     </div>
 
-    <!-- ===== RELOJ (teclado) ===== -->
+    <!-- ===== RELOJ (toggle) ===== -->
     <div v-if="tab === 'reloj'">
-      <!-- PIN -->
-      <div class="flex justify-center gap-2 h-6">
-        <span
-          v-for="i in PIN_LENGTH"
-          :key="i"
-          class="w-3.5 h-3.5 rounded-full transition-colors"
-          :class="pin.length >= i ? 'bg-primary' : 'bg-muted'"
-        ></span>
-      </div>
+      <template v-if="me.id">
+        <!-- Estado -->
+        <div class="p-5 mb-4 text-center border rounded-xl border-border">
+          <p class="text-sm text-muted-foreground truncate">{{ me.name }}</p>
+          <p
+            class="mt-1 text-2xl font-bold"
+            :class="amInside ? 'text-green-600' : 'text-muted-foreground'"
+          >
+            {{ amInside ? "Dentro" : "Fuera" }}
+          </p>
+          <p
+            v-if="amInside"
+            class="mt-1 text-xs text-muted-foreground tabular-nums"
+          >
+            Desde {{ myClockInTime }} · {{ fmtDur(myElapsedMinutes) }}
+          </p>
+        </div>
 
-      <!-- Teclado -->
-      <div class="grid grid-cols-3 gap-2.5">
-        <Button
-          v-for="n in ['1', '2', '3', '4', '5', '6', '7', '8', '9']"
-          :key="n"
-          variant="outline"
-          class="h-14 text-xl font-bold"
-          @click="tapKey(n)"
-        >
-          {{ n }}
-        </Button>
-        <Button variant="ghost" class="h-14" :disabled="!pin" @click="clearPin">
-          C
-        </Button>
-        <Button
-          variant="outline"
-          class="h-14 text-xl font-bold"
-          @click="tapKey('0')"
-        >
-          0
-        </Button>
-        <Button
-          variant="ghost"
-          class="h-14"
-          :disabled="!pin"
-          @click="backspace"
-        >
-          <ClientOnly><Delete :size="20" /></ClientOnly>
-        </Button>
-      </div>
-
-      <!-- Acciones -->
-      <div class="grid grid-cols-2 gap-2.5 mt-5">
+        <!-- Toggle -->
         <Button
           size="lg"
-          class="h-12"
-          :disabled="pin.length < PIN_LENGTH || busy"
-          @click="submit('in')"
+          class="w-full h-16 text-lg"
+          :variant="amInside ? 'outline' : 'default'"
+          :disabled="busy"
+          @click="toggle"
         >
-          <ClientOnly><LogIn :size="17" class="mr-2" /></ClientOnly>
-          Entrada
+          <ClientOnly>
+            <LogOut v-if="amInside" :size="20" class="mr-2" />
+            <LogIn v-else :size="20" class="mr-2" />
+          </ClientOnly>
+          {{ amInside ? "Registrar salida" : "Registrar entrada" }}
         </Button>
-        <Button
-          size="lg"
-          variant="outline"
-          class="h-12"
-          :disabled="pin.length < PIN_LENGTH || busy"
-          @click="submit('out')"
-        >
-          <ClientOnly><LogOut :size="17" class="mr-2" /></ClientOnly>
-          Salida
-        </Button>
+
+        <!-- Stats rápidas -->
+        <div class="grid grid-cols-2 gap-2.5 mt-4">
+          <div class="p-3 text-center border rounded-lg border-border">
+            <p class="text-xs text-muted-foreground">Hoy</p>
+            <p class="text-lg font-bold tabular-nums">
+              {{ fmtDur(workedMinutes(me.id, todayStr, todayStr)) }}
+            </p>
+          </div>
+          <div class="p-3 text-center border rounded-lg border-border">
+            <p class="text-xs text-muted-foreground">Esta semana</p>
+            <p class="text-lg font-bold tabular-nums">
+              {{ fmtDur(workedMinutes(me.id, weekStart, weekEnd)) }}
+            </p>
+          </div>
+        </div>
+      </template>
+
+      <div v-else class="py-10 text-sm text-center text-muted-foreground">
+        Inicia sesión para registrar tu turno.
       </div>
     </div>
 
@@ -128,14 +118,14 @@
       </p>
 
       <div
-        v-if="!staff.length"
+        v-if="!people.length"
         class="py-8 text-sm text-center text-muted-foreground"
       >
-        Sin personal.
+        Sin registros.
       </div>
       <div v-else class="divide-y divide-border">
         <div
-          v-for="m in staff"
+          v-for="m in people"
           :key="m.id"
           class="flex items-center gap-3 py-3"
         >
@@ -189,58 +179,6 @@
       </div>
     </div>
 
-    <!-- ===== PERSONAL (roster) ===== -->
-    <div v-else-if="isAdmin && tab === 'personal'">
-      <div v-if="staff.length" class="mb-4 divide-y divide-border">
-        <div
-          v-for="m in staff"
-          :key="m.id"
-          class="flex items-center gap-3 py-2.5"
-        >
-          <div class="flex-1 min-w-0">
-            <p class="font-semibold truncate">{{ m.name }}</p>
-            <p class="text-xs text-muted-foreground tabular-nums">
-              PIN {{ m.pin }}
-            </p>
-          </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            class="w-8 h-8 text-destructive hover:text-destructive"
-            @click="removeStaff(m)"
-          >
-            <ClientOnly><Trash2 :size="15" /></ClientOnly>
-          </Button>
-        </div>
-      </div>
-
-      <div class="space-y-2">
-        <Input v-model="newName" placeholder="Nombre" class="h-9" />
-        <div class="flex gap-2">
-          <Input
-            v-model="newPin"
-            :placeholder="`PIN (${PIN_LENGTH} dígitos)`"
-            inputmode="numeric"
-            class="h-9"
-            @input="newPin = newPin.replace(/\D/g, '').slice(0, PIN_LENGTH)"
-          />
-          <Button
-            variant="outline"
-            size="sm"
-            class="shrink-0"
-            :disabled="!canAddStaff"
-            @click="addStaff"
-          >
-            <ClientOnly><UserPlus :size="15" class="mr-1.5" /></ClientOnly>
-            Agregar
-          </Button>
-        </div>
-        <p v-if="pinTaken" class="text-[11px] text-destructive">
-          Ese PIN ya está en uso.
-        </p>
-      </div>
-    </div>
-
     <!-- Toast -->
     <div
       v-if="toastMsg"
@@ -257,27 +195,21 @@
 </template>
 
 <script lang="ts" setup>
+import type { PropType } from "vue";
 import { Card } from "@common/components/ui/card";
 import { Button } from "@common/components/ui/button";
 import { Badge } from "@common/components/ui/badge";
-import { Input } from "@common/components/ui/input";
-import {
-  Clock,
-  LogIn,
-  LogOut,
-  Delete,
-  UserPlus,
-  Trash2,
-  Download,
-} from "lucide-vue-next";
+import { Clock, LogIn, LogOut, Download } from "lucide-vue-next";
 import { todayISO } from "~/utils/comandas";
 import { mondayOf, addDays } from "~/utils/rotation";
+
+/* ===== Composables ===== */
+const { waLink } = useWhatsappOrder();
 
 /* ===== Config ===== */
 const COLLECTION = "clockins";
 const FIELD = "data";
-const PIN_LENGTH = 4;
-const OWNER_WHATSAPP = "6221523259";
+
 /* ===== Tipos ===== */
 type PunchType = "in" | "out";
 interface Punch {
@@ -286,13 +218,11 @@ interface Punch {
   type: PunchType;
   at: string;
 }
-interface StaffMember {
+interface Person {
   id: string;
   name: string;
-  pin: string;
 }
 interface ClockData {
-  staff: StaffMember[];
   punches: Punch[];
 }
 
@@ -305,36 +235,34 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  // Cuenta autenticada que registra su propio turno.
+  currentUser: {
+    type: Object as PropType<Person>,
+    default: () => ({ id: "", name: "" }),
+  },
 });
 
 /* ===== Estado ===== */
 const loading = ref(true);
 const recordId = ref<string | null>(null);
-const data = reactive<ClockData>({ staff: [], punches: [] });
+const data = reactive<ClockData>({ punches: [] });
 
-const tab = ref<"reloj" | "resumen" | "personal">("reloj");
+const tab = ref<"reloj" | "resumen">("reloj");
 const tabs = [
   { key: "reloj", label: "Reloj" },
   { key: "resumen", label: "Resumen" },
-  { key: "personal", label: "Personal" },
 ] as const;
-// Oculta "Personal" a quien no es admin (evita ver una pestaña vacía).
-const visibleTabs = computed(() =>
-  props.isAdmin ? tabs : tabs.filter((t) => t.key !== "personal"),
-);
 
 const period = ref<"week" | "all">("week");
-const pin = ref("");
 const busy = ref(false);
-const newName = ref("");
-const newPin = ref("");
 const toastMsg = ref("");
 const toastKind = ref<"ok" | "error">("ok");
 
 const now = ref(new Date());
 let ticker: ReturnType<typeof setInterval> | undefined;
 
-const staff = computed(() => data.staff);
+// Usuario actual (desde la cuenta con sesión iniciada).
+const me = computed<Person>(() => props.currentUser ?? { id: "", name: "" });
 
 /* ===== Reloj / fechas ===== */
 const clock = computed(() =>
@@ -377,6 +305,23 @@ const rangeLabel = computed(() => {
   return `Todo · ${rangeFrom.value} → ${rangeTo.value}`;
 });
 
+/* ===== Personas (derivadas de los registros) ===== */
+// Ya no hay roster: la lista sale de quién ha fichado, más la propia cuenta.
+const punchers = computed<Person[]>(() => {
+  const map = new Map<string, string>();
+  for (const p of data.punches) map.set(p.user, p.name); // último gana = nombre más reciente
+  if (me.value.id && !map.has(me.value.id)) map.set(me.value.id, me.value.name);
+  return [...map]
+    .map(([id, name]) => ({ id, name }))
+    .sort((a, b) => a.name.localeCompare(b.name, "es"));
+});
+// Admin ve a todos; el resto solo se ve a sí mismo.
+const people = computed<Person[]>(() =>
+  props.isAdmin
+    ? punchers.value
+    : punchers.value.filter((p) => p.id === me.value.id),
+);
+
 /* ===== Estado por persona ===== */
 function punchesOf(userId: string): Punch[] {
   return data.punches
@@ -394,7 +339,21 @@ function lastTime(userId: string): string {
   const p = lastPunch(userId);
   return p ? timeOf(p.at) : "";
 }
-const insideCount = computed(() => data.staff.filter((m) => isIn(m.id)).length);
+const insideCount = computed(
+  () => punchers.value.filter((m) => isIn(m.id)).length,
+);
+
+/* ===== Estado del usuario actual ===== */
+const amInside = computed(() => isIn(me.value.id));
+const myClockInTime = computed(() => {
+  const p = lastPunch(me.value.id);
+  return p && p.type === "in" ? timeOf(p.at) : "";
+});
+const myElapsedMinutes = computed(() => {
+  const p = lastPunch(me.value.id);
+  if (!p || p.type !== "in") return 0;
+  return Math.max(0, (now.value.getTime() - new Date(p.at).getTime()) / 60000);
+});
 
 /* ===== Horas ===== */
 function localDay(iso: string): string {
@@ -450,7 +409,7 @@ function fmtDur(mins: number): string {
   return h ? `${h}h ${m}m` : `${m}m`;
 }
 const rangeTotalMinutes = computed(() =>
-  data.staff.reduce(
+  people.value.reduce(
     (sum, m) => sum + workedMinutes(m.id, rangeFrom.value, rangeTo.value),
     0,
   ),
@@ -489,7 +448,7 @@ function downloadReport() {
   rows.push(csvRow(["Empleado", "Fecha", "Entrada", "Salida", "Horas"]));
 
   let grand = 0;
-  for (const m of data.staff) {
+  for (const m of punchers.value) {
     const shifts = buildShifts(m.id, from, to);
     let sub = 0;
     for (const s of shifts) {
@@ -515,7 +474,7 @@ function downloadReport() {
   rows.push("");
   rows.push(csvRow(["RESUMEN"]));
   rows.push(csvRow(["Empleado", "Horas"]));
-  for (const m of data.staff) {
+  for (const m of punchers.value) {
     rows.push(
       csvRow([m.name, (workedMinutes(m.id, from, to) / 60).toFixed(2)]),
     );
@@ -544,18 +503,6 @@ function downloadPunches() {
   downloadCSV(`registros_${todayStr.value}.csv`, rows.join("\n"));
 }
 
-/* ===== Teclado ===== */
-function tapKey(n: string) {
-  if (pin.value.length >= PIN_LENGTH) return;
-  pin.value += n;
-}
-function backspace() {
-  pin.value = pin.value.slice(0, -1);
-}
-function clearPin() {
-  pin.value = "";
-}
-
 /* ===== Toast ===== */
 let toastTimer: ReturnType<typeof setTimeout> | undefined;
 function toast(msg: string, kind: "ok" | "error" = "ok") {
@@ -567,13 +514,9 @@ function toast(msg: string, kind: "ok" | "error" = "ok") {
 
 /* ===== Datos (single JSON object) ===== */
 function normalize(d: any): ClockData {
-  return {
-    staff: Array.isArray(d?.staff) ? d.staff : [],
-    punches: Array.isArray(d?.punches) ? d.punches : [],
-  };
+  return { punches: Array.isArray(d?.punches) ? d.punches : [] };
 }
 function apply(d: ClockData) {
-  data.staff = d.staff;
   data.punches = d.punches;
 }
 
@@ -604,7 +547,7 @@ async function load() {
 
 // Relee lo más fresco, aplica la mutación encima y guarda (mitiga choques).
 async function mutate(fn: (d: ClockData) => ClockData) {
-  let base: ClockData = { staff: [...data.staff], punches: [...data.punches] };
+  let base: ClockData = { punches: [...data.punches] };
   try {
     const res = await fetchCollection(
       COLLECTION,
@@ -634,37 +577,19 @@ async function mutate(fn: (d: ClockData) => ClockData) {
   apply(next);
 }
 
-/* ===== PIN -> persona ===== */
-// Para leer el PIN desde la colección `users` en lugar del roster, reemplaza
-// esta función por una consulta: fetchCollection("users", 1, 1, `pin = "${p}"`…).
-function resolveByPin(p: string): StaffMember | null {
-  return data.staff.find((m) => m.pin === p) ?? null;
-}
+/* ===== Registrar turno (toggle) ===== */
+async function toggle() {
+  if (busy.value || !me.value.id) return;
+  const direction: PunchType = amInside.value ? "out" : "in";
 
-async function submit(direction: PunchType) {
-  if (busy.value || pin.value.length < PIN_LENGTH) return;
-  const m = resolveByPin(pin.value);
-  if (!m) {
-    toast("PIN no reconocido", "error");
-    clearPin();
-    return;
-  }
-  const currentlyIn = isIn(m.id);
-  if (direction === "in" && currentlyIn) {
-    toast(`${m.name} ya está dentro`, "error");
-    clearPin();
-    return;
-  }
-  if (direction === "out" && !currentlyIn) {
-    toast(`${m.name} no ha registrado entrada`, "error");
-    clearPin();
-    return;
-  }
+  // Abre la pestaña YA, dentro del gesto del clic (así iOS y los bloqueadores
+  // la permiten). La redirigimos cuando termine el guardado.
+  const waTab = window.open("about:blank", "_blank");
 
   busy.value = true;
   const punch: Punch = {
-    user: m.id,
-    name: m.name,
+    user: me.value.id,
+    name: me.value.name,
     type: direction,
     at: new Date().toISOString(),
   };
@@ -672,48 +597,20 @@ async function submit(direction: PunchType) {
     await mutate((d) => ({ ...d, punches: [...d.punches, punch] }));
     const time = timeOf(punch.at);
     const verb = direction === "in" ? "Entrada" : "Salida";
-    // Aviso al dueño (revisa cámara si hace falta).
-    openWhatsApp(
-      `🕐 *Registro de turno*\n👤 ${m.name}\n${
+    const url = waLink(
+      `🕐 *Registro de turno*\n👤 ${me.value.name}\n${
         direction === "in" ? "🟢" : "🔴"
       } *${verb}* · ${time}\n📅 ${dateLabel.value}`,
-      OWNER_WHATSAPP,
     );
-    toast(`${m.name}: ${verb} ${time}`);
+    if (waTab && !waTab.closed) waTab.location.href = url;
+    else window.open(url, "_blank", "noopener");
+    toast(`${verb} · ${time}`);
   } catch {
+    waTab?.close();
     toast("No se pudo registrar", "error");
   } finally {
-    clearPin();
     busy.value = false;
   }
-}
-
-/* ===== Roster ===== */
-const pinTaken = computed(
-  () =>
-    newPin.value.length === PIN_LENGTH &&
-    data.staff.some((m) => m.pin === newPin.value),
-);
-const canAddStaff = computed(
-  () =>
-    newName.value.trim().length > 0 &&
-    newPin.value.length === PIN_LENGTH &&
-    !pinTaken.value,
-);
-async function addStaff() {
-  if (!canAddStaff.value) return;
-  const member: StaffMember = {
-    id: "s_" + Date.now().toString(36) + Math.random().toString(36).slice(2, 5),
-    name: newName.value.trim(),
-    pin: newPin.value,
-  };
-  newName.value = "";
-  newPin.value = "";
-  await mutate((d) => ({ ...d, staff: [...d.staff, member] }));
-}
-async function removeStaff(m: StaffMember) {
-  if (!confirm(`¿Quitar a ${m.name}? Sus registros se conservan.`)) return;
-  await mutate((d) => ({ ...d, staff: d.staff.filter((x) => x.id !== m.id) }));
 }
 
 /* ===== Realtime (PC + teléfono en sync) ===== */
