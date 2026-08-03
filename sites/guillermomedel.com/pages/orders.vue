@@ -85,7 +85,7 @@ onMounted(() => {
   }
 });
 
-definePageMeta({ layout: "none" });
+definePageMeta({ layout: "staff" });
 </script>
 
 <style scoped>

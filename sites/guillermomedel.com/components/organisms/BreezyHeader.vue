@@ -106,15 +106,26 @@ import {
 } from "@common/components/ui/sheet";
 import { Menu } from "lucide-vue-next";
 
-defineProps<{ logoSrc: string }>();
+interface NavLink {
+  to: string;
+  label: string;
+}
+
+withDefaults(
+  defineProps<{
+    logoSrc: string;
+    links?: NavLink[];
+  }>(),
+  {
+    links: () => [
+      { to: "/menu", label: "Menú" },
+      { to: "/semana", label: "Semanal" },
+    ],
+  },
+);
 
 const route = useRoute();
 const open = ref(false);
-
-const links = [
-  { to: "/menu", label: "Menú" },
-  { to: "/semana", label: "Semanal" },
-];
 
 const isActive = (to: string) =>
   to === "/" ? route.path === "/" : route.path.startsWith(to);

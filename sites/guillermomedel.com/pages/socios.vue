@@ -1,12 +1,14 @@
 <template>
   <section class="lg:max-w-3xl px-4 pt-8 pb-28 mx-auto">
     <!-- Encabezado -->
-    <div class="flex items-baseline gap-3 mb-1">
-      <h2 class="text-xl font-bold">Socios</h2>
-      <span class="text-xs text-muted-foreground tabular-nums">
-        {{ currentPeriod() }}
-      </span>
-      <Button size="sm" class="ml-auto" @click="openAdd()">
+    <div class="flex items-baseline justify-between mb-2">
+      <div class="flex items-baseline gap-3">
+        <h2 class="text-xl font-bold">Socios</h2>
+        <span class="text-xs text-muted-foreground tabular-nums">
+          {{ currentPeriod() }}
+        </span>
+      </div>
+      <Button size="sm" @click="openAdd()">
         <ClientOnly><UserPlus :size="15" class="mr-1.5" /></ClientOnly>
         Nuevo socio
       </Button>
@@ -17,7 +19,7 @@
     </p>
 
     <!-- Búsqueda -->
-    <Card class="p-4 mb-6">
+    <Card class="p-4 mb-6 space-y-4">
       <div class="space-y-1.5">
         <Label for="search">Código o nombre</Label>
         <div class="flex gap-2">
@@ -36,45 +38,50 @@
       </div>
 
       <!-- Varias coincidencias: elegir -->
-      <div v-if="status === 'choose'" class="mt-3 space-y-1.5">
+      <div v-if="status === 'choose'" class="space-y-2 pt-2">
         <p
           class="text-[11px] font-bold uppercase tracking-wider text-muted-foreground"
         >
           {{ candidates.length }} coincidencias
         </p>
-        <button
-          v-for="c in candidates"
-          :key="c.id"
-          class="flex items-center w-full gap-3 p-2.5 text-left border rounded-lg border-border hover:border-primary"
-          @click="pick(c)"
-        >
-          <span class="font-semibold">{{ c.name }}</span>
-          <span class="text-xs text-muted-foreground tabular-nums">{{
-            c.phone
-          }}</span>
-          <Badge variant="outline" class="ml-auto tabular-nums">{{
-            c.member_code
-          }}</Badge>
-        </button>
+        <div class="space-y-1.5">
+          <button
+            v-for="c in candidates"
+            :key="c.id"
+            class="flex items-center w-full gap-3 p-2.5 text-left border rounded-lg border-border hover:border-primary transition-colors bg-card hover:bg-muted/50"
+            @click="pick(c)"
+          >
+            <span class="font-semibold">{{ c.name }}</span>
+            <span class="text-xs text-muted-foreground tabular-nums">{{
+              c.phone
+            }}</span>
+            <Badge variant="outline" class="ml-auto tabular-nums">{{
+              c.member_code
+            }}</Badge>
+          </button>
+        </div>
       </div>
 
       <p
         v-else-if="searched && !member && status !== 'searching'"
-        class="mt-3 text-sm text-muted-foreground"
+        class="text-sm text-muted-foreground pt-1"
       >
         Sin resultados. Revisa el código o
-        <button class="font-semibold underline" @click="openAdd(term)">
+        <button
+          class="font-semibold underline hover:text-foreground"
+          @click="openAdd(term)"
+        >
           da de alta un socio nuevo</button
         >.
       </p>
     </Card>
 
     <!-- Ficha del socio -->
-    <Card v-if="member" class="overflow-hidden">
+    <Card v-if="member" class="overflow-hidden mb-6">
       <!-- Cabecera de la ficha -->
-      <div class="p-5 border-b border-border bg-muted/30">
-        <div class="flex items-start gap-3">
-          <div class="flex-1">
+      <div class="p-5 border-b border-border bg-muted/30 space-y-4">
+        <div class="flex items-start justify-between gap-3">
+          <div class="space-y-1">
             <div class="flex items-center gap-2">
               <h3 class="text-lg font-bold leading-tight">{{ member.name }}</h3>
               <Badge
@@ -96,15 +103,20 @@
           </Badge>
         </div>
 
-        <!-- Dirección editable (se confirma a mano; nunca automático) -->
-        <div class="mt-3">
-          <div v-if="!editingAddress" class="flex items-start gap-2 text-sm">
-            <span class="mt-0.5 text-muted-foreground">📍</span>
-            <span class="flex-1">
-              {{ member.address || "Sin dirección en archivo" }}
-            </span>
+        <!-- Dirección editable -->
+        <div class="pt-1">
+          <div
+            v-if="!editingAddress"
+            class="flex items-start justify-between text-sm"
+          >
+            <div class="flex items-start gap-2 text-muted-foreground">
+              <span>📍</span>
+              <span class="text-foreground">
+                {{ member.address || "Sin dirección en archivo" }}
+              </span>
+            </div>
             <button
-              class="text-xs font-semibold text-muted-foreground hover:text-foreground"
+              class="text-xs font-semibold text-muted-foreground hover:text-foreground shrink-0 ml-2"
               @click="startEditAddress"
             >
               Editar
@@ -127,12 +139,14 @@
         </div>
       </div>
 
-      <!-- Estado del mes + acción principal -->
-      <div class="p-5">
+      <!-- Cuerpo de la ficha -->
+      <div class="p-5 space-y-6">
         <!-- Con membresía activa este mes -->
         <template v-if="membership">
-          <div class="flex items-end justify-between mb-4">
-            <div>
+          <div
+            class="flex items-end justify-between bg-muted/20 p-4 rounded-xl border border-border/50"
+          >
+            <div class="space-y-0.5">
               <p
                 class="text-[11px] font-bold uppercase tracking-wider text-muted-foreground"
               >
@@ -147,14 +161,14 @@
             </div>
             <div class="text-right text-xs text-muted-foreground">
               <p>Vence</p>
-              <p class="font-semibold tabular-nums">
+              <p class="font-semibold tabular-nums text-foreground">
                 {{ fmtDate(membership.expires_date) }}
               </p>
             </div>
           </div>
 
-          <!-- Colocar orden: abre /orders con el código ya cargado -->
-          <Button as-child size="lg" class="w-full mb-3">
+          <!-- Colocar orden -->
+          <Button as-child size="lg" class="w-full">
             <NuxtLink :to="`/orders?code=${member.member_code}`">
               <ClientOnly><ClipboardList :size="18" class="mr-2" /></ClientOnly>
               Colocar orden
@@ -175,8 +189,8 @@
             La membresía de este mes venció.
           </div>
 
-          <!-- Agregar comidas (pago / renovación). Escribe en `memberships`. -->
-          <div class="grid grid-cols-2 gap-2 mt-3">
+          <!-- Agregar comidas -->
+          <div class="grid grid-cols-2 gap-2 pt-1">
             <Button
               size="sm"
               variant="outline"
@@ -200,12 +214,14 @@
 
         <!-- Sin membresía este mes -->
         <template v-else>
-          <div class="py-4 text-center">
-            <p class="font-semibold">Sin membresía este mes</p>
-            <p class="mt-1 text-sm text-muted-foreground">
-              Este socio no tiene comidas para {{ currentPeriod() }}.
-            </p>
-            <div class="grid grid-cols-2 gap-2 mt-4">
+          <div class="py-2 text-center space-y-4">
+            <div class="space-y-1">
+              <p class="font-semibold">Sin membresía este mes</p>
+              <p class="text-sm text-muted-foreground">
+                Este socio no tiene comidas para {{ currentPeriod() }}.
+              </p>
+            </div>
+            <div class="grid grid-cols-2 gap-2">
               <Button
                 variant="outline"
                 :disabled="working || busy"
@@ -219,7 +235,7 @@
                 Dar 5 comidas
               </Button>
             </div>
-            <Button as-child variant="outline" size="sm" class="mt-2">
+            <Button as-child variant="outline" size="sm" class="w-full">
               <NuxtLink :to="`/orders?code=${member.member_code}`">
                 <ClientOnly
                   ><ClipboardList :size="15" class="mr-1.5"
@@ -230,10 +246,12 @@
           </div>
         </template>
 
+        <Separator />
+
         <!-- Historial -->
-        <div class="mt-6">
+        <div class="space-y-3">
           <p
-            class="text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-2"
+            class="text-[11px] font-bold uppercase tracking-wider text-muted-foreground"
           >
             Historial
           </p>
@@ -241,7 +259,7 @@
             <div
               v-for="h in history"
               :key="h.id"
-              class="flex items-center gap-2 py-2 text-sm border-b border-dashed border-border"
+              class="flex items-center gap-2 py-2 text-sm border-b border-dashed border-border last:border-0"
               :class="h.voided && 'opacity-40 line-through'"
             >
               <span class="shrink-0">{{ kindIcon(h) }}</span>
@@ -264,9 +282,9 @@
     </Card>
 
     <!-- Alta de socio -->
-    <Card v-if="adding" class="p-5 mt-6">
-      <div class="flex items-center justify-between mb-3">
-        <h3 class="font-bold">Nuevo socio</h3>
+    <Card v-if="adding" class="p-5">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="font-bold text-lg">Nuevo socio</h3>
         <button
           class="text-muted-foreground hover:text-foreground"
           @click="adding = false"
@@ -274,7 +292,7 @@
           <ClientOnly><X :size="18" /></ClientOnly>
         </button>
       </div>
-      <div class="space-y-3">
+      <div class="space-y-4">
         <div class="space-y-1.5">
           <Label for="n-name"
             >Nombre <span class="text-destructive">*</span></Label
@@ -304,22 +322,23 @@
             placeholder="Para envíos a domicilio"
           />
         </div>
-        <label class="flex items-center gap-2 text-sm">
-          <input
-            v-model="form.issueNow"
-            type="checkbox"
-            class="rounded border-border"
-          />
-          Dar 5 comidas de {{ currentPeriod() }} al crear
-        </label>
+
+        <!-- Shadcn Checkbox Component integrated -->
+        <div class="flex items-center space-x-2 pt-1">
+          <Checkbox id="issue-now" v-model:checked="form.issueNow" />
+          <Label for="issue-now" class="text-sm font-normal cursor-pointer">
+            Dar 5 comidas de {{ currentPeriod() }} al crear
+          </Label>
+        </div>
+
         <Button
-          class="w-full"
+          class="w-full mt-2"
           :disabled="busy || !form.name.trim() || !form.phone.trim()"
           @click="doCreate"
         >
           {{ busy ? "Creando…" : "Crear socio" }}
         </Button>
-        <p v-if="createError" class="text-[11px] text-destructive">
+        <p v-if="createError" class="text-xs text-destructive">
           {{ createError }}
         </p>
       </div>
@@ -328,7 +347,7 @@
     <!-- Toast -->
     <div
       v-if="toastMsg"
-      class="fixed z-50 px-4 py-2 text-sm -translate-x-1/2 rounded-lg bottom-6 left-1/2 bg-foreground text-background"
+      class="fixed z-50 px-4 py-2 text-sm -translate-x-1/2 rounded-lg bottom-6 left-1/2 bg-foreground text-background shadow-lg"
     >
       {{ toastMsg }}
     </div>
@@ -337,6 +356,7 @@
 
 <script lang="ts" setup>
 import { Card } from "@common/components/ui/card";
+import { Checkbox } from "@common/components/ui/checkbox";
 import { Button } from "@common/components/ui/button";
 import { Input } from "@common/components/ui/input";
 import { Label } from "@common/components/ui/label";
@@ -545,7 +565,7 @@ async function doCreate() {
 }
 
 definePageMeta({
-  layout: "breezy",
+  layout: "staff",
   middleware: defineNuxtRouteMiddleware(() => {
     const pb = usePocketBase();
     if (!pb.authStore.isValid || pb.authStore.model?.verified !== true)
