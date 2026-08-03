@@ -117,10 +117,7 @@ withDefaults(
     links?: NavLink[];
   }>(),
   {
-    links: () => [
-      { to: "/menu", label: "Menú" },
-      { to: "/semana", label: "Semanal" },
-    ],
+    links: () => [],
   },
 );
 
