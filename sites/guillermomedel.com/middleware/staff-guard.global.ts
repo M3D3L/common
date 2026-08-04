@@ -7,6 +7,8 @@ export default defineNuxtRouteMiddleware((to) => {
     "/socios",
     "/orders",
     "/labels",
+    "/semana/menu",
+    "/semana/calendario",
   ];
   const isStaff = staffPaths.some(
     (p) => to.path === p || to.path.startsWith(p + "/"),

@@ -389,11 +389,6 @@ async function save() {
 onMounted(load);
 
 definePageMeta({
-  layout: "breezy",
-  middleware: defineNuxtRouteMiddleware(() => {
-    const pb = usePocketBase();
-    if (!pb.authStore.isValid || pb.authStore.model?.verified !== true)
-      return navigateTo("/");
-  }),
+  layout: "staff",
 });
 </script>

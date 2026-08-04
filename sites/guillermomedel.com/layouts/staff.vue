@@ -15,6 +15,8 @@ const links = [
   { to: "/socios", label: "Miembros" },
   { to: "/orders", label: "Órdenes" },
   { to: "/labels", label: "Etiquetas" },
+  { to: "/semana/menu", label: "Menú Control" },
+  { to: "/semana/calendario", label: "Calendario" },
 ];
 </script>
 
