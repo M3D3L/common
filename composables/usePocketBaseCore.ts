@@ -1,4 +1,4 @@
-import { useRuntimeConfig, useState } from "#app";
+import { useRuntimeConfig } from "#app";
 import usePocketBase from "./usePocketbase";
 
 import {
@@ -10,9 +10,6 @@ import {
 } from "./cacheSingleton";
 import type { ListResult, RecordModel, UnsubscribeFunc } from "pocketbase";
 
-// Module-level guard so the auth listener is bound once, not per consumer.
-let authListenerBound = false;
-
 export default function usePocketBaseCore() {
   const pb = usePocketBase();
   const runtimeConfig = useRuntimeConfig();
@@ -21,32 +18,6 @@ export default function usePocketBaseCore() {
 
   const user = pb.authStore.model;
   const isValid = pb.authStore.isValid;
-
-  // Reactive auth state — user/isValid above are one-time snapshots taken at
-  // setup; these stay in sync as the user logs in/out (needed for a persistent
-  // header that never remounts).
-  const currentUser = useState<RecordModel | null>(
-    "pb_current_user",
-    () => pb.authStore.model as RecordModel | null,
-  );
-  const isLoggedIn = useState<boolean>(
-    "pb_is_logged_in",
-    () => pb.authStore.isValid,
-  );
-
-  if (process.client && !authListenerBound) {
-    authListenerBound = true;
-    pb.authStore.onChange(() => {
-      currentUser.value = pb.authStore.model as RecordModel | null;
-      isLoggedIn.value = pb.authStore.isValid;
-    });
-  }
-
-  const logout = () => {
-    pb.authStore.clear();
-    // Optional: if you cache per-user data, also drop it here, e.g.
-    // clearCachePattern("orders");
-  };
 
   const isUserVerified = (): boolean => {
     return pb.authStore.isValid && pb.authStore.model?.verified === true;
@@ -251,9 +222,6 @@ export default function usePocketBaseCore() {
   return {
     user,
     isValid,
-    currentUser,
-    isLoggedIn,
-    logout,
     fetchCollection,
     fetchRecord,
     createItem,

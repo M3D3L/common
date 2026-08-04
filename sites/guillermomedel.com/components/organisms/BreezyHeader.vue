@@ -126,6 +126,7 @@ import {
   SheetTrigger,
 } from "@common/components/ui/sheet";
 import { Menu, LogOut } from "lucide-vue-next";
+import usePocketBase from "@common/composables/usePocketbase";
 
 interface NavLink {
   to: string;
@@ -147,10 +148,32 @@ withDefaults(
 const route = useRoute();
 const open = ref(false);
 
-const { isLoggedIn, logout } = usePocketBaseCore();
+const pb = usePocketBase();
+
+// Local login flag. authStore is client-only (localStorage), so start false to
+// match SSR and set the real value after mount to avoid a hydration mismatch.
+const isLoggedIn = ref(false);
+
+const syncAuth = () => {
+  isLoggedIn.value = pb.authStore.isValid;
+};
+
+let stopAuthListener: (() => void) | undefined;
+
+onMounted(() => {
+  syncAuth();
+  // authStore.onChange fires on login/logout within this instance — enough to
+  // flip the button live after a sign-out click here.
+  stopAuthListener = pb.authStore.onChange(syncAuth);
+});
+
+onBeforeUnmount(() => {
+  stopAuthListener?.();
+});
 
 const handleSignOut = async () => {
-  logout();
+  pb.authStore.clear();
+  syncAuth(); // update immediately, don't wait on the listener
   open.value = false;
   await navigateTo("/");
 };

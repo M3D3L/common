@@ -20,6 +20,7 @@
     <!-- Fade wrapper -->
     <client-only>
       <motion.div
+        v-if="props.video && heroRef"
         class="absolute top-0 left-0 bottom-0 w-full h-full overflow-hidden"
         initial="{ opacity: 0 }"
         :animate="{ opacity: videoOpacity }"
@@ -78,7 +79,7 @@ watch(
       // fade in
       videoOpacity.value = 1;
     }
-  }
+  },
 );
 
 // Listen for the custom event from VideoBackground component
