@@ -13,6 +13,12 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   POCKETBASE_URL: ${{ vars.POCKETBASE_URL }}
   WHATSAPP_NUMBER: ${{ vars.WHATSAPP_NUMBER }}
+  # npm network resilience — retry transient ECONNRESET / registry drops
+  # instead of failing the whole job on the first dropped connection.
+  npm_config_fetch_retries: 5
+  npm_config_fetch_retry_mintimeout: 20000
+  npm_config_fetch_retry_maxtimeout: 120000
+  npm_config_fetch_timeout: 300000
 
 jobs:
   detect-changes:
@@ -119,16 +125,12 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache-dependency-path: "./package-lock.json"
-
-      - name: Cache node_modules
-        if: steps.check.outputs.should_build == 'true'
-        uses: actions/cache@v4
-        with:
-          path: node_modules
-          key: ${{ runner.os }}-node-v2-${{ hashFiles('package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-v2-
+          # Enable the built-in npm download cache (caches ~/.npm, not node_modules).
+          # This is what actually speeds up `npm ci` and reduces registry round-trips.
+          cache: "npm"
+          cache-dependency-path: |
+            package-lock.json
+            sites/*/package-lock.json
 
       - name: Install dependencies
         if: steps.check.outputs.should_build == 'true'
