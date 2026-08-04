@@ -1,192 +1,187 @@
 <template>
-  <containers-video
-    id="auth"
-    class="min-h-[90vh] md:min-h-screen"
-    title=""
-    description=""
-    :video="videoArray[randomIndex]"
+  <section
+    class="min-h-[90vh] md:min-h-screen flex items-center justify-center px-4 py-12"
   >
-    <template #video-container-content>
-      <!-- SeoMeta component for SEO metadata -->
-      <SeoMeta :seoData="computedSeoData" />
-      <ClientOnly>
-        <Card class="max-w-2xl mx-auto">
-          <CardContent class="p-6">
-            <div class="flex justify-center mb-6">
-              <Tabs v-model="activeTab" class="w-full">
-                <TabsList class="grid w-full grid-cols-2">
-                  <TabsTrigger value="login" asChild>
-                    <NuxtLink
-                      :to="{ path: '/login', query: route.query }"
-                      class="w-full"
-                      >Login</NuxtLink
-                    >
-                  </TabsTrigger>
-                  <TabsTrigger value="register" asChild>
-                    <NuxtLink
-                      :to="{ path: '/register', query: route.query }"
-                      class="w-full"
-                      >Register</NuxtLink
-                    >
-                  </TabsTrigger>
-                </TabsList>
-              </Tabs>
-            </div>
+    <!-- SeoMeta component for SEO metadata -->
+    <SeoMeta :seoData="computedSeoData" />
+    <ClientOnly>
+      <Card class="w-full max-w-2xl mx-auto">
+        <CardContent class="p-6">
+          <!-- Tab selector only renders when registration is enabled -->
+          <div v-if="showRegister" class="flex justify-center mb-6">
+            <Tabs v-model="activeTab" class="w-full">
+              <TabsList class="grid w-full grid-cols-2">
+                <TabsTrigger value="login" asChild>
+                  <NuxtLink
+                    :to="{ path: '/login', query: route.query }"
+                    class="w-full"
+                    >Login</NuxtLink
+                  >
+                </TabsTrigger>
+                <TabsTrigger value="register" asChild>
+                  <NuxtLink
+                    :to="{ path: '/register', query: route.query }"
+                    class="w-full"
+                    >Register</NuxtLink
+                  >
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </div>
 
-            <div
-              v-if="showSuccess"
-              class="p-4 mb-4 text-center text-green-600 bg-green-100 rounded-md"
-            >
-              <p>
-                Thank you for registering! You can now login with your
-                credentials.
-              </p>
-            </div>
-
-            <div
-              v-if="generalError"
-              class="p-4 mb-4 text-center text-red-600 bg-red-100 rounded-md"
-            >
-              <p>{{ generalError }}</p>
-            </div>
-
-            <form @submit.prevent="handleSubmit" class="space-y-4">
-              <div class="space-y-2" v-if="isRegister">
-                <Label for="username">Username</Label>
-                <Input
-                  id="username"
-                  v-model="form.username"
-                  placeholder="johndoe"
-                  required
-                  autocomplete="username"
-                />
-                <div v-if="errors.username" class="text-sm text-destructive">
-                  {{ errors.username }}
-                </div>
-              </div>
-
-              <div class="space-y-2">
-                <Label for="email">Email</Label>
-                <Input
-                  id="email"
-                  v-model="form.email"
-                  type="email"
-                  placeholder="your@email.com"
-                  required
-                  autocomplete="email"
-                />
-                <div v-if="errors.email" class="text-sm text-destructive">
-                  {{ errors.email }}
-                </div>
-              </div>
-
-              <div class="space-y-2">
-                <Label for="password">Password</Label>
-                <Input
-                  id="password"
-                  v-model="form.password"
-                  type="password"
-                  placeholder="••••••••"
-                  required
-                  :minlength="isRegister ? 8 : 1"
-                  autocomplete="current-password"
-                />
-                <div v-if="errors.password" class="text-sm text-destructive">
-                  {{ errors.password }}
-                </div>
-                <div v-if="isRegister" class="text-xs text-muted-foreground">
-                  Password must be at least 8 characters
-                </div>
-              </div>
-
-              <div v-if="isRegister" class="space-y-2">
-                <Label for="confirmPassword">Confirm Password</Label>
-                <Input
-                  id="confirmPassword"
-                  v-model="form.confirmPassword"
-                  type="password"
-                  placeholder="••••••••"
-                  required
-                  minlength="8"
-                  autocomplete="new-password"
-                />
-                <div
-                  v-if="errors.confirmPassword"
-                  class="text-sm text-destructive"
-                >
-                  {{ errors.confirmPassword }}
-                </div>
-              </div>
-
-              <div v-if="isRegister" class="space-y-2">
-                <Label for="bio">Bio</Label>
-                <textarea
-                  id="bio"
-                  v-model="form.bio"
-                  class="w-full px-3 py-2 text-sm border rounded-md border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-                  placeholder="A short bio about yourself"
-                ></textarea>
-                <div v-if="errors.bio" class="text-sm text-destructive">
-                  {{ errors.bio }}
-                </div>
-              </div>
-
-              <div v-if="isRegister" class="space-y-2">
-                <Label for="avatar">Avatar</Label>
-                <Input
-                  id="avatar"
-                  type="file"
-                  @change="handleAvatarChange"
-                  accept="image/*"
-                />
-                <div v-if="errors.avatar" class="text-sm text-destructive">
-                  {{ errors.avatar }}
-                </div>
-                <div v-if="form.avatarUrl" class="mt-2">
-                  <img
-                    :src="form.avatarUrl"
-                    alt="Avatar Preview"
-                    class="object-cover w-16 h-16 rounded-full"
-                  />
-                </div>
-              </div>
-
-              <Button type="submit" class="w-full" :disabled="isSubmitting">
-                <span v-if="isSubmitting" class="flex items-center">
-                  <Loader2 class="w-4 h-4 mr-2 animate-spin" />
-                  Processing...
-                </span>
-                <span v-else>{{
-                  isRegister ? "Create Account" : "Sign In"
-                }}</span>
-              </Button>
-            </form>
-          </CardContent>
-
-          <CardFooter
-            class="flex flex-col items-center justify-center p-6 pt-0"
+          <div
+            v-if="showSuccess"
+            class="p-4 mb-4 text-center text-green-600 bg-green-100 rounded-md"
           >
-            <p class="text-sm text-muted-foreground">
-              {{
-                isRegister
-                  ? "Already have an account?"
-                  : "Don't have an account?"
-              }}
-              <NuxtLink
-                :to="{
-                  path: isRegister ? '/login' : '/register',
-                  query: route.query,
-                }"
-                class="font-medium text-primary hover:underline"
-              >
-                {{ isRegister ? "Sign in" : "Sign up" }}
-              </NuxtLink>
+            <p>
+              Thank you for registering! You can now login with your
+              credentials.
             </p>
-          </CardFooter>
-        </Card>
-      </ClientOnly>
-    </template>
-  </containers-video>
+          </div>
+
+          <div
+            v-if="generalError"
+            class="p-4 mb-4 text-center text-red-600 bg-red-100 rounded-md"
+          >
+            <p>{{ generalError }}</p>
+          </div>
+
+          <form @submit.prevent="handleSubmit" class="space-y-4">
+            <div class="space-y-2" v-if="isRegister">
+              <Label for="username">Username</Label>
+              <Input
+                id="username"
+                v-model="form.username"
+                placeholder="johndoe"
+                required
+                autocomplete="username"
+              />
+              <div v-if="errors.username" class="text-sm text-destructive">
+                {{ errors.username }}
+              </div>
+            </div>
+
+            <div class="space-y-2">
+              <Label for="email">Email</Label>
+              <Input
+                id="email"
+                v-model="form.email"
+                type="email"
+                placeholder="your@email.com"
+                required
+                autocomplete="email"
+              />
+              <div v-if="errors.email" class="text-sm text-destructive">
+                {{ errors.email }}
+              </div>
+            </div>
+
+            <div class="space-y-2">
+              <Label for="password">Password</Label>
+              <Input
+                id="password"
+                v-model="form.password"
+                type="password"
+                placeholder="••••••••"
+                required
+                :minlength="isRegister ? 8 : 1"
+                autocomplete="current-password"
+              />
+              <div v-if="errors.password" class="text-sm text-destructive">
+                {{ errors.password }}
+              </div>
+              <div v-if="isRegister" class="text-xs text-muted-foreground">
+                Password must be at least 8 characters
+              </div>
+            </div>
+
+            <div v-if="isRegister" class="space-y-2">
+              <Label for="confirmPassword">Confirm Password</Label>
+              <Input
+                id="confirmPassword"
+                v-model="form.confirmPassword"
+                type="password"
+                placeholder="••••••••"
+                required
+                minlength="8"
+                autocomplete="new-password"
+              />
+              <div
+                v-if="errors.confirmPassword"
+                class="text-sm text-destructive"
+              >
+                {{ errors.confirmPassword }}
+              </div>
+            </div>
+
+            <div v-if="isRegister" class="space-y-2">
+              <Label for="bio">Bio</Label>
+              <textarea
+                id="bio"
+                v-model="form.bio"
+                class="w-full px-3 py-2 text-sm border rounded-md border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                placeholder="A short bio about yourself"
+              ></textarea>
+              <div v-if="errors.bio" class="text-sm text-destructive">
+                {{ errors.bio }}
+              </div>
+            </div>
+
+            <div v-if="isRegister" class="space-y-2">
+              <Label for="avatar">Avatar</Label>
+              <Input
+                id="avatar"
+                type="file"
+                @change="handleAvatarChange"
+                accept="image/*"
+              />
+              <div v-if="errors.avatar" class="text-sm text-destructive">
+                {{ errors.avatar }}
+              </div>
+              <div v-if="form.avatarUrl" class="mt-2">
+                <img
+                  :src="form.avatarUrl"
+                  alt="Avatar Preview"
+                  class="object-cover w-16 h-16 rounded-full"
+                />
+              </div>
+            </div>
+
+            <Button type="submit" class="w-full" :disabled="isSubmitting">
+              <span v-if="isSubmitting" class="flex items-center">
+                <Loader2 class="w-4 h-4 mr-2 animate-spin" />
+                Processing...
+              </span>
+              <span v-else>{{
+                isRegister ? "Create Account" : "Sign In"
+              }}</span>
+            </Button>
+          </form>
+        </CardContent>
+
+        <!-- Login/register switch link only when registration is enabled -->
+        <CardFooter
+          v-if="showRegister"
+          class="flex flex-col items-center justify-center p-6 pt-0"
+        >
+          <p class="text-sm text-muted-foreground">
+            {{
+              isRegister ? "Already have an account?" : "Don't have an account?"
+            }}
+            <NuxtLink
+              :to="{
+                path: isRegister ? '/login' : '/register',
+                query: route.query,
+              }"
+              class="font-medium text-primary hover:underline"
+            >
+              {{ isRegister ? "Sign in" : "Sign up" }}
+            </NuxtLink>
+          </p>
+        </CardFooter>
+      </Card>
+    </ClientOnly>
+  </section>
 </template>
 
 <script setup lang="ts">
@@ -204,17 +199,13 @@ const auth = useAuth();
 const route = useRoute();
 const router = useRouter();
 
-const videoArray = [
-  "https://www.pexels.com/download/video/33792753/",
-  "https://www.pexels.com/download/video/32926637/",
-  "https://www.pexels.com/download/video/32106032/",
-  "https://www.pexels.com/download/video/32104595/",
-];
+// ⭐ Toggles the registration tab, the tab selector, and the footer switch.
+// Hidden by default — swap this const for a prop when you want to expose it.
+const showRegister = false;
 
-const randomIndex = Math.floor(Math.random() * videoArray.length);
-
-// Determine if register page
-const isRegister = computed(() => route.path === "/register");
+// Determine if register page. Forced to login-only while registration is off,
+// so hitting /register directly still renders the login form (no orphan state).
+const isRegister = computed(() => showRegister && route.path === "/register");
 
 const redirectPath = computed(() => {
   const source = route.query.source as string;
@@ -230,7 +221,8 @@ const activeTab = ref(isRegister.value ? "register" : "login");
 watch(
   () => route.path,
   (newPath) => {
-    activeTab.value = newPath === "/register" ? "register" : "login";
+    activeTab.value =
+      showRegister && newPath === "/register" ? "register" : "login";
   },
 );
 
@@ -346,7 +338,7 @@ const handleSubmit = async () => {
         resetForm();
         setTimeout(() => {
           showSuccess.value = false;
-          // ⭐ UPDATED: After registration, redirect to login.
+          // After registration, redirect to login.
           // If a source is present, pass it along to the login page.
           const loginPath =
             redirectPath.value === "/"
