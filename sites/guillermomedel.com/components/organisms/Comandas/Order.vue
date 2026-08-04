@@ -178,19 +178,69 @@
         </p>
       </div>
 
+      <!-- Hora de entrega -->
       <div class="mt-3 space-y-1">
         <Label
-          for="fulfill-date"
           class="text-[11px] font-bold tracking-wider uppercase text-muted-foreground"
         >
-          Fecha de entrega
+          Hora de entrega
         </Label>
-        <Input
-          id="fulfill-date"
-          v-model="fulfillDate"
-          type="date"
-          :min="minDate"
-        />
+        <div class="flex items-center gap-1.5">
+          <Select :model-value="parts.h12" @update:model-value="setHour">
+            <SelectTrigger class="flex-1"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem v-for="h in hours12" :key="h" :value="h">
+                {{ h }}
+              </SelectItem>
+            </SelectContent>
+          </Select>
+
+          <span class="font-bold text-muted-foreground">:</span>
+
+          <Select :model-value="parts.m" @update:model-value="setMinute">
+            <SelectTrigger class="flex-1"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem v-for="m in minutes" :key="m" :value="m">
+                {{ m }}
+              </SelectItem>
+            </SelectContent>
+          </Select>
+
+          <div class="flex overflow-hidden border rounded-md">
+            <button
+              type="button"
+              class="px-2.5 py-2 text-xs font-bold uppercase transition-colors"
+              :class="
+                parts.period === 'am'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'text-muted-foreground hover:bg-muted'
+              "
+              @click="setPeriod('am')"
+            >
+              am
+            </button>
+            <button
+              type="button"
+              class="px-2.5 py-2 text-xs font-bold uppercase transition-colors border-l"
+              :class="
+                parts.period === 'pm'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'text-muted-foreground hover:bg-muted'
+              "
+              @click="setPeriod('pm')"
+            >
+              pm
+            </button>
+          </div>
+        </div>
+        <button
+          v-if="fulfillTime"
+          type="button"
+          class="text-[11px] font-bold underline text-muted-foreground hover:text-primary"
+          @click="clearTime"
+        >
+          Lo antes posible
+        </button>
       </div>
 
       <Input
@@ -220,6 +270,7 @@
 </template>
 
 <script lang="ts" setup>
+import { computed } from "vue";
 import { Card } from "@common/components/ui/card";
 import { Button } from "@common/components/ui/button";
 import { Input } from "@common/components/ui/input";
@@ -227,6 +278,13 @@ import { Label } from "@common/components/ui/label";
 import { Badge } from "@common/components/ui/badge";
 import { Separator } from "@common/components/ui/separator";
 import { Tabs, TabsList, TabsTrigger } from "@common/components/ui/tabs";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@common/components/ui/select";
 import { Plus, Minus, Send, Sparkles, Pencil } from "lucide-vue-next";
 import { MODES, MODE_SHORT, groups } from "~/utils/comandas";
 
@@ -235,9 +293,8 @@ const {
   cart,
   mode,
   note,
-  fulfillDate,
+  fulfillTime,
   customer,
-  minDate,
   itemCount,
   orderText,
   isOut,
@@ -251,4 +308,55 @@ const {
   activeBlockName,
   memberCode,
 } = useComandas();
+
+/* ===== Selector de hora (opera sobre fulfillTime "HH:mm" 24h) ===== */
+const hours12 = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"];
+const minutes = [
+  "00",
+  "05",
+  "10",
+  "15",
+  "20",
+  "25",
+  "30",
+  "35",
+  "40",
+  "45",
+  "50",
+  "55",
+];
+
+// Base para los selectores cuando aún no hay hora (default 2:00 p.m.).
+const base = computed(() => fulfillTime.value || "14:00");
+
+function split12(hhmm: string) {
+  const [h, m] = hhmm.split(":").map(Number);
+  const period = h >= 12 ? "pm" : "am";
+  const h12 = h % 12 === 0 ? 12 : h % 12;
+  return { h12: String(h12), m: String(m).padStart(2, "0"), period };
+}
+
+function join24(h12: number, m: number, period: "am" | "pm") {
+  let h = h12 % 12;
+  if (period === "pm") h += 12;
+  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+}
+
+const parts = computed(() => split12(base.value));
+
+function setHour(h: unknown) {
+  const p = parts.value;
+  fulfillTime.value = join24(Number(h), Number(p.m), p.period as "am" | "pm");
+}
+function setMinute(m: unknown) {
+  const p = parts.value;
+  fulfillTime.value = join24(Number(p.h12), Number(m), p.period as "am" | "pm");
+}
+function setPeriod(pr: "am" | "pm") {
+  const p = parts.value;
+  fulfillTime.value = join24(Number(p.h12), Number(p.m), pr);
+}
+function clearTime() {
+  fulfillTime.value = "";
+}
 </script>

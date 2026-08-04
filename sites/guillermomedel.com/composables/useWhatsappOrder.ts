@@ -16,6 +16,7 @@ export interface FormatOrderArgs {
   bebidas: string[];
   note?: string;
   fulfillDate?: string;
+  fulfillTime?: string;
 }
 
 export interface FormatMenuArgs {
@@ -73,6 +74,7 @@ export function useWhatsappOrder() {
     bebidas,
     note,
     fulfillDate,
+    fulfillTime,
   }: FormatOrderArgs): string {
     const lines: string[] = [
       `🍽️ *Orden #${orderNumber}*`,
@@ -104,8 +106,12 @@ export function useWhatsappOrder() {
       lines.push("", `📝 *Nota:* ${clean}`);
     }
 
-    if (fulfillDate) {
-      lines.push("", `📅 *Fecha de entrega:* ${fulfillDate}`);
+    // Entrega: la hora es lo importante; la fecha solo aparece si se programó.
+    const when: string[] = [];
+    if (fulfillDate) when.push(`📅 ${fulfillDate}`);
+    if (fulfillTime) when.push(`🕒 ${fulfillTime}`);
+    if (when.length) {
+      lines.push("", `⏱️ *Entregar:* ${when.join(" · ")}`);
     }
 
     return lines.join("\n");

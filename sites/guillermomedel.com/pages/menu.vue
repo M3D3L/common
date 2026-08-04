@@ -273,9 +273,69 @@
               </div>
             </template>
 
-            <div class="space-y-1.5">
-              <Label for="c-time">{{ timeLabel }} (opcional/optional)</Label>
-              <Input id="c-time" v-model="pickupTime" type="time" />
+            <!-- Hora: para "aquí" y "para llevar" (no domicilio). Opcional, sin default -->
+            <div v-if="mode !== 'domicilio'" class="space-y-1.5">
+              <Label>{{ timeLabel }} (opcional/optional)</Label>
+              <div class="flex items-center gap-1.5">
+                <Select v-model="selHour">
+                  <SelectTrigger class="flex-1">
+                    <SelectValue placeholder="Hora" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem v-for="h in hours12" :key="h" :value="h">
+                      {{ h }}
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+
+                <span class="font-bold text-muted-foreground">:</span>
+
+                <Select v-model="selMin">
+                  <SelectTrigger class="flex-1">
+                    <SelectValue placeholder="Min" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem v-for="m in minutes" :key="m" :value="m">
+                      {{ m }}
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+
+                <div class="flex overflow-hidden border rounded-md">
+                  <button
+                    type="button"
+                    class="px-2.5 py-2 text-xs font-bold uppercase transition-colors"
+                    :class="
+                      selPeriod === 'am'
+                        ? 'bg-primary text-primary-foreground'
+                        : 'text-muted-foreground hover:bg-muted'
+                    "
+                    @click="selPeriod = 'am'"
+                  >
+                    am
+                  </button>
+                  <button
+                    type="button"
+                    class="px-2.5 py-2 text-xs font-bold uppercase transition-colors border-l"
+                    :class="
+                      selPeriod === 'pm'
+                        ? 'bg-primary text-primary-foreground'
+                        : 'text-muted-foreground hover:bg-muted'
+                    "
+                    @click="selPeriod = 'pm'"
+                  >
+                    pm
+                  </button>
+                </div>
+              </div>
+              <button
+                v-if="selHour || selMin || selPeriod"
+                type="button"
+                class="text-[11px] font-bold underline text-muted-foreground hover:text-primary"
+                @click="clearTime"
+              >
+                Lo antes posible / ASAP
+              </button>
             </div>
 
             <div class="space-y-1.5">
@@ -354,6 +414,13 @@ import { Separator } from "@common/components/ui/separator";
 import { Tabs, TabsList, TabsTrigger } from "@common/components/ui/tabs";
 import { Textarea } from "@common/components/ui/textarea";
 import { Skeleton } from "@common/components/ui/skeleton";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@common/components/ui/select";
 import {
   Plus,
   Minus,
@@ -473,16 +540,57 @@ const isOut = (n: string) => soldOut.value.includes(n);
 const cart = reactive<Record<string, number>>({});
 const mode = ref<OrderMode>("llevar");
 const note = ref("");
-const pickupTime = ref("");
 const customer = reactive({ name: "", phone: "", address: "" });
 
 // Código de socio (opcional, texto plano). No se valida aquí: se estampa en el
 // mensaje de WhatsApp para que el staff lo vea y redima al servir.
 const memberCode = ref("");
 
+/* ===== Hora (para "aquí" y "para llevar"; opcional, sin default) =====
+ * Tres selecciones independientes que arrancan vacías. `pickupTime` solo se
+ * arma cuando hay hora + am/pm (los minutos, si faltan, caen a :00). Mientras
+ * no se elija nada, queda "" y la orden se envía sin hora (lo antes posible).
+ * No aplica a domicilio.
+ */
+const hours12 = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"];
+const minutes = [
+  "00",
+  "05",
+  "10",
+  "15",
+  "20",
+  "25",
+  "30",
+  "35",
+  "40",
+  "45",
+  "50",
+  "55",
+];
+
+const selHour = ref<string>();
+const selMin = ref<string>();
+const selPeriod = ref<"am" | "pm">();
+
+const pickupTime = computed(() => {
+  if (!selHour.value || !selPeriod.value) return "";
+  const mm = selMin.value || "00";
+  let h = Number(selHour.value) % 12;
+  if (selPeriod.value === "pm") h += 12;
+  return `${String(h).padStart(2, "0")}:${mm}`;
+});
+
 const timeLabel = computed(() =>
-  mode.value === "domicilio" ? "Hora de entrega" : "Hora de recolección",
+  mode.value === "aqui"
+    ? "Hora de llegada / Arrival time"
+    : "Hora de recolección / Pickup time",
 );
+
+function clearTime() {
+  selHour.value = undefined;
+  selMin.value = undefined;
+  selPeriod.value = undefined;
+}
 
 const cartItems = computed(() =>
   Object.entries(cart)
@@ -522,8 +630,9 @@ function clearCart() {
 
 function buildNote() {
   const pieces: string[] = [];
-  if (pickupTime.value) {
-    const verb = mode.value === "domicilio" ? "Entregar" : "Recoger";
+  // La hora aplica a "aquí" y "para llevar" (no domicilio).
+  if (pickupTime.value && mode.value !== "domicilio") {
+    const verb = mode.value === "aqui" ? "Llegada" : "Recoger";
     pieces.push(`${verb} a las ${pickupTime.value}`);
   }
   if (note.value.trim()) pieces.push(note.value.trim());

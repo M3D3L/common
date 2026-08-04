@@ -11,6 +11,7 @@ const logoSrc =
 
 const links = [
   { to: "/inicio", label: "🕒" },
+  { to: "/checklists", label: "Checklists" },
   { to: "/socios", label: "Miembros" },
   { to: "/orders", label: "Órdenes" },
   { to: "/labels", label: "Etiquetas" },

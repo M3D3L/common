@@ -11,27 +11,29 @@
         <div
           class="flex items-center justify-between md:justify-start gap-3 w-full md:w-auto"
         >
-          <div class="flex items-center gap-3">
-            <div
-              class="w-7 h-7 rounded-md bg-neutral-900 dark:bg-white flex items-center justify-center shrink-0"
-            >
-              <UtensilsCrossed
-                class="w-4 h-4 text-white dark:text-neutral-900"
-              />
-            </div>
-            <div class="leading-none">
-              <p
-                class="text-[11px] text-neutral-400 tracking-widest uppercase font-medium"
+          <NuxtLink to="/orders" class="flex items-center gap-3">
+            <div class="flex items-center gap-3">
+              <div
+                class="w-7 h-7 rounded-md bg-neutral-900 dark:bg-white flex items-center justify-center shrink-0"
               >
-                Breezy Meals
-              </p>
-              <h1
-                class="text-sm font-semibold text-neutral-900 dark:text-white tracking-tight"
-              >
-                Nutritional Labels
-              </h1>
+                <UtensilsCrossed
+                  class="w-4 h-4 text-white dark:text-neutral-900"
+                />
+              </div>
+              <div class="leading-none">
+                <p
+                  class="text-[11px] text-neutral-400 tracking-widest uppercase font-medium"
+                >
+                  Breezy Meals
+                </p>
+                <h1
+                  class="text-sm font-semibold text-neutral-900 dark:text-white tracking-tight"
+                >
+                  Nutritional Labels
+                </h1>
+              </div>
             </div>
-          </div>
+          </NuxtLink>
 
           <Tabs v-model="labelType" class="no-print md:hidden">
             <TabsList>

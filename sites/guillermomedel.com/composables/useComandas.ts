@@ -112,7 +112,8 @@ function createComandasStore() {
   const cart = reactive<Record<string, number>>({});
   const mode = ref<OrderMode>("llevar");
   const note = ref("");
-  const fulfillDate = ref<string>(todayISO());
+  const fulfillDate = ref<string>(""); // vacío = hoy
+  const fulfillTime = ref<string>(""); // vacío = lo antes posible
   const filter = ref<FilterType>("all");
   const customer = reactive<Customer>({ name: "", phone: "", address: "" });
   const orders = ref<StoredOrder[]>([]); // SOLO órdenes activas
@@ -208,6 +209,7 @@ function createComandasStore() {
       bebidas: today.bebidas,
       note: note.value,
       fulfillDate: fulfillDate.value,
+      fulfillTime: fulfillTime.value,
     }),
   );
 
@@ -729,7 +731,8 @@ function createComandasStore() {
     });
     mode.value = "llevar";
     note.value = "";
-    fulfillDate.value = todayISO();
+    fulfillDate.value = "";
+    fulfillTime.value = "";
     customer.name = "";
     customer.phone = "";
     customer.address = "";
@@ -801,6 +804,7 @@ function createComandasStore() {
       mode: mode.value,
       note: noteWithTag,
       fulfillDate: fulfillDate.value,
+      fulfillTime: fulfillTime.value,
       customer: mode.value === "domicilio" ? { ...customer } : undefined,
       createdAt: Date.now(),
       status: "active",
@@ -815,6 +819,7 @@ function createComandasStore() {
       bebidas: today.bebidas,
       note: order.note,
       fulfillDate: order.fulfillDate,
+      fulfillTime: order.fulfillTime,
     });
 
     const wa = openBlankTab();
@@ -827,7 +832,8 @@ function createComandasStore() {
         status: "active",
         number: order.number,
         mode: order.mode,
-        fulfill_date: order.fulfillDate,
+        fulfill_date: order.fulfillDate || todayISO(), // columna siempre con fecha usable
+        fulfill_time: order.fulfillTime || "",
         biz_date: todayISO(),
         member_code: code || "", // requiere columna `member_code` (text) en `comandas`
       });
@@ -934,6 +940,7 @@ function createComandasStore() {
     mode,
     note,
     fulfillDate,
+    fulfillTime,
     memberCode,
     filter,
     customer,

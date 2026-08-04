@@ -47,7 +47,7 @@ import { provideChecklists } from "~/composables/Usechecklists";
 
 const { toastMsg, live } = provideChecklists();
 
-definePageMeta({ layout: "none" });
+definePageMeta({ layout: "staff" });
 </script>
 
 <style scoped>
