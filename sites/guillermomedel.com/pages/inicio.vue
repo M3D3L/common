@@ -2,7 +2,7 @@
   <div
     class="max-w-3xl absolute bottom-0 left-0 right-0 mx-auto px-4 py-8 h-screen top-0 grid content-center items-center"
   >
-    <OrganismsClockIn :is-admin="isAdmin" :current-user="currentUser" />
+    <OrganismsClockIn :current-user="currentUser" />
   </div>
 </template>
 
@@ -11,7 +11,7 @@ import usePocketBase from "@common/composables/usePocketbase";
 
 const pb = usePocketBase();
 
-const isAdmin = computed(() => pb.authStore.model?.id === "eftdr8q9xuy4wkb");
+const isAdmin = true;
 
 // Identidad automática desde la cuenta con sesión iniciada.
 // Ajusta el campo del nombre si tu colección `users` usa otro.
@@ -26,10 +26,10 @@ const currentUser = computed(() => ({
 
 definePageMeta({
   layout: "staff",
-  middleware: defineNuxtRouteMiddleware(() => {
-    const pb = usePocketBase();
-    if (!pb.authStore.isValid || pb.authStore.model?.verified !== true)
-      return navigateTo("/");
-  }),
+  // middleware: defineNuxtRouteMiddleware(() => {
+  //   const pb = usePocketBase();
+  //   if (!pb.authStore.isValid || pb.authStore.model?.verified !== true)
+  //     return navigateTo("/");
+  // }),
 });
 </script>

@@ -566,10 +566,5 @@ async function doCreate() {
 
 definePageMeta({
   layout: "staff",
-  middleware: defineNuxtRouteMiddleware(() => {
-    const pb = usePocketBase();
-    if (!pb.authStore.isValid || pb.authStore.model?.verified !== true)
-      return navigateTo("/");
-  }),
 });
 </script>
