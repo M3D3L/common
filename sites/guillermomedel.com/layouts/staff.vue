@@ -1,6 +1,6 @@
 <template>
   <div class="relative">
-    <OrganismsBreezyHeader :logoSrc :links />
+    <OrganismsBreezyHeader :logoSrc :links show-auth />
     <slot />
   </div>
 </template>

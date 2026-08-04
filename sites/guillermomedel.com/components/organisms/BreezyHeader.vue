@@ -50,6 +50,17 @@
         >
           <NuxtLink :to="l.to">{{ l.label }}</NuxtLink>
         </Button>
+
+        <Button
+          v-if="showAuth && isLoggedIn"
+          size="sm"
+          variant="outline"
+          class="ml-1 px-4 font-medium transition-all duration-200 hover:scale-102 active:scale-98"
+          @click="handleSignOut"
+        >
+          <LogOut class="w-4 h-4 mr-2" />
+          Cerrar sesión
+        </Button>
       </nav>
 
       <!-- Mobile nav trigger -->
@@ -87,6 +98,16 @@
             >
               <NuxtLink :to="l.to">{{ l.label }}</NuxtLink>
             </Button>
+
+            <Button
+              v-if="showAuth && isLoggedIn"
+              variant="outline"
+              class="justify-start h-11 mt-2 text-base font-medium"
+              @click="handleSignOut"
+            >
+              <LogOut class="w-4 h-4 mr-2" />
+              Cerrar sesión
+            </Button>
           </nav>
         </SheetContent>
       </Sheet>
@@ -104,7 +125,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@common/components/ui/sheet";
-import { Menu } from "lucide-vue-next";
+import { Menu, LogOut } from "lucide-vue-next";
 
 interface NavLink {
   to: string;
@@ -115,14 +136,24 @@ withDefaults(
   defineProps<{
     logoSrc: string;
     links?: NavLink[];
+    showAuth?: boolean;
   }>(),
   {
     links: () => [],
+    showAuth: false,
   },
 );
 
 const route = useRoute();
 const open = ref(false);
+
+const { isLoggedIn, logout } = usePocketBaseCore();
+
+const handleSignOut = async () => {
+  logout();
+  open.value = false;
+  await navigateTo("/");
+};
 
 const isActive = (to: string) =>
   to === "/" ? route.path === "/" : route.path.startsWith(to);
