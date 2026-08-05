@@ -1,9 +1,10 @@
 <template>
-  <section class="grid items-start grid-cols-1 gap-6 lg:grid-cols-3">
-    <!-- Platillos del turno -->
-    <div class="space-y-8 lg:col-span-2">
-      <!-- Indicador de origen del menú del día -->
-      <div v-if="menuSource !== 'none'" class="-mt-1">
+  <div class="space-y-6">
+    <!-- Encabezado -->
+    <header class="flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <h2 class="text-lg font-bold tracking-tight">Tomar orden</h2>
+
         <Badge
           v-if="menuSource === 'auto'"
           variant="secondary"
@@ -14,259 +15,328 @@
             · {{ activeBlockName }}</template
           >
         </Badge>
-        <Badge v-else variant="outline" class="gap-1.5 font-medium">
+        <Badge
+          v-else-if="menuSource === 'custom'"
+          variant="outline"
+          class="gap-1.5 font-medium"
+        >
           <ClientOnly><Pencil :size="13" /></ClientOnly>
           Menú personalizado
         </Badge>
       </div>
 
-      <div
-        v-for="group in groups"
-        v-show="today[group.key].length"
-        :key="group.key"
+      <div class="flex items-center gap-2 text-sm text-muted-foreground">
+        <ClientOnly><ShoppingBag :size="15" /></ClientOnly>
+        <span class="tabular-nums">{{ itemCount }} en la orden</span>
+      </div>
+    </header>
+
+    <section class="grid items-start grid-cols-1 gap-6 lg:grid-cols-3">
+      <!-- ==================== MENÚ ==================== -->
+      <div class="space-y-6 lg:col-span-2">
+        <div
+          v-for="group in groups"
+          v-show="today[group.key].length"
+          :key="group.key"
+        >
+          <div class="flex items-center gap-3 mb-3">
+            <h3
+              class="text-xs font-bold tracking-widest uppercase text-muted-foreground"
+            >
+              {{ group.label }}
+            </h3>
+            <Separator class="flex-1 shrink" />
+            <Badge variant="secondary" class="rounded-full tabular-nums">
+              {{ today[group.key].length }}
+            </Badge>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3 sm:grid-cols-3">
+            <div
+              v-for="name in today[group.key]"
+              :key="name"
+              role="button"
+              :tabindex="isOut(name) ? -1 : 0"
+              class="relative flex flex-col justify-between gap-4 p-4 transition-all border rounded-xl min-h-[96px] outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              :class="
+                isOut(name)
+                  ? 'border-dashed border-border bg-muted/30 opacity-60'
+                  : cart[name]
+                    ? 'border-green-600/60 bg-green-600/5 cursor-pointer hover:border-green-600'
+                    : 'border-border bg-card cursor-pointer hover:border-primary hover:shadow-sm'
+              "
+              @click="!isOut(name) && onTile(name)"
+              @keydown.enter.prevent="!isOut(name) && onTile(name)"
+            >
+              <!-- Cantidad en la orden -->
+              <span
+                v-if="cart[name] && !isOut(name)"
+                class="absolute flex items-center justify-center w-6 h-6 text-xs font-bold text-white rounded-full shadow -top-2 -right-2 bg-green-600 tabular-nums"
+              >
+                {{ cart[name] }}
+              </span>
+
+              <span
+                class="font-semibold leading-tight"
+                :class="isOut(name) && 'line-through text-muted-foreground'"
+              >
+                {{ name }}
+              </span>
+
+              <div class="flex items-center justify-between gap-2">
+                <span
+                  class="text-sm font-bold"
+                  :class="
+                    isOut(name)
+                      ? 'text-destructive'
+                      : cart[name]
+                        ? 'text-green-700'
+                        : 'text-primary'
+                  "
+                >
+                  <template v-if="isOut(name)">Agotado</template>
+                  <template v-else-if="cart[name]">En la orden</template>
+                  <template v-else>+ Agregar</template>
+                </span>
+
+                <!-- Disponibilidad -->
+                <button
+                  type="button"
+                  class="flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide transition-colors"
+                  :class="
+                    isOut(name)
+                      ? 'text-destructive hover:bg-destructive/10'
+                      : 'text-green-700 hover:bg-green-600/10'
+                  "
+                  @click.stop="toggleOut(name)"
+                >
+                  <span
+                    class="w-1.5 h-1.5 rounded-full"
+                    :class="isOut(name) ? 'bg-destructive' : 'bg-green-600'"
+                  />
+                  {{ isOut(name) ? "Agotado" : "Disp." }}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sin platillos -->
+        <div
+          v-if="!groups.some((g) => today[g.key] && today[g.key].length)"
+          class="py-16 text-sm text-center text-muted-foreground"
+        >
+          No hay platillos para este turno.
+        </div>
+      </div>
+
+      <!-- ==================== ORDEN ==================== -->
+      <Card
+        class="flex flex-col lg:sticky lg:top-6 lg:max-h-[calc(100vh-3rem)]"
       >
-        <div class="flex items-baseline gap-3 mb-3">
+        <!-- Cabecera -->
+        <div class="flex items-center justify-between p-5 pb-3">
           <h3
             class="text-xs font-bold tracking-widest uppercase text-muted-foreground"
           >
-            {{ group.label }}
+            Orden actual
           </h3>
-          <Separator class="flex-1 shrink" />
-          <span class="text-sm text-muted-foreground tabular-nums">{{
-            today[group.key].length
-          }}</span>
+          <Badge v-if="itemCount" class="rounded-full tabular-nums">
+            {{ itemCount }}
+          </Badge>
         </div>
 
-        <div class="grid grid-cols-2 gap-3 sm:grid-cols-3">
+        <!-- Cuerpo desplazable -->
+        <div class="flex-1 px-5 space-y-4 overflow-y-auto">
+          <!-- Vacío -->
           <div
-            v-for="name in today[group.key]"
-            :key="name"
-            class="relative flex flex-col justify-between gap-3 p-4 transition-colors border rounded-xl min-h-[84px]"
-            :class="
-              isOut(name)
-                ? 'border-dashed border-border bg-muted/30 opacity-70'
-                : 'border-border bg-card hover:border-primary cursor-pointer'
-            "
-            @click="onTile(name)"
+            v-if="!itemCount"
+            class="flex flex-col items-center gap-2 py-10 text-center text-muted-foreground"
           >
-            <button
-              type="button"
-              class="absolute px-2.5 py-1 text-[11px] font-bold tracking-wide uppercase border rounded-full top-2 right-2"
-              :class="
-                isOut(name)
-                  ? 'text-destructive border-destructive/30 bg-destructive/10'
-                  : 'text-green-700 border-green-600/30 bg-green-600/10'
-              "
-              @click.stop="toggleOut(name)"
-            >
-              {{ isOut(name) ? "Agotado" : "Disponible" }}
-            </button>
-
-            <span
-              class="pr-16 font-semibold leading-tight"
-              :class="isOut(name) && 'line-through text-muted-foreground'"
-            >
-              {{ name }}
-            </span>
-
-            <span
-              class="text-sm font-bold"
-              :class="cart[name] ? 'text-green-700' : 'text-primary'"
-            >
-              <template v-if="isOut(name)">No disponible</template>
-              <template v-else-if="cart[name]"
-                >{{ cart[name] }} en la orden</template
-              >
-              <template v-else>+ Agregar</template>
-            </span>
+            <ClientOnly
+              ><UtensilsCrossed :size="26" class="opacity-40"
+            /></ClientOnly>
+            <p class="text-sm">Toca un platillo para empezar.</p>
           </div>
-        </div>
-      </div>
-    </div>
 
-    <!-- Orden actual -->
-    <Card class="p-5 lg:sticky lg:top-6">
-      <h3
-        class="text-xs font-bold tracking-widest uppercase text-muted-foreground"
-      >
-        Orden actual
-      </h3>
-
-      <div
-        v-if="!itemCount"
-        class="py-8 text-sm text-center text-muted-foreground"
-      >
-        Toca un platillo para empezar.
-      </div>
-
-      <div v-else class="mt-3">
-        <template v-for="group in groups" :key="group.key">
-          <template v-if="cartGroup(group.key).length">
-            <p
-              class="mt-3 mb-1 text-[11px] font-bold tracking-wider uppercase text-muted-foreground"
-            >
-              {{ group.label }}
-            </p>
-            <div
-              v-for="name in cartGroup(group.key)"
-              :key="name"
-              class="flex items-center gap-2 py-2 border-b border-dashed border-border"
-            >
-              <span class="flex-1 text-sm font-semibold">{{ name }}</span>
-              <div class="flex items-center gap-1">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  class="h-8 w-8"
-                  @click="setQty(name, -1)"
+          <!-- Artículos -->
+          <div v-else class="space-y-4">
+            <template v-for="group in groups" :key="group.key">
+              <div v-if="cartGroup(group.key).length">
+                <p
+                  class="mb-2 text-[11px] font-bold tracking-wider uppercase text-muted-foreground"
                 >
-                  <ClientOnly><Minus :size="15" /></ClientOnly>
-                </Button>
-                <span class="w-6 font-bold text-center tabular-nums">{{
-                  cart[name]
-                }}</span>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  class="h-8 w-8"
-                  @click="setQty(name, 1)"
+                  {{ group.label }}
+                </p>
+                <div class="space-y-1.5">
+                  <div
+                    v-for="name in cartGroup(group.key)"
+                    :key="name"
+                    class="flex items-center gap-2"
+                  >
+                    <span class="flex-1 text-sm font-medium leading-tight">{{
+                      name
+                    }}</span>
+                    <div class="flex items-center gap-1">
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        class="w-7 h-7"
+                        @click="setQty(name, -1)"
+                      >
+                        <ClientOnly><Minus :size="14" /></ClientOnly>
+                      </Button>
+                      <span
+                        class="w-6 text-sm font-bold text-center tabular-nums"
+                        >{{ cart[name] }}</span
+                      >
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        class="w-7 h-7"
+                        @click="setQty(name, 1)"
+                      >
+                        <ClientOnly><Plus :size="14" /></ClientOnly>
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </template>
+          </div>
+
+          <Separator />
+
+          <!-- Modo -->
+          <Tabs v-model="mode">
+            <TabsList class="grid w-full grid-cols-3">
+              <TabsTrigger v-for="m in MODES" :key="m" :value="m">
+                {{ MODE_SHORT[m] }}
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+
+          <!-- Domicilio -->
+          <div v-if="mode === 'domicilio'" class="space-y-2">
+            <Input v-model="customer.name" placeholder="Nombre del cliente" />
+            <Input
+              v-model="customer.phone"
+              type="tel"
+              placeholder="WhatsApp (10 dígitos)"
+            />
+            <Input v-model="customer.address" placeholder="Dirección" />
+          </div>
+
+          <!-- Hora de entrega -->
+          <div class="space-y-1.5">
+            <Label
+              class="text-[11px] font-bold tracking-wider uppercase text-muted-foreground"
+            >
+              Hora de entrega
+            </Label>
+            <div class="flex items-center gap-1.5">
+              <Select :model-value="parts.h12" @update:model-value="setHour">
+                <SelectTrigger class="flex-1"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem v-for="h in hours12" :key="h" :value="h">
+                    {{ h }}
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+
+              <span class="font-bold text-muted-foreground">:</span>
+
+              <Select :model-value="parts.m" @update:model-value="setMinute">
+                <SelectTrigger class="flex-1"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem v-for="m in minutes" :key="m" :value="m">
+                    {{ m }}
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+
+              <div class="flex overflow-hidden border rounded-md">
+                <button
+                  type="button"
+                  class="px-2.5 py-2 text-xs font-bold uppercase transition-colors"
+                  :class="
+                    parts.period === 'am'
+                      ? 'bg-primary text-primary-foreground'
+                      : 'text-muted-foreground hover:bg-muted'
+                  "
+                  @click="setPeriod('am')"
                 >
-                  <ClientOnly><Plus :size="15" /></ClientOnly>
-                </Button>
+                  am
+                </button>
+                <button
+                  type="button"
+                  class="px-2.5 py-2 text-xs font-bold uppercase transition-colors border-l"
+                  :class="
+                    parts.period === 'pm'
+                      ? 'bg-primary text-primary-foreground'
+                      : 'text-muted-foreground hover:bg-muted'
+                  "
+                  @click="setPeriod('pm')"
+                >
+                  pm
+                </button>
               </div>
             </div>
-          </template>
-        </template>
-      </div>
-
-      <Tabs v-model="mode" class="mt-4">
-        <TabsList class="grid w-full grid-cols-3">
-          <TabsTrigger v-for="m in MODES" :key="m" :value="m">
-            {{ MODE_SHORT[m] }}
-          </TabsTrigger>
-        </TabsList>
-      </Tabs>
-
-      <div v-if="mode === 'domicilio'" class="mt-3 space-y-2">
-        <Input v-model="customer.name" placeholder="Nombre del cliente" />
-        <Input
-          v-model="customer.phone"
-          type="tel"
-          placeholder="WhatsApp (10 dígitos)"
-        />
-        <Input v-model="customer.address" placeholder="Dirección" />
-      </div>
-
-      <!-- Código de socio (opcional). Al enviar, descuenta una comida del mes. -->
-      <div class="mt-3 space-y-1">
-        <Label
-          for="socio-code"
-          class="text-[11px] font-bold tracking-wider uppercase text-muted-foreground"
-        >
-          Código de socio (opcional)
-        </Label>
-        <Input
-          id="socio-code"
-          v-model="memberCode"
-          autocomplete="off"
-          placeholder="Ej. GM1234"
-          class="uppercase tracking-widest"
-          @blur="memberCode = memberCode.replace(/\s+/g, '').toUpperCase()"
-        />
-        <p class="text-[11px] text-muted-foreground">
-          Si el cliente es socio, se descuenta una comida al enviar.
-        </p>
-      </div>
-
-      <!-- Hora de entrega -->
-      <div class="mt-3 space-y-1">
-        <Label
-          class="text-[11px] font-bold tracking-wider uppercase text-muted-foreground"
-        >
-          Hora de entrega
-        </Label>
-        <div class="flex items-center gap-1.5">
-          <Select :model-value="parts.h12" @update:model-value="setHour">
-            <SelectTrigger class="flex-1"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem v-for="h in hours12" :key="h" :value="h">
-                {{ h }}
-              </SelectItem>
-            </SelectContent>
-          </Select>
-
-          <span class="font-bold text-muted-foreground">:</span>
-
-          <Select :model-value="parts.m" @update:model-value="setMinute">
-            <SelectTrigger class="flex-1"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem v-for="m in minutes" :key="m" :value="m">
-                {{ m }}
-              </SelectItem>
-            </SelectContent>
-          </Select>
-
-          <div class="flex overflow-hidden border rounded-md">
             <button
+              v-if="fulfillTime"
               type="button"
-              class="px-2.5 py-2 text-xs font-bold uppercase transition-colors"
-              :class="
-                parts.period === 'am'
-                  ? 'bg-primary text-primary-foreground'
-                  : 'text-muted-foreground hover:bg-muted'
-              "
-              @click="setPeriod('am')"
+              class="text-[11px] font-bold underline text-muted-foreground hover:text-primary"
+              @click="clearTime"
             >
-              am
-            </button>
-            <button
-              type="button"
-              class="px-2.5 py-2 text-xs font-bold uppercase transition-colors border-l"
-              :class="
-                parts.period === 'pm'
-                  ? 'bg-primary text-primary-foreground'
-                  : 'text-muted-foreground hover:bg-muted'
-              "
-              @click="setPeriod('pm')"
-            >
-              pm
+              Lo antes posible
             </button>
           </div>
+
+          <!-- Código de socio -->
+          <div class="space-y-1.5">
+            <Label
+              for="socio-code"
+              class="text-[11px] font-bold tracking-wider uppercase text-muted-foreground"
+            >
+              Código de socio (opcional)
+            </Label>
+            <Input
+              id="socio-code"
+              v-model="memberCode"
+              autocomplete="off"
+              placeholder="Ej. GM1234"
+              class="tracking-widest uppercase"
+              @blur="memberCode = memberCode.replace(/\s+/g, '').toUpperCase()"
+            />
+            <p class="text-[11px] text-muted-foreground">
+              Si el cliente es socio, se descuenta una comida al enviar.
+            </p>
+          </div>
+
+          <!-- Nota -->
+          <Input
+            v-model="note"
+            placeholder="Nota (opcional): sin cebolla, mesa 4…"
+          />
         </div>
-        <button
-          v-if="fulfillTime"
-          type="button"
-          class="text-[11px] font-bold underline text-muted-foreground hover:text-primary"
-          @click="clearTime"
-        >
-          Lo antes posible
-        </button>
-      </div>
 
-      <Input
-        v-model="note"
-        class="mt-3"
-        placeholder="Nota (opcional): sin cebolla, mesa 4…"
-      />
-
-      <Button
-        size="lg"
-        class="w-full mt-4"
-        :disabled="!itemCount"
-        @click="send"
-      >
-        <ClientOnly><Send :size="17" class="mr-2" /></ClientOnly>
-        Enviar orden
-      </Button>
-      <button
-        v-if="itemCount"
-        class="block w-full mt-2 text-xs font-bold text-center underline text-muted-foreground hover:text-destructive"
-        @click="clearCart"
-      >
-        Vaciar orden
-      </button>
-    </Card>
-  </section>
+        <!-- Acciones -->
+        <div class="p-5 pt-3 border-t bg-card">
+          <Button size="lg" class="w-full" :disabled="!itemCount" @click="send">
+            <ClientOnly><Send :size="17" class="mr-2" /></ClientOnly>
+            Enviar orden
+          </Button>
+          <button
+            v-if="itemCount"
+            class="block w-full mt-2 text-xs font-bold text-center underline text-muted-foreground hover:text-destructive"
+            @click="clearCart"
+          >
+            Vaciar orden
+          </button>
+        </div>
+      </Card>
+    </section>
+  </div>
 </template>
 
 <script lang="ts" setup>
@@ -285,7 +355,15 @@ import {
   SelectContent,
   SelectItem,
 } from "@common/components/ui/select";
-import { Plus, Minus, Send, Sparkles, Pencil } from "lucide-vue-next";
+import {
+  Plus,
+  Minus,
+  Send,
+  Sparkles,
+  Pencil,
+  ShoppingBag,
+  UtensilsCrossed,
+} from "lucide-vue-next";
 import { MODES, MODE_SHORT, groups } from "~/utils/comandas";
 
 const {
