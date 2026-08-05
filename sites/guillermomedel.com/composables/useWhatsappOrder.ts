@@ -1,3 +1,5 @@
+import { groups, type DayDishes } from "~/utils/comandas";
+
 export type Cart = Record<string, number>;
 export type OrderMode = "llevar" | "aqui" | "domicilio";
 
@@ -11,18 +13,14 @@ export interface FormatOrderArgs {
   orderNumber: number;
   cart: Cart;
   mode: OrderMode;
-  guisos: string[];
-  sides: string[];
-  bebidas: string[];
+  dishes: DayDishes; // menú del día agrupado (antes: guisos/sides/bebidas)
   note?: string;
   fulfillDate?: string;
   fulfillTime?: string;
 }
 
 export interface FormatMenuArgs {
-  guisos: string[];
-  sides: string[];
-  bebidas: string[];
+  dishes: DayDishes; // selección del turno agrupada (antes: guisos/sides/bebidas)
   date?: string;
 }
 
@@ -49,6 +47,31 @@ export const MODE_LABEL: Record<OrderMode, string> = {
   domicilio: "A domicilio",
 };
 
+/**
+ * Presentación por categoría. Las llaves salen de `groups` (utils/comandas).
+ * Para agregar una categoría nueva, añade su emoji/encabezado aquí; si falta,
+ * cae a un fallback y NO se rompe nada.
+ */
+const GROUP_EMOJI: Record<string, string> = {
+  guisos: "🍖",
+  taquizas: "🌮",
+  tortas_burgers_burritos: "🥪",
+  sides: "🥗",
+  bebidas: "🥤",
+};
+// Encabezados del broadcast (mayúsculas, como los tenías).
+const MENU_HEADINGS: Record<string, string> = {
+  guisos: "GUISOS DEL DÍA",
+  taquizas: "TAQUIZAS",
+  tortas_burgers_burritos: "TORTAS, BURGERS Y BURRITOS",
+  sides: "GUARNICIONES",
+  bebidas: "BEBIDAS",
+};
+// Subtítulo opcional por categoría (p. ej. la nota de guarniciones).
+const MENU_SUBTITLE: Record<string, string> = {
+  sides: "_Elige hasta 2_",
+};
+
 // Configuración del mensaje de menú (ajusta precios, horario, persona aquí).
 const MENU_BROADCAST = {
   greeting:
@@ -69,9 +92,7 @@ export function useWhatsappOrder() {
     orderNumber,
     cart,
     mode,
-    guisos,
-    sides,
-    bebidas,
+    dishes,
     note,
     fulfillDate,
     fulfillTime,
@@ -82,24 +103,16 @@ export function useWhatsappOrder() {
       "",
     ];
 
-    const g = guisos.filter((n) => cart[n] > 0);
-    const s = sides.filter((n) => cart[n] > 0);
-    const b = bebidas.filter((n) => cart[n] > 0);
-
-    if (g.length) {
-      lines.push("🍖 *Guisos*");
-      g.forEach((n) => lines.push(`• ${cart[n]}× ${n}`));
-    }
-
-    if (s.length) {
-      lines.push("", "🥗 *Guarniciones*");
-      s.forEach((n) => lines.push(`• ${cart[n]}× ${n}`));
-    }
-
-    if (b.length) {
-      lines.push("", "🥤 *Bebidas*");
-      b.forEach((n) => lines.push(`• ${cart[n]}× ${n}`));
-    }
+    // Recorre TODAS las categorías; imprime solo las que tienen algo en el carrito.
+    let firstSection = true;
+    groups.forEach((g) => {
+      const chosen = (dishes[g.key] ?? []).filter((n) => cart[n] > 0);
+      if (!chosen.length) return;
+      if (!firstSection) lines.push("");
+      firstSection = false;
+      lines.push(`${GROUP_EMOJI[g.key] ?? "🍽️"} *${g.label}*`);
+      chosen.forEach((n) => lines.push(`• ${cart[n]}× ${n}`));
+    });
 
     const clean = note?.trim();
     if (clean) {
@@ -118,12 +131,7 @@ export function useWhatsappOrder() {
   }
 
   // === FORMATO DE MENÚ DEL DÍA (broadcast a clientes) ===
-  function formatMenu({
-    guisos,
-    sides,
-    bebidas,
-    date,
-  }: FormatMenuArgs): string {
+  function formatMenu({ dishes, date }: FormatMenuArgs): string {
     const lines: string[] = [];
 
     // Encabezado
@@ -133,27 +141,17 @@ export function useWhatsappOrder() {
       lines.push(`📅 *${date}*`, "");
     }
 
-    // Guisos
-    if (guisos.length) {
-      lines.push("🍖 *GUISOS DEL DÍA*");
-      guisos.forEach((n) => lines.push(`   • ${n}`));
+    // Una sección por categoría con platillos (orden = `groups`).
+    groups.forEach((g) => {
+      const items = dishes[g.key] ?? [];
+      if (!items.length) return;
+      const emoji = GROUP_EMOJI[g.key] ?? "🍽️";
+      const heading = MENU_HEADINGS[g.key] ?? g.label.toUpperCase();
+      lines.push(`${emoji} *${heading}*`);
+      if (MENU_SUBTITLE[g.key]) lines.push(MENU_SUBTITLE[g.key]);
+      items.forEach((n) => lines.push(`   • ${n}`));
       lines.push("");
-    }
-
-    // Guarniciones
-    if (sides.length) {
-      lines.push("🥗 *GUARNICIONES*");
-      lines.push("_Elige hasta 2_");
-      sides.forEach((n) => lines.push(`   • ${n}`));
-      lines.push("");
-    }
-
-    // Bebidas
-    if (bebidas.length) {
-      lines.push("🥤 *BEBIDAS*");
-      bebidas.forEach((n) => lines.push(`   • ${n}`));
-      lines.push("");
-    }
+    });
 
     // Precios
     lines.push(

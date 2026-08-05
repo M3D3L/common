@@ -5,8 +5,33 @@
 
 import type { OrderMode, Customer } from "~/composables/useWhatsappOrder";
 
-export type GroupKey = "guisos" | "sides" | "bebidas";
+/**
+ * Fuente ÚNICA de categorías. Agregar una nueva (p. ej. "taquizas") aquí la
+ * propaga sola por el editor, el catálogo, el cliente y los tickets, porque
+ * `GroupKey` y `DayDishes` se derivan de esta lista.
+ * Orden = orden en que se renderizan en la UI.
+ */
+export const groups = [
+  { key: "guisos", label: "Guisos" },
+  { key: "taquizas", label: "Taquizas" },
+  { key: "tortas_burgers_burritos", label: "Tortas, Burgers y Burritos" },
+  { key: "sides", label: "Guarniciones" },
+  { key: "bebidas", label: "Bebidas" },
+] as const;
+
+export type GroupKey = (typeof groups)[number]["key"];
 export type FilterType = "all" | OrderMode;
+
+/** Platillos agrupados, misma forma que el estado `today` del staff. */
+export type DayDishes = Record<GroupKey, string[]>;
+
+/**
+ * Objeto vacío con TODAS las categorías, derivado de `groups`.
+ * Úsalo en lugar de escribir `{ guisos: [], sides: [], bebidas: [] }` a mano:
+ * así, al agregar una categoría nueva, no hay literales que actualizar.
+ */
+export const emptyDayDishes = (): DayDishes =>
+  Object.fromEntries(groups.map((g) => [g.key, []])) as DayDishes;
 
 export interface PlacedOrder {
   id: string;
@@ -18,9 +43,6 @@ export interface PlacedOrder {
   customer?: Customer;
   createdAt: number;
 }
-
-/** Platillos agrupados, misma forma que el estado `today` del staff. */
-export type DayDishes = Record<GroupKey, string[]>;
 
 /** Registro único de la colección `menu` en PocketBase. */
 export interface MenuRecord {
@@ -35,12 +57,6 @@ export interface MenuRecord {
   created: string;
   updated: string;
 }
-
-export const groups: { key: GroupKey; label: string }[] = [
-  { key: "guisos", label: "Guisos" },
-  { key: "sides", label: "Guarniciones" },
-  { key: "bebidas", label: "Bebidas" },
-];
 
 export const MODES = ["llevar", "aqui", "domicilio"] as const;
 

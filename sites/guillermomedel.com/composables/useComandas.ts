@@ -12,6 +12,8 @@ import {
 } from "vue";
 import {
   todayISO,
+  groups,
+  emptyDayDishes,
   type GroupKey,
   type FilterType,
   type PlacedOrder,
@@ -41,7 +43,22 @@ const AUTO_MENU_FROM_ROTATION = true;
 // Además fijarlo en la BD (`active` + `active_date`) como menú oficial del día.
 const AUTO_PERSIST_ACTIVE = true;
 
-const emptyDishes = (): DayDishes => ({ guisos: [], sides: [], bebidas: [] });
+// Objeto vacío con TODAS las categorías (derivado de `groups`).
+const emptyDishes = emptyDayDishes;
+
+// Copia plana de un DayDishes reactivo -> objeto normal con todas las llaves.
+function cloneDishes(src: DayDishes): DayDishes {
+  return Object.fromEntries(
+    groups.map((g) => [g.key, [...(src[g.key] ?? [])]]),
+  ) as DayDishes;
+}
+
+// Sets de selección vacíos, uno por categoría.
+function emptyPick(): Record<GroupKey, Set<string>> {
+  return Object.fromEntries(
+    groups.map((g) => [g.key, new Set<string>()]),
+  ) as Record<GroupKey, Set<string>>;
+}
 
 // Comparación de menús como conjuntos (ignora el orden).
 function sameSet(a: string[] = [], b: string[] = []): boolean {
@@ -50,11 +67,8 @@ function sameSet(a: string[] = [], b: string[] = []): boolean {
   return b.every((x) => s.has(x));
 }
 function sameMenu(a: DayDishes, b: DayDishes): boolean {
-  return (
-    sameSet(a.guisos, b.guisos) &&
-    sameSet(a.sides, b.sides) &&
-    sameSet(a.bebidas, b.bebidas)
-  );
+  // Iguales solo si TODAS las categorías coinciden como conjunto.
+  return groups.every((g) => sameSet(a[g.key], b[g.key]));
 }
 
 type OrderStatus = "active" | "completed" | "cancelled";
@@ -86,6 +100,11 @@ type MenuRecordFull = MenuRecord & {
  *  - Se mantiene EN VIVO con realtime (SSE) de PocketBase, sin polling.
  *  - SOCIOS: al enviar una orden con código de socio, se descuenta UNA comida
  *    del mes en curso (única superficie de redención; /socios ya no redime).
+ *
+ *  NOTA sobre categorías: todo el estado de platillos (catálogo, selección,
+ *  menú del día, carrito) se deriva de `groups` en utils/comandas.ts. Para
+ *  agregar una categoría nueva NO se toca este archivo: basta con añadirla a
+ *  `groups`. Las llaves fijas guisos/sides/bebidas ya no viven aquí.
  */
 function createComandasStore() {
   const { formatOrder, formatSoldOut, formatReady, formatMenu, waLink } =
@@ -102,11 +121,7 @@ function createComandasStore() {
   /* ===== Estado ===== */
   const view = ref<"setup" | "order" | "orders">("setup");
   const catalog = ref<DayDishes>(emptyDishes());
-  const today = reactive<Record<GroupKey, string[]>>({
-    guisos: [],
-    sides: [],
-    bebidas: [],
-  });
+  const today = reactive<DayDishes>(emptyDishes());
   const soldOut = ref<string[]>([]);
   const counter = ref(1);
   const cart = reactive<Record<string, number>>({});
@@ -117,11 +132,7 @@ function createComandasStore() {
   const filter = ref<FilterType>("all");
   const customer = reactive<Customer>({ name: "", phone: "", address: "" });
   const orders = ref<StoredOrder[]>([]); // SOLO órdenes activas
-  const pick = reactive<Record<GroupKey, Set<string>>>({
-    guisos: new Set(),
-    sides: new Set(),
-    bebidas: new Set(),
-  });
+  const pick = reactive<Record<GroupKey, Set<string>>>(emptyPick());
   const toastMsg = ref("");
 
   // Socio (PIN opcional capturado por el staff en la orden).
@@ -152,6 +163,24 @@ function createComandasStore() {
   const isRefreshing = ref(false);
   const live = ref(false); // true cuando las suscripciones están activas
   const sending = ref(false); // evita doble-envío por doble-tap
+
+  /* ===== Helpers de estado (derivados de `groups`) ===== */
+  // Reemplaza el contenido de `today` con otro DayDishes (reactivo).
+  function setToday(src: Partial<DayDishes>) {
+    groups.forEach((g) => {
+      today[g.key] = src[g.key] ? [...src[g.key]!] : [];
+    });
+  }
+  // Rehidrata `pick` desde `today`.
+  function pickFromToday() {
+    groups.forEach((g) => {
+      pick[g.key] = new Set(today[g.key]);
+    });
+  }
+  // ¿El menú tiene al menos un platillo en cualquier categoría?
+  function menuHasItems(d: Partial<DayDishes>): boolean {
+    return groups.some((g) => (d[g.key]?.length ?? 0) > 0);
+  }
 
   /* ===== Computed ===== */
   const stats = computed(() => {
@@ -189,10 +218,7 @@ function createComandasStore() {
   });
 
   const catalogEmpty = computed(
-    () =>
-      !catalog.value.guisos.length &&
-      !catalog.value.sides.length &&
-      !catalog.value.bebidas.length,
+    () => !groups.some((g) => catalog.value[g.key]?.length),
   );
 
   const itemCount = computed(
@@ -204,9 +230,7 @@ function createComandasStore() {
       orderNumber: counter.value,
       cart,
       mode: mode.value,
-      guisos: today.guisos,
-      sides: today.sides,
-      bebidas: today.bebidas,
+      dishes: cloneDishes(today),
       note: note.value,
       fulfillDate: fulfillDate.value,
       fulfillTime: fulfillTime.value,
@@ -321,11 +345,9 @@ function createComandasStore() {
     autoMenuApplied = false;
     const rec = r as MenuRecordFull;
     menuRecordId.value = r.id;
-    catalog.value = {
-      guisos: r.dishes?.guisos ?? [],
-      sides: r.dishes?.sides ?? [],
-      bebidas: r.dishes?.bebidas ?? [],
-    };
+    catalog.value = Object.fromEntries(
+      groups.map((g) => [g.key, r.dishes?.[g.key] ?? []]),
+    ) as DayDishes;
     soldOut.value = r.sold_out ?? [];
 
     // Resolver la rotación para HOY (independiente de `active`).
@@ -344,14 +366,10 @@ function createComandasStore() {
 
     // ¿Hay un menú del día ya fijado HOY?
     const a = r.active ?? emptyDishes();
-    const activeFresh =
-      rec.active_date === todayISO() &&
-      !!(a.guisos?.length || a.sides?.length || a.bebidas?.length);
+    const activeFresh = rec.active_date === todayISO() && menuHasItems(a);
 
     if (activeFresh) {
-      today.guisos = a.guisos ?? [];
-      today.sides = a.sides ?? [];
-      today.bebidas = a.bebidas ?? [];
+      setToday(a);
       // Coincide con la rotación -> automático; si no, alguien lo personalizó.
       if (resolved && sameMenu(a, resolved.menu)) {
         menuSource.value = "auto";
@@ -362,27 +380,19 @@ function createComandasStore() {
       }
     } else if (resolved) {
       // Tómalo de la rotación semanal (bloque que cubre hoy).
-      today.guisos = resolved.menu.guisos ?? [];
-      today.sides = resolved.menu.sides ?? [];
-      today.bebidas = resolved.menu.bebidas ?? [];
+      setToday(resolved.menu);
       autoMenuApplied = true;
       menuSource.value = "auto";
       activeBlockName.value = resolved.block.name;
     } else {
-      today.guisos = [];
-      today.sides = [];
-      today.bebidas = [];
+      setToday({});
       menuSource.value = "none";
       activeBlockName.value = "";
     }
 
-    pick.guisos = new Set(today.guisos);
-    pick.sides = new Set(today.sides);
-    pick.bebidas = new Set(today.bebidas);
+    pickFromToday();
 
-    const hasActive =
-      today.guisos.length || today.sides.length || today.bebidas.length;
-    view.value = hasActive ? "order" : "setup";
+    view.value = menuHasItems(today) ? "order" : "setup";
   }
 
   async function loadMenu() {
@@ -405,11 +415,7 @@ function createComandasStore() {
         if (autoMenuApplied && AUTO_PERSIST_ACTIVE && menuRecordId.value) {
           try {
             await updateItem("menu", menuRecordId.value, {
-              active: {
-                guisos: today.guisos,
-                sides: today.sides,
-                bebidas: today.bebidas,
-              },
+              active: cloneDishes(today),
               active_date: todayISO(),
             });
           } catch {
@@ -572,9 +578,7 @@ function createComandasStore() {
       STORAGE_KEY,
       JSON.stringify({
         date: todayISO(),
-        guisos: today.guisos,
-        sides: today.sides,
-        bebidas: today.bebidas,
+        today: cloneDishes(today),
         soldOut: soldOut.value,
         counter: counter.value,
         orders: orders.value,
@@ -615,16 +619,12 @@ function createComandasStore() {
   }
 
   async function startShift() {
-    const activeDishes: DayDishes = {
-      guisos: [...pick.guisos],
-      sides: [...pick.sides],
-      bebidas: [...pick.bebidas],
-    };
-    today.guisos = activeDishes.guisos;
-    today.sides = activeDishes.sides;
-    today.bebidas = activeDishes.bebidas;
-    soldOut.value = soldOut.value.filter(
-      (n) => pick.guisos.has(n) || pick.sides.has(n) || pick.bebidas.has(n),
+    const activeDishes: DayDishes = Object.fromEntries(
+      groups.map((g) => [g.key, [...pick[g.key]]]),
+    ) as DayDishes;
+    setToday(activeDishes);
+    soldOut.value = soldOut.value.filter((n) =>
+      groups.some((g) => pick[g.key].has(n)),
     );
 
     // El indicador refleja si lo que se inicia coincide con la rotación de hoy.
@@ -641,9 +641,7 @@ function createComandasStore() {
     persist();
 
     const text = formatMenu({
-      guisos: activeDishes.guisos,
-      sides: activeDishes.sides,
-      bebidas: activeDishes.bebidas,
+      dishes: activeDishes,
       date: prettyDate.value,
     });
     const wa = openBlankTab();
@@ -677,9 +675,7 @@ function createComandasStore() {
   }
 
   function editMenu() {
-    pick.guisos = new Set(today.guisos);
-    pick.sides = new Set(today.sides);
-    pick.bebidas = new Set(today.bebidas);
+    pickFromToday();
     view.value = "setup";
   }
 
@@ -814,9 +810,7 @@ function createComandasStore() {
       orderNumber: order.number,
       cart: order.cart,
       mode: order.mode,
-      guisos: today.guisos,
-      sides: today.sides,
-      bebidas: today.bebidas,
+      dishes: cloneDishes(today),
       note: order.note,
       fulfillDate: order.fulfillDate,
       fulfillTime: order.fulfillTime,

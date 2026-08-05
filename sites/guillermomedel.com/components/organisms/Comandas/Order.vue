@@ -340,7 +340,6 @@
 </template>
 
 <script lang="ts" setup>
-import { computed } from "vue";
 import { Card } from "@common/components/ui/card";
 import { Button } from "@common/components/ui/button";
 import { Input } from "@common/components/ui/input";

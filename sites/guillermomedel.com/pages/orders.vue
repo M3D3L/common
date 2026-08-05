@@ -5,19 +5,6 @@
     <SeoMeta :follow="false" />
 
     <header class="flex items-center gap-3 mb-8">
-      <div>
-        <p
-          class="text-xs font-semibold tracking-wider uppercase text-muted-foreground"
-        >
-          Comida corrida
-        </p>
-        <h1
-          class="text-3xl font-extrabold tracking-tight text-primary md:text-4xl font-heading"
-        >
-          Breezy Market
-        </h1>
-      </div>
-
       <div v-if="view === 'order'" class="flex items-center gap-2 ml-auto">
         <Badge
           class="px-3 py-1.5 text-sm bg-primary/10 text-primary hover:bg-primary/10 tabular-nums"

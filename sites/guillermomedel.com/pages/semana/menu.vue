@@ -12,7 +12,7 @@
 
     <h2 class="text-xl font-bold">Bloques de semana</h2>
     <p class="mb-6 text-muted-foreground">
-      Arma menús de una semana (Lun–Vie) y guárdalos. Luego se rotan en el
+      Arma menús de una semana (Lun–Dom) y guárdalos. Luego se rotan en el
       calendario.
     </p>
 
@@ -200,7 +200,12 @@ import { Button } from "@common/components/ui/button";
 import { Separator } from "@common/components/ui/separator";
 import { Toggle } from "@common/components/ui/toggle";
 import { Check, Plus, Copy, Trash2 } from "lucide-vue-next";
-import { groups, type GroupKey, type DayDishes } from "~/utils/comandas";
+import {
+  groups,
+  emptyDayDishes,
+  type GroupKey,
+  type DayDishes,
+} from "~/utils/comandas";
 import type { WeekBlock, WeekdayKey } from "~/utils/rotation";
 import usePocketBase from "@common/composables/usePocketbase";
 
@@ -231,7 +236,7 @@ const loading = ref(true);
 const saving = ref(false);
 const toastMsg = ref("");
 const menuRecordId = ref<string | null>(null);
-const catalog = reactive<DayDishes>({ guisos: [], sides: [], bebidas: [] });
+const catalog = reactive<DayDishes>(emptyDayDishes());
 const blocks = ref<WeekBlock[]>([]);
 const selectedId = ref<string>("");
 const activeDay = ref<WeekdayKey>("1");
@@ -239,24 +244,29 @@ const activeDay = ref<WeekdayKey>("1");
 const current = computed(
   () => blocks.value.find((b) => b.id === selectedId.value) ?? null,
 );
-const catalogEmpty = computed(
-  () =>
-    !catalog.guisos.length && !catalog.sides.length && !catalog.bebidas.length,
+const catalogEmpty = computed(() =>
+  groups.every((g) => !catalog[g.key]?.length),
 );
 
 function genId() {
   return "b" + Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
 }
 function emptyDay(): DayDishes {
-  return { guisos: [], sides: [], bebidas: [] };
+  return emptyDayDishes();
 }
 function dayOf(block: WeekBlock, key: WeekdayKey): DayDishes {
   if (!block.days[key]) block.days[key] = emptyDay();
-  return block.days[key]!;
+  const d = block.days[key]!;
+  // Rellena categorías nuevas (p. ej. taquizas) en días guardados antes de
+  // que existieran, para que toggle/has no revienten al indexar.
+  groups.forEach((g) => {
+    if (!d[g.key]) d[g.key] = [];
+  });
+  return d;
 }
 function has(k: GroupKey, name: string): boolean {
   const d = current.value?.days[activeDay.value];
-  return !!d && d[k].includes(name);
+  return !!d && (d[k] ?? []).includes(name);
 }
 function toggleDish(k: GroupKey, name: string) {
   const b = current.value;
@@ -269,17 +279,17 @@ function toggleDish(k: GroupKey, name: string) {
 function dayCount(block: WeekBlock, key: WeekdayKey): number {
   const d = block.days[key];
   if (!d) return 0;
-  return d.guisos.length + d.sides.length + d.bebidas.length;
+  return groups.reduce((n, g) => n + (d[g.key] ?? []).length, 0);
 }
 function copyDay(from: WeekdayKey) {
   const b = current.value;
   if (!b || !b.days[from]) return;
   const src = b.days[from]!;
-  b.days[activeDay.value] = {
-    guisos: [...src.guisos],
-    sides: [...src.sides],
-    bebidas: [...src.bebidas],
-  };
+  const dst = emptyDayDishes();
+  groups.forEach((g) => {
+    dst[g.key] = [...(src[g.key] ?? [])];
+  });
+  b.days[activeDay.value] = dst;
 }
 
 function addBlock() {
@@ -338,9 +348,10 @@ async function load() {
     const rec = res.items[0] as any;
     if (rec) {
       menuRecordId.value = rec.id;
-      catalog.guisos = rec.dishes?.guisos ?? [];
-      catalog.sides = rec.dishes?.sides ?? [];
-      catalog.bebidas = rec.dishes?.bebidas ?? [];
+      // Carga cada categoría desde el catálogo; las que falten quedan vacías.
+      groups.forEach((g) => {
+        catalog[g.key] = rec.dishes?.[g.key] ?? [];
+      });
       blocks.value = (rec.week_blocks ?? []) as WeekBlock[];
       selectedId.value = blocks.value[0]?.id ?? "";
     }
@@ -359,7 +370,7 @@ async function save() {
     const days: WeekBlock["days"] = {};
     (Object.keys(b.days) as WeekdayKey[]).forEach((k) => {
       const d = b.days[k]!;
-      if (d.guisos.length || d.sides.length || d.bebidas.length) days[k] = d;
+      if (groups.some((g) => (d[g.key] ?? []).length > 0)) days[k] = d;
     });
     return { ...b, days };
   });
@@ -369,7 +380,7 @@ async function save() {
     } else {
       const created = await createItem("menu", {
         dishes: catalog,
-        active: { guisos: [], sides: [], bebidas: [] },
+        active: emptyDayDishes(),
         sold_out: [],
         week_blocks: clean,
         rotation: [],

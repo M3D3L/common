@@ -70,7 +70,7 @@
         <Button
           size="lg"
           class="w-full md:w-auto"
-          :disabled="pick.guisos.size === 0 || savingMenu"
+          :disabled="nothingPicked || savingMenu"
           @click="startShift"
         >
           {{ savingMenu ? "Guardando…" : "Empezar turno" }}
@@ -81,6 +81,7 @@
 </template>
 
 <script lang="ts" setup>
+import { computed } from "vue";
 import { Button } from "@common/components/ui/button";
 import { Separator } from "@common/components/ui/separator";
 import { Toggle } from "@common/components/ui/toggle";
@@ -97,4 +98,10 @@ const {
   togglePick,
   startShift,
 } = useComandas();
+
+// Se puede iniciar turno con al menos un platillo en CUALQUIER categoría
+// (antes exigía un guiso; eso bloqueaba días de solo taquiza/tortas).
+const nothingPicked = computed(() =>
+  groups.every((g) => pick[g.key].size === 0),
+);
 </script>
