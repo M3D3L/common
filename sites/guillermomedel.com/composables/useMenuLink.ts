@@ -16,6 +16,10 @@ export interface CustomerOrderArgs {
   cart: Record<string, number>;
   mode: OrderMode;
   dishes?: DayDishes;
+  taquizaByKind?: {
+    tacos?: Record<string, number>;
+    quesadillas?: Record<string, number>;
+  };
   guisos?: string[];
   sides?: string[];
   bebidas?: string[];
@@ -78,6 +82,7 @@ export function useMenuLink() {
     cart,
     mode,
     dishes,
+    taquizaByKind,
     guisos = [],
     sides = [],
     bebidas = [],
@@ -92,6 +97,49 @@ export function useMenuLink() {
     if (dishes) {
       let firstSection = true;
       groups.forEach((g) => {
+        if (
+          "pieceOptions" in g &&
+          taquizaByKind &&
+          (taquizaByKind.tacos || taquizaByKind.quesadillas)
+        ) {
+          const tacos = Object.entries(taquizaByKind.tacos ?? {}).filter(
+            ([, qty]) => qty > 0,
+          );
+          const quesadillas = Object.entries(
+            taquizaByKind.quesadillas ?? {},
+          ).filter(([, qty]) => qty > 0);
+
+          if (!tacos.length && !quesadillas.length) {
+            const selected = (dishes[g.key] ?? []).filter((n) => cart[n] > 0);
+            if (!selected.length) return;
+            if (!firstSection) lines.push("");
+            firstSection = false;
+            lines.push(`${g.emoji ?? "🍽"} ${g.label}`);
+            selected.forEach((n) => lines.push(`• ${cart[n]}× ${n}`));
+            return;
+          }
+
+          if (!firstSection) lines.push("");
+          firstSection = false;
+          lines.push(`${g.emoji ?? "🍽"} ${g.label}`);
+
+          if (tacos.length) {
+            lines.push("Tacos:");
+            tacos.forEach(([name, qty]) => lines.push(`  • ${qty}× ${name}`));
+          }
+
+          if (tacos.length && quesadillas.length) lines.push("");
+
+          if (quesadillas.length) {
+            lines.push("Quesadillas:");
+            quesadillas.forEach(([name, qty]) =>
+              lines.push(`  • ${qty}× ${name}`),
+            );
+          }
+
+          return;
+        }
+
         const selected = (dishes[g.key] ?? []).filter((n) => cart[n] > 0);
         if (!selected.length) return;
         if (!firstSection) lines.push("");

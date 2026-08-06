@@ -110,8 +110,6 @@
             v-if="taquizaGroup && group.key === taquizaGroup.key"
             class="mb-3 rounded-lg border border-border p-3"
           >
-            <h3 class="font-bold text-sm mb-2">Taquizas</h3>
-
             <div class="space-y-2">
               <div
                 class="flex items-center justify-between rounded-md border p-2"
@@ -379,12 +377,7 @@
               </div>
             </Card>
           </div>
-          <p
-            v-else-if="taquizaGroup && group.key === taquizaGroup.key"
-            class="text-[11px] text-muted-foreground"
-          >
-            No hay rellenos activos en Taquizas hoy.
-          </p>
+
           <p
             v-if="isGroupLocked(group.key)"
             class="mt-2 text-[11px] text-muted-foreground"
@@ -614,11 +607,11 @@
             <Button
               size="lg"
               class="flex-1"
-              :disabled="!canTrySend"
+              :disabled="!canTrySend || sendingOrder"
               @click="sendOrder"
             >
               <ClientOnly><Send :size="17" class="mr-2" /></ClientOnly>
-              Enviar / Send
+              {{ sendingOrder ? "Enviando..." : "Enviar / Send" }}
             </Button>
           </div>
 
@@ -865,6 +858,7 @@ const taquizaByKind = reactive<
 });
 const showSubmitDialog = ref(false);
 const submitDialogMessage = ref("");
+const sendingOrder = ref(false);
 
 // Código de socio (opcional, texto plano). No se valida aquí: se estampa en el
 // mensaje de WhatsApp para que el staff lo vea y redima al servir.
@@ -1109,6 +1103,28 @@ function setTaquizaFillQty(kind: TaquizaKind, name: string, delta: number) {
 }
 
 function setQty(k: GroupKey, n: string, d: number) {
+  if (taquizaGroup && k === taquizaGroup.key) {
+    if (d > 0) {
+      if (canAddTaquizaFill("tacos")) {
+        setTaquizaFillQty("tacos", n, 1);
+        return;
+      }
+      if (canAddTaquizaFill("quesadillas")) {
+        setTaquizaFillQty("quesadillas", n, 1);
+      }
+      return;
+    }
+
+    if ((taquizaByKind.quesadillas[n] ?? 0) > 0) {
+      setTaquizaFillQty("quesadillas", n, -1);
+      return;
+    }
+    if ((taquizaByKind.tacos[n] ?? 0) > 0) {
+      setTaquizaFillQty("tacos", n, -1);
+    }
+    return;
+  }
+
   if (d > 0 && !canAddItem(k)) return;
 
   const q = (cart[n] || 0) + d;
@@ -1157,9 +1173,10 @@ function buildNote() {
 }
 
 function sendOrder() {
-  if (!record.value || !canTrySend.value) return;
+  if (!record.value || !canTrySend.value || sendingOrder.value) return;
 
   if (!canSend.value) return;
+  sendingOrder.value = true;
   const a = active.value; // menú resuelto (rotación o `active` de hoy)
 
   // Si hay código de socio, se estampa en la nota (texto plano). El staff lo
@@ -1167,15 +1184,26 @@ function sendOrder() {
   const code = memberCode.value.replace(/\s+/g, "").toUpperCase();
   const memberTag = code ? `SOCIO ${code}` : "";
 
+  const snapshotTaquizaByKind = {
+    tacos: { ...taquizaByKind.tacos },
+    quesadillas: { ...taquizaByKind.quesadillas },
+  };
+
   const text = formatCustomerOrder({
     name: customer.name,
-    cart,
+    cart: { ...cart },
     mode: mode.value,
     dishes: a,
+    taquizaByKind: snapshotTaquizaByKind,
     note: [buildNote(), memberTag].filter(Boolean).join(" · "),
     phone: customer.phone,
     address: customer.address,
   });
   openWhatsApp(text, RESTAURANT_WHATSAPP);
+
+  // Evita doble-tap y mensajes duplicados en móviles.
+  window.setTimeout(() => {
+    sendingOrder.value = false;
+  }, 1200);
 }
 </script>

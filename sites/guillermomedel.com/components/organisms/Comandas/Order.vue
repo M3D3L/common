@@ -51,7 +51,160 @@
             </Badge>
           </div>
 
-          <div class="grid grid-cols-2 gap-3 sm:grid-cols-3">
+          <div
+            v-if="taquizaGroup && group.key === taquizaGroup.key"
+            class="space-y-3"
+          >
+            <div class="space-y-2">
+              <div
+                class="flex items-center justify-between rounded-md border p-2"
+              >
+                <div>
+                  <p class="text-xs font-bold uppercase">Tacos</p>
+                  <p class="text-[11px] text-muted-foreground">
+                    {{ taquizaRules.tacos }} pieza(s) por orden
+                  </p>
+                </div>
+                <div class="flex items-center gap-1">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    class="h-7 w-7"
+                    :disabled="taquizaOrders.tacos <= 0"
+                    @click="setTaquizaOrderQty('tacos', -1)"
+                  >
+                    <ClientOnly><Minus :size="14" /></ClientOnly>
+                  </Button>
+                  <span class="w-5 text-center text-sm font-bold tabular-nums">
+                    {{ taquizaOrders.tacos }}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    class="h-7 w-7"
+                    @click="setTaquizaOrderQty('tacos', 1)"
+                  >
+                    <ClientOnly><Plus :size="14" /></ClientOnly>
+                  </Button>
+                </div>
+              </div>
+
+              <div
+                class="flex items-center justify-between rounded-md border p-2"
+              >
+                <div>
+                  <p class="text-xs font-bold uppercase">Quesadillas</p>
+                  <p class="text-[11px] text-muted-foreground">
+                    {{ taquizaRules.quesadillas }} pieza(s) por orden
+                  </p>
+                </div>
+                <div class="flex items-center gap-1">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    class="h-7 w-7"
+                    :disabled="taquizaOrders.quesadillas <= 0"
+                    @click="setTaquizaOrderQty('quesadillas', -1)"
+                  >
+                    <ClientOnly><Minus :size="14" /></ClientOnly>
+                  </Button>
+                  <span class="w-5 text-center text-sm font-bold tabular-nums">
+                    {{ taquizaOrders.quesadillas }}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    class="h-7 w-7"
+                    @click="setTaquizaOrderQty('quesadillas', 1)"
+                  >
+                    <ClientOnly><Plus :size="14" /></ClientOnly>
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            <template v-for="kind in taquizaKinds" :key="kind">
+              <section
+                v-if="taquizaOrders[kind] > 0"
+                class="rounded-md border p-2"
+              >
+                <div class="mb-2 flex items-center justify-between gap-2">
+                  <p class="text-xs font-bold uppercase">
+                    {{
+                      kind === "tacos"
+                        ? "Elige tus guisos de tacos"
+                        : "Elige tus guisos de quesadillas"
+                    }}
+                  </p>
+                  <span
+                    class="rounded-full border border-muted bg-muted px-2 py-0.5 text-[10px] font-bold uppercase text-muted-foreground"
+                  >
+                    {{ taquizaOrders[kind] }} orden(es)
+                  </span>
+                </div>
+                <p class="mb-2 text-[11px] text-muted-foreground">
+                  {{ taquizaQtyByKind[kind] }}/{{ taquizaTargetByKind[kind] }}
+                  pieza(s) seleccionadas.
+                </p>
+                <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                  <Card
+                    v-for="name in today[group.key]"
+                    :key="`${kind}-${name}`"
+                    class="flex items-center gap-3 p-3"
+                    :class="[
+                      isOut(name) && 'opacity-60 border-dashed',
+                      taquizaItemQtyByKind(kind, name) > 0 &&
+                        'bg-primary/5 ring-1 ring-primary/40',
+                    ]"
+                  >
+                    <div class="flex-1">
+                      <p
+                        class="font-semibold leading-tight"
+                        :class="
+                          isOut(name) && 'line-through text-muted-foreground'
+                        "
+                      >
+                        {{ name }}
+                      </p>
+                    </div>
+
+                    <div v-if="!isOut(name)" class="flex items-center gap-1">
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        class="h-8 w-8"
+                        :disabled="taquizaItemQtyByKind(kind, name) <= 0"
+                        @click="setTaquizaFillQty(kind, name, -1)"
+                      >
+                        <ClientOnly><Minus :size="14" /></ClientOnly>
+                      </Button>
+                      <span class="w-6 text-center font-bold tabular-nums">
+                        {{ taquizaItemQtyByKind(kind, name) }}
+                      </span>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        class="h-8 w-8"
+                        :disabled="!canAddTaquizaFill(kind)"
+                        @click="setTaquizaFillQty(kind, name, 1)"
+                      >
+                        <ClientOnly><Plus :size="14" /></ClientOnly>
+                      </Button>
+                    </div>
+                  </Card>
+                </div>
+              </section>
+            </template>
+
+            <p
+              v-if="!hasTaquizaOrder"
+              class="text-[11px] text-muted-foreground"
+            >
+              Agrega ordenes de tacos o quesadillas para elegir tus guisos.
+            </p>
+          </div>
+
+          <div v-else class="grid grid-cols-2 gap-3 sm:grid-cols-3">
             <div
               v-for="name in today[group.key]"
               :key="name"
@@ -68,7 +221,6 @@
               @click="!isOut(name) && onTile(name)"
               @keydown.enter.prevent="!isOut(name) && onTile(name)"
             >
-              <!-- Cantidad en la orden -->
               <span
                 v-if="cart[name] && !isOut(name)"
                 class="absolute flex items-center justify-center w-6 h-6 text-xs font-bold text-white rounded-full shadow -top-2 -right-2 bg-green-600 tabular-nums"
@@ -99,7 +251,6 @@
                   <template v-else>+ Agregar</template>
                 </span>
 
-                <!-- Disponibilidad -->
                 <button
                   type="button"
                   class="flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide transition-colors"
@@ -376,6 +527,17 @@ const {
   orderText,
   isOut,
   cartGroup,
+  taquizaGroup,
+  taquizaKinds,
+  taquizaRules,
+  taquizaOrders,
+  taquizaTargetByKind,
+  taquizaQtyByKind,
+  hasTaquizaOrder,
+  canAddTaquizaFill,
+  taquizaItemQtyByKind,
+  setTaquizaFillQty,
+  setTaquizaOrderQty,
   onTile,
   toggleOut,
   setQty,

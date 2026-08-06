@@ -14,6 +14,10 @@ export interface FormatOrderArgs {
   cart: Cart;
   mode: OrderMode;
   dishes: DayDishes; // menú del día agrupado (antes: guisos/sides/bebidas)
+  taquizaByKind?: {
+    tacos?: Record<string, number>;
+    quesadillas?: Record<string, number>;
+  };
   note?: string;
   fulfillDate?: string;
   fulfillTime?: string;
@@ -68,12 +72,13 @@ export function useWhatsappOrder() {
     cart,
     mode,
     dishes,
+    taquizaByKind,
     note,
     fulfillDate,
     fulfillTime,
   }: FormatOrderArgs): string {
     const lines: string[] = [
-      `🍽️ *Orden #${orderNumber}*`,
+      `🍽️ Orden #${orderNumber}`,
       `Tipo: ${MODE_LABEL[mode]}`,
       "",
     ];
@@ -81,17 +86,61 @@ export function useWhatsappOrder() {
     // Recorre TODAS las categorías; imprime solo las que tienen algo en el carrito.
     let firstSection = true;
     groups.forEach((g) => {
+      if (
+        "pieceOptions" in g &&
+        taquizaByKind &&
+        (taquizaByKind.tacos || taquizaByKind.quesadillas)
+      ) {
+        const tacos = Object.entries(taquizaByKind.tacos ?? {}).filter(
+          ([, qty]) => qty > 0,
+        );
+        const quesadillas = Object.entries(
+          taquizaByKind.quesadillas ?? {},
+        ).filter(([, qty]) => qty > 0);
+
+        if (!tacos.length && !quesadillas.length) {
+          // Fallback para órdenes viejas o sin detalle de taquiza.
+          const chosen = (dishes[g.key] ?? []).filter((n) => cart[n] > 0);
+          if (!chosen.length) return;
+          if (!firstSection) lines.push("");
+          firstSection = false;
+          lines.push(`${g.emoji ?? "🍽️"} ${g.label}`);
+          chosen.forEach((n) => lines.push(`• ${cart[n]}× ${n}`));
+          return;
+        }
+
+        if (!firstSection) lines.push("");
+        firstSection = false;
+        lines.push(`${g.emoji ?? "🍽️"} ${g.label}`);
+
+        if (tacos.length) {
+          lines.push("Tacos:");
+          tacos.forEach(([name, qty]) => lines.push(`  • ${qty}× ${name}`));
+        }
+
+        if (tacos.length && quesadillas.length) lines.push("");
+
+        if (quesadillas.length) {
+          lines.push("Quesadillas:");
+          quesadillas.forEach(([name, qty]) =>
+            lines.push(`  • ${qty}× ${name}`),
+          );
+        }
+
+        return;
+      }
+
       const chosen = (dishes[g.key] ?? []).filter((n) => cart[n] > 0);
       if (!chosen.length) return;
       if (!firstSection) lines.push("");
       firstSection = false;
-      lines.push(`${g.emoji ?? "🍽️"} *${g.label}*`);
+      lines.push(`${g.emoji ?? "🍽️"} ${g.label}`);
       chosen.forEach((n) => lines.push(`• ${cart[n]}× ${n}`));
     });
 
     const clean = note?.trim();
     if (clean) {
-      lines.push("", `📝 *Nota:* ${clean}`);
+      lines.push("", `📝 Nota: ${clean}`);
     }
 
     // Entrega: la hora es lo importante; la fecha solo aparece si se programó.
@@ -99,7 +148,7 @@ export function useWhatsappOrder() {
     if (fulfillDate) when.push(`📅 ${fulfillDate}`);
     if (fulfillTime) when.push(`🕒 ${fulfillTime}`);
     if (when.length) {
-      lines.push("", `⏱️ *Entregar:* ${when.join(" · ")}`);
+      lines.push("", `⏱️ Entregar: ${when.join(" · ")}`);
     }
 
     return lines.join("\n");

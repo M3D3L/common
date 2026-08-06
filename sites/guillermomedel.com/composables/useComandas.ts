@@ -137,6 +137,13 @@ function createComandasStore() {
   const orders = ref<StoredOrder[]>([]); // SOLO órdenes activas
   const pick = reactive<Record<GroupKey, Set<string>>>(emptyPick());
   const toastMsg = ref("");
+  const taquizaOrders = reactive({ tacos: 0, quesadillas: 0 });
+  const taquizaByKind = reactive<
+    Record<"tacos" | "quesadillas", Record<string, number>>
+  >({
+    tacos: {},
+    quesadillas: {},
+  });
 
   // Socio (PIN opcional capturado por el staff en la orden).
   const memberCode = ref("");
@@ -161,6 +168,13 @@ function createComandasStore() {
   let autoMenuApplied = false;
   // Menú que la rotación propone para HOY (para comparar tras editar).
   let rotationToday: { menu: DayDishes; blockName: string } | null = null;
+
+  const taquizaGroup = groups.find((g) => "pieceOptions" in g) as
+    | ((typeof groups)[number] & {
+        pieceOptions: { tacos: number; quesadillas: number };
+      })
+    | undefined;
+  const taquizaKinds: Array<"tacos" | "quesadillas"> = ["tacos", "quesadillas"];
 
   // Estado de conexión / reconciliación
   const isRefreshing = ref(false);
@@ -228,12 +242,51 @@ function createComandasStore() {
     () => Object.values(cart).filter((q) => q > 0).length,
   );
 
+  const taquizaRules = {
+    tacos: taquizaGroup?.pieceOptions?.tacos ?? 3,
+    quesadillas: taquizaGroup?.pieceOptions?.quesadillas ?? 2,
+  };
+
+  const hasTaquizaOrder = computed(
+    () => taquizaOrders.tacos + taquizaOrders.quesadillas > 0,
+  );
+
+  const taquizaTargetByKind = computed(() => ({
+    tacos: taquizaOrders.tacos * taquizaRules.tacos,
+    quesadillas: taquizaOrders.quesadillas * taquizaRules.quesadillas,
+  }));
+
+  const taquizaQtyByKind = computed(() => {
+    const sum = (kind: "tacos" | "quesadillas") =>
+      Object.values(taquizaByKind[kind]).reduce((acc, qty) => acc + qty, 0);
+    return {
+      tacos: sum("tacos"),
+      quesadillas: sum("quesadillas"),
+    };
+  });
+
+  const taquizaRemainingByKind = computed(() => ({
+    tacos: Math.max(
+      0,
+      taquizaTargetByKind.value.tacos - taquizaQtyByKind.value.tacos,
+    ),
+    quesadillas: Math.max(
+      0,
+      taquizaTargetByKind.value.quesadillas -
+        taquizaQtyByKind.value.quesadillas,
+    ),
+  }));
+
   const orderText = computed(() =>
     formatOrder({
       orderNumber: counter.value,
       cart,
       mode: mode.value,
       dishes: cloneDishes(today),
+      taquizaByKind: {
+        tacos: { ...taquizaByKind.tacos },
+        quesadillas: { ...taquizaByKind.quesadillas },
+      },
       note: note.value,
       fulfillDate: fulfillDate.value,
       fulfillTime: fulfillTime.value,
@@ -257,6 +310,78 @@ function createComandasStore() {
   /* ===== Evaluadores con estado ===== */
   const isOut = (n: string) => soldOut.value.includes(n);
   const cartGroup = (k: GroupKey) => today[k].filter((n) => cart[n] > 0);
+
+  function isTaquizaItem(name: string): boolean {
+    if (!taquizaGroup) return false;
+    return today[taquizaGroup.key]?.includes(name) ?? false;
+  }
+
+  function syncTaquizaCart() {
+    if (!taquizaGroup) return;
+    today[taquizaGroup.key].forEach((name) => {
+      cart[name] =
+        (taquizaByKind.tacos[name] ?? 0) +
+        (taquizaByKind.quesadillas[name] ?? 0);
+    });
+  }
+
+  function canAddTaquizaFill(kind: "tacos" | "quesadillas") {
+    return taquizaOrders[kind] > 0 && taquizaRemainingByKind.value[kind] > 0;
+  }
+
+  function taquizaItemQtyByKind(kind: "tacos" | "quesadillas", name: string) {
+    return taquizaByKind[kind][name] ?? 0;
+  }
+
+  function setTaquizaFillQty(
+    kind: "tacos" | "quesadillas",
+    name: string,
+    delta: number,
+  ) {
+    if (delta > 0) {
+      if (!canAddTaquizaFill(kind)) return;
+      taquizaByKind[kind][name] = (taquizaByKind[kind][name] ?? 0) + 1;
+    } else {
+      const cur = taquizaByKind[kind][name] ?? 0;
+      if (cur <= 0) return;
+      taquizaByKind[kind][name] = cur - 1;
+    }
+    syncTaquizaCart();
+  }
+
+  function setTaquizaOrderQty(kind: "tacos" | "quesadillas", delta: number) {
+    const next = (taquizaOrders[kind] ?? 0) + delta;
+    taquizaOrders[kind] = next <= 0 ? 0 : next;
+    if (taquizaOrders[kind] <= 0) {
+      taquizaByKind[kind] = {};
+    }
+    syncTaquizaCart();
+  }
+
+  watch(
+    taquizaTargetByKind,
+    (target) => {
+      if (!taquizaGroup) return;
+
+      const trimKind = (kind: "tacos" | "quesadillas") => {
+        let over = taquizaQtyByKind.value[kind] - target[kind];
+        if (over <= 0) return;
+        today[taquizaGroup.key].forEach((name) => {
+          if (over <= 0) return;
+          const q = taquizaByKind[kind][name] ?? 0;
+          if (!q) return;
+          const drop = Math.min(q, over);
+          taquizaByKind[kind][name] = q - drop;
+          over -= drop;
+        });
+      };
+
+      trimKind("tacos");
+      trimKind("quesadillas");
+      syncTaquizaCart();
+    },
+    { deep: true },
+  );
 
   /* ===== Socio: prellenar domicilio desde la BD =====
    * Perezoso: solo se busca al socio cuando el modo es "domicilio" y hay un
@@ -688,10 +813,36 @@ function createComandasStore() {
   }
 
   function addToCart(n: string) {
+    if (isTaquizaItem(n)) {
+      // En /orders, taquizas se selecciona desde sus paneles dedicados.
+      return;
+    }
     cart[n] = (cart[n] || 0) + 1;
   }
 
   function setQty(n: string, d: number) {
+    if (isTaquizaItem(n)) {
+      if (d > 0) {
+        if (canAddTaquizaFill("tacos")) {
+          setTaquizaFillQty("tacos", n, 1);
+          return;
+        }
+        if (canAddTaquizaFill("quesadillas")) {
+          setTaquizaFillQty("quesadillas", n, 1);
+        }
+        return;
+      }
+
+      if ((taquizaByKind.quesadillas[n] ?? 0) > 0) {
+        setTaquizaFillQty("quesadillas", n, -1);
+        return;
+      }
+      if ((taquizaByKind.tacos[n] ?? 0) > 0) {
+        setTaquizaFillQty("tacos", n, -1);
+      }
+      return;
+    }
+
     const q = (cart[n] || 0) + d;
     cart[n] = q <= 0 ? 0 : q;
   }
@@ -703,6 +854,8 @@ function createComandasStore() {
     else {
       soldOut.value.push(n);
       cart[n] = 0;
+      if (taquizaByKind.tacos[n]) taquizaByKind.tacos[n] = 0;
+      if (taquizaByKind.quesadillas[n]) taquizaByKind.quesadillas[n] = 0;
     }
     persist();
 
@@ -737,6 +890,10 @@ function createComandasStore() {
     customer.address = "";
     memberCode.value = "";
     memberInfo.value = null;
+    taquizaByKind.tacos = {};
+    taquizaByKind.quesadillas = {};
+    taquizaOrders.tacos = 0;
+    taquizaOrders.quesadillas = 0;
   }
 
   /**
@@ -752,6 +909,29 @@ function createComandasStore() {
   async function send() {
     if (!itemCount.value || sending.value) return;
     sending.value = true;
+
+    // Congela el estado de la orden al momento del click para evitar
+    // desfaces si hay trabajo async (socio/BD) mientras el usuario toca UI.
+    const snapshot = {
+      cart: { ...cart },
+      mode: mode.value,
+      note: note.value.trim(),
+      fulfillDate: fulfillDate.value,
+      fulfillTime: fulfillTime.value,
+      customer: mode.value === "domicilio" ? { ...customer } : undefined,
+      taquizaOrders: {
+        tacos: taquizaOrders.tacos,
+        quesadillas: taquizaOrders.quesadillas,
+      },
+      taquizaQtyByKind: {
+        tacos: taquizaQtyByKind.value.tacos,
+        quesadillas: taquizaQtyByKind.value.quesadillas,
+      },
+      taquizaByKind: {
+        tacos: { ...taquizaByKind.tacos },
+        quesadillas: { ...taquizaByKind.quesadillas },
+      },
+    };
 
     // --- Socio: intentar redimir una comida si se capturó un PIN ---
     const code = memberCode.value.replace(/\s+/g, "").toUpperCase();
@@ -792,19 +972,40 @@ function createComandasStore() {
     }
 
     // --- Orden (igual que antes, + nota con etiqueta de socio) ---
-    const noteWithTag = [note.value.trim(), memberTag]
+    const noteWithTag = [snapshot.note, memberTag].filter(Boolean).join(" · ");
+
+    const hasTaquizaSnapshotOrder =
+      snapshot.taquizaOrders.tacos + snapshot.taquizaOrders.quesadillas > 0;
+
+    const taquizaMeta = hasTaquizaSnapshotOrder
+      ? [
+          snapshot.taquizaOrders.tacos > 0
+            ? `${snapshot.taquizaOrders.tacos} orden(es) tacos (${taquizaRules.tacos} c/u, ${snapshot.taquizaQtyByKind.tacos} sel.)`
+            : "",
+          snapshot.taquizaOrders.quesadillas > 0
+            ? `${snapshot.taquizaOrders.quesadillas} orden(es) quesadillas (${taquizaRules.quesadillas} c/u, ${snapshot.taquizaQtyByKind.quesadillas} sel.)`
+            : "",
+        ]
+          .filter(Boolean)
+          .join(", ")
+      : "";
+
+    const finalNote = [
+      noteWithTag,
+      taquizaMeta ? `Taquiza: ${taquizaMeta}` : "",
+    ]
       .filter(Boolean)
       .join(" · ");
 
     const order: StoredOrder = {
       id: `${counter.value}-${Date.now()}`,
       number: counter.value,
-      cart: { ...cart },
-      mode: mode.value,
-      note: noteWithTag,
-      fulfillDate: fulfillDate.value,
-      fulfillTime: fulfillTime.value,
-      customer: mode.value === "domicilio" ? { ...customer } : undefined,
+      cart: snapshot.cart,
+      mode: snapshot.mode,
+      note: finalNote,
+      fulfillDate: snapshot.fulfillDate,
+      fulfillTime: snapshot.fulfillTime,
+      customer: snapshot.customer,
       createdAt: Date.now(),
       status: "active",
     };
@@ -814,6 +1015,7 @@ function createComandasStore() {
       cart: order.cart,
       mode: order.mode,
       dishes: cloneDishes(today),
+      taquizaByKind: snapshot.taquizaByKind,
       note: order.note,
       fulfillDate: order.fulfillDate,
       fulfillTime: order.fulfillTime,
@@ -963,6 +1165,18 @@ function createComandasStore() {
     // evaluadores
     isOut,
     cartGroup,
+    taquizaGroup,
+    taquizaKinds,
+    taquizaRules,
+    taquizaOrders,
+    taquizaTargetByKind,
+    taquizaQtyByKind,
+    hasTaquizaOrder,
+    canAddTaquizaFill,
+    taquizaItemQtyByKind,
+    setTaquizaFillQty,
+    setTaquizaOrderQty,
+    isTaquizaItem,
     // acciones
     togglePick,
     startShift,
