@@ -286,7 +286,16 @@ export interface PlacedOrder {
   mode: OrderMode;
   note: string;
   fulfillDate?: string;
+  fulfillTime?: string;
   customer?: Customer;
+  taquizaOrders?: {
+    tacos: number;
+    quesadillas: number;
+  };
+  taquizaByKind?: {
+    tacos: Record<string, number>;
+    quesadillas: Record<string, number>;
+  };
   createdAt: number;
 }
 
@@ -373,7 +382,50 @@ export function hasGroupItems(
   groupKey: GroupKey,
   catalog: DayDishes,
 ) {
-  return (catalog[groupKey] ?? []).some((n) => o.cart && o.cart[n] > 0);
+  const taquizaGroup = groups.find((g) => "pieceOptions" in g);
+  const taquizaKey = taquizaGroup?.key;
+  const taquizaByKind = o.taquizaByKind;
+
+  // Con breakdown de taquiza: este grupo se determina por sus propios datos.
+  if (taquizaKey && groupKey === taquizaKey && taquizaByKind) {
+    const hasTacos = Object.values(taquizaByKind.tacos ?? {}).some(
+      (q) => q > 0,
+    );
+    const hasQuesadillas = Object.values(taquizaByKind.quesadillas ?? {}).some(
+      (q) => q > 0,
+    );
+    return hasTacos || hasQuesadillas;
+  }
+
+  const hasTaquizaNote = /taquiza\s*:/i.test(o.note || "");
+  const taquizaNames = new Set(
+    taquizaKey ? (catalog[taquizaKey] ?? []) : ([] as string[]),
+  );
+
+  return (catalog[groupKey] ?? []).some((n) => {
+    const total = o.cart?.[n] ?? 0;
+    if (total <= 0) return false;
+
+    // Evita duplicar en guisos lo que ya pertenece a taquiza.
+    if (taquizaByKind && taquizaKey && groupKey !== taquizaKey) {
+      const taquizaQty =
+        (taquizaByKind.tacos?.[n] ?? 0) + (taquizaByKind.quesadillas?.[n] ?? 0);
+      return total - taquizaQty > 0;
+    }
+
+    // Compatibilidad con órdenes viejas: si la nota indica taquiza y el item
+    // vive en el catálogo de taquizas, no repetirlo en otros grupos.
+    if (
+      !taquizaByKind &&
+      taquizaKey &&
+      groupKey !== taquizaKey &&
+      hasTaquizaNote
+    ) {
+      return !taquizaNames.has(n);
+    }
+
+    return true;
+  });
 }
 
 export function getGroupLines(
@@ -381,7 +433,49 @@ export function getGroupLines(
   groupKey: GroupKey,
   catalog: DayDishes,
 ) {
+  const taquizaGroup = groups.find((g) => "pieceOptions" in g);
+  const taquizaKey = taquizaGroup?.key;
+  const taquizaByKind = o.taquizaByKind;
+
+  if (taquizaKey && groupKey === taquizaKey && taquizaByKind) {
+    const merged = new Map<string, number>();
+    Object.entries(taquizaByKind.tacos ?? {}).forEach(([name, qty]) => {
+      if (qty > 0) merged.set(name, (merged.get(name) ?? 0) + qty);
+    });
+    Object.entries(taquizaByKind.quesadillas ?? {}).forEach(([name, qty]) => {
+      if (qty > 0) merged.set(name, (merged.get(name) ?? 0) + qty);
+    });
+    return [...merged.entries()].map(([name, qty]) => ({ name, qty }));
+  }
+
+  const hasTaquizaNote = /taquiza\s*:/i.test(o.note || "");
+  const taquizaNames = new Set(
+    taquizaKey ? (catalog[taquizaKey] ?? []) : ([] as string[]),
+  );
+
   return (catalog[groupKey] ?? [])
-    .filter((n) => o.cart && o.cart[n] > 0)
-    .map((n) => ({ name: n, qty: o.cart[n] }));
+    .map((n) => {
+      const total = o.cart?.[n] ?? 0;
+      if (total <= 0) return null;
+
+      if (taquizaByKind && taquizaKey && groupKey !== taquizaKey) {
+        const taquizaQty =
+          (taquizaByKind.tacos?.[n] ?? 0) +
+          (taquizaByKind.quesadillas?.[n] ?? 0);
+        const qty = total - taquizaQty;
+        return qty > 0 ? { name: n, qty } : null;
+      }
+
+      if (
+        !taquizaByKind &&
+        taquizaKey &&
+        groupKey !== taquizaKey &&
+        hasTaquizaNote
+      ) {
+        if (taquizaNames.has(n)) return null;
+      }
+
+      return { name: n, qty: total };
+    })
+    .filter((line): line is { name: string; qty: number } => !!line);
 }

@@ -1006,6 +1006,8 @@ function createComandasStore() {
       fulfillDate: snapshot.fulfillDate,
       fulfillTime: snapshot.fulfillTime,
       customer: snapshot.customer,
+      taquizaOrders: snapshot.taquizaOrders,
+      taquizaByKind: snapshot.taquizaByKind,
       createdAt: Date.now(),
       status: "active",
     };

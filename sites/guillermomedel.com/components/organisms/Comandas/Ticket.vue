@@ -15,7 +15,10 @@
         class="px-2 py-0.5 text-[10px] uppercase tracking-wider"
         :class="modeBadgeClass(order.mode)"
       >
-        {{ MODE_LABEL[order.mode] || order.mode }}
+        <template v-if="order.mode === 'llevar'">Para llevar</template>
+        <template v-else-if="order.mode === 'aqui'">Para aquí</template>
+        <template v-else-if="order.mode === 'domicilio'">A domicilio</template>
+        <template v-else>{{ order.mode }}</template>
       </Badge>
       <span class="ml-auto text-xs text-muted-foreground tabular-nums">
         {{ orderTime(order) }}
@@ -34,7 +37,53 @@
         >
           {{ g.label }}
         </p>
-        <div class="space-y-0.5">
+        <template v-if="isTaquizaGroup(g.key) && hasTaquizaBreakdown(order)">
+          <div v-if="taquizaLines(order, 'tacos').length" class="space-y-0.5">
+            <p
+              class="text-[10px] font-bold uppercase tracking-wide text-muted-foreground"
+            >
+              Tacos
+            </p>
+            <div
+              v-for="line in taquizaLines(order, 'tacos')"
+              :key="`tacos-${line.name}`"
+              class="flex items-baseline gap-2 text-sm"
+            >
+              <span class="font-bold text-primary shrink-0 tabular-nums"
+                >{{ line.qty }}×</span
+              >
+              <span class="font-semibold text-card-foreground">{{
+                line.name
+              }}</span>
+            </div>
+          </div>
+
+          <div
+            v-if="taquizaLines(order, 'quesadillas').length"
+            class="space-y-0.5"
+            :class="taquizaLines(order, 'tacos').length ? 'mt-1' : ''"
+          >
+            <p
+              class="text-[10px] font-bold uppercase tracking-wide text-muted-foreground"
+            >
+              Quesadillas
+            </p>
+            <div
+              v-for="line in taquizaLines(order, 'quesadillas')"
+              :key="`quesadillas-${line.name}`"
+              class="flex items-baseline gap-2 text-sm"
+            >
+              <span class="font-bold text-primary shrink-0 tabular-nums"
+                >{{ line.qty }}×</span
+              >
+              <span class="font-semibold text-card-foreground">{{
+                line.name
+              }}</span>
+            </div>
+          </div>
+        </template>
+
+        <div v-else class="space-y-0.5">
           <div
             v-for="line in getGroupLines(order, g.key, catalog)"
             :key="line.name"
@@ -126,7 +175,29 @@ import {
   type PlacedOrder,
 } from "~/utils/comandas";
 
-defineProps<{ order: PlacedOrder }>();
+const props = defineProps<{ order: PlacedOrder }>();
 
 const { completeOrder, discardOrder, catalog } = useComandas();
+
+const taquizaGroup = groups.find((g) => "pieceOptions" in g);
+
+function isTaquizaGroup(key: string) {
+  return !!taquizaGroup && key === taquizaGroup.key;
+}
+
+function hasTaquizaBreakdown(order: PlacedOrder) {
+  const tacos = Object.values(order.taquizaByKind?.tacos ?? {}).some(
+    (q) => q > 0,
+  );
+  const quesadillas = Object.values(
+    order.taquizaByKind?.quesadillas ?? {},
+  ).some((q) => q > 0);
+  return tacos || quesadillas;
+}
+
+function taquizaLines(order: PlacedOrder, kind: "tacos" | "quesadillas") {
+  return Object.entries(order.taquizaByKind?.[kind] ?? {})
+    .filter(([, qty]) => qty > 0)
+    .map(([name, qty]) => ({ name, qty }));
+}
 </script>
