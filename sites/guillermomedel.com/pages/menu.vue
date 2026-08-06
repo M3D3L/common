@@ -90,7 +90,7 @@
 
         <section
           v-for="group in groups"
-          v-show="groupItems(group.key).length"
+          v-show="showGroupSection(group.key)"
           :key="group.key"
         >
           <div class="mb-3 flex items-baseline gap-3">
@@ -106,7 +106,204 @@
             <Separator class="shrink flex-1" />
           </div>
 
-          <div class="space-y-2">
+          <div
+            v-if="taquizaGroup && group.key === taquizaGroup.key"
+            class="mb-3 rounded-lg border border-border p-3"
+          >
+            <h3 class="font-bold text-sm mb-2">Taquizas</h3>
+
+            <div class="space-y-2">
+              <div
+                class="flex items-center justify-between rounded-md border p-2"
+              >
+                <div>
+                  <p class="text-xs font-bold uppercase">Tacos</p>
+                  <p class="text-[11px] text-muted-foreground">
+                    {{ taquizaRules.tacos }} pieza(s) por orden
+                  </p>
+                </div>
+                <div class="flex items-center gap-2">
+                  <div class="flex items-center gap-1">
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      class="h-7 w-7"
+                      :disabled="taquizaOrders.tacos <= 0"
+                      @click="setTaquizaOrderQty('tacos', -1)"
+                    >
+                      <ClientOnly><Minus :size="14" /></ClientOnly>
+                    </Button>
+                    <span
+                      class="w-5 text-center text-sm font-bold tabular-nums"
+                    >
+                      {{ taquizaOrders.tacos }}
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      class="h-7 w-7"
+                      @click="setTaquizaOrderQty('tacos', 1)"
+                    >
+                      <ClientOnly><Plus :size="14" /></ClientOnly>
+                    </Button>
+                  </div>
+                </div>
+              </div>
+
+              <div
+                class="flex items-center justify-between rounded-md border p-2"
+              >
+                <div>
+                  <p class="text-xs font-bold uppercase">Quesadillas</p>
+                  <p class="text-[11px] text-muted-foreground">
+                    {{ taquizaRules.quesadillas }} pieza(s) por orden
+                  </p>
+                </div>
+                <div class="flex items-center gap-2">
+                  <div class="flex items-center gap-1">
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      class="h-7 w-7"
+                      :disabled="taquizaOrders.quesadillas <= 0"
+                      @click="setTaquizaOrderQty('quesadillas', -1)"
+                    >
+                      <ClientOnly><Minus :size="14" /></ClientOnly>
+                    </Button>
+                    <span
+                      class="w-5 text-center text-sm font-bold tabular-nums"
+                    >
+                      {{ taquizaOrders.quesadillas }}
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      class="h-7 w-7"
+                      @click="setTaquizaOrderQty('quesadillas', 1)"
+                    >
+                      <ClientOnly><Plus :size="14" /></ClientOnly>
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <p class="mt-2 text-[11px] text-muted-foreground">
+              Objetivo total: {{ taquizaTargetQty }} pieza(s). Seleccionadas:
+              {{ taquizaQty }}.
+            </p>
+            <p
+              v-if="taquizaTargetQty <= 0"
+              class="mt-1 text-[11px] text-muted-foreground"
+            >
+              Selecciona orden(es) de tacos o quesadillas para habilitar los
+              guisos.
+            </p>
+
+            <div v-if="groupItems(group.key).length" class="mt-3 space-y-3">
+              <template v-for="kind in taquizaKinds" :key="kind">
+                <section
+                  v-if="taquizaOrders[kind] > 0"
+                  class="rounded-md border p-2"
+                >
+                  <div class="mb-2 flex items-center justify-between gap-2">
+                    <p class="text-xs font-bold uppercase">
+                      {{
+                        kind === "tacos"
+                          ? "Elige tus guisos de tacos"
+                          : "Elige tus guisos de quesadillas"
+                      }}
+                    </p>
+                    <span
+                      class="rounded-full border border-muted bg-muted px-2 py-0.5 text-[10px] font-bold uppercase text-muted-foreground"
+                    >
+                      {{ taquizaOrders[kind] }} orden(es)
+                    </span>
+                  </div>
+                  <p class="mb-2 text-[11px] text-muted-foreground">
+                    {{ taquizaQtyByKind[kind] }}/{{ taquizaTargetByKind[kind] }}
+                    pieza(s) seleccionadas.
+                  </p>
+                  <div class="space-y-2">
+                    <Card
+                      v-for="item in groupItems(group.key)"
+                      :key="`${kind}-${item.name}`"
+                      class="flex items-center gap-3 p-3"
+                      :class="[
+                        isOut(item.name) && 'opacity-60',
+                        taquizaItemQtyByKind(kind, item.name) > 0 &&
+                          'bg-primary/5 ring-1 ring-primary/40',
+                      ]"
+                    >
+                      <div class="flex-1">
+                        <p
+                          class="font-semibold leading-tight"
+                          :class="
+                            isOut(item.name) &&
+                            'text-muted-foreground line-through'
+                          "
+                        >
+                          {{ item.name }}
+                        </p>
+                        <p
+                          v-if="item?.price !== 0"
+                          class="mt-0.5 text-[11px] font-semibold text-muted-foreground"
+                        >
+                          {{ money(item.price) }}
+                        </p>
+                      </div>
+
+                      <div
+                        v-if="!isOut(item.name)"
+                        class="flex shrink-0 items-center gap-1"
+                      >
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          class="h-8 w-8"
+                          :disabled="taquizaItemQtyByKind(kind, item.name) <= 0"
+                          @click="setTaquizaFillQty(kind, item.name, -1)"
+                        >
+                          <ClientOnly><Minus :size="15" /></ClientOnly>
+                        </Button>
+                        <span class="w-6 text-center font-bold tabular-nums">
+                          {{ taquizaItemQtyByKind(kind, item.name) }}
+                        </span>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          class="h-8 w-8"
+                          :disabled="!canAddTaquizaFill(kind)"
+                          @click="setTaquizaFillQty(kind, item.name, 1)"
+                        >
+                          <ClientOnly><Plus :size="15" /></ClientOnly>
+                        </Button>
+                      </div>
+                    </Card>
+                  </div>
+                  <p class="mt-2 text-[11px] text-muted-foreground">
+                    Puedes enviar como quieras; solo se respeta el maximo de
+                    piezas segun las ordenes de este tipo.
+                  </p>
+                </section>
+              </template>
+
+              <p
+                v-if="!hasTaquizaOrder"
+                class="text-[11px] text-muted-foreground"
+              >
+                Agrega ordenes de tacos o quesadillas para elegir tus guisos.
+              </p>
+            </div>
+          </div>
+
+          <div
+            v-if="
+              groupItems(group.key).length &&
+              !(taquizaGroup && group.key === taquizaGroup.key)
+            "
+            class="space-y-2"
+          >
             <Card
               v-for="item in groupItems(group.key)"
               :key="item.name"
@@ -161,12 +358,20 @@
                     >{{ cart[item.name] }}</span
                   >
                 </template>
+                <span
+                  v-if="taquizaGroup && group.key === taquizaGroup.key"
+                  class="text-[10px] text-muted-foreground tabular-nums"
+                >
+                  T{{ taquizaItemQtyByKind("tacos", item.name) }} · Q{{
+                    taquizaItemQtyByKind("quesadillas", item.name)
+                  }}
+                </span>
                 <Button
                   variant="outline"
                   size="icon"
                   class="h-8 w-8"
                   :aria-label="`Agregar ${item.name}`"
-                  :disabled="isGroupLocked(group.key)"
+                  :disabled="!canAddItem(group.key)"
                   @click="setQty(group.key, item.name, 1)"
                 >
                   <ClientOnly><Plus :size="15" /></ClientOnly>
@@ -174,6 +379,12 @@
               </div>
             </Card>
           </div>
+          <p
+            v-else-if="taquizaGroup && group.key === taquizaGroup.key"
+            class="text-[11px] text-muted-foreground"
+          >
+            No hay rellenos activos en Taquizas hoy.
+          </p>
           <p
             v-if="isGroupLocked(group.key)"
             class="mt-2 text-[11px] text-muted-foreground"
@@ -403,7 +614,7 @@
             <Button
               size="lg"
               class="flex-1"
-              :disabled="!canSend"
+              :disabled="!canTrySend"
               @click="sendOrder"
             >
               <ClientOnly><Send :size="17" class="mr-2" /></ClientOnly>
@@ -412,13 +623,32 @@
           </div>
 
           <p
-            v-if="itemCount && !canSend"
+            v-if="itemCount && (!canTrySend || taquizaMismatch)"
             class="text-[11px] text-muted-foreground text-center"
           >
             {{ hint }}
           </p>
         </div>
       </div>
+
+      <AlertDialog
+        :open="showSubmitDialog"
+        @update:open="showSubmitDialog = $event"
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Completa tu orden de Taquizas</AlertDialogTitle>
+            <AlertDialogDescription>
+              {{ submitDialogMessage }}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction @click="showSubmitDialog = false">
+              Entendido
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </template>
   </div>
 </template>
@@ -433,6 +663,15 @@ import { Separator } from "@common/components/ui/separator";
 import { Tabs, TabsList, TabsTrigger } from "@common/components/ui/tabs";
 import { Textarea } from "@common/components/ui/textarea";
 import { Skeleton } from "@common/components/ui/skeleton";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@common/components/ui/alert-dialog";
 import {
   Select,
   SelectTrigger,
@@ -451,9 +690,13 @@ import {
   RotateCw,
 } from "lucide-vue-next";
 import {
+  DRINK_GROUP_KEYS,
+  MAIN_GROUP_KEYS,
+  SIDE_GROUP_KEYS,
   comboForItem,
   emptyDayDishes,
   findMenuItemByName,
+  groupByKey,
   groups,
   MODES,
   MODE_SHORT,
@@ -487,11 +730,6 @@ const PRICE_FORMAT = new Intl.NumberFormat("es-MX", {
   currency: "MXN",
   maximumFractionDigits: 0,
 });
-const MAIN_GROUPS: GroupKey[] = [
-  "guisos",
-  "taquizas",
-  "tortas_burgers_burritos",
-];
 
 const MODE_ICON: Record<string, any> = {
   llevar: ShoppingBag,
@@ -600,6 +838,16 @@ const activeItems = computed<Record<GroupKey, ActiveMenuItem[]>>(() => {
 });
 
 const groupItems = (k: GroupKey) => activeItems.value[k] ?? [];
+const taquizaGroup = groups.find((g) => "pieceOptions" in g) as
+  | ((typeof groups)[number] & {
+      pieceOptions: { tacos: number; quesadillas: number };
+    })
+  | undefined;
+
+function showGroupSection(key: GroupKey) {
+  if (taquizaGroup && key === taquizaGroup.key) return true;
+  return groupItems(key).length > 0;
+}
 
 const soldOut = computed<string[]>(() => record.value?.sold_out ?? []);
 const isOut = (n: string) => soldOut.value.includes(n);
@@ -608,6 +856,15 @@ const cart = reactive<Record<string, number>>({});
 const mode = ref<OrderMode>("llevar");
 const note = ref("");
 const customer = reactive({ name: "", phone: "", address: "" });
+const taquizaOrders = reactive({ tacos: 0, quesadillas: 0 });
+const taquizaByKind = reactive<
+  Record<"tacos" | "quesadillas", Record<string, number>>
+>({
+  tacos: {},
+  quesadillas: {},
+});
+const showSubmitDialog = ref(false);
+const submitDialogMessage = ref("");
 
 // Código de socio (opcional, texto plano). No se valida aquí: se estampa en el
 // mensaje de WhatsApp para que el staff lo vea y redima al servir.
@@ -671,7 +928,7 @@ const totalQty = computed(() =>
 );
 
 const selectedMain = computed(() =>
-  MAIN_GROUPS.flatMap((k) =>
+  MAIN_GROUP_KEYS.flatMap((k) =>
     groupItems(k)
       .filter((item) => (cart[item.name] ?? 0) > 0)
       .map((item) => ({
@@ -686,74 +943,89 @@ const selectedMainQty = computed(() =>
   selectedMain.value.reduce((sum, x) => sum + x.qty, 0),
 );
 
-const sidesQty = computed(() =>
-  groupItems("sides").reduce((sum, i) => sum + (cart[i.name] ?? 0), 0),
+const sideQty = computed(() =>
+  SIDE_GROUP_KEYS.reduce(
+    (sum, key) =>
+      sum + groupItems(key).reduce((acc, i) => acc + (cart[i.name] ?? 0), 0),
+    0,
+  ),
 );
 
-const drinksQty = computed(() =>
-  groupItems("bebidas").reduce((sum, i) => sum + (cart[i.name] ?? 0), 0),
+const drinkQty = computed(() =>
+  DRINK_GROUP_KEYS.reduce(
+    (sum, key) =>
+      sum + groupItems(key).reduce((acc, i) => acc + (cart[i.name] ?? 0), 0),
+    0,
+  ),
 );
 
-const sidesLocked = computed(() =>
-  selectedMain.value.some((x) => !x.rules.allowSides),
+const taquizaRules = {
+  tacos: taquizaGroup?.pieceOptions?.tacos ?? 3,
+  quesadillas: taquizaGroup?.pieceOptions?.quesadillas ?? 2,
+};
+
+type TaquizaKind = "tacos" | "quesadillas";
+const taquizaKinds: TaquizaKind[] = ["tacos", "quesadillas"];
+
+const hasTaquizaOrder = computed(
+  () => taquizaOrders.tacos + taquizaOrders.quesadillas > 0,
 );
 
-const drinksLocked = computed(() =>
-  selectedMain.value.some((x) => !x.rules.allowDrink),
-);
+const taquizaTargetByKind = computed<Record<TaquizaKind, number>>(() => ({
+  tacos: taquizaOrders.tacos * taquizaRules.tacos,
+  quesadillas: taquizaOrders.quesadillas * taquizaRules.quesadillas,
+}));
 
-const requiredSides = computed(() =>
-  selectedMain.value.reduce((max, x) => {
-    if (!x.rules.allowSides) return max;
-    return Math.max(max, x.rules.requiredSides);
-  }, 0),
-);
+const taquizaQtyByKind = computed<Record<TaquizaKind, number>>(() => {
+  const count = (kind: TaquizaKind) =>
+    Object.values(taquizaByKind[kind]).reduce((sum, qty) => sum + qty, 0);
+  return {
+    tacos: count("tacos"),
+    quesadillas: count("quesadillas"),
+  };
+});
 
-const requiresDrink = computed(() =>
-  selectedMain.value.some((x) => x.rules.allowDrink && x.rules.requiredDrink),
-);
+const taquizaRemainingByKind = computed<Record<TaquizaKind, number>>(() => ({
+  tacos: Math.max(
+    0,
+    taquizaTargetByKind.value.tacos - taquizaQtyByKind.value.tacos,
+  ),
+  quesadillas: Math.max(
+    0,
+    taquizaTargetByKind.value.quesadillas - taquizaQtyByKind.value.quesadillas,
+  ),
+}));
 
-const missingMain = computed(() => selectedMainQty.value <= 0);
-const missingSides = computed(
-  () =>
-    !missingMain.value &&
-    !sidesLocked.value &&
-    sidesQty.value < requiredSides.value,
-);
-const missingDrink = computed(
-  () =>
-    !missingMain.value &&
-    !drinksLocked.value &&
-    requiresDrink.value &&
-    drinksQty.value < 1,
-);
+const taquizaTargetQty = computed(() => {
+  return (
+    taquizaTargetByKind.value.tacos + taquizaTargetByKind.value.quesadillas
+  );
+});
+
+const taquizaQty = computed(() => {
+  return taquizaQtyByKind.value.tacos + taquizaQtyByKind.value.quesadillas;
+});
+
+const taquizaMismatch = computed(() => false);
 
 const needsAddress = computed(
   () => mode.value === "domicilio" && !customer.address.trim(),
 );
 
 const canSend = computed(
-  () =>
-    itemCount.value > 0 &&
-    !missingMain.value &&
-    !missingSides.value &&
-    !missingDrink.value &&
-    !!customer.name.trim() &&
-    !needsAddress.value,
+  () => itemCount.value > 0 && !!customer.name.trim() && !needsAddress.value,
+);
+
+const canTrySend = computed(
+  () => itemCount.value > 0 && !!customer.name.trim() && !needsAddress.value,
 );
 
 const hint = computed(() =>
   !customer.name.trim()
     ? "Please enter your name to proceed / Ingresa tu nombre para continuar."
-    : missingMain.value
-      ? "Choose at least one main dish / Elige al menos un platillo principal."
-      : missingSides.value
-        ? `This combo needs ${requiredSides.value} side(s) / Este combo requiere ${requiredSides.value} guarnición(es).`
-        : missingDrink.value
-          ? "This combo needs one drink / Este combo requiere una bebida."
-          : needsAddress.value
-            ? "Address is required for delivery / Se requiere dirección para el envío."
-            : "",
+    : needsAddress.value
+      ? "Address is required for delivery / Se requiere dirección para el envío."
+      : "",
 );
 
 function money(value: number) {
@@ -766,38 +1038,98 @@ function clearGroup(k: GroupKey) {
   });
 }
 
-watch(sidesLocked, (locked) => {
-  if (locked) clearGroup("sides");
-});
+watch(
+  taquizaTargetByKind,
+  (target) => {
+    if (!taquizaGroup) return;
 
-watch(drinksLocked, (locked) => {
-  if (locked) clearGroup("bebidas");
-});
+    const trimKind = (kind: TaquizaKind) => {
+      let over = taquizaQtyByKind.value[kind] - target[kind];
+      if (over <= 0) return;
+      groupItems(taquizaGroup.key).forEach((item) => {
+        if (over <= 0) return;
+        const q = taquizaByKind[kind][item.name] ?? 0;
+        if (!q) return;
+        const drop = Math.min(q, over);
+        taquizaByKind[kind][item.name] = q - drop;
+        over -= drop;
+      });
+    };
+
+    trimKind("tacos");
+    trimKind("quesadillas");
+    syncTaquizaCart();
+  },
+  { deep: true },
+);
 
 function isGroupLocked(k: GroupKey) {
-  if (k === "sides") return sidesLocked.value;
-  if (k === "bebidas") return drinksLocked.value;
   return false;
 }
 
 function lockReason(k: GroupKey) {
-  if (k === "sides" && sidesLocked.value) {
-    return "Un platillo seleccionado no incluye guarniciones.";
-  }
-  if (k === "bebidas" && drinksLocked.value) {
-    return "Un platillo seleccionado no incluye bebida.";
-  }
   return "";
 }
 
+function syncTaquizaCart() {
+  if (!taquizaGroup) return;
+  groupItems(taquizaGroup.key).forEach((item) => {
+    cart[item.name] =
+      (taquizaByKind.tacos[item.name] ?? 0) +
+      (taquizaByKind.quesadillas[item.name] ?? 0);
+  });
+}
+
+function canAddItem(k: GroupKey) {
+  if (isGroupLocked(k)) return false;
+  if (taquizaGroup && k === taquizaGroup.key) {
+    return false;
+  }
+  return true;
+}
+
+function canAddTaquizaFill(kind: TaquizaKind) {
+  return taquizaOrders[kind] > 0 && taquizaRemainingByKind.value[kind] > 0;
+}
+
+function taquizaItemQtyByKind(kind: TaquizaKind, name: string) {
+  return taquizaByKind[kind][name] ?? 0;
+}
+
+function setTaquizaFillQty(kind: TaquizaKind, name: string, delta: number) {
+  if (delta > 0) {
+    if (!canAddTaquizaFill(kind)) return;
+    taquizaByKind[kind][name] = (taquizaByKind[kind][name] ?? 0) + 1;
+  } else {
+    const cur = taquizaByKind[kind][name] ?? 0;
+    if (cur <= 0) return;
+    taquizaByKind[kind][name] = cur - 1;
+  }
+  syncTaquizaCart();
+}
+
 function setQty(k: GroupKey, n: string, d: number) {
-  if (d > 0 && isGroupLocked(k)) return;
+  if (d > 0 && !canAddItem(k)) return;
+
   const q = (cart[n] || 0) + d;
   cart[n] = q <= 0 ? 0 : q;
 }
 
+function setTaquizaOrderQty(kind: "tacos" | "quesadillas", delta: number) {
+  const next = (taquizaOrders[kind] ?? 0) + delta;
+  taquizaOrders[kind] = next <= 0 ? 0 : next;
+  if (taquizaOrders[kind] <= 0) {
+    taquizaByKind[kind] = {};
+  }
+  syncTaquizaCart();
+}
+
 function clearCart() {
   for (const k of Object.keys(cart)) cart[k] = 0;
+  taquizaByKind.tacos = {};
+  taquizaByKind.quesadillas = {};
+  taquizaOrders.tacos = 0;
+  taquizaOrders.quesadillas = 0;
 }
 
 function buildNote() {
@@ -807,12 +1139,27 @@ function buildNote() {
     const verb = mode.value === "aqui" ? "Llegada" : "Recoger";
     pieces.push(`${verb} a las ${pickupTime.value}`);
   }
+  if (hasTaquizaOrder.value) {
+    const summary = [
+      taquizaOrders.tacos > 0
+        ? `${taquizaOrders.tacos} orden(es) de tacos (${taquizaRules.tacos} c/u, ${taquizaQtyByKind.value.tacos} seleccionadas)`
+        : "",
+      taquizaOrders.quesadillas > 0
+        ? `${taquizaOrders.quesadillas} orden(es) de quesadillas (${taquizaRules.quesadillas} c/u, ${taquizaQtyByKind.value.quesadillas} seleccionadas)`
+        : "",
+    ]
+      .filter(Boolean)
+      .join(", ");
+    pieces.push(`Taquiza: ${summary}`);
+  }
   if (note.value.trim()) pieces.push(note.value.trim());
   return pieces.join(" · ");
 }
 
 function sendOrder() {
-  if (!record.value || !canSend.value) return;
+  if (!record.value || !canTrySend.value) return;
+
+  if (!canSend.value) return;
   const a = active.value; // menú resuelto (rotación o `active` de hoy)
 
   // Si hay código de socio, se estampa en la nota (texto plano). El staff lo

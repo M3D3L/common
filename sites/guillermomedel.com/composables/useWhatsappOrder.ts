@@ -47,31 +47,6 @@ export const MODE_LABEL: Record<OrderMode, string> = {
   domicilio: "A domicilio",
 };
 
-/**
- * Presentación por categoría. Las llaves salen de `groups` (utils/comandas).
- * Para agregar una categoría nueva, añade su emoji/encabezado aquí; si falta,
- * cae a un fallback y NO se rompe nada.
- */
-const GROUP_EMOJI: Record<string, string> = {
-  guisos: "🍖",
-  taquizas: "🌮",
-  tortas_burgers_burritos: "🥪",
-  sides: "🥗",
-  bebidas: "🥤",
-};
-// Encabezados del broadcast (mayúsculas, como los tenías).
-const MENU_HEADINGS: Record<string, string> = {
-  guisos: "GUISOS DEL DÍA",
-  taquizas: "TAQUIZAS",
-  tortas_burgers_burritos: "TORTAS, BURGERS Y BURRITOS",
-  sides: "GUARNICIONES",
-  bebidas: "BEBIDAS",
-};
-// Subtítulo opcional por categoría (p. ej. la nota de guarniciones).
-const MENU_SUBTITLE: Record<string, string> = {
-  sides: "_Elige hasta 2_",
-};
-
 // Configuración del mensaje de menú (ajusta precios, horario, persona aquí).
 const MENU_BROADCAST = {
   greeting:
@@ -110,7 +85,7 @@ export function useWhatsappOrder() {
       if (!chosen.length) return;
       if (!firstSection) lines.push("");
       firstSection = false;
-      lines.push(`${GROUP_EMOJI[g.key] ?? "🍽️"} *${g.label}*`);
+      lines.push(`${g.emoji ?? "🍽️"} *${g.label}*`);
       chosen.forEach((n) => lines.push(`• ${cart[n]}× ${n}`));
     });
 
@@ -145,10 +120,10 @@ export function useWhatsappOrder() {
     groups.forEach((g) => {
       const items = dishes[g.key] ?? [];
       if (!items.length) return;
-      const emoji = GROUP_EMOJI[g.key] ?? "🍽️";
-      const heading = MENU_HEADINGS[g.key] ?? g.label.toUpperCase();
+      const emoji = g.emoji ?? "🍽️";
+      const heading = g.heading;
       lines.push(`${emoji} *${heading}*`);
-      if (MENU_SUBTITLE[g.key]) lines.push(MENU_SUBTITLE[g.key]);
+      if ("subtitle" in g && g.subtitle) lines.push(g.subtitle);
       items.forEach((n) => lines.push(`   • ${n}`));
       lines.push("");
     });
@@ -267,7 +242,7 @@ export function useWhatsappOrder() {
   }
 
   function waLink(text: string, phone?: string): string {
-    const encoded = encodeURIComponent(text);
+    const encoded = encodeURIComponent(text.normalize("NFC"));
     const cleanPhone = phone?.replace(/\D/g, "");
 
     if (cleanPhone) {

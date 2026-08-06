@@ -26,14 +26,6 @@ export interface CustomerOrderArgs {
 
 const MENU_PATH = "/menu";
 
-const GROUP_EMOJI: Record<string, string> = {
-  guisos: "🍖",
-  taquizas: "🌮",
-  tortas_burgers_burritos: "🥪",
-  sides: "🥗",
-  bebidas: "🥤",
-};
-
 /* ===== base64url seguro con acentos/emoji ===== */
 function toB64Url(str: string): string {
   const bytes = new TextEncoder().encode(str);
@@ -93,7 +85,7 @@ export function useMenuLink() {
     phone,
     address,
   }: CustomerOrderArgs): string {
-    const lines: string[] = ["🧾 *Nuevo pedido*"];
+    const lines: string[] = ["🧾 Nuevo pedido"];
     if (name?.trim()) lines.push(`👤 ${name.trim()}`);
     lines.push(`Tipo: ${MODE_LABEL[mode]}`, "");
 
@@ -104,7 +96,7 @@ export function useMenuLink() {
         if (!selected.length) return;
         if (!firstSection) lines.push("");
         firstSection = false;
-        lines.push(`${GROUP_EMOJI[g.key] ?? "🍽️"} *${g.label}*`);
+        lines.push(`${g.emoji ?? "🍽"} ${g.label}`);
         selected.forEach((n) => lines.push(`• ${cart[n]}× ${n}`));
       });
     } else {
@@ -113,27 +105,27 @@ export function useMenuLink() {
       const b = bebidas.filter((n) => cart[n] > 0);
 
       if (g.length) {
-        lines.push("🍖 *Guisos*");
+        lines.push("🍖 Guisos");
         g.forEach((n) => lines.push(`• ${cart[n]}× ${n}`));
       }
       if (s.length) {
-        lines.push("", "🥗 *Guarniciones*");
+        lines.push("", "🥗 Guarniciones");
         s.forEach((n) => lines.push(`• ${cart[n]}× ${n}`));
       }
       if (b.length) {
-        lines.push("", "🥤 *Bebidas*");
+        lines.push("", "🥤 Bebidas");
         b.forEach((n) => lines.push(`• ${cart[n]}× ${n}`));
       }
     }
 
     const clean = note?.trim();
-    if (clean) lines.push("", `📝 *Nota:* ${clean}`);
+    if (clean) lines.push("", `📝 Nota: ${clean}`);
 
     if (mode === "domicilio" && address?.trim()) {
-      lines.push("", `🏠 *Dirección:* ${address.trim()}`);
+      lines.push("", `🏠 Dirección: ${address.trim()}`);
     }
     if (phone?.trim()) {
-      lines.push(`📱 *Tel:* ${phone.trim()}`);
+      lines.push(`📱 Tel: ${phone.trim()}`);
     }
 
     return lines.join("\n");

@@ -11,23 +11,119 @@ import type { OrderMode, Customer } from "~/composables/useWhatsappOrder";
  * `GroupKey` y `DayDishes` se derivan de esta lista.
  * Orden = orden en que se renderizan en la UI.
  */
-export const groups = [
-  { key: "guisos", label: "Guisos" },
-  { key: "taquizas", label: "Taquizas" },
-  { key: "tortas_burgers_burritos", label: "Tortas, Burgers y Burritos" },
-  { key: "sides", label: "Guarniciones" },
-  { key: "bebidas", label: "Bebidas" },
-] as const;
-
-export type GroupKey = (typeof groups)[number]["key"];
-export type FilterType = "all" | OrderMode;
-
 export interface ComboPolicy {
   allowSides?: boolean;
   requiredSides?: number;
   allowDrink?: boolean;
   requiredDrink?: boolean;
 }
+
+export interface GroupConfig {
+  key: string;
+  label: string;
+  emoji: string;
+  heading: string;
+  kind: "main" | "side" | "drink";
+  subtitle?: string;
+  defaultCombo?: ComboPolicy;
+  pieceOptions?: {
+    tacos: number;
+    quesadillas: number;
+  };
+}
+
+export const groups = [
+  {
+    key: "guisos",
+    label: "Guisos",
+    emoji: "🍖",
+    heading: "GUISOS DEL DIA",
+    kind: "main",
+    defaultCombo: {
+      allowSides: true,
+      requiredSides: 2,
+      allowDrink: true,
+      requiredDrink: true,
+    },
+  },
+  {
+    key: "sides",
+    label: "Guarniciones / Sides",
+    emoji: "🥗",
+    heading: "GUARNICIONES / SIDES",
+    subtitle: "_Elige hasta 2_",
+    kind: "side",
+    defaultCombo: {
+      allowSides: false,
+      requiredSides: 0,
+      allowDrink: false,
+      requiredDrink: false,
+    },
+  },
+  {
+    key: "tortas_burgers_burritos",
+    label: "Tortas, Burgers y Burritos",
+    emoji: "🥪",
+    heading: "TORTAS, BURGERS Y BURRITOS",
+    kind: "main",
+    defaultCombo: {
+      allowSides: false,
+      requiredSides: 0,
+      allowDrink: true,
+      requiredDrink: true,
+    },
+  },
+  {
+    key: "taquizas",
+    label: "Taquizas",
+    emoji: "🌮",
+    heading: "TAQUIZAS",
+    kind: "main",
+    defaultCombo: {
+      allowSides: false,
+      requiredSides: 0,
+      allowDrink: true,
+      requiredDrink: true,
+    },
+    pieceOptions: {
+      tacos: 3,
+      quesadillas: 2,
+    },
+  },
+  {
+    key: "bebidas",
+    label: "Bebidas",
+    emoji: "🥤",
+    heading: "BEBIDAS",
+    kind: "drink",
+    defaultCombo: {
+      allowSides: false,
+      requiredSides: 0,
+      allowDrink: false,
+      requiredDrink: false,
+    },
+  },
+] as const satisfies readonly GroupConfig[];
+
+export type GroupKey = (typeof groups)[number]["key"];
+export type GroupKind = (typeof groups)[number]["kind"];
+export type FilterType = "all" | OrderMode;
+
+export const groupByKey = Object.fromEntries(
+  groups.map((g) => [g.key, g]),
+) as Record<GroupKey, (typeof groups)[number]>;
+
+export const MAIN_GROUP_KEYS = groups
+  .filter((g) => g.kind === "main")
+  .map((g) => g.key) as GroupKey[];
+
+export const SIDE_GROUP_KEYS = groups
+  .filter((g) => g.kind === "side")
+  .map((g) => g.key) as GroupKey[];
+
+export const DRINK_GROUP_KEYS = groups
+  .filter((g) => g.kind === "drink")
+  .map((g) => g.key) as GroupKey[];
 
 export interface MenuItem {
   name: string;
@@ -38,12 +134,6 @@ export interface MenuItem {
 export type DayDishes = Record<GroupKey, string[]>;
 export type MenuCatalog = Record<GroupKey, MenuItem[]>;
 export type LegacyOrItemList = Array<string | Partial<MenuItem>>;
-
-const MAIN_GROUPS = new Set<GroupKey>([
-  "guisos",
-  "taquizas",
-  "tortas_burgers_burritos",
-]);
 
 /**
  * Objeto vacío con TODAS las categorías, derivado de `groups`.
@@ -70,26 +160,12 @@ function toDishName(entry: unknown): string {
 }
 
 function defaultPolicy(group: GroupKey): ComboPolicy {
-  if (group === "guisos") {
+  const cfg = groupByKey[group];
+  if (cfg?.defaultCombo) return cfg.defaultCombo;
+  if (cfg?.kind === "main") {
     return {
       allowSides: true,
       requiredSides: 2,
-      allowDrink: true,
-      requiredDrink: true,
-    };
-  }
-  if (group === "taquizas") {
-    return {
-      allowSides: false,
-      requiredSides: 0,
-      allowDrink: true,
-      requiredDrink: true,
-    };
-  }
-  if (group === "tortas_burgers_burritos") {
-    return {
-      allowSides: false,
-      requiredSides: 0,
       allowDrink: true,
       requiredDrink: true,
     };
@@ -136,7 +212,7 @@ function normalizeMenuItem(group: GroupKey, entry: unknown): MenuItem | null {
     price,
   };
 
-  if (MAIN_GROUPS.has(group)) {
+  if (MAIN_GROUP_KEYS.includes(group)) {
     normalized.combo = {
       ...defaultPolicy(group),
       ...(combo ?? {}),
