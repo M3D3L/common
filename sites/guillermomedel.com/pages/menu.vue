@@ -90,7 +90,7 @@
 
         <section
           v-for="group in groups"
-          v-show="(active[group.key] || []).length"
+          v-show="groupItems(group.key).length"
           :key="group.key"
         >
           <div class="mb-3 flex items-baseline gap-3">
@@ -100,7 +100,7 @@
               {{ group.label }}
               <span
                 class="ml-1 font-semibold tabular-nums text-foreground/50"
-                >{{ (active[group.key] || []).length }}</span
+                >{{ groupItems(group.key).length }}</span
               >
             </h2>
             <Separator class="shrink flex-1" />
@@ -108,23 +108,31 @@
 
           <div class="space-y-2">
             <Card
-              v-for="name in active[group.key]"
-              :key="name"
+              v-for="item in groupItems(group.key)"
+              :key="item.name"
               class="flex items-center gap-3 p-3 transition-colors"
               :class="[
-                isOut(name) && 'opacity-60',
-                cart[name] > 0 && 'bg-primary/5 ring-1 ring-primary/40',
+                isOut(item.name) && 'opacity-60',
+                cart[item.name] > 0 && 'bg-primary/5 ring-1 ring-primary/40',
               ]"
             >
               <div class="flex-1">
                 <p
                   class="font-semibold leading-tight"
-                  :class="isOut(name) && 'text-muted-foreground line-through'"
+                  :class="
+                    isOut(item.name) && 'text-muted-foreground line-through'
+                  "
                 >
-                  {{ name }}
+                  {{ item.name }}
+                </p>
+                <p
+                  v-if="item?.price !== 0"
+                  class="mt-0.5 text-[11px] font-semibold text-muted-foreground"
+                >
+                  {{ money(item.price) }}
                 </p>
                 <Badge
-                  v-if="isOut(name)"
+                  v-if="isOut(item.name)"
                   variant="outline"
                   class="mt-1 border-destructive/30 bg-destructive/10 text-[10px] uppercase text-destructive"
                 >
@@ -132,35 +140,46 @@
                 </Badge>
               </div>
 
-              <div v-if="!isOut(name)" class="flex shrink-0 items-center gap-1">
-                <template v-if="cart[name]">
+              <div
+                v-if="!isOut(item.name)"
+                class="flex shrink-0 items-center gap-1"
+              >
+                <template v-if="cart[item.name]">
                   <Button
                     variant="outline"
                     size="icon"
                     class="h-8 w-8"
-                    :aria-label="`Quitar uno de ${name}`"
-                    @click="setQty(name, -1)"
+                    :aria-label="`Quitar uno de ${item.name}`"
+                    :disabled="isGroupLocked(group.key)"
+                    @click="setQty(group.key, item.name, -1)"
                   >
                     <ClientOnly><Minus :size="15" /></ClientOnly>
                   </Button>
                   <span
                     class="w-6 text-center font-bold tabular-nums"
                     aria-live="polite"
-                    >{{ cart[name] }}</span
+                    >{{ cart[item.name] }}</span
                   >
                 </template>
                 <Button
                   variant="outline"
                   size="icon"
                   class="h-8 w-8"
-                  :aria-label="`Agregar ${name}`"
-                  @click="setQty(name, 1)"
+                  :aria-label="`Agregar ${item.name}`"
+                  :disabled="isGroupLocked(group.key)"
+                  @click="setQty(group.key, item.name, 1)"
                 >
                   <ClientOnly><Plus :size="15" /></ClientOnly>
                 </Button>
               </div>
             </Card>
           </div>
+          <p
+            v-if="isGroupLocked(group.key)"
+            class="mt-2 text-[11px] text-muted-foreground"
+          >
+            {{ lockReason(group.key) }}
+          </p>
         </section>
 
         <section>
@@ -432,11 +451,19 @@ import {
   RotateCw,
 } from "lucide-vue-next";
 import {
+  comboForItem,
+  emptyDayDishes,
+  findMenuItemByName,
   groups,
   MODES,
   MODE_SHORT,
+  normalizeDishNames,
+  normalizeMenuCatalog,
   todayISO,
   type DayDishes,
+  type GroupKey,
+  type MenuCatalog,
+  type MenuItem,
   type MenuRecord,
 } from "~/utils/comandas";
 import {
@@ -453,8 +480,18 @@ const { fetchCollection } = usePocketBaseCore();
 const { formatCustomerOrder } = useMenuLink();
 const { openWhatsApp } = useWhatsappOrder();
 
-const EMPTY_DISHES: DayDishes = { guisos: [], sides: [], bebidas: [] };
+const EMPTY_DISHES: DayDishes = emptyDayDishes();
 const RESTAURANT_WHATSAPP = "6221523259";
+const PRICE_FORMAT = new Intl.NumberFormat("es-MX", {
+  style: "currency",
+  currency: "MXN",
+  maximumFractionDigits: 0,
+});
+const MAIN_GROUPS: GroupKey[] = [
+  "guisos",
+  "taquizas",
+  "tortas_burgers_burritos",
+];
 
 const MODE_ICON: Record<string, any> = {
   llevar: ShoppingBag,
@@ -511,10 +548,12 @@ const active = computed<DayDishes>(() => {
   const rec = record.value;
   if (!rec) return EMPTY_DISHES;
 
-  const a = rec.active ?? EMPTY_DISHES;
+  const a = normalizeDishNames(
+    rec.active as Partial<Record<GroupKey, unknown>>,
+  );
   const activeFresh =
     rec.active_date === todayISO() &&
-    !!(a.guisos?.length || a.sides?.length || a.bebidas?.length);
+    groups.some((g) => (a[g.key] ?? []).length > 0);
   if (activeFresh) return a;
 
   const cfg: RotationConfig = {
@@ -524,15 +563,43 @@ const active = computed<DayDishes>(() => {
     overrides: rec.overrides ?? {},
   };
   const resolved = resolveDay(todayISO(), cfg);
-  return resolved ? resolved.menu : EMPTY_DISHES;
+  return resolved
+    ? normalizeDishNames(resolved.menu as Partial<Record<GroupKey, unknown>>)
+    : EMPTY_DISHES;
 });
 
-const hasMenu = computed(
-  () =>
-    active.value.guisos.length ||
-    active.value.sides.length ||
-    active.value.bebidas.length,
+const hasMenu = computed(() => groups.some((g) => active.value[g.key].length));
+
+const catalog = computed<MenuCatalog>(() =>
+  normalizeMenuCatalog(
+    record.value?.dishes as Partial<Record<GroupKey, unknown>> | undefined,
+  ),
 );
+
+type ActiveMenuItem = MenuItem & { group: GroupKey };
+
+const activeItems = computed<Record<GroupKey, ActiveMenuItem[]>>(() => {
+  const out = {} as Record<GroupKey, ActiveMenuItem[]>;
+
+  groups.forEach((g) => {
+    out[g.key] = [];
+    out[g.key] = (active.value[g.key] ?? []).map((name) => {
+      const found = findMenuItemByName(catalog.value, name);
+      if (found?.item) {
+        return { ...found.item, group: found.group };
+      }
+      return {
+        name,
+        price: 0,
+        combo: comboForItem(null, g.key),
+        group: g.key,
+      };
+    });
+  });
+  return out;
+});
+
+const groupItems = (k: GroupKey) => activeItems.value[k] ?? [];
 
 const soldOut = computed<string[]>(() => record.value?.sold_out ?? []);
 const isOut = (n: string) => soldOut.value.includes(n);
@@ -603,23 +670,128 @@ const totalQty = computed(() =>
   cartItems.value.reduce((sum, it) => sum + it.qty, 0),
 );
 
+const selectedMain = computed(() =>
+  MAIN_GROUPS.flatMap((k) =>
+    groupItems(k)
+      .filter((item) => (cart[item.name] ?? 0) > 0)
+      .map((item) => ({
+        ...item,
+        qty: cart[item.name] ?? 0,
+        rules: comboForItem(item, k),
+      })),
+  ),
+);
+
+const selectedMainQty = computed(() =>
+  selectedMain.value.reduce((sum, x) => sum + x.qty, 0),
+);
+
+const sidesQty = computed(() =>
+  groupItems("sides").reduce((sum, i) => sum + (cart[i.name] ?? 0), 0),
+);
+
+const drinksQty = computed(() =>
+  groupItems("bebidas").reduce((sum, i) => sum + (cart[i.name] ?? 0), 0),
+);
+
+const sidesLocked = computed(() =>
+  selectedMain.value.some((x) => !x.rules.allowSides),
+);
+
+const drinksLocked = computed(() =>
+  selectedMain.value.some((x) => !x.rules.allowDrink),
+);
+
+const requiredSides = computed(() =>
+  selectedMain.value.reduce((max, x) => {
+    if (!x.rules.allowSides) return max;
+    return Math.max(max, x.rules.requiredSides);
+  }, 0),
+);
+
+const requiresDrink = computed(() =>
+  selectedMain.value.some((x) => x.rules.allowDrink && x.rules.requiredDrink),
+);
+
+const missingMain = computed(() => selectedMainQty.value <= 0);
+const missingSides = computed(
+  () =>
+    !missingMain.value &&
+    !sidesLocked.value &&
+    sidesQty.value < requiredSides.value,
+);
+const missingDrink = computed(
+  () =>
+    !missingMain.value &&
+    !drinksLocked.value &&
+    requiresDrink.value &&
+    drinksQty.value < 1,
+);
+
 const needsAddress = computed(
   () => mode.value === "domicilio" && !customer.address.trim(),
 );
 
 const canSend = computed(
-  () => itemCount.value > 0 && !!customer.name.trim() && !needsAddress.value,
+  () =>
+    itemCount.value > 0 &&
+    !missingMain.value &&
+    !missingSides.value &&
+    !missingDrink.value &&
+    !!customer.name.trim() &&
+    !needsAddress.value,
 );
 
 const hint = computed(() =>
   !customer.name.trim()
     ? "Please enter your name to proceed / Ingresa tu nombre para continuar."
-    : needsAddress.value
-      ? "Address is required for delivery / Se requiere dirección para el envío."
-      : "",
+    : missingMain.value
+      ? "Choose at least one main dish / Elige al menos un platillo principal."
+      : missingSides.value
+        ? `This combo needs ${requiredSides.value} side(s) / Este combo requiere ${requiredSides.value} guarnición(es).`
+        : missingDrink.value
+          ? "This combo needs one drink / Este combo requiere una bebida."
+          : needsAddress.value
+            ? "Address is required for delivery / Se requiere dirección para el envío."
+            : "",
 );
 
-function setQty(n: string, d: number) {
+function money(value: number) {
+  return PRICE_FORMAT.format(value || 0);
+}
+
+function clearGroup(k: GroupKey) {
+  groupItems(k).forEach((item) => {
+    cart[item.name] = 0;
+  });
+}
+
+watch(sidesLocked, (locked) => {
+  if (locked) clearGroup("sides");
+});
+
+watch(drinksLocked, (locked) => {
+  if (locked) clearGroup("bebidas");
+});
+
+function isGroupLocked(k: GroupKey) {
+  if (k === "sides") return sidesLocked.value;
+  if (k === "bebidas") return drinksLocked.value;
+  return false;
+}
+
+function lockReason(k: GroupKey) {
+  if (k === "sides" && sidesLocked.value) {
+    return "Un platillo seleccionado no incluye guarniciones.";
+  }
+  if (k === "bebidas" && drinksLocked.value) {
+    return "Un platillo seleccionado no incluye bebida.";
+  }
+  return "";
+}
+
+function setQty(k: GroupKey, n: string, d: number) {
+  if (d > 0 && isGroupLocked(k)) return;
   const q = (cart[n] || 0) + d;
   cart[n] = q <= 0 ? 0 : q;
 }
@@ -652,9 +824,7 @@ function sendOrder() {
     name: customer.name,
     cart,
     mode: mode.value,
-    guisos: a.guisos ?? [],
-    sides: a.sides ?? [],
-    bebidas: a.bebidas ?? [],
+    dishes: a,
     note: [buildNote(), memberTag].filter(Boolean).join(" · "),
     phone: customer.phone,
     address: customer.address,

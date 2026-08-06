@@ -1,4 +1,5 @@
 import { MODE_LABEL, type OrderMode } from "~/composables/useWhatsappOrder";
+import { groups, type DayDishes } from "~/utils/comandas";
 
 /** Menú del día compartido con clientes (viaja dentro del link). */
 export interface SharedMenu {
@@ -14,15 +15,24 @@ export interface CustomerOrderArgs {
   name?: string;
   cart: Record<string, number>;
   mode: OrderMode;
-  guisos: string[];
-  sides: string[];
-  bebidas: string[];
+  dishes?: DayDishes;
+  guisos?: string[];
+  sides?: string[];
+  bebidas?: string[];
   note?: string;
   phone?: string;
   address?: string;
 }
 
 const MENU_PATH = "/menu";
+
+const GROUP_EMOJI: Record<string, string> = {
+  guisos: "🍖",
+  taquizas: "🌮",
+  tortas_burgers_burritos: "🥪",
+  sides: "🥗",
+  bebidas: "🥤",
+};
 
 /* ===== base64url seguro con acentos/emoji ===== */
 function toB64Url(str: string): string {
@@ -75,9 +85,10 @@ export function useMenuLink() {
     name,
     cart,
     mode,
-    guisos,
-    sides,
-    bebidas,
+    dishes,
+    guisos = [],
+    sides = [],
+    bebidas = [],
     note,
     phone,
     address,
@@ -86,21 +97,33 @@ export function useMenuLink() {
     if (name?.trim()) lines.push(`👤 ${name.trim()}`);
     lines.push(`Tipo: ${MODE_LABEL[mode]}`, "");
 
-    const g = guisos.filter((n) => cart[n] > 0);
-    const s = sides.filter((n) => cart[n] > 0);
-    const b = bebidas.filter((n) => cart[n] > 0);
+    if (dishes) {
+      let firstSection = true;
+      groups.forEach((g) => {
+        const selected = (dishes[g.key] ?? []).filter((n) => cart[n] > 0);
+        if (!selected.length) return;
+        if (!firstSection) lines.push("");
+        firstSection = false;
+        lines.push(`${GROUP_EMOJI[g.key] ?? "🍽️"} *${g.label}*`);
+        selected.forEach((n) => lines.push(`• ${cart[n]}× ${n}`));
+      });
+    } else {
+      const g = guisos.filter((n) => cart[n] > 0);
+      const s = sides.filter((n) => cart[n] > 0);
+      const b = bebidas.filter((n) => cart[n] > 0);
 
-    if (g.length) {
-      lines.push("🍖 *Guisos*");
-      g.forEach((n) => lines.push(`• ${cart[n]}× ${n}`));
-    }
-    if (s.length) {
-      lines.push("", "🥗 *Guarniciones*");
-      s.forEach((n) => lines.push(`• ${cart[n]}× ${n}`));
-    }
-    if (b.length) {
-      lines.push("", "🥤 *Bebidas*");
-      b.forEach((n) => lines.push(`• ${cart[n]}× ${n}`));
+      if (g.length) {
+        lines.push("🍖 *Guisos*");
+        g.forEach((n) => lines.push(`• ${cart[n]}× ${n}`));
+      }
+      if (s.length) {
+        lines.push("", "🥗 *Guarniciones*");
+        s.forEach((n) => lines.push(`• ${cart[n]}× ${n}`));
+      }
+      if (b.length) {
+        lines.push("", "🥤 *Bebidas*");
+        b.forEach((n) => lines.push(`• ${cart[n]}× ${n}`));
+      }
     }
 
     const clean = note?.trim();

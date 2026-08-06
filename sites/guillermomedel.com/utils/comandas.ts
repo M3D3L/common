@@ -22,8 +22,28 @@ export const groups = [
 export type GroupKey = (typeof groups)[number]["key"];
 export type FilterType = "all" | OrderMode;
 
-/** Platillos agrupados, misma forma que el estado `today` del staff. */
+export interface ComboPolicy {
+  allowSides?: boolean;
+  requiredSides?: number;
+  allowDrink?: boolean;
+  requiredDrink?: boolean;
+}
+
+export interface MenuItem {
+  name: string;
+  price: number;
+  combo?: ComboPolicy;
+}
+
 export type DayDishes = Record<GroupKey, string[]>;
+export type MenuCatalog = Record<GroupKey, MenuItem[]>;
+export type LegacyOrItemList = Array<string | Partial<MenuItem>>;
+
+const MAIN_GROUPS = new Set<GroupKey>([
+  "guisos",
+  "taquizas",
+  "tortas_burgers_burritos",
+]);
 
 /**
  * Objeto vacío con TODAS las categorías, derivado de `groups`.
@@ -32,6 +52,156 @@ export type DayDishes = Record<GroupKey, string[]>;
  */
 export const emptyDayDishes = (): DayDishes =>
   Object.fromEntries(groups.map((g) => [g.key, []])) as DayDishes;
+
+export const emptyMenuCatalog = (): MenuCatalog =>
+  Object.fromEntries(groups.map((g) => [g.key, []])) as MenuCatalog;
+
+function toDishName(entry: unknown): string {
+  if (typeof entry === "string") return entry.trim();
+  if (
+    entry &&
+    typeof entry === "object" &&
+    "name" in entry &&
+    typeof (entry as { name?: unknown }).name === "string"
+  ) {
+    return (entry as { name: string }).name.trim();
+  }
+  return "";
+}
+
+function defaultPolicy(group: GroupKey): ComboPolicy {
+  if (group === "guisos") {
+    return {
+      allowSides: true,
+      requiredSides: 2,
+      allowDrink: true,
+      requiredDrink: true,
+    };
+  }
+  if (group === "taquizas") {
+    return {
+      allowSides: false,
+      requiredSides: 0,
+      allowDrink: true,
+      requiredDrink: true,
+    };
+  }
+  if (group === "tortas_burgers_burritos") {
+    return {
+      allowSides: false,
+      requiredSides: 0,
+      allowDrink: true,
+      requiredDrink: true,
+    };
+  }
+  return {
+    allowSides: false,
+    requiredSides: 0,
+    allowDrink: false,
+    requiredDrink: false,
+  };
+}
+
+export function comboForItem(
+  item: MenuItem | null | undefined,
+  group: GroupKey,
+): Required<ComboPolicy> {
+  const base = defaultPolicy(group);
+  const combo = item?.combo ?? {};
+  return {
+    allowSides: combo.allowSides ?? base.allowSides ?? false,
+    requiredSides: Math.max(0, combo.requiredSides ?? base.requiredSides ?? 0),
+    allowDrink: combo.allowDrink ?? base.allowDrink ?? false,
+    requiredDrink: combo.requiredDrink ?? base.requiredDrink ?? false,
+  };
+}
+
+function normalizeMenuItem(group: GroupKey, entry: unknown): MenuItem | null {
+  const name = toDishName(entry);
+  if (!name) return null;
+
+  const rawPrice =
+    entry && typeof entry === "object" && "price" in entry
+      ? Number((entry as { price?: unknown }).price)
+      : NaN;
+  const price = Number.isFinite(rawPrice) ? rawPrice : 0;
+
+  const combo =
+    entry && typeof entry === "object" && "combo" in entry
+      ? (entry as { combo?: ComboPolicy }).combo
+      : undefined;
+
+  const normalized: MenuItem = {
+    name,
+    price,
+  };
+
+  if (MAIN_GROUPS.has(group)) {
+    normalized.combo = {
+      ...defaultPolicy(group),
+      ...(combo ?? {}),
+    };
+  } else if (combo) {
+    normalized.combo = { ...combo };
+  }
+
+  return normalized;
+}
+
+export function normalizeDishNames(raw?: Partial<Record<GroupKey, unknown>>) {
+  const out = emptyDayDishes();
+  groups.forEach((g) => {
+    const list = Array.isArray(raw?.[g.key]) ? (raw?.[g.key] as unknown[]) : [];
+    const names = list.map(toDishName).filter(Boolean);
+    out[g.key] = Array.from(new Set(names));
+  });
+  return out;
+}
+
+export function normalizeMenuCatalog(
+  raw?: Partial<Record<GroupKey, LegacyOrItemList | unknown>>,
+) {
+  const out = emptyMenuCatalog();
+  groups.forEach((g) => {
+    const list = Array.isArray(raw?.[g.key]) ? (raw?.[g.key] as unknown[]) : [];
+    const items = list
+      .map((entry) => normalizeMenuItem(g.key, entry))
+      .filter((x): x is MenuItem => !!x);
+
+    const unique = new Map<string, MenuItem>();
+    items.forEach((item) => {
+      if (!unique.has(item.name)) unique.set(item.name, item);
+    });
+    out[g.key] = [...unique.values()];
+  });
+  return out;
+}
+
+export function catalogToDayDishes(catalog: MenuCatalog): DayDishes {
+  const out = emptyDayDishes();
+  groups.forEach((g) => {
+    out[g.key] = (catalog[g.key] ?? []).map((item) => item.name);
+  });
+  return out;
+}
+
+export function dayDishesToCatalog(dishes: DayDishes): MenuCatalog {
+  const out = emptyMenuCatalog();
+  groups.forEach((g) => {
+    out[g.key] = (dishes[g.key] ?? [])
+      .map((name) => normalizeMenuItem(g.key, name))
+      .filter((x): x is MenuItem => !!x);
+  });
+  return out;
+}
+
+export function findMenuItemByName(catalog: MenuCatalog, name: string) {
+  for (const g of groups) {
+    const item = (catalog[g.key] ?? []).find((x) => x.name === name);
+    if (item) return { group: g.key, item };
+  }
+  return null;
+}
 
 export interface PlacedOrder {
   id: string;
@@ -47,7 +217,7 @@ export interface PlacedOrder {
 /** Registro único de la colección `menu` en PocketBase. */
 export interface MenuRecord {
   id: string;
-  dishes: DayDishes; // catálogo completo
+  dishes: MenuCatalog | DayDishes; // catálogo completo (legacy o estructurado)
   active: DayDishes; // selección disponible (lo que ve el cliente)
   sold_out: string[]; // agotados
   whatsapp?: string; // número del negocio (solo dígitos), si existe el campo

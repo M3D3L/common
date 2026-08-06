@@ -11,9 +11,12 @@ import {
   type InjectionKey,
 } from "vue";
 import {
+  catalogToDayDishes,
+  dayDishesToCatalog,
   todayISO,
   groups,
   emptyDayDishes,
+  normalizeMenuCatalog,
   type GroupKey,
   type FilterType,
   type PlacedOrder,
@@ -345,9 +348,9 @@ function createComandasStore() {
     autoMenuApplied = false;
     const rec = r as MenuRecordFull;
     menuRecordId.value = r.id;
-    catalog.value = Object.fromEntries(
-      groups.map((g) => [g.key, r.dishes?.[g.key] ?? []]),
-    ) as DayDishes;
+    catalog.value = catalogToDayDishes(
+      normalizeMenuCatalog(r.dishes as Partial<Record<GroupKey, unknown>>),
+    );
     soldOut.value = r.sold_out ?? [];
 
     // Resolver la rotación para HOY (independiente de `active`).
@@ -657,7 +660,7 @@ function createComandasStore() {
         });
       } else {
         const created = await createItem("menu", {
-          dishes: catalog.value,
+          dishes: dayDishesToCatalog(catalog.value),
           active: activeDishes,
           sold_out: soldOut.value,
           active_date: todayISO(),

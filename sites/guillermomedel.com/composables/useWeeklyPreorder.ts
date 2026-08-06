@@ -1,5 +1,7 @@
 import { ref, reactive, computed, onMounted } from "vue";
 import {
+  groups,
+  normalizeDishNames,
   todayISO,
   type DayDishes,
   type PlacedOrder,
@@ -145,16 +147,15 @@ export function useWeeklyPreorder() {
             if (date < today) continue; // sin días pasados
             const resolved = resolveDay(date, cfg);
             if (!resolved) continue; // cerrado / vacío / fin de semana
+            const normalizedMenu = normalizeDishNames(resolved.menu as any);
             out.push({
               date,
               label: dayLabel(date),
               blockName: resolved.block.name,
               color: resolved.block.color,
-              menu: {
-                guisos: resolved.menu.guisos ?? [],
-                sides: resolved.menu.sides ?? [],
-                bebidas: resolved.menu.bebidas ?? [],
-              },
+              menu: Object.fromEntries(
+                groups.map((g) => [g.key, normalizedMenu[g.key] ?? []]),
+              ) as DayDishes,
               cart: {},
             });
             anyDay = true;

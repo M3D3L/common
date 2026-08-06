@@ -247,7 +247,7 @@ import {
   ChevronRight,
   X,
 } from "lucide-vue-next";
-import { todayISO } from "~/utils/comandas";
+import { emptyDayDishes, emptyMenuCatalog, todayISO } from "~/utils/comandas";
 import {
   mondayOf,
   addDays,
@@ -403,8 +403,8 @@ async function save() {
       });
     } else {
       const created = await createItem("menu", {
-        dishes: { guisos: [], sides: [], bebidas: [] },
-        active: { guisos: [], sides: [], bebidas: [] },
+        dishes: emptyMenuCatalog(),
+        active: emptyDayDishes(),
         sold_out: [],
         week_blocks: [],
         rotation: rotation.value,

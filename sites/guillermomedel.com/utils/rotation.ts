@@ -1,4 +1,4 @@
-import type { DayDishes } from "~/utils/comandas";
+import { groups, type DayDishes } from "~/utils/comandas";
 
 /* ===== Modelo ===== */
 
@@ -104,8 +104,7 @@ export function resolveDay(
   if (closed || !block) return null;
   const menu = block.days[String(wd) as WeekdayKey];
   if (!menu) return null;
-  const empty =
-    !menu.guisos?.length && !menu.sides?.length && !menu.bebidas?.length;
+  const empty = groups.every((g) => !(menu[g.key]?.length ?? 0));
   if (empty) return null;
   return { block, menu };
 }

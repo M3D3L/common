@@ -201,8 +201,11 @@ import { Separator } from "@common/components/ui/separator";
 import { Toggle } from "@common/components/ui/toggle";
 import { Check, Plus, Copy, Trash2 } from "lucide-vue-next";
 import {
+  catalogToDayDishes,
+  dayDishesToCatalog,
   groups,
   emptyDayDishes,
+  normalizeMenuCatalog,
   type GroupKey,
   type DayDishes,
 } from "~/utils/comandas";
@@ -349,8 +352,11 @@ async function load() {
     if (rec) {
       menuRecordId.value = rec.id;
       // Carga cada categoría desde el catálogo; las que falten quedan vacías.
+      const names = catalogToDayDishes(
+        normalizeMenuCatalog(rec.dishes as Partial<Record<GroupKey, unknown>>),
+      );
       groups.forEach((g) => {
-        catalog[g.key] = rec.dishes?.[g.key] ?? [];
+        catalog[g.key] = names[g.key] ?? [];
       });
       blocks.value = (rec.week_blocks ?? []) as WeekBlock[];
       selectedId.value = blocks.value[0]?.id ?? "";
@@ -379,7 +385,7 @@ async function save() {
       await updateItem("menu", menuRecordId.value, { week_blocks: clean });
     } else {
       const created = await createItem("menu", {
-        dishes: catalog,
+        dishes: dayDishesToCatalog(catalog),
         active: emptyDayDishes(),
         sold_out: [],
         week_blocks: clean,
