@@ -183,6 +183,7 @@ import {
   Utensils,
   Cookie,
   Coffee,
+  Candy,
 } from "lucide-vue-next";
 import ExpirationPicker from "./ExpirationPicker.vue";
 import ManualNutritionForm from "./ManualNutritionForm.vue";
@@ -193,6 +194,7 @@ const TYPE_OPTIONS = [
   { value: "meal", label: "Comida", icon: Utensils },
   { value: "snack", label: "Snack", icon: Cookie },
   { value: "drink", label: "Bebida", icon: Coffee },
+  { value: "sweet", label: "Sweet", icon: Candy },
 ] as const;
 
 const props = defineProps<{
