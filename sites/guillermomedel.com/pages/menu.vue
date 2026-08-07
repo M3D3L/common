@@ -82,12 +82,17 @@
 
         <section v-if="promoHints.length">
           <div class="mb-2 flex items-center gap-2">
-            <Badge
-              variant="outline"
-              class="border-primary/30 bg-primary/10 text-[10px] uppercase text-primary"
+            <nuxt-link
+              to="/promos"
+              class="flex items-center gap-1 hover:underline"
             >
-              Promo
-            </Badge>
+              <Badge
+                variant="outline"
+                class="border-primary/30 bg-primary/10 text-[10px] uppercase text-primary"
+              >
+                Promos
+              </Badge>
+            </nuxt-link>
             <p class="text-xs font-bold uppercase tracking-wide">
               Promociones disponibles
             </p>
