@@ -25,6 +25,9 @@ export interface PricingPromo {
   priority?: number;
   stackable?: boolean;
   maxApplications?: number;
+  display?: {
+    summary?: string;
+  };
   match: {
     requirements: PricingPromoRequirement[];
   };

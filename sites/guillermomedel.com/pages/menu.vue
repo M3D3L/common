@@ -80,6 +80,44 @@
           </ol>
         </section>
 
+        <section v-if="promoHints.length">
+          <div class="mb-2 flex items-center gap-2">
+            <Badge
+              variant="outline"
+              class="border-primary/30 bg-primary/10 text-[10px] uppercase text-primary"
+            >
+              Promo
+            </Badge>
+            <p class="text-xs font-bold uppercase tracking-wide">
+              Promociones disponibles
+            </p>
+          </div>
+
+          <div class="space-y-2">
+            <div
+              v-for="promo in promoHints"
+              :key="promo.id"
+              class="rounded-md border border-primary/10 bg-background/80 p-2"
+            >
+              <div class="flex items-start justify-between gap-3">
+                <div class="min-w-0 flex-1">
+                  <p class="font-semibold leading-tight">
+                    {{ promo.label }}
+                  </p>
+                  <p class="text-[11px] text-muted-foreground">
+                    {{ promo.summary }}
+                  </p>
+                </div>
+                <p
+                  class="shrink-0 text-right text-sm font-bold tabular-nums text-primary"
+                >
+                  {{ money(promo.price) }}
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
         <section
           v-for="group in menuGroups"
           v-show="showGroupSection(group.key)"
@@ -182,12 +220,6 @@
                       "
                     >
                       {{ item.name }}
-                    </p>
-                    <p
-                      v-if="item?.price !== 0"
-                      class="mt-0.5 text-[11px] font-semibold text-muted-foreground"
-                    >
-                      {{ money(item.price) }}
                     </p>
                   </div>
 
@@ -999,6 +1031,84 @@ const cartItems = computed(() =>
     .filter(([, q]) => q > 0)
     .map(([name, qty]) => ({ name, qty })),
 );
+
+const promoHints = computed(() =>
+  menuPricingConfig.promos
+    .filter((promo) => promo.active !== false)
+    .filter((promo) => promoIsAvailableToday(promo))
+    .map((promo) => ({
+      id: promo.id,
+      label: promo.label,
+      summary: promoSummary(promo),
+      price: promo.pricing.amount,
+    })),
+);
+
+interface PromoHint {
+  id: string;
+  label: string;
+  summary: string;
+  price: number;
+}
+
+function promoRequirementLabel(
+  requirement: (typeof menuPricingConfig.promos)[number]["match"]["requirements"][number],
+) {
+  if (requirement.targetType === "group") {
+    return groupByKey[requirement.target]?.label ?? requirement.target;
+  }
+
+  if (requirement.targetType === "order-unit") {
+    return (
+      menuPricingConfig.orderUnits?.[requirement.target]?.label ??
+      requirement.target
+    );
+  }
+
+  return requirement.target;
+}
+
+function promoSummary(promo: (typeof menuPricingConfig.promos)[number]) {
+  return (
+    promo.display?.summary ??
+    promo.match.requirements
+      .map((requirement) => {
+        const label = promoRequirementLabel(requirement);
+        return `${requirement.qty} ${label}`;
+      })
+      .join(" + ")
+  );
+}
+
+function promoIsAvailableToday(
+  promo: (typeof menuPricingConfig.promos)[number],
+) {
+  return promo.match.requirements.every((requirement) => {
+    if (requirement.targetType === "group") {
+      const group = menuGroups.value.find(
+        (entry) => entry.key === requirement.target,
+      );
+      if (!group) return false;
+      const availableCount = groupItems(group.key).filter(
+        (item) => !isOut(item.name),
+      ).length;
+      return availableCount >= requirement.qty;
+    }
+
+    if (requirement.targetType === "item") {
+      const found = menuGroups.value
+        .flatMap((group) => groupItems(group.key))
+        .find((item) => item.name === requirement.target && !isOut(item.name));
+      return !!found;
+    }
+
+    if (!taquizaGroup) return false;
+    const taquizaAvailable = groupItems(taquizaGroup.key).filter(
+      (item) => !isOut(item.name),
+    ).length;
+    return taquizaAvailable > 0;
+  });
+}
 
 const pricingSummary = computed(() => {
   const standardItems = menuGroups.value.flatMap((group) => {
