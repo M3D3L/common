@@ -422,7 +422,7 @@
               <div class="flex items-center justify-between gap-3">
                 <p class="font-bold uppercase tracking-wide">Total</p>
                 <p class="text-lg font-bold tabular-nums">
-                  {{ money(pricingSummary.total) }}
+                  {{ money(pricingSummaryWithDelivery.total) }}
                 </p>
               </div>
             </div>
@@ -611,7 +611,7 @@
               v-if="orderSummaryLines.length"
               class="font-semibold tabular-nums"
             >
-              {{ money(pricingSummary.total) }}
+              {{ money(pricingSummaryWithDelivery.total) }}
             </span>
           </div>
 
@@ -715,6 +715,7 @@ const { openWhatsApp } = useWhatsappOrder();
 
 const EMPTY_DISHES: DayDishes = emptyDayDishes();
 const RESTAURANT_WHATSAPP = "6221523259";
+const DELIVERY_FEE = 50;
 const PRICE_FORMAT = new Intl.NumberFormat("es-MX", {
   style: "currency",
   currency: "MXN",
@@ -1153,7 +1154,30 @@ const pricingSummary = computed(() => {
   });
 });
 
-const orderSummaryLines = computed(() => pricingSummary.value.lines);
+const pricingSummaryWithDelivery = computed(() => {
+  const base = pricingSummary.value;
+  const shouldAddDelivery = mode.value === "domicilio" && itemCount.value > 0;
+  if (!shouldAddDelivery) return base;
+
+  return {
+    lines: [
+      ...base.lines,
+      {
+        kind: "item" as const,
+        code: "delivery-fee",
+        label: "Cargo por domicilio",
+        qty: 1,
+        unitPrice: DELIVERY_FEE,
+        total: DELIVERY_FEE,
+      },
+    ],
+    total: base.total + DELIVERY_FEE,
+  };
+});
+
+const orderSummaryLines = computed(
+  () => pricingSummaryWithDelivery.value.lines,
+);
 
 const itemCount = computed(() => cartItems.value.length);
 const totalQty = computed(() =>
@@ -1228,6 +1252,9 @@ function buildNote() {
       .filter(Boolean)
       .join(", ");
     pieces.push(`Taquiza: ${summary}`);
+  }
+  if (mode.value === "domicilio" && itemCount.value > 0) {
+    pieces.push(`Cargo por domicilio: ${money(DELIVERY_FEE)}`);
   }
   if (note.value.trim()) pieces.push(note.value.trim());
   return pieces.join(" · ");
