@@ -4,14 +4,6 @@
 
     <!-- Cargando -->
     <div v-if="pending" class="mx-auto max-w-lg px-5 pt-9 pb-40">
-      <div class="flex flex-col items-center gap-3 text-center">
-        <Skeleton class="h-24 w-24 rounded-full" />
-        <div class="space-y-2 mt-2 flex flex-col items-center">
-          <Skeleton class="h-3 w-24" />
-          <Skeleton class="h-8 w-48" />
-          <Skeleton class="h-4 w-32" />
-        </div>
-      </div>
       <div class="mt-12 space-y-3">
         <Skeleton class="h-3 w-24" />
         <Skeleton v-for="i in 4" :key="i" class="h-20 w-full rounded-xl" />
@@ -163,7 +155,7 @@
                 <Button
                   variant="ghost"
                   size="icon"
-                  class="h-7 w-7 text-muted-foreground hover:text-destructive"
+                  class="h-7 w-7 text-background hover:text-destructive"
                   :aria-label="`Quitar orden ${idx + 1}`"
                   @click="removeTaquizaOrder(order.id)"
                 >
