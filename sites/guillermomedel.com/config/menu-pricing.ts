@@ -14,7 +14,7 @@ export const menuPricingConfig: PricingConfig = {
   promos: [
     {
       id: "meal-combo-180",
-      label: "Combo comida completa",
+      label: "Combo comida completa + extra",
       priority: 25,
       display: {
         summary: "2 guisos + 2 Guarniciones + 1 bebida = $180",
