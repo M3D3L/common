@@ -15,9 +15,11 @@ import {
   dayDishesToCatalog,
   todayISO,
   groups,
+  groupsFromData,
   emptyDayDishes,
   normalizeMenuCatalog,
   type GroupKey,
+  type GroupConfig,
   type FilterType,
   type PlacedOrder,
   type DayDishes,
@@ -51,8 +53,11 @@ const emptyDishes = emptyDayDishes;
 
 // Copia plana de un DayDishes reactivo -> objeto normal con todas las llaves.
 function cloneDishes(src: DayDishes): DayDishes {
+  const groupKeys = groupsFromData(src as Record<string, unknown>).map(
+    (g) => g.key,
+  );
   return Object.fromEntries(
-    groups.map((g) => [g.key, [...(src[g.key] ?? [])]]),
+    groupKeys.map((key) => [key, [...(src[key] ?? [])]]),
   ) as DayDishes;
 }
 
@@ -70,8 +75,12 @@ function sameSet(a: string[] = [], b: string[] = []): boolean {
   return b.every((x) => s.has(x));
 }
 function sameMenu(a: DayDishes, b: DayDishes): boolean {
-  // Iguales solo si TODAS las categorías coinciden como conjunto.
-  return groups.every((g) => sameSet(a[g.key], b[g.key]));
+  const keys = new Set<string>([
+    ...groups.map((g) => g.key),
+    ...Object.keys(a || {}),
+    ...Object.keys(b || {}),
+  ]);
+  return [...keys].every((key) => sameSet(a[key], b[key]));
 }
 
 type OrderStatus = "active" | "completed" | "cancelled";
@@ -136,6 +145,7 @@ function createComandasStore() {
   const customer = reactive<Customer>({ name: "", phone: "", address: "" });
   const orders = ref<StoredOrder[]>([]); // SOLO órdenes activas
   const pick = reactive<Record<GroupKey, Set<string>>>(emptyPick());
+  const menuGroups = ref<GroupConfig[]>([...groups]);
   const toastMsg = ref("");
   const taquizaOrders = reactive({ tacos: 0, quesadillas: 0 });
   const taquizaByKind = reactive<
@@ -182,21 +192,31 @@ function createComandasStore() {
   const sending = ref(false); // evita doble-envío por doble-tap
 
   /* ===== Helpers de estado (derivados de `groups`) ===== */
+  function syncMenuGroupsFromData(raw?: Record<string, unknown> | null) {
+    const next = groupsFromData(raw ?? {});
+    menuGroups.value = next;
+    next.forEach((g) => {
+      if (!Array.isArray(catalog.value[g.key])) catalog.value[g.key] = [];
+      if (!Array.isArray(today[g.key])) today[g.key] = [];
+      if (!pick[g.key]) pick[g.key] = new Set<string>();
+    });
+  }
+
   // Reemplaza el contenido de `today` con otro DayDishes (reactivo).
   function setToday(src: Partial<DayDishes>) {
-    groups.forEach((g) => {
+    menuGroups.value.forEach((g) => {
       today[g.key] = src[g.key] ? [...src[g.key]!] : [];
     });
   }
   // Rehidrata `pick` desde `today`.
   function pickFromToday() {
-    groups.forEach((g) => {
+    menuGroups.value.forEach((g) => {
       pick[g.key] = new Set(today[g.key]);
     });
   }
   // ¿El menú tiene al menos un platillo en cualquier categoría?
   function menuHasItems(d: Partial<DayDishes>): boolean {
-    return groups.some((g) => (d[g.key]?.length ?? 0) > 0);
+    return menuGroups.value.some((g) => (d[g.key]?.length ?? 0) > 0);
   }
 
   /* ===== Computed ===== */
@@ -235,7 +255,7 @@ function createComandasStore() {
   });
 
   const catalogEmpty = computed(
-    () => !groups.some((g) => catalog.value[g.key]?.length),
+    () => !menuGroups.value.some((g) => catalog.value[g.key]?.length),
   );
 
   const itemCount = computed(
@@ -476,6 +496,10 @@ function createComandasStore() {
     catalog.value = catalogToDayDishes(
       normalizeMenuCatalog(r.dishes as Partial<Record<GroupKey, unknown>>),
     );
+    syncMenuGroupsFromData({
+      ...(r.dishes as Record<string, unknown>),
+      ...(r.active as Record<string, unknown>),
+    });
     soldOut.value = r.sold_out ?? [];
 
     // Resolver la rotación para HOY (independiente de `active`).
@@ -748,11 +772,11 @@ function createComandasStore() {
 
   async function startShift() {
     const activeDishes: DayDishes = Object.fromEntries(
-      groups.map((g) => [g.key, [...pick[g.key]]]),
+      menuGroups.value.map((g) => [g.key, [...(pick[g.key] ?? new Set())]]),
     ) as DayDishes;
     setToday(activeDishes);
     soldOut.value = soldOut.value.filter((n) =>
-      groups.some((g) => pick[g.key].has(n)),
+      menuGroups.value.some((g) => pick[g.key]?.has(n)),
     );
 
     // El indicador refleja si lo que se inicia coincide con la rotación de hoy.
@@ -1155,6 +1179,7 @@ function createComandasStore() {
     sending,
     menuSource,
     activeBlockName,
+    menuGroups,
     minDate: todayISO(),
     // computed
     stats,

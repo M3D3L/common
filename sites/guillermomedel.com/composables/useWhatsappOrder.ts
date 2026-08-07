@@ -1,4 +1,4 @@
-import { groups, type DayDishes } from "~/utils/comandas";
+import { groupsFromData, type DayDishes } from "~/utils/comandas";
 
 export type Cart = Record<string, number>;
 export type OrderMode = "llevar" | "aqui" | "domicilio";
@@ -85,7 +85,7 @@ export function useWhatsappOrder() {
 
     // Recorre TODAS las categorías; imprime solo las que tienen algo en el carrito.
     let firstSection = true;
-    groups.forEach((g) => {
+    groupsFromData(dishes as Record<string, unknown>).forEach((g) => {
       if (
         "pieceOptions" in g &&
         taquizaByKind &&
@@ -166,7 +166,7 @@ export function useWhatsappOrder() {
     }
 
     // Una sección por categoría con platillos (orden = `groups`).
-    groups.forEach((g) => {
+    groupsFromData(dishes as Record<string, unknown>).forEach((g) => {
       const items = dishes[g.key] ?? [];
       if (!items.length) return;
       const emoji = g.emoji ?? "🍽️";

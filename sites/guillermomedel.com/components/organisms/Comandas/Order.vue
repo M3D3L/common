@@ -514,9 +514,10 @@ import {
   ShoppingBag,
   UtensilsCrossed,
 } from "lucide-vue-next";
-import { MODES, MODE_SHORT, groups } from "~/utils/comandas";
+import { MODES, MODE_SHORT } from "~/utils/comandas";
 
 const {
+  menuGroups: groups,
   today,
   cart,
   mode,

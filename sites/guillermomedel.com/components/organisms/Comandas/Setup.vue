@@ -86,9 +86,9 @@ import { Button } from "@common/components/ui/button";
 import { Separator } from "@common/components/ui/separator";
 import { Toggle } from "@common/components/ui/toggle";
 import { Check } from "lucide-vue-next";
-import { groups } from "~/utils/comandas";
 
 const {
+  menuGroups: groups,
   catalog,
   catalogEmpty,
   menuLoading,
@@ -102,6 +102,6 @@ const {
 // Se puede iniciar turno con al menos un platillo en CUALQUIER categoría
 // (antes exigía un guiso; eso bloqueaba días de solo taquiza/tortas).
 const nothingPicked = computed(() =>
-  groups.every((g) => pick[g.key].size === 0),
+  groups.value.every((g) => (pick[g.key]?.size ?? 0) === 0),
 );
 </script>

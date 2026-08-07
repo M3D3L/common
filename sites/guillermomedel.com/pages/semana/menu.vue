@@ -118,7 +118,7 @@
         </div>
 
         <!-- Grid de platillos por grupo -->
-        <div v-for="g in groups" :key="g.key" class="mb-8">
+        <div v-for="g in menuGroups" :key="g.key" class="mb-8">
           <div class="flex items-baseline gap-3 mb-3">
             <h3
               class="text-xs font-bold tracking-widest uppercase text-muted-foreground"
@@ -203,7 +203,7 @@ import { Check, Plus, Copy, Trash2 } from "lucide-vue-next";
 import {
   catalogToDayDishes,
   dayDishesToCatalog,
-  groups,
+  groupsFromData,
   emptyDayDishes,
   normalizeMenuCatalog,
   type GroupKey,
@@ -243,26 +243,29 @@ const catalog = reactive<DayDishes>(emptyDayDishes());
 const blocks = ref<WeekBlock[]>([]);
 const selectedId = ref<string>("");
 const activeDay = ref<WeekdayKey>("1");
+const menuGroups = computed(() =>
+  groupsFromData(catalog as unknown as Record<string, unknown>),
+);
 
 const current = computed(
   () => blocks.value.find((b) => b.id === selectedId.value) ?? null,
 );
-const catalogEmpty = computed(() =>
-  groups.every((g) => !catalog[g.key]?.length),
+const catalogEmpty = computed(
+  () => !menuGroups.value.some((g) => catalog[g.key]?.length),
 );
 
 function genId() {
   return "b" + Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
 }
 function emptyDay(): DayDishes {
-  return emptyDayDishes();
+  return emptyDayDishes(Object.keys(catalog));
 }
 function dayOf(block: WeekBlock, key: WeekdayKey): DayDishes {
   if (!block.days[key]) block.days[key] = emptyDay();
   const d = block.days[key]!;
   // Rellena categorías nuevas (p. ej. taquizas) en días guardados antes de
   // que existieran, para que toggle/has no revienten al indexar.
-  groups.forEach((g) => {
+  menuGroups.value.forEach((g) => {
     if (!d[g.key]) d[g.key] = [];
   });
   return d;
@@ -282,14 +285,14 @@ function toggleDish(k: GroupKey, name: string) {
 function dayCount(block: WeekBlock, key: WeekdayKey): number {
   const d = block.days[key];
   if (!d) return 0;
-  return groups.reduce((n, g) => n + (d[g.key] ?? []).length, 0);
+  return menuGroups.value.reduce((n, g) => n + (d[g.key] ?? []).length, 0);
 }
 function copyDay(from: WeekdayKey) {
   const b = current.value;
   if (!b || !b.days[from]) return;
   const src = b.days[from]!;
-  const dst = emptyDayDishes();
-  groups.forEach((g) => {
+  const dst = emptyDayDishes(Object.keys(catalog));
+  menuGroups.value.forEach((g) => {
     dst[g.key] = [...(src[g.key] ?? [])];
   });
   b.days[activeDay.value] = dst;
@@ -353,10 +356,13 @@ async function load() {
       menuRecordId.value = rec.id;
       // Carga cada categoría desde el catálogo; las que falten quedan vacías.
       const names = catalogToDayDishes(
-        normalizeMenuCatalog(rec.dishes as Partial<Record<GroupKey, unknown>>),
+        normalizeMenuCatalog(rec.dishes as Partial<Record<string, unknown>>),
       );
-      groups.forEach((g) => {
-        catalog[g.key] = names[g.key] ?? [];
+      Object.keys(catalog).forEach((k) => {
+        if (!(k in names)) delete catalog[k];
+      });
+      Object.entries(names).forEach(([k, list]) => {
+        catalog[k] = list ?? [];
       });
       blocks.value = (rec.week_blocks ?? []) as WeekBlock[];
       selectedId.value = blocks.value[0]?.id ?? "";
@@ -376,7 +382,8 @@ async function save() {
     const days: WeekBlock["days"] = {};
     (Object.keys(b.days) as WeekdayKey[]).forEach((k) => {
       const d = b.days[k]!;
-      if (groups.some((g) => (d[g.key] ?? []).length > 0)) days[k] = d;
+      if (menuGroups.value.some((g) => (d[g.key] ?? []).length > 0))
+        days[k] = d;
     });
     return { ...b, days };
   });

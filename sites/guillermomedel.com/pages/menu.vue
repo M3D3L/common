@@ -89,7 +89,7 @@
         </section>
 
         <section
-          v-for="group in groups"
+          v-for="group in menuGroups"
           v-show="showGroupSection(group.key)"
           :key="group.key"
         >
@@ -106,195 +106,138 @@
             <Separator class="shrink flex-1" />
           </div>
 
+          <!-- ===== Taquizas: por orden ===== -->
           <div
             v-if="taquizaGroup && group.key === taquizaGroup.key"
-            class="mb-3 rounded-lg border border-border p-3"
+            class="mb-3 space-y-3"
           >
-            <div class="space-y-2">
-              <div
-                class="flex items-center justify-between rounded-md border p-2"
+            <!-- Crear una orden nueva (tacos o quesadillas). Se pueden agregar
+                 tantas como quiera el cliente; cada una tiene su propio límite. -->
+            <div class="grid grid-cols-2 gap-2">
+              <Button
+                v-for="kind in taquizaKinds"
+                :key="`add-${kind}`"
+                variant="outline"
+                class="h-auto flex-col items-start gap-0.5 py-2"
+                @click="addTaquizaOrder(kind)"
               >
-                <div>
-                  <p class="text-xs font-bold uppercase">Tacos</p>
-                  <p class="text-[11px] text-muted-foreground">
-                    {{ taquizaRules.tacos }} pieza(s) por orden
-                  </p>
-                </div>
-                <div class="flex items-center gap-2">
-                  <div class="flex items-center gap-1">
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      class="h-7 w-7"
-                      :disabled="taquizaOrders.tacos <= 0"
-                      @click="setTaquizaOrderQty('tacos', -1)"
-                    >
-                      <ClientOnly><Minus :size="14" /></ClientOnly>
-                    </Button>
-                    <span
-                      class="w-5 text-center text-sm font-bold tabular-nums"
-                    >
-                      {{ taquizaOrders.tacos }}
-                    </span>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      class="h-7 w-7"
-                      @click="setTaquizaOrderQty('tacos', 1)"
-                    >
-                      <ClientOnly><Plus :size="14" /></ClientOnly>
-                    </Button>
-                  </div>
-                </div>
-              </div>
-
-              <div
-                class="flex items-center justify-between rounded-md border p-2"
-              >
-                <div>
-                  <p class="text-xs font-bold uppercase">Quesadillas</p>
-                  <p class="text-[11px] text-muted-foreground">
-                    {{ taquizaRules.quesadillas }} pieza(s) por orden
-                  </p>
-                </div>
-                <div class="flex items-center gap-2">
-                  <div class="flex items-center gap-1">
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      class="h-7 w-7"
-                      :disabled="taquizaOrders.quesadillas <= 0"
-                      @click="setTaquizaOrderQty('quesadillas', -1)"
-                    >
-                      <ClientOnly><Minus :size="14" /></ClientOnly>
-                    </Button>
-                    <span
-                      class="w-5 text-center text-sm font-bold tabular-nums"
-                    >
-                      {{ taquizaOrders.quesadillas }}
-                    </span>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      class="h-7 w-7"
-                      @click="setTaquizaOrderQty('quesadillas', 1)"
-                    >
-                      <ClientOnly><Plus :size="14" /></ClientOnly>
-                    </Button>
-                  </div>
-                </div>
-              </div>
+                <span
+                  class="flex items-center gap-1.5 text-xs font-bold uppercase"
+                >
+                  <ClientOnly><Plus :size="14" /></ClientOnly>
+                  {{
+                    kind === "tacos" ? "Orden de tacos" : "Orden de quesadillas"
+                  }}
+                </span>
+                <span class="text-[11px] font-normal text-background">
+                  {{ TAQUIZA_CAP[kind] }} piezas por orden
+                </span>
+              </Button>
             </div>
 
-            <p class="mt-2 text-[11px] text-muted-foreground">
-              Objetivo total: {{ taquizaTargetQty }} pieza(s). Seleccionadas:
-              {{ taquizaQty }}.
-            </p>
             <p
-              v-if="taquizaTargetQty <= 0"
-              class="mt-1 text-[11px] text-muted-foreground"
+              v-if="!taquizaOrders.length"
+              class="text-[11px] text-muted-foreground"
             >
-              Selecciona orden(es) de tacos o quesadillas para habilitar los
-              guisos.
+              Agrega una orden de tacos o quesadillas para elegir tus guisos.
             </p>
 
-            <div v-if="groupItems(group.key).length" class="mt-3 space-y-3">
-              <template v-for="kind in taquizaKinds" :key="kind">
-                <section
-                  v-if="taquizaOrders[kind] > 0"
-                  class="rounded-md border p-2"
+            <!-- Órdenes creadas. Cada tarjeta es una orden independiente con su
+                 propio tope de piezas y su propia selección de guisos. -->
+            <div
+              v-for="(order, idx) in taquizaOrders"
+              :key="order.id"
+              class="rounded-md border p-2"
+            >
+              <div class="mb-2 flex items-center justify-between gap-2">
+                <div>
+                  <p class="text-xs font-bold uppercase">
+                    Orden {{ idx + 1 }} ·
+                    {{ order.kind === "tacos" ? "Tacos" : "Quesadillas" }}
+                  </p>
+                  <p class="text-[11px] text-muted-foreground">
+                    {{ orderFillTotal(order) }}/{{ TAQUIZA_CAP[order.kind] }}
+                    pieza(s)
+                  </p>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  class="h-7 w-7 text-muted-foreground hover:text-destructive"
+                  :aria-label="`Quitar orden ${idx + 1}`"
+                  @click="removeTaquizaOrder(order.id)"
                 >
-                  <div class="mb-2 flex items-center justify-between gap-2">
-                    <p class="text-xs font-bold uppercase">
-                      {{
-                        kind === "tacos"
-                          ? "Elige tus guisos de tacos"
-                          : "Elige tus guisos de quesadillas"
-                      }}
+                  <ClientOnly><Trash2 :size="15" /></ClientOnly>
+                </Button>
+              </div>
+
+              <div v-if="groupItems(group.key).length" class="space-y-2">
+                <Card
+                  v-for="item in groupItems(group.key)"
+                  :key="`${order.id}-${item.name}`"
+                  class="flex items-center gap-3 p-3"
+                  :class="[
+                    isOut(item.name) && 'opacity-60',
+                    (order.fills[item.name] ?? 0) > 0 &&
+                      'bg-primary/5 ring-1 ring-primary/40',
+                  ]"
+                >
+                  <div class="flex-1">
+                    <p
+                      class="font-semibold leading-tight"
+                      :class="
+                        isOut(item.name) && 'text-muted-foreground line-through'
+                      "
+                    >
+                      {{ item.name }}
                     </p>
-                    <span
-                      class="rounded-full border border-muted bg-muted px-2 py-0.5 text-[10px] font-bold uppercase text-muted-foreground"
+                    <p
+                      v-if="item?.price !== 0"
+                      class="mt-0.5 text-[11px] font-semibold text-muted-foreground"
                     >
-                      {{ taquizaOrders[kind] }} orden(es)
+                      {{ money(item.price) }}
+                    </p>
+                  </div>
+
+                  <div
+                    v-if="!isOut(item.name)"
+                    class="flex shrink-0 items-center gap-1"
+                  >
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      class="h-8 w-8"
+                      :disabled="(order.fills[item.name] ?? 0) <= 0"
+                      @click="setOrderFill(order, item.name, -1)"
+                    >
+                      <ClientOnly><Minus :size="15" /></ClientOnly>
+                    </Button>
+                    <span class="w-6 text-center font-bold tabular-nums">
+                      {{ order.fills[item.name] ?? 0 }}
                     </span>
-                  </div>
-                  <p class="mb-2 text-[11px] text-muted-foreground">
-                    {{ taquizaQtyByKind[kind] }}/{{ taquizaTargetByKind[kind] }}
-                    pieza(s) seleccionadas.
-                  </p>
-                  <div class="space-y-2">
-                    <Card
-                      v-for="item in groupItems(group.key)"
-                      :key="`${kind}-${item.name}`"
-                      class="flex items-center gap-3 p-3"
-                      :class="[
-                        isOut(item.name) && 'opacity-60',
-                        taquizaItemQtyByKind(kind, item.name) > 0 &&
-                          'bg-primary/5 ring-1 ring-primary/40',
-                      ]"
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      class="h-8 w-8"
+                      :disabled="!canAddToOrder(order)"
+                      @click="setOrderFill(order, item.name, 1)"
                     >
-                      <div class="flex-1">
-                        <p
-                          class="font-semibold leading-tight"
-                          :class="
-                            isOut(item.name) &&
-                            'text-muted-foreground line-through'
-                          "
-                        >
-                          {{ item.name }}
-                        </p>
-                        <p
-                          v-if="item?.price !== 0"
-                          class="mt-0.5 text-[11px] font-semibold text-muted-foreground"
-                        >
-                          {{ money(item.price) }}
-                        </p>
-                      </div>
-
-                      <div
-                        v-if="!isOut(item.name)"
-                        class="flex shrink-0 items-center gap-1"
-                      >
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          class="h-8 w-8"
-                          :disabled="taquizaItemQtyByKind(kind, item.name) <= 0"
-                          @click="setTaquizaFillQty(kind, item.name, -1)"
-                        >
-                          <ClientOnly><Minus :size="15" /></ClientOnly>
-                        </Button>
-                        <span class="w-6 text-center font-bold tabular-nums">
-                          {{ taquizaItemQtyByKind(kind, item.name) }}
-                        </span>
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          class="h-8 w-8"
-                          :disabled="!canAddTaquizaFill(kind)"
-                          @click="setTaquizaFillQty(kind, item.name, 1)"
-                        >
-                          <ClientOnly><Plus :size="15" /></ClientOnly>
-                        </Button>
-                      </div>
-                    </Card>
+                      <ClientOnly><Plus :size="15" /></ClientOnly>
+                    </Button>
                   </div>
-                  <p class="mt-2 text-[11px] text-muted-foreground">
-                    Puedes enviar como quieras; solo se respeta el maximo de
-                    piezas segun las ordenes de este tipo.
-                  </p>
-                </section>
-              </template>
+                </Card>
+              </div>
+              <p v-else class="text-[11px] text-muted-foreground">
+                No hay guisos disponibles para taquizas hoy.
+              </p>
 
-              <p
-                v-if="!hasTaquizaOrder"
-                class="text-[11px] text-muted-foreground"
-              >
-                Agrega ordenes de tacos o quesadillas para elegir tus guisos.
+              <p class="mt-2 text-[11px] text-muted-foreground">
+                Máximo {{ TAQUIZA_CAP[order.kind] }} pieza(s) en esta orden.
               </p>
             </div>
           </div>
 
+          <!-- ===== Grupos normales ===== -->
           <div
             v-if="
               groupItems(group.key).length &&
@@ -356,14 +299,6 @@
                     >{{ cart[item.name] }}</span
                   >
                 </template>
-                <span
-                  v-if="taquizaGroup && group.key === taquizaGroup.key"
-                  class="text-[10px] text-muted-foreground tabular-nums"
-                >
-                  T{{ taquizaItemQtyByKind("tacos", item.name) }} · Q{{
-                    taquizaItemQtyByKind("quesadillas", item.name)
-                  }}
-                </span>
                 <Button
                   variant="outline"
                   size="icon"
@@ -411,6 +346,58 @@
               </TabsTrigger>
             </TabsList>
           </Tabs>
+        </section>
+
+        <section v-if="orderSummaryLines.length">
+          <h2
+            class="mb-2 text-xs font-bold uppercase tracking-widest text-muted-foreground"
+          >
+            Totales / Pricing totals
+          </h2>
+          <Card class="p-4">
+            <div class="space-y-3">
+              <div
+                v-for="line in orderSummaryLines"
+                :key="`${line.kind}-${line.code}`"
+                class="flex items-start justify-between gap-3"
+              >
+                <div class="min-w-0 flex-1">
+                  <p class="font-semibold leading-tight">{{ line.label }}</p>
+                  <p class="text-[11px] text-muted-foreground">
+                    {{ line.qty }} x
+                    {{
+                      line.unitPrice > 0 ? money(line.unitPrice) : "Incluido"
+                    }}
+                  </p>
+                  <p
+                    v-if="line.detail"
+                    class="text-[11px] text-muted-foreground"
+                  >
+                    Incluye: {{ line.detail }}
+                  </p>
+                </div>
+                <p class="shrink-0 text-right font-semibold tabular-nums">
+                  {{ line.total > 0 ? money(line.total) : "Incluido" }}
+                </p>
+              </div>
+
+              <Separator />
+
+              <div
+                class="flex items-center justify-between text-sm text-muted-foreground"
+              >
+                <span>Total de piezas / Items</span>
+                <span class="font-semibold tabular-nums">{{ totalQty }}</span>
+              </div>
+
+              <div class="flex items-center justify-between gap-3">
+                <p class="font-bold uppercase tracking-wide">Total</p>
+                <p class="text-lg font-bold tabular-nums">
+                  {{ money(pricingSummary.total) }}
+                </p>
+              </div>
+            </div>
+          </Card>
         </section>
 
         <section>
@@ -591,6 +578,12 @@
                 Tu pedido / Your order · {{ MODE_LABEL[mode] }}
               </template>
             </span>
+            <span
+              v-if="orderSummaryLines.length"
+              class="font-semibold tabular-nums"
+            >
+              {{ money(pricingSummary.total) }}
+            </span>
           </div>
 
           <div class="flex items-center gap-2">
@@ -616,32 +609,13 @@
           </div>
 
           <p
-            v-if="itemCount && (!canTrySend || taquizaMismatch)"
+            v-if="itemCount && !canTrySend"
             class="text-[11px] text-muted-foreground text-center"
           >
             {{ hint }}
           </p>
         </div>
       </div>
-
-      <AlertDialog
-        :open="showSubmitDialog"
-        @update:open="showSubmitDialog = $event"
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Completa tu orden de Taquizas</AlertDialogTitle>
-            <AlertDialogDescription>
-              {{ submitDialogMessage }}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogAction @click="showSubmitDialog = false">
-              Entendido
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </template>
   </div>
 </template>
@@ -656,15 +630,6 @@ import { Separator } from "@common/components/ui/separator";
 import { Tabs, TabsList, TabsTrigger } from "@common/components/ui/tabs";
 import { Textarea } from "@common/components/ui/textarea";
 import { Skeleton } from "@common/components/ui/skeleton";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@common/components/ui/alert-dialog";
 import {
   Select,
   SelectTrigger,
@@ -690,7 +655,8 @@ import {
   emptyDayDishes,
   findMenuItemByName,
   groupByKey,
-  groups,
+  groups as baseGroups,
+  groupsFromData,
   MODES,
   MODE_SHORT,
   normalizeDishNames,
@@ -709,6 +675,8 @@ import {
   type WeekOverride,
 } from "~/utils/rotation";
 import { MODE_LABEL, type OrderMode } from "~/composables/useWhatsappOrder";
+import { menuPricingConfig } from "~/config/menu-pricing";
+import { priceMenuOrder } from "~/utils/menuPricing";
 
 definePageMeta({ layout: "breezy" });
 
@@ -784,7 +752,9 @@ const active = computed<DayDishes>(() => {
   );
   const activeFresh =
     rec.active_date === todayISO() &&
-    groups.some((g) => (a[g.key] ?? []).length > 0);
+    groupsFromData(a as Record<string, unknown>).some(
+      (g) => (a[g.key] ?? []).length > 0,
+    );
   if (activeFresh) return a;
 
   const cfg: RotationConfig = {
@@ -799,7 +769,20 @@ const active = computed<DayDishes>(() => {
     : EMPTY_DISHES;
 });
 
-const hasMenu = computed(() => groups.some((g) => active.value[g.key].length));
+const menuGroups = computed(() => {
+  const fromMenu = groupsFromData({
+    ...(record.value?.dishes as Record<string, unknown>),
+    ...(active.value as Record<string, unknown>),
+  });
+  const knownKeys = new Set<string>(baseGroups.map((group) => group.key));
+  const extraGroups = fromMenu.filter((group) => !knownKeys.has(group.key));
+
+  return [...baseGroups, ...extraGroups];
+});
+
+const hasMenu = computed(() =>
+  menuGroups.value.some((g) => active.value[g.key]?.length),
+);
 
 const catalog = computed<MenuCatalog>(() =>
   normalizeMenuCatalog(
@@ -812,9 +795,10 @@ type ActiveMenuItem = MenuItem & { group: GroupKey };
 const activeItems = computed<Record<GroupKey, ActiveMenuItem[]>>(() => {
   const out = {} as Record<GroupKey, ActiveMenuItem[]>;
 
-  groups.forEach((g) => {
-    out[g.key] = [];
-    out[g.key] = (active.value[g.key] ?? []).map((name) => {
+  menuGroups.value.forEach((g) => {
+    const names = active.value[g.key] ?? [];
+
+    out[g.key] = names.map((name) => {
       const found = findMenuItemByName(catalog.value, name);
       if (found?.item) {
         return { ...found.item, group: found.group };
@@ -831,14 +815,13 @@ const activeItems = computed<Record<GroupKey, ActiveMenuItem[]>>(() => {
 });
 
 const groupItems = (k: GroupKey) => activeItems.value[k] ?? [];
-const taquizaGroup = groups.find((g) => "pieceOptions" in g) as
-  | ((typeof groups)[number] & {
+const taquizaGroup = baseGroups.find((g) => "pieceOptions" in g) as
+  | ((typeof baseGroups)[number] & {
       pieceOptions: { tacos: number; quesadillas: number };
     })
   | undefined;
 
 function showGroupSection(key: GroupKey) {
-  if (taquizaGroup && key === taquizaGroup.key) return true;
   return groupItems(key).length > 0;
 }
 
@@ -849,27 +832,136 @@ const cart = reactive<Record<string, number>>({});
 const mode = ref<OrderMode>("llevar");
 const note = ref("");
 const customer = reactive({ name: "", phone: "", address: "" });
-const taquizaOrders = reactive({ tacos: 0, quesadillas: 0 });
-const taquizaByKind = reactive<
-  Record<"tacos" | "quesadillas", Record<string, number>>
->({
-  tacos: {},
-  quesadillas: {},
-});
-const showSubmitDialog = ref(false);
-const submitDialogMessage = ref("");
-const sendingOrder = ref(false);
 
 // Código de socio (opcional, texto plano). No se valida aquí: se estampa en el
 // mensaje de WhatsApp para que el staff lo vea y redima al servir.
 const memberCode = ref("");
 
-/* ===== Hora (para "aquí" y "para llevar"; opcional, sin default) =====
- * Tres selecciones independientes que arrancan vacías. `pickupTime` solo se
- * arma cuando hay hora + am/pm (los minutos, si faltan, caen a :00). Mientras
- * no se elija nada, queda "" y la orden se envía sin hora (lo antes posible).
- * No aplica a domicilio.
+const sendingOrder = ref(false);
+
+/* ===== Taquizas: modelo por orden =====
+ * Cada orden es una unidad independiente (tacos = 3 piezas, quesadillas = 2).
+ * El cliente crea tantas órdenes como quiera; dentro de cada una elige sus
+ * guisos hasta el tope de esa orden. El `cart` sigue el invariante que espera
+ * la cocina: cart[nombre] = porción normal + suma de esa pieza en todas las
+ * órdenes de taquiza (por eso siempre usamos deltas, nunca reasignación).
  */
+type TaquizaKind = "tacos" | "quesadillas";
+const taquizaKinds: TaquizaKind[] = ["tacos", "quesadillas"];
+
+const taquizaRules = {
+  tacos: taquizaGroup?.pieceOptions?.tacos ?? 3,
+  quesadillas: taquizaGroup?.pieceOptions?.quesadillas ?? 2,
+};
+
+const TAQUIZA_CAP: Record<TaquizaKind, number> = {
+  tacos: taquizaRules.tacos,
+  quesadillas: taquizaRules.quesadillas,
+};
+
+interface TaquizaOrder {
+  id: string;
+  kind: TaquizaKind;
+  fills: Record<string, number>; // guiso -> cantidad en esta orden
+}
+
+const taquizaOrders = ref<TaquizaOrder[]>([]);
+
+let taquizaSeq = 0;
+function nextTaquizaId() {
+  taquizaSeq += 1;
+  return `tq_${Date.now().toString(36)}_${taquizaSeq}`;
+}
+
+function orderFillTotal(order: TaquizaOrder) {
+  return Object.values(order.fills).reduce((sum, q) => sum + q, 0);
+}
+
+function canAddToOrder(order: TaquizaOrder) {
+  return orderFillTotal(order) < TAQUIZA_CAP[order.kind];
+}
+
+/**
+ * Ajuste RELATIVO del cart para piezas de taquiza. Nunca reasigna el total: un
+ * guiso puede vivir a la vez en `guisos` y en `taquizas` (p. ej. "Birria"), y
+ * ambas porciones comparten la misma llave del cart.
+ */
+function applyTaquizaDelta(name: string, delta: number) {
+  const next = (cart[name] ?? 0) + delta;
+  cart[name] = next <= 0 ? 0 : next;
+}
+
+function addTaquizaOrder(kind: TaquizaKind) {
+  taquizaOrders.value.push({ id: nextTaquizaId(), kind, fills: {} });
+}
+
+function removeTaquizaOrder(id: string) {
+  const idx = taquizaOrders.value.findIndex((o) => o.id === id);
+  if (idx === -1) return;
+  const [removed] = taquizaOrders.value.splice(idx, 1);
+  Object.entries(removed.fills).forEach(([name, qty]) => {
+    if (qty > 0) applyTaquizaDelta(name, -qty);
+  });
+}
+
+function setOrderFill(order: TaquizaOrder, name: string, delta: number) {
+  if (delta > 0) {
+    if (!canAddToOrder(order)) return;
+    order.fills[name] = (order.fills[name] ?? 0) + 1;
+    applyTaquizaDelta(name, 1);
+  } else {
+    const cur = order.fills[name] ?? 0;
+    if (cur <= 0) return;
+    const next = cur - 1;
+    if (next <= 0) delete order.fills[name];
+    else order.fills[name] = next;
+    applyTaquizaDelta(name, -1);
+  }
+}
+
+// Vista "por tipo" que espera la cocina (formatCustomerOrder / comandas.ts):
+// aplanamos todas las órdenes a un mapa nombre -> cantidad por tipo.
+const taquizaByKind = computed<Record<TaquizaKind, Record<string, number>>>(
+  () => {
+    const out: Record<TaquizaKind, Record<string, number>> = {
+      tacos: {},
+      quesadillas: {},
+    };
+    taquizaOrders.value.forEach((order) => {
+      Object.entries(order.fills).forEach(([name, qty]) => {
+        if (qty > 0) {
+          out[order.kind][name] = (out[order.kind][name] ?? 0) + qty;
+        }
+      });
+    });
+    return out;
+  },
+);
+
+const taquizaOrderCount = computed<Record<TaquizaKind, number>>(() => ({
+  tacos: taquizaOrders.value.filter((o) => o.kind === "tacos").length,
+  quesadillas: taquizaOrders.value.filter((o) => o.kind === "quesadillas")
+    .length,
+}));
+
+const taquizaSelectedByKind = computed<Record<TaquizaKind, number>>(() => {
+  const sum = (k: TaquizaKind) =>
+    Object.values(taquizaByKind.value[k]).reduce((s, q) => s + q, 0);
+  return { tacos: sum("tacos"), quesadillas: sum("quesadillas") };
+});
+
+const hasTaquizaOrder = computed(() => taquizaOrders.value.length > 0);
+
+/** Piezas de taquiza (todas las órdenes) de un mismo guiso, para no doblar
+ *  su conteo en los totales del guiso normal cuando el nombre se comparte. */
+function taquizaTotalForName(name: string) {
+  return (
+    (taquizaByKind.value.tacos[name] ?? 0) +
+    (taquizaByKind.value.quesadillas[name] ?? 0)
+  );
+}
+
+/* ===== Hora (para "aquí" y "para llevar"; opcional, sin default) ===== */
 const hours12 = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"];
 const minutes = [
   "00",
@@ -916,91 +1008,50 @@ const cartItems = computed(() =>
     .map(([name, qty]) => ({ name, qty })),
 );
 
+const pricingSummary = computed(() => {
+  const standardItems = menuGroups.value.flatMap((group) => {
+    if (taquizaGroup && group.key === taquizaGroup.key) return [];
+
+    return groupItems(group.key)
+      .map((item) => ({
+        name: item.name,
+        group: group.key,
+        // Resta la porción de taquiza cuando el nombre se comparte, para no
+        // cobrar dos veces un guiso que también es relleno de taquiza.
+        qty: Math.max(
+          0,
+          (cart[item.name] ?? 0) - taquizaTotalForName(item.name),
+        ),
+        unitPrice: item.price ?? 0,
+      }))
+      .filter((entry) => entry.qty > 0);
+  });
+
+  const taquizaUnits = [
+    { code: "taquiza:tacos", qty: taquizaOrderCount.value.tacos },
+    { code: "taquiza:quesadillas", qty: taquizaOrderCount.value.quesadillas },
+  ]
+    .filter((unit) => unit.qty > 0)
+    .map((unit) => ({
+      code: unit.code,
+      qty: unit.qty,
+      label: menuPricingConfig.orderUnits?.[unit.code]?.label ?? unit.code,
+      unitPrice: menuPricingConfig.orderUnits?.[unit.code]?.unitPrice ?? 0,
+    }));
+
+  return priceMenuOrder({
+    items: standardItems,
+    orderUnits: taquizaUnits,
+    config: menuPricingConfig,
+  });
+});
+
+const orderSummaryLines = computed(() => pricingSummary.value.lines);
+
 const itemCount = computed(() => cartItems.value.length);
 const totalQty = computed(() =>
   cartItems.value.reduce((sum, it) => sum + it.qty, 0),
 );
-
-const selectedMain = computed(() =>
-  MAIN_GROUP_KEYS.flatMap((k) =>
-    groupItems(k)
-      .filter((item) => (cart[item.name] ?? 0) > 0)
-      .map((item) => ({
-        ...item,
-        qty: cart[item.name] ?? 0,
-        rules: comboForItem(item, k),
-      })),
-  ),
-);
-
-const selectedMainQty = computed(() =>
-  selectedMain.value.reduce((sum, x) => sum + x.qty, 0),
-);
-
-const sideQty = computed(() =>
-  SIDE_GROUP_KEYS.reduce(
-    (sum, key) =>
-      sum + groupItems(key).reduce((acc, i) => acc + (cart[i.name] ?? 0), 0),
-    0,
-  ),
-);
-
-const drinkQty = computed(() =>
-  DRINK_GROUP_KEYS.reduce(
-    (sum, key) =>
-      sum + groupItems(key).reduce((acc, i) => acc + (cart[i.name] ?? 0), 0),
-    0,
-  ),
-);
-
-const taquizaRules = {
-  tacos: taquizaGroup?.pieceOptions?.tacos ?? 3,
-  quesadillas: taquizaGroup?.pieceOptions?.quesadillas ?? 2,
-};
-
-type TaquizaKind = "tacos" | "quesadillas";
-const taquizaKinds: TaquizaKind[] = ["tacos", "quesadillas"];
-
-const hasTaquizaOrder = computed(
-  () => taquizaOrders.tacos + taquizaOrders.quesadillas > 0,
-);
-
-const taquizaTargetByKind = computed<Record<TaquizaKind, number>>(() => ({
-  tacos: taquizaOrders.tacos * taquizaRules.tacos,
-  quesadillas: taquizaOrders.quesadillas * taquizaRules.quesadillas,
-}));
-
-const taquizaQtyByKind = computed<Record<TaquizaKind, number>>(() => {
-  const count = (kind: TaquizaKind) =>
-    Object.values(taquizaByKind[kind]).reduce((sum, qty) => sum + qty, 0);
-  return {
-    tacos: count("tacos"),
-    quesadillas: count("quesadillas"),
-  };
-});
-
-const taquizaRemainingByKind = computed<Record<TaquizaKind, number>>(() => ({
-  tacos: Math.max(
-    0,
-    taquizaTargetByKind.value.tacos - taquizaQtyByKind.value.tacos,
-  ),
-  quesadillas: Math.max(
-    0,
-    taquizaTargetByKind.value.quesadillas - taquizaQtyByKind.value.quesadillas,
-  ),
-}));
-
-const taquizaTargetQty = computed(() => {
-  return (
-    taquizaTargetByKind.value.tacos + taquizaTargetByKind.value.quesadillas
-  );
-});
-
-const taquizaQty = computed(() => {
-  return taquizaQtyByKind.value.tacos + taquizaQtyByKind.value.quesadillas;
-});
-
-const taquizaMismatch = computed(() => false);
 
 const needsAddress = computed(
   () => mode.value === "domicilio" && !customer.address.trim(),
@@ -1010,9 +1061,7 @@ const canSend = computed(
   () => itemCount.value > 0 && !!customer.name.trim() && !needsAddress.value,
 );
 
-const canTrySend = computed(
-  () => itemCount.value > 0 && !!customer.name.trim() && !needsAddress.value,
-);
+const canTrySend = canSend;
 
 const hint = computed(() =>
   !customer.name.trim()
@@ -1026,37 +1075,6 @@ function money(value: number) {
   return PRICE_FORMAT.format(value || 0);
 }
 
-function clearGroup(k: GroupKey) {
-  groupItems(k).forEach((item) => {
-    cart[item.name] = 0;
-  });
-}
-
-watch(
-  taquizaTargetByKind,
-  (target) => {
-    if (!taquizaGroup) return;
-
-    const trimKind = (kind: TaquizaKind) => {
-      let over = taquizaQtyByKind.value[kind] - target[kind];
-      if (over <= 0) return;
-      groupItems(taquizaGroup.key).forEach((item) => {
-        if (over <= 0) return;
-        const q = taquizaByKind[kind][item.name] ?? 0;
-        if (!q) return;
-        const drop = Math.min(q, over);
-        taquizaByKind[kind][item.name] = q - drop;
-        over -= drop;
-      });
-    };
-
-    trimKind("tacos");
-    trimKind("quesadillas");
-    syncTaquizaCart();
-  },
-  { deep: true },
-);
-
 function isGroupLocked(k: GroupKey) {
   return false;
 }
@@ -1065,87 +1083,23 @@ function lockReason(k: GroupKey) {
   return "";
 }
 
-function syncTaquizaCart() {
-  if (!taquizaGroup) return;
-  groupItems(taquizaGroup.key).forEach((item) => {
-    cart[item.name] =
-      (taquizaByKind.tacos[item.name] ?? 0) +
-      (taquizaByKind.quesadillas[item.name] ?? 0);
-  });
-}
-
 function canAddItem(k: GroupKey) {
   if (isGroupLocked(k)) return false;
-  if (taquizaGroup && k === taquizaGroup.key) {
-    return false;
-  }
+  // Las taquizas no se agregan desde el bloque normal, sino por orden.
+  if (taquizaGroup && k === taquizaGroup.key) return false;
   return true;
 }
 
-function canAddTaquizaFill(kind: TaquizaKind) {
-  return taquizaOrders[kind] > 0 && taquizaRemainingByKind.value[kind] > 0;
-}
-
-function taquizaItemQtyByKind(kind: TaquizaKind, name: string) {
-  return taquizaByKind[kind][name] ?? 0;
-}
-
-function setTaquizaFillQty(kind: TaquizaKind, name: string, delta: number) {
-  if (delta > 0) {
-    if (!canAddTaquizaFill(kind)) return;
-    taquizaByKind[kind][name] = (taquizaByKind[kind][name] ?? 0) + 1;
-  } else {
-    const cur = taquizaByKind[kind][name] ?? 0;
-    if (cur <= 0) return;
-    taquizaByKind[kind][name] = cur - 1;
-  }
-  syncTaquizaCart();
-}
-
 function setQty(k: GroupKey, n: string, d: number) {
-  if (taquizaGroup && k === taquizaGroup.key) {
-    if (d > 0) {
-      if (canAddTaquizaFill("tacos")) {
-        setTaquizaFillQty("tacos", n, 1);
-        return;
-      }
-      if (canAddTaquizaFill("quesadillas")) {
-        setTaquizaFillQty("quesadillas", n, 1);
-      }
-      return;
-    }
-
-    if ((taquizaByKind.quesadillas[n] ?? 0) > 0) {
-      setTaquizaFillQty("quesadillas", n, -1);
-      return;
-    }
-    if ((taquizaByKind.tacos[n] ?? 0) > 0) {
-      setTaquizaFillQty("tacos", n, -1);
-    }
-    return;
-  }
-
+  // El grupo de taquizas se maneja por orden (setOrderFill), nunca aquí.
+  if (taquizaGroup && k === taquizaGroup.key) return;
   if (d > 0 && !canAddItem(k)) return;
-
-  const q = (cart[n] || 0) + d;
-  cart[n] = q <= 0 ? 0 : q;
-}
-
-function setTaquizaOrderQty(kind: "tacos" | "quesadillas", delta: number) {
-  const next = (taquizaOrders[kind] ?? 0) + delta;
-  taquizaOrders[kind] = next <= 0 ? 0 : next;
-  if (taquizaOrders[kind] <= 0) {
-    taquizaByKind[kind] = {};
-  }
-  syncTaquizaCart();
+  applyTaquizaDelta(n, d); // suma/resta relativa: preserva la porción de taquiza
 }
 
 function clearCart() {
   for (const k of Object.keys(cart)) cart[k] = 0;
-  taquizaByKind.tacos = {};
-  taquizaByKind.quesadillas = {};
-  taquizaOrders.tacos = 0;
-  taquizaOrders.quesadillas = 0;
+  taquizaOrders.value = [];
 }
 
 function buildNote() {
@@ -1157,11 +1111,11 @@ function buildNote() {
   }
   if (hasTaquizaOrder.value) {
     const summary = [
-      taquizaOrders.tacos > 0
-        ? `${taquizaOrders.tacos} orden(es) de tacos (${taquizaRules.tacos} c/u, ${taquizaQtyByKind.value.tacos} seleccionadas)`
+      taquizaOrderCount.value.tacos > 0
+        ? `${taquizaOrderCount.value.tacos} orden(es) de tacos (${taquizaRules.tacos} c/u, ${taquizaSelectedByKind.value.tacos} seleccionadas)`
         : "",
-      taquizaOrders.quesadillas > 0
-        ? `${taquizaOrders.quesadillas} orden(es) de quesadillas (${taquizaRules.quesadillas} c/u, ${taquizaQtyByKind.value.quesadillas} seleccionadas)`
+      taquizaOrderCount.value.quesadillas > 0
+        ? `${taquizaOrderCount.value.quesadillas} orden(es) de quesadillas (${taquizaRules.quesadillas} c/u, ${taquizaSelectedByKind.value.quesadillas} seleccionadas)`
         : "",
     ]
       .filter(Boolean)
@@ -1185,8 +1139,8 @@ function sendOrder() {
   const memberTag = code ? `SOCIO ${code}` : "";
 
   const snapshotTaquizaByKind = {
-    tacos: { ...taquizaByKind.tacos },
-    quesadillas: { ...taquizaByKind.quesadillas },
+    tacos: { ...taquizaByKind.value.tacos },
+    quesadillas: { ...taquizaByKind.value.quesadillas },
   };
 
   const text = formatCustomerOrder({

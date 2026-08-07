@@ -32,12 +32,48 @@ export interface GroupConfig {
   };
 }
 
+function titleFromKey(key: string): string {
+  return key
+    .replace(/[_-]+/g, " ")
+    .trim()
+    .split(" ")
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+}
+
+function inferKindFromKey(key: string): GroupConfig["kind"] {
+  const k = key.toLowerCase();
+  if (k.includes("bebida") || k.includes("drink")) return "drink";
+  if (k.includes("side") || k.includes("guarn")) return "side";
+  return "main";
+}
+
+function inferEmojiFromKind(kind: GroupConfig["kind"]): string {
+  if (kind === "drink") return "🥤";
+  if (kind === "side") return "🥗";
+  return "🍽️";
+}
+
 export const groups = [
   {
     key: "guisos",
     label: "Guisos",
     emoji: "🍖",
     heading: "GUISOS DEL DIA",
+    kind: "main",
+    defaultCombo: {
+      allowSides: true,
+      requiredSides: 2,
+      allowDrink: true,
+      requiredDrink: true,
+    },
+  },
+  {
+    key: "caldos",
+    label: "Caldos",
+    emoji: "🍲",
+    heading: "CALDOS",
     kind: "main",
     defaultCombo: {
       allowSides: true,
@@ -105,13 +141,37 @@ export const groups = [
   },
 ] as const satisfies readonly GroupConfig[];
 
-export type GroupKey = (typeof groups)[number]["key"];
+export type GroupKey = string;
 export type GroupKind = (typeof groups)[number]["kind"];
 export type FilterType = "all" | OrderMode;
 
 export const groupByKey = Object.fromEntries(
   groups.map((g) => [g.key, g]),
-) as Record<GroupKey, (typeof groups)[number]>;
+) as Record<string, (typeof groups)[number]>;
+
+export function groupsFromKeys(keys: string[] = []): GroupConfig[] {
+  const base = [...groups] as GroupConfig[];
+  const known = new Set(base.map((g) => g.key));
+  const extras = [...new Set(keys)]
+    .filter((key) => key && !known.has(key))
+    .map((key) => {
+      const kind = inferKindFromKey(key);
+      return {
+        key,
+        label: titleFromKey(key),
+        heading: titleFromKey(key).toUpperCase(),
+        kind,
+        emoji: inferEmojiFromKind(kind),
+      } as GroupConfig;
+    });
+  return [...base, ...extras];
+}
+
+export function groupsFromData(
+  raw?: Record<string, unknown> | null,
+): GroupConfig[] {
+  return groupsFromKeys(Object.keys(raw ?? {}));
+}
 
 export const MAIN_GROUP_KEYS = groups
   .filter((g) => g.kind === "main")
@@ -131,8 +191,8 @@ export interface MenuItem {
   combo?: ComboPolicy;
 }
 
-export type DayDishes = Record<GroupKey, string[]>;
-export type MenuCatalog = Record<GroupKey, MenuItem[]>;
+export type DayDishes = Record<string, string[]>;
+export type MenuCatalog = Record<string, MenuItem[]>;
 export type LegacyOrItemList = Array<string | Partial<MenuItem>>;
 
 /**
@@ -140,11 +200,15 @@ export type LegacyOrItemList = Array<string | Partial<MenuItem>>;
  * Úsalo en lugar de escribir `{ guisos: [], sides: [], bebidas: [] }` a mano:
  * así, al agregar una categoría nueva, no hay literales que actualizar.
  */
-export const emptyDayDishes = (): DayDishes =>
-  Object.fromEntries(groups.map((g) => [g.key, []])) as DayDishes;
+export const emptyDayDishes = (extraKeys: string[] = []): DayDishes =>
+  Object.fromEntries(
+    groupsFromKeys(extraKeys).map((g) => [g.key, []]),
+  ) as DayDishes;
 
-export const emptyMenuCatalog = (): MenuCatalog =>
-  Object.fromEntries(groups.map((g) => [g.key, []])) as MenuCatalog;
+export const emptyMenuCatalog = (extraKeys: string[] = []): MenuCatalog =>
+  Object.fromEntries(
+    groupsFromKeys(extraKeys).map((g) => [g.key, []]),
+  ) as MenuCatalog;
 
 function toDishName(entry: unknown): string {
   if (typeof entry === "string") return entry.trim();
@@ -162,7 +226,8 @@ function toDishName(entry: unknown): string {
 function defaultPolicy(group: GroupKey): ComboPolicy {
   const cfg = groupByKey[group];
   if (cfg?.defaultCombo) return cfg.defaultCombo;
-  if (cfg?.kind === "main") {
+  const kind = cfg?.kind ?? inferKindFromKey(group);
+  if (kind === "main") {
     return {
       allowSides: true,
       requiredSides: 2,
@@ -224,9 +289,9 @@ function normalizeMenuItem(group: GroupKey, entry: unknown): MenuItem | null {
   return normalized;
 }
 
-export function normalizeDishNames(raw?: Partial<Record<GroupKey, unknown>>) {
-  const out = emptyDayDishes();
-  groups.forEach((g) => {
+export function normalizeDishNames(raw?: Partial<Record<string, unknown>>) {
+  const out = emptyDayDishes(Object.keys(raw ?? {}));
+  groupsFromData(raw as Record<string, unknown>).forEach((g) => {
     const list = Array.isArray(raw?.[g.key]) ? (raw?.[g.key] as unknown[]) : [];
     const names = list.map(toDishName).filter(Boolean);
     out[g.key] = Array.from(new Set(names));
@@ -235,10 +300,10 @@ export function normalizeDishNames(raw?: Partial<Record<GroupKey, unknown>>) {
 }
 
 export function normalizeMenuCatalog(
-  raw?: Partial<Record<GroupKey, LegacyOrItemList | unknown>>,
+  raw?: Partial<Record<string, LegacyOrItemList | unknown>>,
 ) {
-  const out = emptyMenuCatalog();
-  groups.forEach((g) => {
+  const out = emptyMenuCatalog(Object.keys(raw ?? {}));
+  groupsFromData(raw as Record<string, unknown>).forEach((g) => {
     const list = Array.isArray(raw?.[g.key]) ? (raw?.[g.key] as unknown[]) : [];
     const items = list
       .map((entry) => normalizeMenuItem(g.key, entry))
@@ -254,16 +319,16 @@ export function normalizeMenuCatalog(
 }
 
 export function catalogToDayDishes(catalog: MenuCatalog): DayDishes {
-  const out = emptyDayDishes();
-  groups.forEach((g) => {
+  const out = emptyDayDishes(Object.keys(catalog ?? {}));
+  groupsFromData(catalog as Record<string, unknown>).forEach((g) => {
     out[g.key] = (catalog[g.key] ?? []).map((item) => item.name);
   });
   return out;
 }
 
 export function dayDishesToCatalog(dishes: DayDishes): MenuCatalog {
-  const out = emptyMenuCatalog();
-  groups.forEach((g) => {
+  const out = emptyMenuCatalog(Object.keys(dishes ?? {}));
+  groupsFromData(dishes as Record<string, unknown>).forEach((g) => {
     out[g.key] = (dishes[g.key] ?? [])
       .map((name) => normalizeMenuItem(g.key, name))
       .filter((x): x is MenuItem => !!x);
@@ -272,7 +337,7 @@ export function dayDishesToCatalog(dishes: DayDishes): MenuCatalog {
 }
 
 export function findMenuItemByName(catalog: MenuCatalog, name: string) {
-  for (const g of groups) {
+  for (const g of groupsFromData(catalog as Record<string, unknown>)) {
     const item = (catalog[g.key] ?? []).find((x) => x.name === name);
     if (item) return { group: g.key, item };
   }

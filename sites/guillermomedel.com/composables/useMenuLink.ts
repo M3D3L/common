@@ -1,5 +1,5 @@
 import { MODE_LABEL, type OrderMode } from "~/composables/useWhatsappOrder";
-import { groups, type DayDishes } from "~/utils/comandas";
+import { groupsFromData, type DayDishes } from "~/utils/comandas";
 
 /** Menú del día compartido con clientes (viaja dentro del link). */
 export interface SharedMenu {
@@ -96,7 +96,7 @@ export function useMenuLink() {
 
     if (dishes) {
       let firstSection = true;
-      groups.forEach((g) => {
+      groupsFromData(dishes as Record<string, unknown>).forEach((g) => {
         if (
           "pieceOptions" in g &&
           taquizaByKind &&

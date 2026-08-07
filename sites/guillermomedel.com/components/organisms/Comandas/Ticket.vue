@@ -28,7 +28,7 @@
     <!-- Items List -->
     <div class="flex-1 space-y-3">
       <div
-        v-for="g in groups"
+        v-for="g in ticketGroups"
         v-show="hasGroupItems(order, g.key, catalog)"
         :key="g.key"
       >
@@ -160,12 +160,14 @@
 </template>
 
 <script lang="ts" setup>
+import { computed } from "vue";
 import { Card } from "@common/components/ui/card";
 import { Button } from "@common/components/ui/button";
 import { Badge } from "@common/components/ui/badge";
 import { Check, Trash2 } from "lucide-vue-next";
 import {
   groups,
+  groupsFromData,
   todayISO,
   orderTime,
   modeBorderClass,
@@ -178,6 +180,10 @@ import {
 const props = defineProps<{ order: PlacedOrder }>();
 
 const { completeOrder, discardOrder, catalog } = useComandas();
+
+const ticketGroups = computed(() =>
+  groupsFromData(catalog.value as Record<string, unknown>),
+);
 
 const taquizaGroup = groups.find((g) => "pieceOptions" in g);
 
