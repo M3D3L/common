@@ -127,7 +127,7 @@
 
               <!-- Los items solo se montan cuando la categoria esta abierta -->
               <AccordionContent class="px-3 pb-3 pt-0">
-                <div class="grid grid-cols-2 gap-2">
+                <div class="grid gap-2">
                   <Card
                     v-for="item in groupItems(group.key)"
                     :key="item.code"
