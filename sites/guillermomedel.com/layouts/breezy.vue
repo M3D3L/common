@@ -11,6 +11,7 @@ const logoSrc =
 
 const links = [
   { to: "/menu", label: "Menú" },
+  { to: "/menu-semanal", label: "Calendario" },
   { to: "/promos", label: "Promos" },
 ];
 </script>
