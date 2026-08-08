@@ -709,7 +709,6 @@ import { priceMenuOrder } from "~/utils/menuPricing";
 
 definePageMeta({ layout: "breezy" });
 
-const { fetchCollection } = usePocketBaseCore();
 const { formatCustomerOrder } = useMenuLink();
 const { openWhatsApp } = useWhatsappOrder();
 
@@ -732,6 +731,7 @@ const MODE_ICON: Record<string, any> = {
 
 // Registro `menu` con los campos de rotación.
 type MenuRecordFull = MenuRecord & {
+  store?: MenuCatalog | DayDishes;
   week_blocks?: WeekBlock[];
   rotation?: string[];
   rotation_anchor?: string;
@@ -739,32 +739,8 @@ type MenuRecordFull = MenuRecord & {
   active_date?: string;
 };
 
-const record = ref<MenuRecordFull | null>(null);
-const pending = ref(true);
-const loadError = ref(false);
-
-async function load() {
-  pending.value = true;
-  loadError.value = false;
-  try {
-    const res = await fetchCollection(
-      "menu",
-      1,
-      1,
-      "",
-      "-created",
-      null,
-      null,
-      true,
-    );
-    record.value = (res.items[0] as unknown as MenuRecordFull) ?? null;
-  } catch {
-    loadError.value = true;
-    record.value = null;
-  } finally {
-    pending.value = false;
-  }
-}
+const { record, pending, loadError, load } =
+  useLatestMenuRecord<MenuRecordFull>();
 
 onMounted(load);
 
@@ -799,9 +775,13 @@ const active = computed<DayDishes>(() => {
     : EMPTY_DISHES;
 });
 
+const menuSourceCatalog = computed<Partial<Record<GroupKey, unknown>>>(
+  () => (record.value?.dishes ?? {}) as Partial<Record<GroupKey, unknown>>,
+);
+
 const menuGroups = computed(() => {
   const fromMenu = groupsFromData({
-    ...(record.value?.dishes as Record<string, unknown>),
+    ...(menuSourceCatalog.value as Record<string, unknown>),
     ...(active.value as Record<string, unknown>),
   });
   const knownKeys = new Set<string>(baseGroups.map((group) => group.key));
@@ -815,9 +795,7 @@ const hasMenu = computed(() =>
 );
 
 const catalog = computed<MenuCatalog>(() =>
-  normalizeMenuCatalog(
-    record.value?.dishes as Partial<Record<GroupKey, unknown>> | undefined,
-  ),
+  normalizeMenuCatalog(menuSourceCatalog.value),
 );
 
 type ActiveMenuItem = MenuItem & { group: GroupKey };
