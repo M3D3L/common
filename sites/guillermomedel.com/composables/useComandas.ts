@@ -657,6 +657,7 @@ function createComandasStore() {
   /* ===== Realtime (sustituye al polling) ===== */
   let unsubOrders: (() => void) | null = null;
   let unsubMenu: (() => void) | null = null;
+  let resyncTimer: ReturnType<typeof setInterval> | null = null;
 
   function onComandaEvent(e: { action: string; record: RecordModel }) {
     const rec = e.record;
@@ -684,8 +685,19 @@ function createComandasStore() {
       unsubOrders = await subscribe(COMANDAS_COLLECTION, onComandaEvent, "*");
       unsubMenu = await subscribe("menu", onMenuEvent, "*");
       live.value = true;
+      // Realtime is back: stop the fallback poller if it was running.
+      if (resyncTimer) {
+        clearInterval(resyncTimer);
+        resyncTimer = null;
+      }
     } catch {
       live.value = false;
+      // Realtime is dead on this client: reconcile periodically so this
+      // device doesn't drift away from everyone else. resync() fetches with
+      // ignoreCache, so it always pulls the true server state.
+      if (!resyncTimer) {
+        resyncTimer = setInterval(() => resync(), 15000);
+      }
     }
   }
 
@@ -704,6 +716,10 @@ function createComandasStore() {
     }
     unsubOrders = null;
     unsubMenu = null;
+    if (resyncTimer) {
+      clearInterval(resyncTimer);
+      resyncTimer = null;
+    }
     live.value = false;
   }
 

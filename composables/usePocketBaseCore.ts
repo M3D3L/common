@@ -98,7 +98,8 @@ export default function usePocketBaseCore() {
         ) as any;
       }
 
-      setCache(cacheKey, response);
+      // Cache the response only if ignoreCache is false
+      if (!ignoreCache) setCache(cacheKey, response);
       logQuery(`${cacheKey} (network)`, response);
 
       return response;
