@@ -77,41 +77,110 @@
     </Card>
 
     <!-- Lista completa de socios -->
-    <Sheet v-model:open="membersDrawerOpen">
-      <SheetTrigger as-child>
-        <Button variant="outline" class="w-full mb-6">
-          <ClientOnly><Users :size="16" class="mr-2" /></ClientOnly>
-          Ver socios
-          <Badge variant="secondary" class="ml-2 tabular-nums">
+    <div class="mb-6 border rounded-lg border-border bg-card overflow-hidden">
+      <div class="flex items-center justify-between gap-3 p-3">
+        <button
+          class="flex items-center min-w-0 gap-2 text-left font-semibold"
+          :aria-expanded="membersDrawerOpen"
+          @click="membersDrawerOpen = !membersDrawerOpen"
+        >
+          <Users :size="16" class="shrink-0" />
+          <span>Todos los socios</span>
+          <Badge variant="secondary" class="tabular-nums">
             {{ allMembers.length }}
           </Badge>
-        </Button>
-      </SheetTrigger>
-      <SheetContent side="right" class="w-[min(92vw,28rem)] sm:max-w-md">
-        <SheetHeader class="pr-8">
-          <div class="flex items-center justify-between gap-3">
-            <SheetTitle>Todos los socios</SheetTitle>
+        </button>
+        <div class="flex items-center gap-1">
+          <Button
+            variant="ghost"
+            size="icon"
+            :disabled="listLoading"
+            title="Actualizar lista"
+            @click="loadMembers"
+          >
+            <RefreshCw :size="16" :class="listLoading && 'animate-spin'" />
+            <span class="sr-only">Actualizar lista</span>
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            :aria-label="membersDrawerOpen ? 'Ocultar socios' : 'Ver socios'"
+            @click="membersDrawerOpen = !membersDrawerOpen"
+          >
+            <ChevronDown
+              :size="18"
+              class="transition-transform"
+              :class="membersDrawerOpen && 'rotate-180'"
+            />
+          </Button>
+        </div>
+      </div>
+
+      <div
+        v-show="membersDrawerOpen"
+        class="px-3 pb-3 space-y-3 border-t border-border"
+      >
+        <div v-if="adding" class="pt-3 space-y-4">
+          <div class="flex items-center justify-between">
+            <h3 class="font-bold text-lg">Nuevo socio</h3>
             <Button
               variant="ghost"
               size="icon"
-              :disabled="listLoading"
-              title="Actualizar lista"
-              @click="loadMembers"
+              title="Cancelar"
+              @click="adding = false"
             >
-              <RefreshCw :size="16" :class="listLoading && 'animate-spin'" />
-              <span class="sr-only">Actualizar lista</span>
+              <X :size="18" />
+              <span class="sr-only">Cancelar</span>
             </Button>
           </div>
-        </SheetHeader>
-
-        <div class="flex flex-col h-full gap-4 pt-6">
+          <div class="space-y-1.5">
+            <Label for="n-name"
+              >Nombre <span class="text-destructive">*</span></Label
+            >
+            <Input
+              id="n-name"
+              v-model="form.name"
+              placeholder="Nombre completo"
+            />
+          </div>
+          <div class="space-y-1.5">
+            <Label for="n-phone"
+              >Teléfono <span class="text-destructive">*</span></Label
+            >
+            <Input
+              id="n-phone"
+              v-model="form.phone"
+              type="tel"
+              placeholder="10 dígitos"
+            />
+          </div>
+          <div class="space-y-1.5">
+            <Label for="n-address">Dirección (opcional)</Label>
+            <Input
+              id="n-address"
+              v-model="form.address"
+              placeholder="Para envíos a domicilio"
+            />
+          </div>
+          <div class="flex items-center space-x-2 pt-1">
+            <Checkbox id="issue-now" v-model:checked="form.issueNow" />
+            <Label for="issue-now" class="text-sm font-normal cursor-pointer">
+              Dar 5 comidas de {{ currentPeriod() }} al crear
+            </Label>
+          </div>
           <Button
             class="w-full"
-            @click="
-              openAdd();
-              membersDrawerOpen = false;
-            "
+            :disabled="busy || !form.name.trim() || !form.phone.trim()"
+            @click="doCreate"
           >
+            {{ busy ? "Creando…" : "Crear socio" }}
+          </Button>
+          <p v-if="createError" class="text-xs text-destructive">
+            {{ createError }}
+          </p>
+        </div>
+        <template v-else>
+          <Button class="w-full mt-3" @click="openAdd()">
             <UserPlus :size="15" class="mr-1.5" />
             Nuevo socio
           </Button>
@@ -124,7 +193,7 @@
           >
             No hay socios registrados.
           </p>
-          <div v-else class="flex-1 min-h-0 pb-6 space-y-1.5 overflow-y-auto">
+          <div v-else class="max-h-[28rem] space-y-1.5 overflow-y-auto">
             <div
               v-for="c in allMembers"
               :key="c.id"
@@ -139,17 +208,15 @@
                   class="text-xs text-muted-foreground tabular-nums truncate"
                   >{{ c.phone }}</span
                 >
-                <Badge
-                  variant="outline"
-                  class="ml-auto tabular-nums shrink-0"
-                  >{{ c.member_code }}</Badge
-                >
+                <Badge variant="outline" class="ml-auto tabular-nums shrink-0">
+                  {{ c.member_code }}
+                </Badge>
               </button>
             </div>
           </div>
-        </div>
-      </SheetContent>
-    </Sheet>
+        </template>
+      </div>
+    </div>
 
     <!-- Ficha del socio -->
     <Card v-if="member" class="overflow-hidden mb-6">
@@ -390,69 +457,6 @@
       </div>
     </Card>
 
-    <!-- Alta de socio -->
-    <Card v-if="adding" class="p-5">
-      <div class="flex items-center justify-between mb-4">
-        <h3 class="font-bold text-lg">Nuevo socio</h3>
-        <button
-          class="text-muted-foreground hover:text-foreground"
-          @click="adding = false"
-        >
-          <ClientOnly><X :size="18" /></ClientOnly>
-        </button>
-      </div>
-      <div class="space-y-4">
-        <div class="space-y-1.5">
-          <Label for="n-name"
-            >Nombre <span class="text-destructive">*</span></Label
-          >
-          <Input
-            id="n-name"
-            v-model="form.name"
-            placeholder="Nombre completo"
-          />
-        </div>
-        <div class="space-y-1.5">
-          <Label for="n-phone"
-            >Teléfono <span class="text-destructive">*</span></Label
-          >
-          <Input
-            id="n-phone"
-            v-model="form.phone"
-            type="tel"
-            placeholder="10 dígitos"
-          />
-        </div>
-        <div class="space-y-1.5">
-          <Label for="n-address">Dirección (opcional)</Label>
-          <Input
-            id="n-address"
-            v-model="form.address"
-            placeholder="Para envíos a domicilio"
-          />
-        </div>
-
-        <!-- Shadcn Checkbox Component integrated -->
-        <div class="flex items-center space-x-2 pt-1">
-          <Checkbox id="issue-now" v-model:checked="form.issueNow" />
-          <Label for="issue-now" class="text-sm font-normal cursor-pointer">
-            Dar 5 comidas de {{ currentPeriod() }} al crear
-          </Label>
-        </div>
-
-        <Button
-          class="w-full mt-2"
-          :disabled="busy || !form.name.trim() || !form.phone.trim()"
-          @click="doCreate"
-        >
-          {{ busy ? "Creando…" : "Crear socio" }}
-        </Button>
-        <p v-if="createError" class="text-xs text-destructive">
-          {{ createError }}
-        </p>
-      </div>
-    </Card>
-
     <!-- Toast -->
     <div
       v-if="toastMsg"
@@ -482,13 +486,6 @@ import {
   AlertDialogTrigger,
 } from "@common/components/ui/alert-dialog";
 import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@common/components/ui/sheet";
-import {
   Search,
   Plus,
   UserPlus,
@@ -497,8 +494,13 @@ import {
   Users,
   RefreshCw,
   Trash2,
+  ChevronDown,
 } from "lucide-vue-next";
 import usePocketBase from "@common/composables/usePocketbase";
+import useCheckIn from "~/composables/useCheckIn";
+import useMembers from "~/composables/useMembers";
+import useMemberships from "~/composables/useMemberships";
+import useRedemptions from "~/composables/useRedemptions";
 import type { Member, Redemption } from "~/types/membership";
 
 // --- composables (todas autenticadas; sin hooks ni lecturas públicas) ---
@@ -616,7 +618,7 @@ async function loadMembers() {
   listLoading.value = true;
   try {
     const firstPage = await members.listMembers();
-    const pages = await Promise.all(
+    const pages: Array<{ items: unknown[] }> = await Promise.all(
       Array.from({ length: Math.max(0, firstPage.totalPages - 1) }, (_, i) =>
         members.listMembers(i + 2),
       ),
@@ -714,6 +716,7 @@ async function saveAddress() {
 // --- alta de socio ---
 function openAdd(prefill?: string) {
   adding.value = true;
+  membersDrawerOpen.value = true;
   createError.value = "";
   form.name = typeof prefill === "string" ? prefill : "";
   form.phone = "";
