@@ -31,7 +31,6 @@ import {
   type WeekBlock,
   type WeekOverride,
 } from "~/utils/rotation";
-import { clearCache, getCacheKey } from "~/composables/cacheSingleton";
 import type { OrderMode, Customer } from "~/composables/useWhatsappOrder";
 import type { RecordModel } from "pocketbase";
 
@@ -84,15 +83,12 @@ function sameMenu(a: DayDishes, b: DayDishes): boolean {
   return [...keys].every((key) => sameSet(a[key], b[key]));
 }
 
-type OrderStatus = "active" | "completed" | "cancelled";
-
 // De dónde salió el menú del día que se está mostrando.
 type MenuSource = "auto" | "manual" | "none";
 
-// Orden + metadatos de PocketBase (id de registro y status para el soft-delete).
+// Orden + metadatos de PocketBase (id de registro).
 type StoredOrder = PlacedOrder & {
   recordId?: string;
-  status?: OrderStatus;
 };
 
 // Registro `menu` extendido con la rotación semanal y el sello del día.
@@ -107,9 +103,9 @@ type MenuRecordFull = MenuRecord & {
 /**
  * Fuente única de verdad de Comandas.
  *  - CATÁLOGO + SELECCIÓN del turno + AGOTADOS -> registro único `menu`.
- *  - ÓRDENES -> colección `comandas` (un registro por orden). NO se borran al
- *    completar: se marcan `completed`/`cancelled` y dejan de mostrarse. El
- *    tablero solo carga las `active`. El historial queda para el reporte EOD.
+ *  - ÓRDENES -> colección `comandas` (un registro por orden). El registro
+ *    SOLO existe mientras la orden está activa: completar/descartar la
+ *    BORRA de la BD (misma cola para todos, sin status que desincronizar).
  *  - Se mantiene EN VIVO con realtime (SSE) de PocketBase, sin polling.
  *  - SOCIOS: al enviar una orden con código de socio, se descuenta UNA comida
  *    del mes en curso (única superficie de redención; /socios ya no redime).
@@ -124,9 +120,9 @@ function createComandasStore() {
     useWhatsappOrder();
   const {
     fetchCollection,
-    fetchRecord,
     createItem,
     updateItem,
+    deleteItem,
     subscribe,
     unsubscribe,
   } = usePocketBaseCore();
@@ -473,16 +469,9 @@ function createComandasStore() {
 
   /* ===== Helpers de órdenes (en memoria) ===== */
   function recordToOrder(rec: RecordModel): StoredOrder {
-    const payload = ((rec as any)[COMANDAS_FIELD] ?? {}) as
-      | (PlacedOrder & { status?: OrderStatus })
-      | Record<string, never>;
-    const payloadStatus = (payload as any).status as OrderStatus | undefined;
-    const topLevelStatus = (rec as any).status as OrderStatus | undefined;
-    const status = topLevelStatus ?? payloadStatus ?? "active";
     return {
-      ...(payload as PlacedOrder),
+      ...(((rec as any)[COMANDAS_FIELD] ?? {}) as PlacedOrder),
       recordId: rec.id,
-      status,
     };
   }
 
@@ -499,24 +488,6 @@ function createComandasStore() {
   function removeByRecordId(recordId: string) {
     if (!recordId) return;
     orders.value = orders.value.filter((x) => x.recordId !== recordId);
-  }
-
-  async function updateOrderStatus(recordId: string, status: OrderStatus) {
-    try {
-      await updateItem(COMANDAS_COLLECTION, recordId, { status });
-      return;
-    } catch {
-      // Fallback para esquemas donde `status` no existe como columna.
-    }
-
-    const fresh = await fetchRecord(COMANDAS_COLLECTION, recordId);
-    const payload = ((fresh as any)[COMANDAS_FIELD] ?? {}) as PlacedOrder;
-    await updateItem(COMANDAS_COLLECTION, recordId, {
-      [COMANDAS_FIELD]: {
-        ...payload,
-        status,
-      },
-    });
   }
 
   /* ===== PocketBase: menú ===== */
@@ -640,7 +611,8 @@ function createComandasStore() {
   }
 
   /* ===== PocketBase: órdenes ===== */
-  // Tablero: solo órdenes activas (sin importar la fecha de entrega).
+  // Tablero: TODAS las órdenes en la colección son activas (se borran al
+  // completar/descartar), así que no hace falta filtrar por status.
   async function loadActiveOrders() {
     try {
       const res = await fetchCollection(
@@ -653,9 +625,7 @@ function createComandasStore() {
         null,
         true,
       );
-      const remote = res.items
-        .map(recordToOrder)
-        .filter((o) => (o.status ?? "active") === "active");
+      const remote = res.items.map(recordToOrder);
       // Conserva órdenes creadas sin red (aún sin recordId).
       const unsynced = orders.value.filter((o) => !o.recordId);
       orders.value = [...remote, ...unsynced];
@@ -665,22 +635,25 @@ function createComandasStore() {
     }
   }
 
-  // Semilla del contador: número más alto del DÍA (cualquier status), para no
-  // reciclar números ya usados por órdenes que ya se completaron.
+  // Semilla del contador: número más alto entre las órdenes activas, para no
+  // reciclar números ya usados por órdenes que ya se completaron/borraron.
+  // El esquema solo tiene el campo `data`, así que se calcula en memoria.
   async function seedCounter() {
     try {
       const res = await fetchCollection(
         COMANDAS_COLLECTION,
         1,
-        1,
-        `biz_date = "${todayISO()}"`,
-        "-number",
+        300,
+        "",
+        "-created",
         null,
         null,
         true,
       );
-      const top = res.items[0] as any;
-      const n = top ? Number(top.number) || 0 : 0;
+      const n = res.items.reduce((max, rec) => {
+        const num = Number((rec as any)[COMANDAS_FIELD]?.number) || 0;
+        return Math.max(max, num);
+      }, 0);
       counter.value = Math.max(counter.value, n + 1);
     } catch {
       /* offline: se usa el contador local */
@@ -694,57 +667,15 @@ function createComandasStore() {
   /**
    * Evento realtime de una comanda.
    *
-   * REGLA: una orden se quita del tablero cuando se elimina o cuando su status
-   * deja de ser "active" (completed/cancelled). El problema anterior era que,
-   * si el payload realtime llegaba SIN el campo `status` poblado, la condición
-   * de remoción no se cumplía y la orden se volvía a AGREGAR (upsert) en los
-   * otros dispositivos —justo el bug de "al cerrar una comanda reaparece en la
-   * cuenta de otro usuario". Ahora, si el status llega ambiguo, se resuelve el
-   * registro real desde la BD (limpiando primero su cache por id) antes de
-   * decidir. Así, "completada/cancelada" SIEMPRE remueve en todos lados.
+   * REGLA: el registro solo existe mientras la orden está activa (completar/
+   * descartar la borra de la BD), así que un "create"/"update" siempre es
+   * upsert y un "delete" siempre remueve. Sin status que desincronizar entre
+   * pantallas.
    */
-  async function onComandaEvent(e: { action: string; record: RecordModel }) {
+  function onComandaEvent(e: { action: string; record: RecordModel }) {
     const rec = e.record;
 
-    // Los deletes siempre remueven.
     if (e.action === "delete") {
-      removeByRecordId(rec.id);
-      persist();
-      return;
-    }
-
-    let status =
-      ((rec as any).status as OrderStatus | undefined) ||
-      (((rec as any)[COMANDAS_FIELD] as any)?.status as
-        | OrderStatus
-        | undefined);
-
-    // Status ausente/ambiguo en el evento: resolver el registro autoritativo.
-    // Se limpia primero la cache por id (fetchRecord no tiene ignoreCache) para
-    // no leer una copia vieja del propio registro.
-    if (!status) {
-      try {
-        clearCache(
-          getCacheKey("fetchRecord", {
-            collection: COMANDAS_COLLECTION,
-            id: rec.id,
-          }),
-        );
-        const fresh = await fetchRecord(COMANDAS_COLLECTION, rec.id);
-        status =
-          ((fresh as any).status as OrderStatus | undefined) ||
-          (((fresh as any)[COMANDAS_FIELD] as any)?.status as
-            | OrderStatus
-            | undefined);
-        (rec as any).status = status;
-        (rec as any)[COMANDAS_FIELD] =
-          (fresh as any)[COMANDAS_FIELD] ?? (rec as any)[COMANDAS_FIELD];
-      } catch {
-        /* si no se pudo resolver, se sigue con lo que haya */
-      }
-    }
-
-    if (status && status !== "active") {
       removeByRecordId(rec.id);
     } else {
       upsertOrder(recordToOrder(rec));
@@ -1115,7 +1046,6 @@ function createComandasStore() {
       taquizaOrders: snapshot.taquizaOrders,
       taquizaByKind: snapshot.taquizaByKind,
       createdAt: Date.now(),
-      status: "active",
     };
 
     const text = formatOrder({
@@ -1131,29 +1061,12 @@ function createComandasStore() {
 
     const wa = openBlankTab();
 
-    // 1) Primero la BD. Payload completo en `data` + columnas denormalizadas
-    //    para el tablero (status) y el reporte EOD. `member_code` para historial.
+    // 1) Primero la BD. El esquema de `comandas` solo tiene el campo `data`,
+    //    ahí va el payload completo (incluye member_code para historial).
     try {
-      let rec: RecordModel;
-      try {
-        rec = await createItem(COMANDAS_COLLECTION, {
-          [COMANDAS_FIELD]: order,
-          status: "active",
-          number: order.number,
-          mode: order.mode,
-          fulfill_date: order.fulfillDate || todayISO(),
-          fulfill_time: order.fulfillTime || "",
-          biz_date: todayISO(),
-          member_code: code || "",
-        });
-      } catch {
-        rec = await createItem(COMANDAS_COLLECTION, {
-          [COMANDAS_FIELD]: {
-            ...order,
-            status: "active",
-          },
-        });
-      }
+      const rec = await createItem(COMANDAS_COLLECTION, {
+        [COMANDAS_FIELD]: { ...order, memberCode: code || "" },
+      });
       order.recordId = rec.id;
     } catch {
       toast("No se guardó en el servidor; se envía igual");
@@ -1184,16 +1097,16 @@ function createComandasStore() {
     const text = formatReady(o.number, o.mode, o.customer);
     const wa = openBlankTab();
 
-    // 1) Primero la BD: soft-delete (queda para el reporte EOD).
+    // 1) Primero la BD: se borra el registro (misma cola para todos).
     // Si esto falla (red/permiso), NO se quita localmente: de lo contrario
-    // el status en la BD sigue "active" y la orden reaparece en las demás
-    // pantallas (el cierre "funcionó" solo para quien lo intentó).
+    // el registro sigue existiendo en la BD y la orden reaparece en las
+    // demás pantallas (el cierre "funcionó" solo para quien lo intentó).
     try {
       if (o.recordId) {
-        await updateOrderStatus(o.recordId, "completed");
+        await deleteItem(COMANDAS_COLLECTION, o.recordId);
       }
     } catch (e) {
-      console.error("No se pudo marcar completada en el servidor", e);
+      console.error("No se pudo cerrar la orden en el servidor", e);
       wa?.close();
       toast(`No se pudo cerrar la orden #${o.number}; reintenta`);
       return;
@@ -1208,33 +1121,19 @@ function createComandasStore() {
 
   async function discardOrder(o: StoredOrder) {
     // Igual que en completeOrder: solo se quita localmente si la BD confirmó
-    // el cambio de status, para que no reaparezca en otras pantallas.
+    // el borrado, para que no reaparezca en otras pantallas.
     try {
       if (o.recordId) {
-        await updateOrderStatus(o.recordId, "cancelled");
+        await deleteItem(COMANDAS_COLLECTION, o.recordId);
       }
     } catch (e) {
-      console.error("No se pudo cancelar en el servidor", e);
+      console.error("No se pudo descartar la orden en el servidor", e);
       toast(`No se pudo descartar la orden #${o.number}; reintenta`);
       return;
     }
     orders.value = orders.value.filter((x) => x.id !== o.id);
     persist();
     toast(`Orden #${o.number} descartada`);
-  }
-
-  // Reabrir una orden completada/cancelada por error -> vuelve a `active`.
-  async function reopenOrder(recordId: string) {
-    try {
-      await updateOrderStatus(recordId, "active");
-      const fresh = await fetchRecord(COMANDAS_COLLECTION, recordId);
-      upsertOrder(recordToOrder(fresh));
-      persist();
-      toast("Orden reabierta");
-    } catch (e) {
-      console.error("No se pudo reabrir", e);
-      toast("No se pudo reabrir");
-    }
   }
 
   onMounted(async () => {
@@ -1312,7 +1211,6 @@ function createComandasStore() {
     send,
     completeOrder,
     discardOrder,
-    reopenOrder,
     refreshNow: resync,
   };
 }
