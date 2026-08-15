@@ -76,6 +76,81 @@
       </p>
     </Card>
 
+    <!-- Lista completa de socios -->
+    <Sheet v-model:open="membersDrawerOpen">
+      <SheetTrigger as-child>
+        <Button variant="outline" class="w-full mb-6">
+          <ClientOnly><Users :size="16" class="mr-2" /></ClientOnly>
+          Ver socios
+          <Badge variant="secondary" class="ml-2 tabular-nums">
+            {{ allMembers.length }}
+          </Badge>
+        </Button>
+      </SheetTrigger>
+      <SheetContent side="right" class="w-[min(92vw,28rem)] sm:max-w-md">
+        <SheetHeader class="pr-8">
+          <div class="flex items-center justify-between gap-3">
+            <SheetTitle>Todos los socios</SheetTitle>
+            <Button
+              variant="ghost"
+              size="icon"
+              :disabled="listLoading"
+              title="Actualizar lista"
+              @click="loadMembers"
+            >
+              <RefreshCw :size="16" :class="listLoading && 'animate-spin'" />
+              <span class="sr-only">Actualizar lista</span>
+            </Button>
+          </div>
+        </SheetHeader>
+
+        <div class="flex flex-col h-full gap-4 pt-6">
+          <Button
+            class="w-full"
+            @click="
+              openAdd();
+              membersDrawerOpen = false;
+            "
+          >
+            <UserPlus :size="15" class="mr-1.5" />
+            Nuevo socio
+          </Button>
+          <p v-if="listLoading" class="text-sm text-muted-foreground">
+            Cargando socios...
+          </p>
+          <p
+            v-else-if="!allMembers.length"
+            class="text-sm text-muted-foreground"
+          >
+            No hay socios registrados.
+          </p>
+          <div v-else class="flex-1 min-h-0 pb-6 space-y-1.5 overflow-y-auto">
+            <div
+              v-for="c in allMembers"
+              :key="c.id"
+              class="flex items-center gap-2 p-2.5 border rounded-lg border-border bg-card"
+            >
+              <button
+                class="flex items-center min-w-0 flex-1 gap-3 text-left hover:text-primary transition-colors"
+                @click="pick(c)"
+              >
+                <span class="font-semibold truncate">{{ c.name }}</span>
+                <span
+                  class="text-xs text-muted-foreground tabular-nums truncate"
+                  >{{ c.phone }}</span
+                >
+                <Badge
+                  variant="outline"
+                  class="ml-auto tabular-nums shrink-0"
+                  >{{ c.member_code }}</Badge
+                >
+              </button>
+            </div>
+          </div>
+        </div>
+      </SheetContent>
+    </Sheet>
+
     <!-- Ficha del socio -->
     <Card v-if="member" class="overflow-hidden mb-6">
       <!-- Cabecera de la ficha -->
@@ -102,6 +177,40 @@
             {{ member.member_code }}
           </Badge>
         </div>
+
+        <AlertDialog>
+          <AlertDialogTrigger as-child>
+            <Button
+              variant="ghost"
+              size="sm"
+              class="text-destructive hover:text-destructive"
+              :disabled="deleting || busy"
+            >
+              <Trash2 :size="15" class="mr-1.5" />
+              Archivar socio
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle
+                >¿Archivar a {{ member.name }}?</AlertDialogTitle
+              >
+              <AlertDialogDescription>
+                El socio dejará de aparecer en la lista activa. Sus créditos e
+                historial se conservarán y podrás recuperarlo desde PocketBase.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction
+                class="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                @click="archiveSelected"
+              >
+                Archivar socio
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
 
         <!-- Dirección editable -->
         <div class="pt-1">
@@ -361,7 +470,34 @@ import { Button } from "@common/components/ui/button";
 import { Input } from "@common/components/ui/input";
 import { Label } from "@common/components/ui/label";
 import { Badge } from "@common/components/ui/badge";
-import { Search, Plus, UserPlus, ClipboardList, X } from "lucide-vue-next";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@common/components/ui/alert-dialog";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@common/components/ui/sheet";
+import {
+  Search,
+  Plus,
+  UserPlus,
+  ClipboardList,
+  X,
+  Users,
+  RefreshCw,
+  Trash2,
+} from "lucide-vue-next";
 import usePocketBase from "@common/composables/usePocketbase";
 import type { Member, Redemption } from "~/types/membership";
 
@@ -381,7 +517,11 @@ const { member, membership, candidates, status, loading, working, remaining } =
 const term = ref("");
 const searched = ref(false);
 const busy = ref(false);
+const listLoading = ref(false);
 const toastMsg = ref("");
+const allMembers = ref<Member[]>([]);
+const membersDrawerOpen = ref(true);
+const deleting = ref(false);
 
 const history = ref<Redemption[]>([]);
 
@@ -470,6 +610,45 @@ async function runSearch() {
 }
 async function pick(c: Member) {
   await checkIn.select(c);
+  membersDrawerOpen.value = false;
+}
+async function loadMembers() {
+  listLoading.value = true;
+  try {
+    const firstPage = await members.listMembers();
+    const pages = await Promise.all(
+      Array.from({ length: Math.max(0, firstPage.totalPages - 1) }, (_, i) =>
+        members.listMembers(i + 2),
+      ),
+    );
+    allMembers.value = [
+      ...(firstPage.items as Member[]),
+      ...pages.flatMap((page) => page.items as Member[]),
+    ];
+  } catch (e) {
+    console.error("Could not load members:", e);
+    allMembers.value = [];
+  } finally {
+    listLoading.value = false;
+  }
+}
+async function archiveSelected() {
+  if (!member.value) return;
+  deleting.value = true;
+  try {
+    const archivedId = member.value.id;
+    await members.archiveMember(archivedId);
+    allMembers.value = allMembers.value.filter((m) => m.id !== archivedId);
+    checkIn.reset();
+    history.value = [];
+    membersDrawerOpen.value = true;
+    toast("Socio archivado");
+  } catch (e: any) {
+    console.error("archive failed:", e);
+    toast(e?.message ?? "No se pudo archivar el socio");
+  } finally {
+    deleting.value = false;
+  }
 }
 
 // --- acciones de crédito ---
@@ -567,4 +746,6 @@ async function doCreate() {
 definePageMeta({
   layout: "staff",
 });
+
+onMounted(loadMembers);
 </script>
