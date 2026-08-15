@@ -706,15 +706,21 @@ import {
 import { MODE_LABEL, type OrderMode } from "~/composables/useWhatsappOrder";
 import { menuPricingConfig } from "~/config/menu-pricing";
 import { priceMenuOrder } from "~/utils/menuPricing";
+import type { PlacedOrder } from "~/utils/comandas";
 
 definePageMeta({ layout: "breezy" });
 
 const { formatCustomerOrder } = useMenuLink();
 const { openWhatsApp } = useWhatsappOrder();
+const { createItem, fetchCollection } = usePocketBaseCore();
 
 const EMPTY_DISHES: DayDishes = emptyDayDishes();
 const RESTAURANT_WHATSAPP = "6221523259";
 const DELIVERY_FEE = 50;
+// Misma colección/campo que usa el tablero de cocina (useComandas.ts): un
+// registro por orden en `data`, existe mientras esté activa.
+const COMANDAS_COLLECTION = "comandas";
+const COMANDAS_FIELD = "data";
 const PRICE_FORMAT = new Intl.NumberFormat("es-MX", {
   style: "currency",
   currency: "MXN",
@@ -1238,7 +1244,59 @@ function buildNote() {
   return pieces.join(" · ");
 }
 
-function sendOrder() {
+// Número consecutivo para el tablero de cocina: máximo existente + 1. Al no
+// haber columna de status, cualquier registro que quede en la colección es
+// una orden activa.
+async function nextComandaNumber(): Promise<number> {
+  try {
+    const res = await fetchCollection(
+      COMANDAS_COLLECTION,
+      1,
+      300,
+      "",
+      "-created",
+      null,
+      null,
+      true,
+    );
+    const max = res.items.reduce((acc, rec) => {
+      const n = Number((rec as any)[COMANDAS_FIELD]?.number) || 0;
+      return Math.max(acc, n);
+    }, 0);
+    return max + 1;
+  } catch {
+    return Math.floor(Date.now() / 1000) % 100000;
+  }
+}
+
+// Crea la comanda en la BD para que aparezca en el tablero de cocina. Nunca
+// bloquea el envío por WhatsApp: si falla, el pedido igual se manda.
+async function createComanda(
+  number: number,
+  finalNote: string,
+  snapshotTaquizaByKind: Record<TaquizaKind, Record<string, number>>,
+) {
+  const order: PlacedOrder = {
+    id: `${number}-${Date.now()}`,
+    number,
+    cart: { ...cart },
+    mode: mode.value,
+    note: finalNote,
+    fulfillTime: mode.value !== "domicilio" ? pickupTime.value : "",
+    customer: { ...customer },
+    taquizaOrders: { ...taquizaOrderCount.value },
+    taquizaByKind: snapshotTaquizaByKind,
+    createdAt: Date.now(),
+  };
+
+  try {
+    await createItem(COMANDAS_COLLECTION, { [COMANDAS_FIELD]: order });
+  } catch (e) {
+    console.error("No se pudo crear la comanda en cocina", e);
+  }
+}
+
+async function sendOrder() {
   if (!record.value || !canTrySend.value || sendingOrder.value) return;
 
   if (!canSend.value) return;
@@ -1254,6 +1312,7 @@ function sendOrder() {
     tacos: { ...taquizaByKind.value.tacos },
     quesadillas: { ...taquizaByKind.value.quesadillas },
   };
+  const finalNote = [buildNote(), memberTag].filter(Boolean).join(" · ");
 
   const text = formatCustomerOrder({
     name: customer.name,
@@ -1261,10 +1320,14 @@ function sendOrder() {
     mode: mode.value,
     dishes: a,
     taquizaByKind: snapshotTaquizaByKind,
-    note: [buildNote(), memberTag].filter(Boolean).join(" · "),
+    note: finalNote,
     phone: customer.phone,
     address: customer.address,
   });
+
+  const number = await nextComandaNumber();
+  await createComanda(number, finalNote, snapshotTaquizaByKind);
+
   openWhatsApp(text, RESTAURANT_WHATSAPP);
 
   // Evita doble-tap y mensajes duplicados en móviles.
