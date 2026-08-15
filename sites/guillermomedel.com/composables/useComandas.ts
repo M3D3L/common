@@ -31,6 +31,7 @@ import {
   type WeekBlock,
   type WeekOverride,
 } from "~/utils/rotation";
+import { clearCache, getCacheKey } from "~/composables/cacheSingleton";
 import type { OrderMode, Customer } from "~/composables/useWhatsappOrder";
 import type { RecordModel } from "pocketbase";
 
@@ -121,8 +122,14 @@ type MenuRecordFull = MenuRecord & {
 function createComandasStore() {
   const { formatOrder, formatSoldOut, formatReady, formatMenu, waLink } =
     useWhatsappOrder();
-  const { fetchCollection, createItem, updateItem, subscribe, unsubscribe } =
-    usePocketBaseCore();
+  const {
+    fetchCollection,
+    fetchRecord,
+    createItem,
+    updateItem,
+    subscribe,
+    unsubscribe,
+  } = usePocketBaseCore();
 
   // Socios: composables de membresía (mismas que usa /socios).
   const members = useMembers();
@@ -466,10 +473,16 @@ function createComandasStore() {
 
   /* ===== Helpers de órdenes (en memoria) ===== */
   function recordToOrder(rec: RecordModel): StoredOrder {
+    const payload = ((rec as any)[COMANDAS_FIELD] ?? {}) as
+      | (PlacedOrder & { status?: OrderStatus })
+      | Record<string, never>;
+    const payloadStatus = (payload as any).status as OrderStatus | undefined;
+    const topLevelStatus = (rec as any).status as OrderStatus | undefined;
+    const status = topLevelStatus ?? payloadStatus ?? "active";
     return {
-      ...((rec as any)[COMANDAS_FIELD] as PlacedOrder),
+      ...(payload as PlacedOrder),
       recordId: rec.id,
-      status: (rec as any).status as OrderStatus,
+      status,
     };
   }
 
@@ -486,6 +499,24 @@ function createComandasStore() {
   function removeByRecordId(recordId: string) {
     if (!recordId) return;
     orders.value = orders.value.filter((x) => x.recordId !== recordId);
+  }
+
+  async function updateOrderStatus(recordId: string, status: OrderStatus) {
+    try {
+      await updateItem(COMANDAS_COLLECTION, recordId, { status });
+      return;
+    } catch {
+      // Fallback para esquemas donde `status` no existe como columna.
+    }
+
+    const fresh = await fetchRecord(COMANDAS_COLLECTION, recordId);
+    const payload = ((fresh as any)[COMANDAS_FIELD] ?? {}) as PlacedOrder;
+    await updateItem(COMANDAS_COLLECTION, recordId, {
+      [COMANDAS_FIELD]: {
+        ...payload,
+        status,
+      },
+    });
   }
 
   /* ===== PocketBase: menú ===== */
@@ -616,13 +647,15 @@ function createComandasStore() {
         COMANDAS_COLLECTION,
         1,
         300,
-        'status = "active"',
+        "",
         "created",
         null,
         null,
         true,
       );
-      const remote = res.items.map(recordToOrder);
+      const remote = res.items
+        .map(recordToOrder)
+        .filter((o) => (o.status ?? "active") === "active");
       // Conserva órdenes creadas sin red (aún sin recordId).
       const unsynced = orders.value.filter((o) => !o.recordId);
       orders.value = [...remote, ...unsynced];
@@ -657,13 +690,61 @@ function createComandasStore() {
   /* ===== Realtime (sustituye al polling) ===== */
   let unsubOrders: (() => void) | null = null;
   let unsubMenu: (() => void) | null = null;
-  let resyncTimer: ReturnType<typeof setInterval> | null = null;
 
-  function onComandaEvent(e: { action: string; record: RecordModel }) {
+  /**
+   * Evento realtime de una comanda.
+   *
+   * REGLA: una orden se quita del tablero cuando se elimina o cuando su status
+   * deja de ser "active" (completed/cancelled). El problema anterior era que,
+   * si el payload realtime llegaba SIN el campo `status` poblado, la condición
+   * de remoción no se cumplía y la orden se volvía a AGREGAR (upsert) en los
+   * otros dispositivos —justo el bug de "al cerrar una comanda reaparece en la
+   * cuenta de otro usuario". Ahora, si el status llega ambiguo, se resuelve el
+   * registro real desde la BD (limpiando primero su cache por id) antes de
+   * decidir. Así, "completada/cancelada" SIEMPRE remueve en todos lados.
+   */
+  async function onComandaEvent(e: { action: string; record: RecordModel }) {
     const rec = e.record;
-    const status = (rec as any).status as OrderStatus | undefined;
 
-    if (e.action === "delete" || (status && status !== "active")) {
+    // Los deletes siempre remueven.
+    if (e.action === "delete") {
+      removeByRecordId(rec.id);
+      persist();
+      return;
+    }
+
+    let status =
+      ((rec as any).status as OrderStatus | undefined) ||
+      (((rec as any)[COMANDAS_FIELD] as any)?.status as
+        | OrderStatus
+        | undefined);
+
+    // Status ausente/ambiguo en el evento: resolver el registro autoritativo.
+    // Se limpia primero la cache por id (fetchRecord no tiene ignoreCache) para
+    // no leer una copia vieja del propio registro.
+    if (!status) {
+      try {
+        clearCache(
+          getCacheKey("fetchRecord", {
+            collection: COMANDAS_COLLECTION,
+            id: rec.id,
+          }),
+        );
+        const fresh = await fetchRecord(COMANDAS_COLLECTION, rec.id);
+        status =
+          ((fresh as any).status as OrderStatus | undefined) ||
+          (((fresh as any)[COMANDAS_FIELD] as any)?.status as
+            | OrderStatus
+            | undefined);
+        (rec as any).status = status;
+        (rec as any)[COMANDAS_FIELD] =
+          (fresh as any)[COMANDAS_FIELD] ?? (rec as any)[COMANDAS_FIELD];
+      } catch {
+        /* si no se pudo resolver, se sigue con lo que haya */
+      }
+    }
+
+    if (status && status !== "active") {
       removeByRecordId(rec.id);
     } else {
       upsertOrder(recordToOrder(rec));
@@ -685,19 +766,8 @@ function createComandasStore() {
       unsubOrders = await subscribe(COMANDAS_COLLECTION, onComandaEvent, "*");
       unsubMenu = await subscribe("menu", onMenuEvent, "*");
       live.value = true;
-      // Realtime is back: stop the fallback poller if it was running.
-      if (resyncTimer) {
-        clearInterval(resyncTimer);
-        resyncTimer = null;
-      }
     } catch {
       live.value = false;
-      // Realtime is dead on this client: reconcile periodically so this
-      // device doesn't drift away from everyone else. resync() fetches with
-      // ignoreCache, so it always pulls the true server state.
-      if (!resyncTimer) {
-        resyncTimer = setInterval(() => resync(), 15000);
-      }
     }
   }
 
@@ -716,10 +786,6 @@ function createComandasStore() {
     }
     unsubOrders = null;
     unsubMenu = null;
-    if (resyncTimer) {
-      clearInterval(resyncTimer);
-      resyncTimer = null;
-    }
     live.value = false;
   }
 
@@ -1068,16 +1134,26 @@ function createComandasStore() {
     // 1) Primero la BD. Payload completo en `data` + columnas denormalizadas
     //    para el tablero (status) y el reporte EOD. `member_code` para historial.
     try {
-      const rec = await createItem(COMANDAS_COLLECTION, {
-        [COMANDAS_FIELD]: order,
-        status: "active",
-        number: order.number,
-        mode: order.mode,
-        fulfill_date: order.fulfillDate || todayISO(), // columna siempre con fecha usable
-        fulfill_time: order.fulfillTime || "",
-        biz_date: todayISO(),
-        member_code: code || "", // requiere columna `member_code` (text) en `comandas`
-      });
+      let rec: RecordModel;
+      try {
+        rec = await createItem(COMANDAS_COLLECTION, {
+          [COMANDAS_FIELD]: order,
+          status: "active",
+          number: order.number,
+          mode: order.mode,
+          fulfill_date: order.fulfillDate || todayISO(),
+          fulfill_time: order.fulfillTime || "",
+          biz_date: todayISO(),
+          member_code: code || "",
+        });
+      } catch {
+        rec = await createItem(COMANDAS_COLLECTION, {
+          [COMANDAS_FIELD]: {
+            ...order,
+            status: "active",
+          },
+        });
+      }
       order.recordId = rec.id;
     } catch {
       toast("No se guardó en el servidor; se envía igual");
@@ -1109,14 +1185,18 @@ function createComandasStore() {
     const wa = openBlankTab();
 
     // 1) Primero la BD: soft-delete (queda para el reporte EOD).
+    // Si esto falla (red/permiso), NO se quita localmente: de lo contrario
+    // el status en la BD sigue "active" y la orden reaparece en las demás
+    // pantallas (el cierre "funcionó" solo para quien lo intentó).
     try {
       if (o.recordId) {
-        await updateItem(COMANDAS_COLLECTION, o.recordId, {
-          status: "completed",
-        });
+        await updateOrderStatus(o.recordId, "completed");
       }
     } catch (e) {
       console.error("No se pudo marcar completada en el servidor", e);
+      wa?.close();
+      toast(`No se pudo cerrar la orden #${o.number}; reintenta`);
+      return;
     }
     // 2) Fuera del tablero (localmente; realtime lo confirmará).
     orders.value = orders.value.filter((x) => x.id !== o.id);
@@ -1127,14 +1207,16 @@ function createComandasStore() {
   }
 
   async function discardOrder(o: StoredOrder) {
+    // Igual que en completeOrder: solo se quita localmente si la BD confirmó
+    // el cambio de status, para que no reaparezca en otras pantallas.
     try {
       if (o.recordId) {
-        await updateItem(COMANDAS_COLLECTION, o.recordId, {
-          status: "cancelled",
-        });
+        await updateOrderStatus(o.recordId, "cancelled");
       }
     } catch (e) {
       console.error("No se pudo cancelar en el servidor", e);
+      toast(`No se pudo descartar la orden #${o.number}; reintenta`);
+      return;
     }
     orders.value = orders.value.filter((x) => x.id !== o.id);
     persist();
@@ -1144,10 +1226,9 @@ function createComandasStore() {
   // Reabrir una orden completada/cancelada por error -> vuelve a `active`.
   async function reopenOrder(recordId: string) {
     try {
-      const rec = await updateItem(COMANDAS_COLLECTION, recordId, {
-        status: "active",
-      });
-      upsertOrder(recordToOrder(rec));
+      await updateOrderStatus(recordId, "active");
+      const fresh = await fetchRecord(COMANDAS_COLLECTION, recordId);
+      upsertOrder(recordToOrder(fresh));
       persist();
       toast("Orden reabierta");
     } catch (e) {
