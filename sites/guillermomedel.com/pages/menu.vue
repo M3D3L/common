@@ -646,6 +646,34 @@
         </div>
       </div>
     </template>
+
+    <!-- Confirmación de pedido -->
+    <Dialog v-model:open="showThankYou">
+      <DialogContent class="max-w-sm text-center">
+        <div class="flex flex-col items-center gap-2 pt-2">
+          <img
+            :src="LOGO_SRC"
+            alt="Breezy Meals"
+            class="h-16 w-16 rounded-full border-2 border-primary/20 object-cover shadow-xs"
+          />
+        </div>
+        <DialogHeader class="text-center sm:text-center">
+          <DialogTitle class="text-center font-heading text-xl">
+            ¡Gracias por tu pedido! / Thank you for your order!
+          </DialogTitle>
+          <DialogDescription class="text-center">
+            Ya lo recibimos en cocina y lo estamos preparando.
+            <br />
+            We've received it in the kitchen and it's being prepared.
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter class="sm:justify-center">
+          <Button class="w-full" @click="showThankYou = false">
+            Entendido / Got it
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   </div>
 </template>
 
@@ -666,6 +694,14 @@ import {
   SelectContent,
   SelectItem,
 } from "@common/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@common/components/ui/dialog";
 import {
   Plus,
   Minus,
@@ -717,6 +753,9 @@ const { createItem, fetchCollection } = usePocketBaseCore();
 const EMPTY_DISHES: DayDishes = emptyDayDishes();
 const RESTAURANT_WHATSAPP = "6221523259";
 const DELIVERY_FEE = 50;
+// Mismo logo que el header (layouts/breezy.vue), para la marca en el modal.
+const LOGO_SRC =
+  "https://cdn.shopify.com/oxygen-v2/57245/154448/316060/3919871/assets/breezy-BBRcmAK6.png";
 // Misma colección/campo que usa el tablero de cocina (useComandas.ts): un
 // registro por orden en `data`, existe mientras esté activa.
 const COMANDAS_COLLECTION = "comandas";
@@ -852,6 +891,7 @@ const customer = reactive({ name: "", phone: "", address: "" });
 const memberCode = ref("");
 
 const sendingOrder = ref(false);
+const showThankYou = ref(false);
 
 /* ===== Taquizas: modelo por orden =====
  * Cada orden es una unidad independiente (tacos = 3 piezas, quesadillas = 2).
@@ -1217,6 +1257,18 @@ function clearCart() {
   taquizaOrders.value = [];
 }
 
+// Deja el formulario listo para un pedido nuevo tras confirmar el envío.
+function resetOrderForm() {
+  clearCart();
+  mode.value = "llevar";
+  note.value = "";
+  customer.name = "";
+  customer.phone = "";
+  customer.address = "";
+  memberCode.value = "";
+  clearTime();
+}
+
 function buildNote() {
   const pieces: string[] = [];
   // La hora aplica a "aquí" y "para llevar" (no domicilio).
@@ -1348,6 +1400,9 @@ async function sendOrder() {
       window.open(url, "_blank", "noopener");
     }
   }
+
+  resetOrderForm();
+  showThankYou.value = true;
 
   // Evita doble-tap y mensajes duplicados en móviles.
   window.setTimeout(() => {
