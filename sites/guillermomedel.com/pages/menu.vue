@@ -711,7 +711,7 @@ import type { PlacedOrder } from "~/utils/comandas";
 definePageMeta({ layout: "breezy" });
 
 const { formatCustomerOrder } = useMenuLink();
-const { openWhatsApp } = useWhatsappOrder();
+const { waLink, isAppleDevice } = useWhatsappOrder();
 const { createItem, fetchCollection } = usePocketBaseCore();
 
 const EMPTY_DISHES: DayDishes = emptyDayDishes();
@@ -1301,6 +1301,16 @@ async function sendOrder() {
 
   if (!canSend.value) return;
   sendingOrder.value = true;
+
+  // Abrir la pestaña DENTRO del gesto del click (síncrono): si se abre
+  // después de un `await`, el bloqueador de pop-ups la mata y el fallback
+  // termina navegando la propia página (se "cierra" el menú de golpe) y,
+  // según el navegador, deja dos intentos de apertura visibles.
+  const wa =
+    typeof window !== "undefined" && !isAppleDevice()
+      ? window.open("", "_blank")
+      : null;
+
   const a = active.value; // menú resuelto (rotación o `active` de hoy)
 
   // Si hay código de socio, se estampa en la nota (texto plano). El staff lo
@@ -1328,7 +1338,16 @@ async function sendOrder() {
   const number = await nextComandaNumber();
   await createComanda(number, finalNote, snapshotTaquizaByKind);
 
-  openWhatsApp(text, RESTAURANT_WHATSAPP);
+  const url = waLink(text, RESTAURANT_WHATSAPP);
+  if (typeof window !== "undefined") {
+    if (isAppleDevice()) {
+      window.location.href = url;
+    } else if (wa) {
+      wa.location.href = url;
+    } else {
+      window.open(url, "_blank", "noopener");
+    }
+  }
 
   // Evita doble-tap y mensajes duplicados en móviles.
   window.setTimeout(() => {
