@@ -117,20 +117,27 @@
       </span>
     </div>
 
-    <!-- Address: Replaced purples with neutral slate-gray -->
+    <!-- Cliente / Dirección: el nombre es opcional en llevar/aquí, así que
+         solo se muestra cuando el cliente lo capturó. -->
     <div
-      v-if="order.mode === 'domicilio' && order.customer?.address"
+      v-if="
+        order.customer?.name ||
+        (order.mode === 'domicilio' && order.customer?.address)
+      "
       class="p-2 mt-2 text-xs rounded bg-slate-50 dark:bg-slate-900/50 text-slate-700 dark:text-slate-300 font-medium border border-slate-100 dark:border-slate-800"
     >
-      <p class="flex items-start gap-1">
+      <p
+        v-if="order.customer?.name"
+        class="font-bold text-slate-900 dark:text-slate-100"
+      >
+        👤 {{ order.customer.name }}
+      </p>
+      <p
+        v-if="order.mode === 'domicilio' && order.customer?.address"
+        class="flex items-start gap-1 mt-1"
+      >
         <span class="mt-0.5">📍</span> {{ order.customer.address }}
       </p>
-      <span
-        v-if="order.customer.name"
-        class="font-bold block mt-1 text-[11px] text-slate-900 dark:text-slate-100"
-      >
-        Cliente: {{ order.customer.name }}
-      </span>
     </div>
 
     <p
@@ -150,7 +157,7 @@
         variant="outline"
         size="icon"
         title="Descartar sin avisar"
-        class="h-9 w-9 shrink-0 text-muted-foreground hover:border-destructive hover:text-destructive"
+        class="h-9 w-9 shrink-0 text-background hover:border-destructive hover:text-destructive"
         @click="discardOrder(order)"
       >
         <ClientOnly><Trash2 :size="15" /></ClientOnly>

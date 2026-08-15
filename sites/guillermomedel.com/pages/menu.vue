@@ -74,7 +74,8 @@
             <li>Select your dishes / Selecciona tus platillos.</li>
             <li>Choose delivery/pickup / Elige entrega o recoger.</li>
             <li>
-              Fill in your name / <b>Ingresa tu nombre (required/requerido)</b>.
+              Fill in your name (required for delivery) / Ingresa tu nombre
+              (requerido para domicilio).
             </li>
             <li>Tap "Send" / Presiona "Enviar".</li>
           </ol>
@@ -438,7 +439,9 @@
           <Card class="space-y-4 p-4">
             <div class="space-y-1.5">
               <Label for="c-name" class="flex items-center gap-1">
-                Tu nombre / Your name <span class="text-destructive">*</span>
+                Tu nombre / Your name
+                <span v-if="nameRequired" class="text-destructive">*</span>
+                <span v-else class="text-muted-foreground">(opcional)</span>
               </Label>
               <Input
                 id="c-name"
@@ -446,11 +449,11 @@
                 placeholder="Ej. Juan Pérez / e.g. John Doe"
                 :class="{
                   'border-destructive focus-visible:ring-destructive':
-                    itemCount > 0 && !customer.name.trim(),
+                    itemCount > 0 && nameRequired && !customer.name.trim(),
                 }"
               />
               <p
-                v-if="itemCount > 0 && !customer.name.trim()"
+                v-if="itemCount > 0 && nameRequired && !customer.name.trim()"
                 class="text-[11px] text-destructive"
               >
                 Required to complete your order / Requerido para completar tu
@@ -659,7 +662,8 @@
         </div>
         <DialogHeader class="text-center sm:text-center">
           <DialogTitle class="text-center font-heading text-xl">
-            ¡Gracias por tu pedido! / Thank you for your order!
+            ¡Gracias {{ thankYouName }} por tu pedido! / Thank you
+            {{ thankYouName }} for your order!
           </DialogTitle>
           <DialogDescription class="text-center">
             Ya lo recibimos en cocina y lo estamos preparando.
@@ -892,6 +896,9 @@ const memberCode = ref("");
 
 const sendingOrder = ref(false);
 const showThankYou = ref(false);
+// Nombre a mostrar en el modal de agradecimiento; se captura antes de
+// limpiar el formulario (resetOrderForm vacía customer.name).
+const thankYouName = ref("");
 
 /* ===== Taquizas: modelo por orden =====
  * Cada orden es una unidad independiente (tacos = 3 piezas, quesadillas = 2).
@@ -1212,14 +1219,20 @@ const needsAddress = computed(
   () => mode.value === "domicilio" && !customer.address.trim(),
 );
 
+// El nombre es opcional para llevar/aquí; a domicilio siempre se requiere
+// para identificar al cliente que recibe.
+const nameRequired = computed(() => mode.value === "domicilio");
+
+const needsName = computed(() => nameRequired.value && !customer.name.trim());
+
 const canSend = computed(
-  () => itemCount.value > 0 && !!customer.name.trim() && !needsAddress.value,
+  () => itemCount.value > 0 && !needsName.value && !needsAddress.value,
 );
 
 const canTrySend = canSend;
 
 const hint = computed(() =>
-  !customer.name.trim()
+  needsName.value
     ? "Please enter your name to proceed / Ingresa tu nombre para continuar."
     : needsAddress.value
       ? "Address is required for delivery / Se requiere dirección para el envío."
@@ -1401,6 +1414,7 @@ async function sendOrder() {
     }
   }
 
+  thankYouName.value = customer.name.trim();
   resetOrderForm();
   showThankYou.value = true;
 
