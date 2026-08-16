@@ -1340,6 +1340,7 @@ async function createComanda(
   number: number,
   finalNote: string,
   snapshotTaquizaByKind: Record<TaquizaKind, Record<string, number>>,
+  memberCodeValue: string,
 ) {
   const order: PlacedOrder = {
     id: `${number}-${Date.now()}`,
@@ -1352,6 +1353,7 @@ async function createComanda(
     taquizaOrders: { ...taquizaOrderCount.value },
     taquizaByKind: snapshotTaquizaByKind,
     createdAt: Date.now(),
+    memberCode: memberCodeValue || undefined,
   };
 
   try {
@@ -1378,8 +1380,8 @@ async function sendOrder() {
 
   const a = active.value; // menú resuelto (rotación o `active` de hoy)
 
-  // Si hay código de socio, se estampa en la nota (texto plano). El staff lo
-  // valida y descuenta la comida del lado autenticado al servir.
+  // Si hay código de socio, se estampa en la nota Y se guarda como campo
+  // estructurado; el staff descuenta la comida al marcar la orden lista.
   const code = memberCode.value.replace(/\s+/g, "").toUpperCase();
   const memberTag = code ? `SOCIO ${code}` : "";
 
@@ -1401,7 +1403,7 @@ async function sendOrder() {
   });
 
   const number = await nextComandaNumber();
-  await createComanda(number, finalNote, snapshotTaquizaByKind);
+  await createComanda(number, finalNote, snapshotTaquizaByKind, code);
 
   const url = waLink(text, RESTAURANT_WHATSAPP);
   if (typeof window !== "undefined") {

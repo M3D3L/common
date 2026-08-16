@@ -362,6 +362,11 @@ export interface PlacedOrder {
     quesadillas: Record<string, number>;
   };
   createdAt: number;
+  // Código de socio (si se capturó). La comida se redime al marcar la orden
+  // lista (completeOrder), no al crearla, así funciona igual desde /orders
+  // y desde /menu público.
+  memberCode?: string;
+  memberRedeemed?: boolean;
 }
 
 /** Registro único de la colección `menu` en PocketBase. */

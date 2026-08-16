@@ -975,43 +975,12 @@ function createComandasStore() {
       },
     };
 
-    // --- Socio: intentar redimir una comida si se capturó un PIN ---
+    // --- Socio: solo se etiqueta aquí. La comida se redime hasta que el
+    // staff marque la orden como lista (completeOrder), así el mismo flujo
+    // sirve para órdenes tomadas en /orders y para las del /menu público.
     const code = memberCode.value.replace(/\s+/g, "").toUpperCase();
-    let memberTag = "";
-
-    if (code) {
-      try {
-        const member = await members.getMemberByCode(code);
-        if (!member) {
-          memberTag = `SOCIO ${code} · NO ENCONTRADO`;
-          toast(`Código ${code}: socio no encontrado`);
-        } else {
-          const ms = await memberships.getActiveMembership(member.id);
-          if (ms && memberships.isUsable(ms)) {
-            const { remaining } = await redemptions.redeem(ms, {
-              staffId: user?.id,
-            });
-            memberTag = `SOCIO ${code} · ${remaining} restantes`;
-            toast(
-              `Socio ${member.name}: comida registrada (${remaining} restantes)`,
-            );
-          } else {
-            const why = !ms
-              ? "sin membresía"
-              : memberships.isExpired(ms)
-                ? "vencida"
-                : "sin crédito";
-            memberTag = `SOCIO ${code} · ${why.toUpperCase()}`;
-            toast(`Socio ${member.name}: ${why} — cobra normal`);
-          }
-        }
-      } catch (e: any) {
-        // Nunca bloquear la orden por un problema de crédito.
-        console.error("socio redeem failed:", e);
-        memberTag = `SOCIO ${code} · ERROR`;
-        toast("No se pudo verificar al socio; la orden sigue");
-      }
-    }
+    const memberTag = code ? `SOCIO ${code}` : "";
+    if (code) toast(`Código ${code} anotado; se redime al marcar lista`);
 
     // --- Orden (igual que antes, + nota con etiqueta de socio) ---
     const noteWithTag = [snapshot.note, memberTag].filter(Boolean).join(" · ");
@@ -1051,6 +1020,7 @@ function createComandasStore() {
       taquizaOrders: snapshot.taquizaOrders,
       taquizaByKind: snapshot.taquizaByKind,
       createdAt: Date.now(),
+      memberCode: code || undefined,
     };
 
     const text = formatOrder({
@@ -1070,7 +1040,7 @@ function createComandasStore() {
     //    ahí va el payload completo (incluye member_code para historial).
     try {
       const rec = await createItem(COMANDAS_COLLECTION, {
-        [COMANDAS_FIELD]: { ...order, memberCode: code || "" },
+        [COMANDAS_FIELD]: order,
       });
       order.recordId = rec.id;
     } catch {
@@ -1098,9 +1068,48 @@ function createComandasStore() {
     toast(msg);
   }
 
+  // Redime UNA comida del socio etiquetado en la orden. Se llama al marcar
+  // lista (plato servido), nunca al crear la orden ni desde /menu público.
+  // Un problema de crédito NUNCA bloquea el cierre de la orden.
+  async function redeemMemberCredit(o: StoredOrder) {
+    const code = o.memberCode;
+    if (!code) return;
+    try {
+      const member = await members.getMemberByCode(code);
+      if (!member) {
+        toast(`Código ${code}: socio no encontrado — cobra normal`);
+        return;
+      }
+      const ms = await memberships.getActiveMembership(member.id);
+      if (ms && memberships.isUsable(ms)) {
+        const { remaining } = await redemptions.redeem(ms, {
+          staffId: user?.id,
+        });
+        toast(
+          `Socio ${member.name}: comida registrada (${remaining} restantes)`,
+        );
+      } else {
+        const why = !ms
+          ? "sin membresía"
+          : memberships.isExpired(ms)
+            ? "vencida"
+            : "sin crédito";
+        toast(`Socio ${member.name}: ${why} — cobra normal`);
+      }
+    } catch (e) {
+      console.error("socio redeem failed:", e);
+      toast("No se pudo verificar al socio; la orden se marca lista igual");
+    }
+  }
+
   async function completeOrder(o: StoredOrder) {
     const text = formatReady(o.number, o.mode, o.customer);
     const wa = openBlankTab();
+
+    if (o.memberCode && !o.memberRedeemed) {
+      o.memberRedeemed = true; // evita doble redención por doble-tap
+      await redeemMemberCredit(o);
+    }
 
     // 1) Primero la BD: se borra el registro (misma cola para todos).
     // Si esto falla (red/permiso), NO se quita localmente: de lo contrario
