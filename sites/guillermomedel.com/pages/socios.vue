@@ -245,6 +245,16 @@
           </Badge>
         </div>
 
+        <Button
+          variant="outline"
+          size="sm"
+          :disabled="!member.phone"
+          @click="sendSummary"
+        >
+          <ClientOnly><MessageCircle :size="15" class="mr-1.5" /></ClientOnly>
+          Enviar resumen por WhatsApp
+        </Button>
+
         <AlertDialog>
           <AlertDialogTrigger as-child>
             <Button
@@ -490,6 +500,7 @@ import {
   Plus,
   UserPlus,
   ClipboardList,
+  MessageCircle,
   X,
   Users,
   RefreshCw,
@@ -508,6 +519,7 @@ const checkIn = useCheckIn();
 const members = useMembers();
 const memberships = useMemberships();
 const redemptions = useRedemptions();
+const { openWhatsApp } = useWhatsappOrder();
 
 const { currentPeriod } = memberships;
 
@@ -688,6 +700,40 @@ async function addMeals(n: number) {
   } finally {
     busy.value = false;
   }
+}
+
+// --- resumen por WhatsApp ---
+// El mensaje se arma aquí (no en el composable): esta pantalla es la única
+// dueña de qué datos del socio mostrar; el composable solo sabe mandar texto.
+function sendSummary() {
+  if (!member.value?.phone) return;
+
+  const total = membership.value?.credits_total ?? 0;
+  const left = membership.value ? memberships.remaining(membership.value) : 0;
+  // "de 5" solo tiene sentido si el saldo cabe en el plan base; con un
+  // saldo mayor (top-up) se muestra solo el número.
+  const balanceLine =
+    left > 5
+      ? `🍽️ Tienes *${left}* comidas disponibles.`
+      : `🍽️ Te quedan *${left} de ${total}* comidas este mes.`;
+
+  const recentMeals = history.value
+    .filter((h) => h.kind === "meal" && !h.voided)
+    .slice(0, 5)
+    .map((h) => fmtDateTime(h.redeemed_at));
+
+  const lines = [`Hola ${member.value.name} 👋`, "", balanceLine];
+  if (membership.value) {
+    lines.push(`📅 Vigencia hasta: ${fmtDate(membership.value.expires_date)}`);
+  }
+  lines.push("", `🎫 Tu código: *${member.value.member_code}*`);
+  if (recentMeals.length) {
+    lines.push("", "📋 *Tus últimas comidas:*");
+    recentMeals.forEach((d, i) => lines.push(`${i + 1}. ${d}`));
+  }
+  lines.push("", "¡Gracias por ser parte de Breezy! 🌊");
+
+  openWhatsApp(lines.join("\n"), member.value.phone);
 }
 
 // --- dirección en archivo (confirmada a mano) ---
