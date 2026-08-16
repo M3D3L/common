@@ -624,14 +624,18 @@ function createComandasStore() {
         null,
         null,
         true,
+        // requestKey propio: sin esto, comparte clave con seedCounter() y
+        // PocketBase cancela una de las dos peticiones al lanzarse juntas.
+        { requestKey: "comandas_active" },
       );
       const remote = res.items.map(recordToOrder);
       // Conserva órdenes creadas sin red (aún sin recordId).
       const unsynced = orders.value.filter((o) => !o.recordId);
       orders.value = [...remote, ...unsynced];
       persist();
-    } catch {
-      // Sin red: se conserva el cache local.
+    } catch (e: any) {
+      // Solo se ignora si fue una cancelación intencional (sin red sí debe avisar).
+      if (!e?.isAbort) toast("No se pudieron cargar las comandas; reintenta");
     }
   }
 
@@ -649,6 +653,7 @@ function createComandasStore() {
         null,
         null,
         true,
+        { requestKey: "comandas_seed" },
       );
       const n = res.items.reduce((max, rec) => {
         const num = Number((rec as any)[COMANDAS_FIELD]?.number) || 0;
