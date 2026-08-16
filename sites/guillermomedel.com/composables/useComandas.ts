@@ -316,11 +316,18 @@ function createComandasStore() {
     }),
   );
 
+  // Orden de salida de cocina: por fecha de entrega, luego por hora
+  // ("HH:MM" 24h, comparable como texto), luego por número de orden.
+  // Sin hora ("lo antes posible") ordena primero, ya que "" < cualquier "HH:MM".
   const sortedOrders = computed(() =>
     [...orders.value].sort((a, b) => {
       const dateA = a.fulfillDate || todayISO();
       const dateB = b.fulfillDate || todayISO();
-      return dateA.localeCompare(dateB) || a.number - b.number;
+      return (
+        dateA.localeCompare(dateB) ||
+        (a.fulfillTime || "").localeCompare(b.fulfillTime || "") ||
+        a.number - b.number
+      );
     }),
   );
 

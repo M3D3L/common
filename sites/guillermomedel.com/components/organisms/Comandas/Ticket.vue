@@ -117,6 +117,17 @@
       </span>
     </div>
 
+    <!-- Hora de salida: define el orden de la cola de cocina. -->
+    <div
+      v-if="order.fulfillTime"
+      class="flex items-center justify-between text-xs"
+    >
+      <span class="text-muted-foreground">Hora:</span>
+      <span class="font-bold tabular-nums">{{
+        fulfillTimeLabel(order.fulfillTime)
+      }}</span>
+    </div>
+
     <!-- Cliente / Dirección: el nombre es opcional en llevar/aquí, así que
          solo se muestra cuando el cliente lo capturó. -->
     <div
@@ -191,6 +202,15 @@ const { completeOrder, discardOrder, catalog } = useComandas();
 const ticketGroups = computed(() =>
   groupsFromData(catalog.value as Record<string, unknown>),
 );
+
+// "HH:MM" (24h) -> "H:MM AM/PM", para que el staff lea la hora de salida.
+function fulfillTimeLabel(t: string) {
+  const [hStr, mStr] = t.split(":");
+  const h = Number(hStr);
+  const period = h >= 12 ? "PM" : "AM";
+  const h12 = h % 12 === 0 ? 12 : h % 12;
+  return `${h12}:${mStr} ${period}`;
+}
 
 const taquizaGroup = groups.find((g) => "pieceOptions" in g);
 
