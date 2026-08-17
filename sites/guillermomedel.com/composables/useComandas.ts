@@ -518,9 +518,7 @@ function createComandasStore() {
       });
       combinedCatalog[key] = [...existing.values()];
     });
-    catalog.value = catalogToDayDishes(
-      combinedCatalog,
-    );
+    catalog.value = catalogToDayDishes(combinedCatalog);
     syncMenuGroupsFromData({
       ...(r.dishes as Record<string, unknown>),
       ...(r.store as Record<string, unknown>),

@@ -38,38 +38,13 @@
         </p>
       </div>
 
-      <!-- Desktop nav with smooth interactive states -->
-      <nav class="items-center hidden gap-1.5 ml-auto md:flex">
-        <Button
-          v-for="l in links"
-          :key="l.to"
-          as-child
-          size="sm"
-          :variant="isActive(l.to) ? 'secondary' : 'ghost'"
-          class="transition-all duration-200 hover:scale-102 active:scale-98 font-medium px-4"
-        >
-          <NuxtLink :to="l.to">{{ l.label }}</NuxtLink>
-        </Button>
-
-        <Button
-          v-if="showAuth && isLoggedIn"
-          size="sm"
-          variant="outline"
-          class="ml-1 px-4 font-medium transition-all duration-200 hover:scale-102 active:scale-98"
-          @click="handleSignOut"
-        >
-          <LogOut class="w-4 h-4 mr-2" />
-          Cerrar sesión
-        </Button>
-      </nav>
-
-      <!-- Mobile nav trigger -->
+      <!-- Navigation sheet used at every viewport size -->
       <Sheet v-model:open="open">
         <SheetTrigger as-child>
           <Button
             variant="ghost"
             size="icon"
-            class="ml-auto md:hidden shrink-0 transition-transform duration-200 active:scale-95"
+            class="ml-auto shrink-0 transition-transform duration-200 active:scale-95"
           >
             <Menu
               class="w-5 h-5 transition-transform duration-300"
