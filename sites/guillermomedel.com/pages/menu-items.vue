@@ -185,9 +185,21 @@ import {
   type MenuItem,
 } from "~/utils/comandas";
 
+const props = withDefaults(
+  defineProps<{
+    fetchedCollection?: string;
+    dishes?: "dishes" | "store";
+  }>(),
+  {
+    fetchedCollection: "menu",
+    dishes: "dishes",
+  },
+);
+
 interface MenuRecordForItems {
   id: string;
   dishes?: Record<string, unknown>;
+  store?: Record<string, unknown>;
   active?: Record<string, unknown>;
   sold_out?: string[];
   week_blocks?: unknown[];
@@ -224,7 +236,7 @@ async function load() {
   loadError.value = false;
   try {
     const result = await fetchCollection(
-      "menu",
+      props.fetchedCollection,
       1,
       1,
       "",
@@ -242,7 +254,7 @@ async function load() {
     }
 
     menuRecordId.value = record.id;
-    catalog.value = normalizeMenuCatalog(record.dishes ?? {});
+    catalog.value = normalizeMenuCatalog(record[props.dishes] ?? {});
   } catch {
     loadError.value = true;
   } finally {
@@ -293,13 +305,14 @@ function cleanCatalog(source: MenuCatalog): MenuCatalog {
 async function save() {
   saving.value = true;
   try {
-    const dishes = cleanCatalog(catalog.value);
+    const menuItems = cleanCatalog(catalog.value);
+    const payload = { [props.dishes]: menuItems };
 
     if (menuRecordId.value) {
-      await updateItem("menu", menuRecordId.value, { dishes });
+      await updateItem(props.fetchedCollection, menuRecordId.value, payload);
     } else {
       const created = await createItem("menu", {
-        dishes,
+        [props.dishes]: menuItems,
         active: emptyDayDishes(),
         sold_out: [],
         week_blocks: [],
@@ -310,7 +323,7 @@ async function save() {
       menuRecordId.value = created.id;
     }
 
-    catalog.value = normalizeMenuCatalog(dishes);
+    catalog.value = normalizeMenuCatalog(menuItems);
     toast("Catalogo guardado");
   } catch {
     toast("No se pudo guardar el catalogo");
