@@ -21,9 +21,9 @@
             {{ orders.length }}
           </Badge>
         </Button>
-        <Button variant="outline" size="sm" @click="editMenu">
-          <ClientOnly><Pencil :size="15" class="mr-1.5" /></ClientOnly>
-          Editar menú
+        <Button variant="outline" size="sm" @click="sendTodayMenu">
+          <ClientOnly><Send :size="15" class="mr-1.5" /></ClientOnly>
+          Enviar menú del día
         </Button>
       </div>
 
@@ -38,8 +38,7 @@
       </div>
     </header>
 
-    <OrganismsComandasSetup v-if="view === 'setup'" />
-    <OrganismsComandasOrder v-else-if="view === 'order'" />
+    <OrganismsComandasOrder v-if="view === 'order'" />
     <OrganismsComandasOrders v-else />
 
     <Transition name="toast">
@@ -56,10 +55,10 @@
 <script lang="ts" setup>
 import { Button } from "@common/components/ui/button";
 import { Badge } from "@common/components/ui/badge";
-import { Pencil, ClipboardList, ArrowLeft } from "lucide-vue-next";
+import { Send, ClipboardList, ArrowLeft } from "lucide-vue-next";
 
 const store = provideComandas();
-const { view, counter, orders, toastMsg, editMenu } = store;
+const { view, counter, orders, toastMsg, sendTodayMenu } = store;
 
 // Si venimos de /socios con ?code=GM1234, precargar el PIN del socio y
 // mandar directo a la pantalla de orden.

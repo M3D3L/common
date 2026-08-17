@@ -134,7 +134,7 @@ function createComandasStore() {
   const { user } = usePocketBaseCore();
 
   /* ===== Estado ===== */
-  const view = ref<"setup" | "order" | "orders">("setup");
+  const view = ref<"order" | "orders">("order");
   const catalog = ref<DayDishes>(emptyDishes());
   const today = reactive<DayDishes>(emptyDishes());
   const soldOut = ref<string[]>([]);
@@ -568,7 +568,7 @@ function createComandasStore() {
 
     pickFromToday();
 
-    view.value = menuHasItems(today) ? "order" : "setup";
+    view.value = "order";
   }
 
   async function loadMenu() {
@@ -600,7 +600,7 @@ function createComandasStore() {
         }
       } else {
         menuRecordId.value = null;
-        view.value = "setup";
+        view.value = "order";
       }
     } catch {
       // Offline: se conserva lo que haya quedado en cache local.
@@ -804,71 +804,20 @@ function createComandasStore() {
     }, 1800);
   }
 
-  /* ===== Acciones del turno ===== */
-  function togglePick(k: GroupKey, name: string) {
-    if (pick[k].has(name)) pick[k].delete(name);
-    else pick[k].add(name);
-  }
-
-  async function startShift() {
-    const activeDishes: DayDishes = Object.fromEntries(
-      menuGroups.value.map((g) => [g.key, [...(pick[g.key] ?? new Set())]]),
-    ) as DayDishes;
-    setToday(activeDishes);
-    soldOut.value = soldOut.value.filter((n) =>
-      menuGroups.value.some((g) => pick[g.key]?.has(n)),
-    );
-
-    // El indicador refleja si lo que se inicia coincide con la rotación de hoy.
-    if (rotationToday && sameMenu(activeDishes, rotationToday.menu)) {
-      menuSource.value = "auto";
-      activeBlockName.value = rotationToday.blockName;
-    } else {
-      menuSource.value = "manual";
-      activeBlockName.value = "";
+  /* ===== Menú del día ===== */
+  async function sendTodayMenu() {
+    if (!menuHasItems(today)) {
+      toast("No hay menú del día para enviar");
+      return;
     }
 
-    clearCart();
-    view.value = "order";
-    persist();
-
     const text = formatMenu({
-      dishes: activeDishes,
+      dishes: cloneDishes(today),
       date: prettyDate.value,
     });
     const wa = openBlankTab();
-
-    savingMenu.value = true;
-    toast("Guardando menú…");
-    try {
-      if (menuRecordId.value) {
-        await updateItem("menu", menuRecordId.value, {
-          active: activeDishes,
-          sold_out: soldOut.value,
-          active_date: todayISO(),
-        });
-      } else {
-        const created = await createItem("menu", {
-          dishes: dayDishesToCatalog(catalog.value),
-          active: activeDishes,
-          sold_out: soldOut.value,
-          active_date: todayISO(),
-        });
-        menuRecordId.value = (created as unknown as MenuRecord).id;
-      }
-      toast("Menú guardado ✅");
-      sendToTab(wa, text);
-    } catch {
-      wa?.close();
-      toast("No se pudo guardar en el servidor");
-    } finally {
-      savingMenu.value = false;
-    }
-  }
-
-  function editMenu() {
-    pickFromToday();
-    view.value = "setup";
+    sendToTab(wa, text);
+    toast("Abriendo menú del día…");
   }
 
   /* ===== Flujo de órdenes ===== */
@@ -1260,9 +1209,7 @@ function createComandasStore() {
     setTaquizaOrderQty,
     isTaquizaItem,
     // acciones
-    togglePick,
-    startShift,
-    editMenu,
+    sendTodayMenu,
     onTile,
     setQty,
     toggleOut,
