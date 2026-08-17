@@ -214,11 +214,13 @@ export function useWhatsappOrder() {
     mode: OrderMode,
     customer?: Customer,
     recipientName?: string,
+    fulfillDate?: string,
   ): string {
     const name = recipientName?.trim();
     const checkEmoji = "\u2705";
     const sealEmoji = "\u{1F9AD}";
     let msg = `${name ? `¡Hola, ${name}!\n` : ""}${checkEmoji} *¡Tu pedido está listo!* ${sealEmoji} (${MODE_LABEL[mode]})`;
+    if (fulfillDate) msg += `\n📅 *Fecha:* ${fulfillDate}`;
 
     if (mode === "domicilio" && customer) {
       msg += `\n\n🚀 *DATOS PARA EL REPARTIDOR:*`;

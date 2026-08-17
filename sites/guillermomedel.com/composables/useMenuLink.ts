@@ -26,6 +26,7 @@ export interface CustomerOrderArgs {
   note?: string;
   phone?: string;
   address?: string;
+  fulfillDate?: string;
 }
 
 const MENU_PATH = "/menu";
@@ -89,10 +90,12 @@ export function useMenuLink() {
     note,
     phone,
     address,
+    fulfillDate,
   }: CustomerOrderArgs): string {
     const lines: string[] = ["🧾 Nuevo pedido"];
     if (name?.trim()) lines.push(`👤 ${name.trim()}`);
     lines.push(`Tipo: ${MODE_LABEL[mode]}`, "");
+    if (fulfillDate) lines.push(`📅 Fecha: ${fulfillDate}`, "");
 
     if (dishes) {
       let firstSection = true;

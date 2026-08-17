@@ -81,6 +81,40 @@
           </ol>
         </section>
 
+        <section
+          class="flex items-center justify-between rounded-lg border border-primary/10 bg-primary/5 px-3 py-2"
+          aria-label="Seleccionar día del menú"
+        >
+          <Button
+            variant="ghost"
+            size="icon"
+            class="h-9 w-9"
+            title="Día anterior"
+            aria-label="Día anterior"
+            @click="changeMenuDate(-1)"
+          >
+            <ClientOnly><ChevronLeft :size="18" /></ClientOnly>
+          </Button>
+          <div class="text-center">
+            <p
+              class="text-[10px] font-bold uppercase tracking-widest text-muted-foreground"
+            >
+              Menú del día
+            </p>
+            <p class="text-sm font-bold capitalize">{{ selectedDateLabel }}</p>
+          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            class="h-9 w-9"
+            title="Día siguiente"
+            aria-label="Día siguiente"
+            @click="changeMenuDate(1)"
+          >
+            <ClientOnly><ChevronRight :size="18" /></ClientOnly>
+          </Button>
+        </section>
+
         <section v-if="promoHints.length">
           <div class="mb-2 flex items-center gap-2">
             <nuxt-link
@@ -715,6 +749,8 @@ import {
   Bike,
   Utensils,
   RotateCw,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-vue-next";
 import {
   DRINK_GROUP_KEYS,
@@ -793,6 +829,23 @@ const { record, pending, loadError, load } =
 
 onMounted(load);
 
+const selectedDate = ref(todayISO());
+
+const selectedDateLabel = computed(() =>
+  new Date(`${selectedDate.value}T12:00:00`).toLocaleDateString("es-MX", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+  }),
+);
+
+function changeMenuDate(days: number) {
+  const date = new Date(`${selectedDate.value}T12:00:00`);
+  date.setDate(date.getDate() + days);
+  selectedDate.value = date.toISOString().slice(0, 10);
+  clearCart();
+}
+
 /**
  * Menú del día: mismo criterio que la app de comandas.
  *  1) Si hay un `active` fijado HOY (turno iniciado o ajuste manual), ese manda.
@@ -806,7 +859,7 @@ const active = computed<DayDishes>(() => {
     rec.active as Partial<Record<GroupKey, unknown>>,
   );
   const activeFresh =
-    rec.active_date === todayISO() &&
+    rec.active_date === selectedDate.value &&
     groupsFromData(a as Record<string, unknown>).some(
       (g) => (a[g.key] ?? []).length > 0,
     );
@@ -818,7 +871,7 @@ const active = computed<DayDishes>(() => {
     anchor: rec.rotation_anchor ?? "",
     overrides: rec.overrides ?? {},
   };
-  const resolved = resolveDay(todayISO(), cfg);
+  const resolved = resolveDay(selectedDate.value, cfg);
   return resolved
     ? normalizeDishNames(resolved.menu as Partial<Record<GroupKey, unknown>>)
     : EMPTY_DISHES;
@@ -1348,6 +1401,7 @@ async function createComanda(
     cart: { ...cart },
     mode: mode.value,
     note: finalNote,
+    fulfillDate: selectedDate.value,
     fulfillTime: mode.value !== "domicilio" ? pickupTime.value : "",
     customer: { ...customer },
     taquizaOrders: { ...taquizaOrderCount.value },
@@ -1400,6 +1454,7 @@ async function sendOrder() {
     note: finalNote,
     phone: customer.phone,
     address: customer.address,
+    fulfillDate: selectedDate.value,
   });
 
   const number = await nextComandaNumber();

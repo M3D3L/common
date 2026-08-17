@@ -1147,7 +1147,13 @@ function createComandasStore() {
     persist();
     // 3) WhatsApp.
     if (memberPhone.trim()) {
-      const text = formatReady(o.number, o.mode, o.customer, memberName);
+      const text = formatReady(
+        o.number,
+        o.mode,
+        o.customer,
+        memberName,
+        o.fulfillDate,
+      );
       const url = waLink(text, memberPhone);
       if (wa) wa.location.href = url;
       else if (import.meta.client) window.open(url, "_blank");
