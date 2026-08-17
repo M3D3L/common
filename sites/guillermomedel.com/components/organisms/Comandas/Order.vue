@@ -298,20 +298,11 @@
         </div>
 
         <!-- Cuerpo desplazable -->
-        <div class="flex-1 px-5 space-y-4 overflow-y-auto">
+        <div class="flex-1 px-5 space-y-4 pb-4 overflow-y-auto">
           <!-- Vacío -->
-          <div
-            v-if="!itemCount"
-            class="flex flex-col items-center gap-2 py-10 text-center text-muted-foreground"
-          >
-            <ClientOnly
-              ><UtensilsCrossed :size="26" class="opacity-40"
-            /></ClientOnly>
-            <p class="text-sm">Toca un platillo para empezar.</p>
-          </div>
 
           <!-- Artículos -->
-          <div v-else class="space-y-4">
+          <div class="space-y-4">
             <template v-for="group in groups" :key="group.key">
               <div v-if="cartGroup(group.key).length">
                 <p
@@ -465,7 +456,7 @@
           </div>
 
           <!-- Nota -->
-          <Input
+          <Textarea
             v-model="note"
             placeholder="Nota (opcional): sin cebolla, mesa 4…"
           />
@@ -494,6 +485,7 @@
 import { Card } from "@common/components/ui/card";
 import { Button } from "@common/components/ui/button";
 import { Input } from "@common/components/ui/input";
+import { Textarea } from "@common/components/ui/textarea";
 import { Label } from "@common/components/ui/label";
 import { Badge } from "@common/components/ui/badge";
 import { Separator } from "@common/components/ui/separator";
