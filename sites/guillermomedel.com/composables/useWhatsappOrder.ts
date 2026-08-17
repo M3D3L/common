@@ -213,8 +213,12 @@ export function useWhatsappOrder() {
     orderNumber: number,
     mode: OrderMode,
     customer?: Customer,
+    recipientName?: string,
   ): string {
-    let msg = `✅ *Orden #${orderNumber} lista* (${MODE_LABEL[mode]})`;
+    const name = recipientName?.trim();
+    const checkEmoji = "\u2705";
+    const sealEmoji = "\u{1F9AD}";
+    let msg = `${name ? `¡Hola, ${name}!\n` : ""}${checkEmoji} *¡Tu pedido está listo!* ${sealEmoji} (${MODE_LABEL[mode]})`;
 
     if (mode === "domicilio" && customer) {
       msg += `\n\n🚀 *DATOS PARA EL REPARTIDOR:*`;
@@ -295,7 +299,7 @@ export function useWhatsappOrder() {
     const cleanPhone = phone?.replace(/\D/g, "");
 
     if (cleanPhone) {
-      return `https://wa.me/${cleanPhone}?text=${encoded}`;
+      return `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encoded}`;
     }
 
     return `https://api.whatsapp.com/send?text=${encoded}`;

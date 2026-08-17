@@ -1110,11 +1110,21 @@ function createComandasStore() {
   }
 
   async function completeOrder(o: StoredOrder) {
-    const text = formatReady(o.number, o.mode, o.customer);
     const wa = openBlankTab();
+    let memberPhone = "";
+    let memberName = "";
+
+    if (o.memberCode) {
+      try {
+        const member = await members.getMemberByCode(o.memberCode);
+        memberPhone = member?.phone ?? "";
+        memberName = member?.name ?? "";
+      } catch (e) {
+        console.error("No se pudo obtener el teléfono del socio", e);
+      }
+    }
 
     if (o.memberCode && !o.memberRedeemed) {
-      o.memberRedeemed = true; // evita doble redención por doble-tap
       await redeemMemberCredit(o);
     }
 
@@ -1136,7 +1146,14 @@ function createComandasStore() {
     orders.value = orders.value.filter((x) => x.id !== o.id);
     persist();
     // 3) WhatsApp.
-    sendToTab(wa, text);
+    if (memberPhone.trim()) {
+      const text = formatReady(o.number, o.mode, o.customer, memberName);
+      const url = waLink(text, memberPhone);
+      if (wa) wa.location.href = url;
+      else if (import.meta.client) window.open(url, "_blank");
+    } else {
+      wa?.close();
+    }
     toast(`Orden #${o.number} lista`);
   }
 

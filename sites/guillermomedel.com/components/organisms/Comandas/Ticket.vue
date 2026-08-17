@@ -133,21 +133,37 @@
     <div
       v-if="
         order.customer?.name ||
-        (order.mode === 'domicilio' && order.customer?.address)
+        memberData?.name ||
+        memberPhone ||
+        (order.mode === 'domicilio' &&
+          (order.customer?.address || memberData?.address))
       "
       class="p-2 mt-2 text-xs rounded bg-slate-50 dark:bg-slate-900/50 text-slate-700 dark:text-slate-300 font-medium border border-slate-100 dark:border-slate-800"
     >
       <p
-        v-if="order.customer?.name"
+        v-if="order.customer?.name || memberData?.name"
         class="font-bold text-slate-900 dark:text-slate-100"
       >
-        👤 {{ order.customer.name }}
+        👤 {{ order.customer?.name || memberData?.name }}
       </p>
+      <a
+        v-if="memberPhone"
+        :href="`https://wa.me/${memberPhone}`"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="flex items-center gap-1 mt-1 text-green-700 hover:underline dark:text-green-400"
+      >
+        <span>📱</span> {{ memberData?.phone }}
+      </a>
       <p
-        v-if="order.mode === 'domicilio' && order.customer?.address"
+        v-if="
+          order.mode === 'domicilio' &&
+          (order.customer?.address || memberData?.address)
+        "
         class="flex items-start gap-1 mt-1"
       >
-        <span class="mt-0.5">📍</span> {{ order.customer.address }}
+        <span class="mt-0.5">📍</span>
+        {{ order.customer?.address || memberData?.address }}
       </p>
     </div>
 
@@ -178,7 +194,6 @@
 </template>
 
 <script lang="ts" setup>
-import { computed } from "vue";
 import { Card } from "@common/components/ui/card";
 import { Button } from "@common/components/ui/button";
 import { Badge } from "@common/components/ui/badge";
@@ -198,6 +213,7 @@ import {
 const props = defineProps<{ order: PlacedOrder }>();
 
 const { completeOrder, discardOrder, catalog } = useComandas();
+const { fetchCollection } = usePocketBaseCore();
 
 const ticketGroups = computed(() =>
   groupsFromData(catalog.value as Record<string, unknown>),
@@ -233,4 +249,42 @@ function taquizaLines(order: PlacedOrder, kind: "tacos" | "quesadillas") {
     .filter(([, qty]) => qty > 0)
     .map(([name, qty]) => ({ name, qty }));
 }
+
+const memberData = ref<Record<string, unknown> | null>(null);
+const memberPhone = computed(() =>
+  String(memberData.value?.phone ?? "").replace(/\D/g, ""),
+);
+
+watch(
+  () => props.order?.memberCode,
+  async (memberCode, _, onCleanup) => {
+    memberData.value = null;
+    if (!memberCode) return;
+
+    let cancelled = false;
+    onCleanup(() => {
+      cancelled = true;
+    });
+
+    try {
+      const result = await fetchCollection(
+        "members",
+        1,
+        1,
+        `member_code = "${memberCode}"`,
+        "",
+        null,
+        null,
+        true,
+      );
+
+      if (!cancelled) {
+        memberData.value = (result.items[0] as Record<string, unknown>) ?? null;
+      }
+    } catch {
+      if (!cancelled) memberData.value = null;
+    }
+  },
+  { immediate: true },
+);
 </script>
