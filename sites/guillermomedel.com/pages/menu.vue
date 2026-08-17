@@ -193,12 +193,61 @@
           </div>
         </section>
 
+        <!-- ===== Chips de categoría: filtran a golpe de vista =====
+             Cada chip abre su cajón y hace scroll hacia él. "Todo" expande o
+             colapsa todo. El badge conserva el conteo del carrito aunque el
+             cajón esté cerrado, para que el usuario nunca pierda su pedido. -->
+        <div
+          class="sticky top-0 z-20 -mx-5 border-b border-border bg-background/95 px-5 py-2 backdrop-blur"
+        >
+          <div class="flex gap-2 overflow-x-auto pb-0.5">
+            <button
+              type="button"
+              class="shrink-0 rounded-full border px-3 py-1.5 text-xs font-bold transition-colors"
+              :class="
+                allGroupsOpen
+                  ? 'border-primary bg-primary text-primary-foreground'
+                  : 'border-border text-muted-foreground hover:bg-muted'
+              "
+              @click="toggleAllGroups"
+            >
+              Todo / All
+            </button>
+
+            <button
+              v-for="group in visibleMenuGroups"
+              :key="`chip-${group.key}`"
+              type="button"
+              class="shrink-0 rounded-full border px-3 py-1.5 text-xs font-bold transition-colors"
+              :class="
+                isGroupOpen(group.key)
+                  ? 'border-primary bg-primary text-primary-foreground'
+                  : 'border-border text-muted-foreground hover:bg-muted'
+              "
+              @click="focusGroup(group.key)"
+            >
+              {{ group.label }}
+              <span v-if="groupCartCount(group.key)" class="ml-1 tabular-nums"
+                >· {{ groupCartCount(group.key) }}</span
+              >
+            </button>
+          </div>
+        </div>
+
         <section
           v-for="group in menuGroups"
           v-show="showGroupSection(group.key)"
           :key="group.key"
+          :ref="(el) => setSectionRef(group.key, el)"
+          class="scroll-mt-16"
         >
-          <div class="mb-3 flex items-baseline gap-3">
+          <!-- Encabezado = botón que abre/cierra el cajón -->
+          <button
+            type="button"
+            class="mb-3 flex w-full items-center gap-3 text-left"
+            :aria-expanded="isGroupOpen(group.key)"
+            @click="toggleGroup(group.key)"
+          >
             <h2
               class="text-xs font-bold uppercase tracking-widest text-muted-foreground"
             >
@@ -208,86 +257,182 @@
                 >{{ groupItems(group.key).length }}</span
               >
             </h2>
+            <span
+              v-if="groupCartCount(group.key)"
+              class="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold tabular-nums text-primary"
+            >
+              {{ groupCartCount(group.key) }} en carrito
+            </span>
             <Separator class="shrink flex-1" />
-          </div>
+            <ClientOnly>
+              <ChevronDown
+                :size="16"
+                class="shrink-0 text-muted-foreground transition-transform duration-200"
+                :class="isGroupOpen(group.key) && 'rotate-180'"
+              />
+            </ClientOnly>
+          </button>
 
-          <!-- ===== Taquizas: por orden ===== -->
-          <div
-            v-if="taquizaGroup && group.key === taquizaGroup.key"
-            class="mb-3 space-y-3"
-          >
-            <!-- Crear una orden nueva (tacos o quesadillas). Se pueden agregar
-                 tantas como quiera el cliente; cada una tiene su propio límite. -->
-            <div class="grid grid-cols-2 gap-2">
-              <Button
-                v-for="kind in taquizaKinds"
-                :key="`add-${kind}`"
-                variant="outline"
-                class="h-auto flex-col items-start gap-0.5 py-2"
-                @click="addTaquizaOrder(kind)"
-              >
-                <span
-                  class="flex items-center gap-1.5 text-xs font-bold uppercase"
-                >
-                  <ClientOnly><Plus :size="14" /></ClientOnly>
-                  {{
-                    kind === "tacos" ? "Orden de tacos" : "Orden de quesadillas"
-                  }}
-                </span>
-                <span class="text-[11px] font-normal text-background">
-                  {{ TAQUIZA_CAP[kind] }} piezas por orden
-                </span>
-              </Button>
-            </div>
-
-            <p
-              v-if="!taquizaOrders.length"
-              class="text-[11px] text-muted-foreground"
-            >
-              Agrega una orden de tacos o quesadillas para elegir tus guisos.
-            </p>
-
-            <!-- Órdenes creadas. Cada tarjeta es una orden independiente con su
-                 propio tope de piezas y su propia selección de guisos. -->
+          <!-- Cuerpo del cajón -->
+          <div v-show="isGroupOpen(group.key)">
+            <!-- ===== Taquizas: por orden ===== -->
             <div
-              v-for="(order, idx) in taquizaOrders"
-              :key="order.id"
-              class="rounded-md border p-2"
+              v-if="taquizaGroup && group.key === taquizaGroup.key"
+              class="mb-3 space-y-3"
             >
-              <div class="mb-2 flex items-center justify-between gap-2">
-                <div>
-                  <p class="text-xs font-bold uppercase">
-                    Orden {{ idx + 1 }} ·
-                    {{ order.kind === "tacos" ? "Tacos" : "Quesadillas" }}
-                  </p>
-                  <p class="text-[11px] text-muted-foreground">
-                    {{ orderFillTotal(order) }}/{{ TAQUIZA_CAP[order.kind] }}
-                    pieza(s)
-                  </p>
-                </div>
+              <!-- Crear una orden nueva (tacos o quesadillas). Se pueden agregar
+                   tantas como quiera el cliente; cada una tiene su propio límite. -->
+              <div class="grid grid-cols-2 gap-2">
                 <Button
-                  variant="ghost"
-                  size="icon"
-                  class="h-7 w-7 text-background hover:text-destructive"
-                  :aria-label="`Quitar orden ${idx + 1}`"
-                  @click="removeTaquizaOrder(order.id)"
+                  v-for="kind in taquizaKinds"
+                  :key="`add-${kind}`"
+                  variant="outline"
+                  class="h-auto flex-col items-start gap-0.5 py-2"
+                  @click="addTaquizaOrder(kind)"
                 >
-                  <ClientOnly><Trash2 :size="15" /></ClientOnly>
+                  <span
+                    class="flex items-center gap-1.5 text-xs font-bold uppercase"
+                  >
+                    <ClientOnly><Plus :size="14" /></ClientOnly>
+                    {{
+                      kind === "tacos"
+                        ? "Orden de tacos"
+                        : "Orden de quesadillas"
+                    }}
+                  </span>
+                  <span class="text-[11px] font-normal text-background">
+                    {{ TAQUIZA_CAP[kind] }} piezas por orden
+                  </span>
                 </Button>
               </div>
 
-              <div v-if="groupItems(group.key).length" class="space-y-2">
-                <Card
-                  v-for="item in groupItems(group.key)"
-                  :key="`${order.id}-${item.name}`"
-                  class="flex items-center gap-3 p-3"
-                  :class="[
-                    isOut(item.name) && 'opacity-60',
-                    (order.fills[item.name] ?? 0) > 0 &&
-                      'bg-primary/5 ring-1 ring-primary/40',
-                  ]"
-                >
-                  <div class="flex-1">
+              <p
+                v-if="!taquizaOrders.length"
+                class="text-[11px] text-muted-foreground"
+              >
+                Agrega una orden de tacos o quesadillas para elegir tus guisos.
+              </p>
+
+              <!-- Órdenes creadas. Cada tarjeta es una orden independiente con su
+                   propio tope de piezas y su propia selección de guisos. -->
+              <div
+                v-for="(order, idx) in taquizaOrders"
+                :key="order.id"
+                class="rounded-md border p-2"
+              >
+                <div class="mb-2 flex items-center justify-between gap-2">
+                  <div>
+                    <p class="text-xs font-bold uppercase">
+                      Orden {{ idx + 1 }} ·
+                      {{ order.kind === "tacos" ? "Tacos" : "Quesadillas" }}
+                    </p>
+                    <p class="text-[11px] text-muted-foreground">
+                      {{ orderFillTotal(order) }}/{{ TAQUIZA_CAP[order.kind] }}
+                      pieza(s)
+                    </p>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    class="h-7 w-7 text-background hover:text-destructive"
+                    :aria-label="`Quitar orden ${idx + 1}`"
+                    @click="removeTaquizaOrder(order.id)"
+                  >
+                    <ClientOnly><Trash2 :size="15" /></ClientOnly>
+                  </Button>
+                </div>
+
+                <div v-if="groupItems(group.key).length" class="space-y-2">
+                  <Card
+                    v-for="item in groupItems(group.key)"
+                    :key="`${order.id}-${item.name}`"
+                    class="flex items-center gap-3 p-3"
+                    :class="[
+                      isOut(item.name) && 'opacity-60',
+                      (order.fills[item.name] ?? 0) > 0 &&
+                        'bg-primary/5 ring-1 ring-primary/40',
+                    ]"
+                  >
+                    <div class="flex-1">
+                      <p
+                        class="font-semibold leading-tight"
+                        :class="
+                          isOut(item.name) &&
+                          'text-muted-foreground line-through'
+                        "
+                      >
+                        {{ item.name }}
+                      </p>
+                    </div>
+
+                    <div
+                      v-if="!isOut(item.name)"
+                      class="flex shrink-0 items-center gap-1"
+                    >
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        class="h-8 w-8"
+                        :disabled="(order.fills[item.name] ?? 0) <= 0"
+                        @click="setOrderFill(order, item.name, -1)"
+                      >
+                        <ClientOnly><Minus :size="15" /></ClientOnly>
+                      </Button>
+                      <span class="w-6 text-center font-bold tabular-nums">
+                        {{ order.fills[item.name] ?? 0 }}
+                      </span>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        class="h-8 w-8"
+                        :disabled="!canAddToOrder(order)"
+                        @click="setOrderFill(order, item.name, 1)"
+                      >
+                        <ClientOnly><Plus :size="15" /></ClientOnly>
+                      </Button>
+                    </div>
+                  </Card>
+                </div>
+                <p v-else class="text-[11px] text-muted-foreground">
+                  No hay guisos disponibles para taquizas hoy.
+                </p>
+
+                <p class="mt-2 text-[11px] text-muted-foreground">
+                  Máximo {{ TAQUIZA_CAP[order.kind] }} pieza(s) en esta orden.
+                </p>
+              </div>
+            </div>
+
+            <!-- ===== Grupos normales ===== -->
+            <div
+              v-if="
+                groupItems(group.key).length &&
+                !(taquizaGroup && group.key === taquizaGroup.key)
+              "
+              class="space-y-2"
+            >
+              <Card
+                v-for="item in groupItems(group.key)"
+                :key="item.name"
+                class="flex items-center gap-3 p-3 transition-colors"
+                :class="[
+                  isOut(item.name) && 'opacity-60',
+                  cart[item.name] > 0 && 'bg-primary/5 ring-1 ring-primary/40',
+                ]"
+              >
+                <div class="flex flex-row w-full items-center gap-3">
+                  <div
+                    v-if="typeof item.image == 'string'"
+                    class="h-20 w-20 shrink-0 overflow-hidden rounded-full"
+                  >
+                    <img
+                      :src="item.image"
+                      :alt="item.name"
+                      class="object-cover w-full h-full"
+                    />
+                  </div>
+
+                  <div class="min-w-0 flex-1">
                     <p
                       class="font-semibold leading-tight"
                       :class="
@@ -296,142 +441,65 @@
                     >
                       {{ item.name }}
                     </p>
+                    <p
+                      v-if="item?.price !== 0"
+                      class="mt-0.5 text-[11px] font-semibold text-muted-foreground"
+                    >
+                      {{ money(item.price) }}
+                    </p>
+
+                    <Badge
+                      v-if="isOut(item.name)"
+                      variant="outline"
+                      class="mt-1 border-destructive/30 bg-destructive/10 text-[10px] uppercase text-destructive"
+                    >
+                      Agotado
+                    </Badge>
                   </div>
 
                   <div
                     v-if="!isOut(item.name)"
                     class="flex shrink-0 items-center gap-1"
                   >
+                    <template v-if="cart[item.name]">
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        class="h-8 w-8"
+                        :aria-label="`Quitar uno de ${item.name}`"
+                        :disabled="isGroupLocked(group.key)"
+                        @click="setQty(group.key, item.name, -1)"
+                      >
+                        <ClientOnly><Minus :size="15" /></ClientOnly>
+                      </Button>
+                      <span
+                        class="w-6 text-center font-bold tabular-nums"
+                        aria-live="polite"
+                        >{{ cart[item.name] }}</span
+                      >
+                    </template>
                     <Button
                       variant="outline"
                       size="icon"
                       class="h-8 w-8"
-                      :disabled="(order.fills[item.name] ?? 0) <= 0"
-                      @click="setOrderFill(order, item.name, -1)"
-                    >
-                      <ClientOnly><Minus :size="15" /></ClientOnly>
-                    </Button>
-                    <span class="w-6 text-center font-bold tabular-nums">
-                      {{ order.fills[item.name] ?? 0 }}
-                    </span>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      class="h-8 w-8"
-                      :disabled="!canAddToOrder(order)"
-                      @click="setOrderFill(order, item.name, 1)"
+                      :aria-label="`Agregar ${item.name}`"
+                      :disabled="!canAddItem(group.key)"
+                      @click="setQty(group.key, item.name, 1)"
                     >
                       <ClientOnly><Plus :size="15" /></ClientOnly>
                     </Button>
                   </div>
-                </Card>
-              </div>
-              <p v-else class="text-[11px] text-muted-foreground">
-                No hay guisos disponibles para taquizas hoy.
-              </p>
-
-              <p class="mt-2 text-[11px] text-muted-foreground">
-                Máximo {{ TAQUIZA_CAP[order.kind] }} pieza(s) en esta orden.
-              </p>
+                </div>
+              </Card>
             </div>
-          </div>
 
-          <!-- ===== Grupos normales ===== -->
-          <div
-            v-if="
-              groupItems(group.key).length &&
-              !(taquizaGroup && group.key === taquizaGroup.key)
-            "
-            class="space-y-2"
-          >
-            <Card
-              v-for="item in groupItems(group.key)"
-              :key="item.name"
-              class="flex items-center gap-3 p-3 transition-colors"
-              :class="[
-                isOut(item.name) && 'opacity-60',
-                cart[item.name] > 0 && 'bg-primary/5 ring-1 ring-primary/40',
-              ]"
+            <p
+              v-if="isGroupLocked(group.key)"
+              class="mt-2 text-[11px] text-muted-foreground"
             >
-
-              <div class="flex flex-row w-full items-center gap-3">
-                  <div>
-                    <div v-if="typeof item.image == 'string'" class="mb-2 h-20 overflow-hidden w-20 rounded-full">
-                    
-                    <img
-                    
-                    :src="item.image"
-                    :alt="item.name"
-                    class="object-cover w-full h-full"
-                  />  
-                  </div>
-                  </div>
-                  
-                  <p
-                    class="font-semibold leading-tight"
-                    :class="
-                      isOut(item.name) && 'text-muted-foreground line-through'
-                    "
-                  >
-                    {{ item.name }} <p
-                  v-if="item?.price !== 0"
-                  class="mt-0.5 text-[11px] font-semibold text-muted-foreground"
-                >
-                  {{ money(item.price) }}
-                </p>
-                  </p>
-          
-        
-                <Badge
-                  v-if="isOut(item.name)"
-                  variant="outline"
-                  class="mt-1 border-destructive/30 bg-destructive/10 text-[10px] uppercase text-destructive"
-                >
-                  Agotado
-                </Badge>
-              </div>
-
-              <div
-                v-if="!isOut(item.name)"
-                class="flex shrink-0 items-center gap-1"
-              >
-                <template v-if="cart[item.name]">
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    class="h-8 w-8"
-                    :aria-label="`Quitar uno de ${item.name}`"
-                    :disabled="isGroupLocked(group.key)"
-                    @click="setQty(group.key, item.name, -1)"
-                  >
-                    <ClientOnly><Minus :size="15" /></ClientOnly>
-                  </Button>
-                  <span
-                    class="w-6 text-center font-bold tabular-nums"
-                    aria-live="polite"
-                    >{{ cart[item.name] }}</span
-                  >
-                </template>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  class="h-8 w-8"
-                  :aria-label="`Agregar ${item.name}`"
-                  :disabled="!canAddItem(group.key)"
-                  @click="setQty(group.key, item.name, 1)"
-                >
-                  <ClientOnly><Plus :size="15" /></ClientOnly>
-                </Button>
-              </div>
-            </Card>
+              {{ lockReason(group.key) }}
+            </p>
           </div>
-
-          <p
-            v-if="isGroupLocked(group.key)"
-            class="mt-2 text-[11px] text-muted-foreground"
-          >
-            {{ lockReason(group.key) }}
-          </p>
         </section>
 
         <section>
@@ -800,6 +868,7 @@ import {
   RotateCw,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
 } from "lucide-vue-next";
 import {
   DRINK_GROUP_KEYS,
@@ -1007,6 +1076,78 @@ const taquizaGroup = baseGroups.find((g) => "pieceOptions" in g) as
 function showGroupSection(key: GroupKey) {
   return groupItems(key).length > 0;
 }
+
+/* ===== Chips + cajones (acordeón) =====
+ * `openGroups` = conjunto de grupos abiertos. Los chips y el encabezado de cada
+ * sección comparten este estado, así que un chip "activo" siempre corresponde a
+ * un cajón abierto. Al arrancar abrimos solo el primer grupo con platillos para
+ * no abrumar con toda la lista desplegada. */
+const openGroups = ref<Set<string>>(new Set());
+
+// Grupos que realmente tienen platillos hoy (los que muestran chip).
+const visibleMenuGroups = computed(() =>
+  menuGroups.value.filter((g) => groupItems(g.key).length > 0),
+);
+
+const isGroupOpen = (key: GroupKey) => openGroups.value.has(key);
+
+function toggleGroup(key: GroupKey) {
+  const next = new Set(openGroups.value);
+  next.has(key) ? next.delete(key) : next.add(key);
+  openGroups.value = next;
+}
+
+const allGroupsOpen = computed(
+  () =>
+    visibleMenuGroups.value.length > 0 &&
+    visibleMenuGroups.value.every((g) => openGroups.value.has(g.key)),
+);
+
+function toggleAllGroups() {
+  openGroups.value = allGroupsOpen.value
+    ? new Set()
+    : new Set(visibleMenuGroups.value.map((g) => g.key));
+}
+
+// Conteo del carrito por grupo (badge del chip y del encabezado). Conserva la
+// referencia del pedido aunque el cajón esté cerrado.
+function groupCartCount(key: GroupKey) {
+  return groupItems(key).reduce((sum, item) => sum + (cart[item.name] ?? 0), 0);
+}
+
+// Refs de cada <section> para poder hacer scroll hacia ellas desde el chip.
+const sectionEls: Record<string, HTMLElement> = {};
+function setSectionRef(key: string, el: unknown) {
+  if (el instanceof HTMLElement) sectionEls[key] = el;
+}
+
+// Chip: abre el cajón (si estaba cerrado) y hace scroll suave hacia él.
+async function focusGroup(key: GroupKey) {
+  if (!openGroups.value.has(key)) {
+    const next = new Set(openGroups.value);
+    next.add(key);
+    openGroups.value = next;
+  }
+  await nextTick();
+  sectionEls[key]?.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+// Abre el primer grupo con platillos la primera vez que carga el menú.
+const didInitOpen = ref(false);
+watch(
+  visibleMenuGroups,
+  (groups) => {
+    if (!didInitOpen.value && groups.length) {
+      openGroups.value = new Set(
+        props.dishesField === "dishes"
+          ? groups.map((group) => group.key)
+          : [groups[0].key],
+      );
+      didInitOpen.value = true;
+    }
+  },
+  { immediate: true },
+);
 
 const soldOut = computed<string[]>(() => record.value?.sold_out ?? []);
 const isOut = (n: string) => soldOut.value.includes(n);
