@@ -14,9 +14,10 @@ const links = [
   { to: "/checklists", label: "Checklists" },
   { to: "/socios", label: "Miembros" },
   { to: "/orders", label: "Órdenes" },
-  { to: "/labels", label: "Etiquetas" },
-  { to: "/semana/menu", label: "Menú Control" },
+  { to: "/menu-items", label: "Menu Items" },
+  { to: "/semana/menu", label: "Menu Control" },
   { to: "/semana/calendario", label: "Calendario" },
+  { to: "/labels", label: "Etiquetas" },
 ];
 </script>
 

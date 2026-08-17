@@ -2,14 +2,6 @@
   <section class="mx-auto max-w-5xl px-4 pb-28 pt-8">
     <div class="mb-6 flex flex-wrap items-start justify-between gap-4">
       <div>
-        <div class="mb-3 flex gap-2">
-          <Button as-child size="sm" variant="secondary">
-            <NuxtLink to="/menu-items">Platillos</NuxtLink>
-          </Button>
-          <Button as-child size="sm" variant="ghost">
-            <NuxtLink to="/semana/menu">Semanas</NuxtLink>
-          </Button>
-        </div>
         <h1 class="text-2xl font-bold tracking-tight">Platillos del menu</h1>
         <p class="mt-1 text-sm text-muted-foreground">
           Administra los items disponibles en el catalogo del menu.
