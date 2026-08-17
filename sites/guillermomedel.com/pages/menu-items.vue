@@ -28,20 +28,29 @@
       <Button class="mt-4" variant="outline" @click="load">Reintentar</Button>
     </div>
 
-    <div v-else class="space-y-8">
-      <section v-for="group in menuGroups" :key="group.key" class="space-y-4">
-        <div class="flex items-center gap-3">
+    <div v-else class="min-w-0 space-y-8">
+      <section
+        v-for="group in menuGroups"
+        :key="group.key"
+        class="min-w-0 space-y-4"
+      >
+        <div class="flex min-w-0 flex-wrap items-center gap-3">
           <h2
-            class="flex items-center gap-2 text-sm font-bold uppercase tracking-widest"
+            class="flex min-w-0 items-center gap-2 text-sm font-bold uppercase tracking-widest"
           >
-            <span>{{ group.emoji }}</span>
-            {{ group.label }}
-            <Badge variant="secondary" class="tabular-nums">
+            <span class="shrink-0">{{ group.emoji }}</span>
+            <span class="min-w-0 break-words">{{ group.label }}</span>
+            <Badge variant="secondary" class="shrink-0 tabular-nums">
               {{ catalog[group.key]?.length ?? 0 }}
             </Badge>
           </h2>
-          <Separator class="flex-1" />
-          <Button size="sm" variant="outline" @click="addItem(group.key)">
+          <Separator class="hidden min-w-0 flex-1 sm:block" />
+          <Button
+            size="sm"
+            variant="outline"
+            class="shrink-0"
+            @click="addItem(group.key)"
+          >
             <Plus :size="15" class="mr-1.5" />
             Agregar
           </Button>
@@ -49,12 +58,12 @@
 
         <div
           v-if="catalog[group.key]?.length"
-          class="grid gap-3 md:grid-cols-2"
+          class="grid min-w-0 grid-cols-1 gap-3 md:grid-cols-2"
         >
           <div
             v-for="(item, index) in catalog[group.key]"
             :key="`${group.key}-${item.name}-${index}`"
-            class="rounded-lg border border-border bg-card p-4"
+            class="min-w-0 rounded-lg border border-border bg-card p-4"
           >
             <div class="flex items-start gap-3">
               <div
@@ -90,8 +99,8 @@
 
             <Separator class="my-4" />
 
-            <div class="grid gap-3 sm:grid-cols-2">
-              <div class="space-y-1.5 sm:col-span-2">
+            <div class="grid min-w-0 gap-3 sm:grid-cols-2">
+              <div class="min-w-0 space-y-1.5 sm:col-span-2">
                 <Label :for="`name-${group.key}-${index}`">Nombre</Label>
                 <Input
                   :id="`name-${group.key}-${index}`"
@@ -99,7 +108,7 @@
                   placeholder="Nombre del platillo"
                 />
               </div>
-              <div class="space-y-1.5">
+              <div class="min-w-0 space-y-1.5">
                 <Label :for="`price-${group.key}-${index}`">Precio</Label>
                 <Input
                   :id="`price-${group.key}-${index}`"
@@ -109,7 +118,7 @@
                   step="1"
                 />
               </div>
-              <div class="space-y-1.5">
+              <div class="min-w-0 space-y-1.5">
                 <Label :for="`image-${group.key}-${index}`">Imagen</Label>
                 <Input
                   :id="`image-${group.key}-${index}`"
