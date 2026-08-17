@@ -50,13 +50,47 @@
       <div class="max-w-sm">
         <p class="mb-4 text-5xl">🗓️</p>
         <h1 class="text-xl font-bold font-heading">Hoy no hay servicio</h1>
-        <p class="mt-2 text-sm text-muted-foreground">
+
+        <Card
+          class="flex items-center mt-2 justify-between w-full px-3 py-2"
+          aria-label="Seleccionar día del menú"
+        >
+          <Button
+            variant="ghost"
+            size="icon"
+            class="h-9 w-9"
+            title="Día anterior"
+            aria-label="Día anterior"
+            @click="changeMenuDate(-1)"
+          >
+            <ClientOnly><ChevronLeft :size="18" /></ClientOnly>
+          </Button>
+          <div class="text-center">
+            <p
+              class="text-[10px] font-bold uppercase tracking-widest text-muted-foreground"
+            >
+              Menú del día
+            </p>
+            <p class="text-sm font-bold capitalize">{{ selectedDateLabel }}</p>
+          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            class="h-9 w-9"
+            title="Día siguiente"
+            aria-label="Día siguiente"
+            @click="changeMenuDate(1)"
+          >
+            <ClientOnly><ChevronRight :size="18" /></ClientOnly>
+          </Button>
+        </Card>
+        <p class="mt-3 text-sm text-muted-foreground">
           No hay menú disponible para hoy. ¿Quieres preordenar para los próximos
           días?
         </p>
-        <Button as-child variant="outline" size="sm" class="mt-4">
+        <!-- <Button as-child variant="outline" size="sm" class="mt-4">
           <NuxtLink to="/semana">Ver preórdenes</NuxtLink>
-        </Button>
+        </Button> -->
       </div>
     </div>
 
