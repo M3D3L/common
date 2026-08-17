@@ -352,21 +352,33 @@
                 cart[item.name] > 0 && 'bg-primary/5 ring-1 ring-primary/40',
               ]"
             >
-              <div class="flex-1">
-                <p
-                  class="font-semibold leading-tight"
-                  :class="
-                    isOut(item.name) && 'text-muted-foreground line-through'
-                  "
-                >
-                  {{ item.name }}
-                </p>
-                <p
+
+              <div class="flex flex-row w-full items-center gap-3">
+                  <div v-if="typeof item.image == 'string'" class="mb-2 h-20 overflow-hidden w-20 rounded-full">
+                    
+                    <img
+                    
+                    :src="item.image"
+                    :alt="item.name"
+                    class="object-cover"
+                  />  
+                  </div>
+                  
+                  <p
+                    class="font-semibold leading-tight"
+                    :class="
+                      isOut(item.name) && 'text-muted-foreground line-through'
+                    "
+                  >
+                    {{ item.name }} <p
                   v-if="item?.price !== 0"
                   class="mt-0.5 text-[11px] font-semibold text-muted-foreground"
                 >
                   {{ money(item.price) }}
                 </p>
+                  </p>
+          
+        
                 <Badge
                   v-if="isOut(item.name)"
                   variant="outline"

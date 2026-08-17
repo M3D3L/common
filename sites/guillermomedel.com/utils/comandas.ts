@@ -188,6 +188,7 @@ export const DRINK_GROUP_KEYS = groups
 export interface MenuItem {
   name: string;
   price: number;
+  image?: string;
   combo?: ComboPolicy;
 }
 
@@ -266,6 +267,10 @@ function normalizeMenuItem(group: GroupKey, entry: unknown): MenuItem | null {
       ? Number((entry as { price?: unknown }).price)
       : NaN;
   const price = Number.isFinite(rawPrice) ? rawPrice : 0;
+  const image =
+    entry && typeof entry === "object" && "image" in entry
+      ? String((entry as { image?: unknown }).image ?? "").trim()
+      : "";
 
   const combo =
     entry && typeof entry === "object" && "combo" in entry
@@ -276,6 +281,8 @@ function normalizeMenuItem(group: GroupKey, entry: unknown): MenuItem | null {
     name,
     price,
   };
+
+  if (image) normalized.image = image;
 
   if (MAIN_GROUP_KEYS.includes(group)) {
     normalized.combo = {
