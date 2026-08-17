@@ -38,7 +38,13 @@
       </div>
     </header>
 
-    <OrganismsComandasOrder v-if="view === 'order'" />
+    <MenuPage
+      v-if="view === 'order'"
+      fetched-collection="menu"
+      dishes-field="dishes"
+      :use-daily-menu="false"
+      :staff-mode="true"
+    />
     <OrganismsComandasOrders v-else />
 
     <Transition name="toast">
@@ -56,6 +62,7 @@
 import { Button } from "@common/components/ui/button";
 import { Badge } from "@common/components/ui/badge";
 import { Send, ClipboardList, ArrowLeft } from "lucide-vue-next";
+import MenuPage from "~/pages/menu.vue";
 
 const store = provideComandas();
 const { view, counter, orders, toastMsg, sendTodayMenu } = store;

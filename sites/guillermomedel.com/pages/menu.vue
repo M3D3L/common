@@ -98,7 +98,10 @@
       <!-- Hero -->
       <main class="mx-auto max-w-lg space-y-8 px-5 pb-44 pt-6">
         <!-- Instrucciones -->
-        <section class="rounded-lg bg-primary/5 border border-primary/10 p-4">
+        <section
+          v-if="!props.staffMode"
+          class="rounded-lg bg-primary/5 border border-primary/10 p-4"
+        >
           <h3 class="font-bold text-sm mb-2 flex items-center gap-2">
             <span>💡</span> How to order / Cómo pedir
           </h3>
@@ -150,7 +153,9 @@
           </Button>
         </section>
 
-        <section v-if="props.useDailyMenu && promoHints.length">
+        <section
+          v-if="!props.staffMode && props.useDailyMenu && promoHints.length"
+        >
           <div class="mb-2 flex items-center gap-2">
             <nuxt-link
               to="/promos"
@@ -489,6 +494,23 @@
                       <ClientOnly><Plus :size="15" /></ClientOnly>
                     </Button>
                   </div>
+                  <Button
+                    v-if="props.staffMode && isLoggedIn"
+                    variant="ghost"
+                    size="sm"
+                    class="shrink-0 px-2 text-[10px]"
+                    :class="
+                      isOut(item.name)
+                        ? 'text-destructive hover:text-destructive'
+                        : 'text-green-700 hover:text-green-800'
+                    "
+                    :title="
+                      isOut(item.name) ? 'Marcar disponible' : 'Marcar agotado'
+                    "
+                    @click.stop="toggleOut(item.name)"
+                  >
+                    {{ isOut(item.name) ? "Disponible" : "Agotado" }}
+                  </Button>
                 </div>
               </Card>
             </div>
@@ -633,7 +655,7 @@
               </p>
             </div>
 
-            <template v-if="mode === 'domicilio'">
+            <template v-if="props.staffMode || mode === 'domicilio'">
               <div class="space-y-1.5">
                 <Label for="c-phone">WhatsApp / Phone</Label>
                 <Input
@@ -646,7 +668,10 @@
 
               <div class="space-y-1.5">
                 <Label for="c-address" class="flex items-center gap-1">
-                  Dirección / Address <span class="text-destructive">*</span>
+                  Dirección / Address
+                  <span v-if="mode === 'domicilio'" class="text-destructive"
+                    >*</span
+                  >
                 </Label>
                 <Input
                   id="c-address"
@@ -898,6 +923,7 @@ import {
   type WeekOverride,
 } from "~/utils/rotation";
 import { MODE_LABEL, type OrderMode } from "~/composables/useWhatsappOrder";
+import usePocketBase from "@common/composables/usePocketbase";
 import { menuPricingConfig } from "~/config/menu-pricing";
 import { priceMenuOrder } from "~/utils/menuPricing";
 import type { PlacedOrder } from "~/utils/comandas";
@@ -909,17 +935,22 @@ const props = withDefaults(
     fetchedCollection?: string;
     dishesField?: "dishes" | "store";
     useDailyMenu?: boolean;
+    staffMode?: boolean;
   }>(),
   {
     fetchedCollection: "menu",
     dishesField: "dishes",
     useDailyMenu: true,
+    staffMode: false,
   },
 );
 
 const { formatCustomerOrder } = useMenuLink();
 const { waLink, isAppleDevice } = useWhatsappOrder();
-const { createItem, fetchCollection } = usePocketBaseCore();
+const { createItem, fetchCollection, updateItem } = usePocketBaseCore();
+const { getMemberByCode } = useMembers();
+const pb = usePocketBase();
+const route = useRoute();
 
 const EMPTY_DISHES: DayDishes = emptyDayDishes();
 const RESTAURANT_WHATSAPP = "6221523259";
@@ -988,6 +1019,9 @@ const active = computed<DayDishes>(() => {
   if (!rec) return EMPTY_DISHES;
 
   const selectedDishes = rec[props.dishesField];
+  if (props.staffMode) {
+    return normalizeDishNames(rec.active as Partial<Record<GroupKey, unknown>>);
+  }
   if (!props.useDailyMenu || props.dishesField !== "dishes") {
     return normalizeDishNames(
       selectedDishes as Partial<Record<GroupKey, unknown>>,
@@ -1151,6 +1185,26 @@ watch(
 
 const soldOut = computed<string[]>(() => record.value?.sold_out ?? []);
 const isOut = (n: string) => soldOut.value.includes(n);
+const isLoggedIn = ref(false);
+
+async function toggleOut(name: string) {
+  if (!props.staffMode || !record.value) return;
+  const next = new Set(soldOut.value);
+  if (next.has(name)) next.delete(name);
+  else {
+    next.add(name);
+    cart[name] = 0;
+  }
+
+  try {
+    await updateItem(props.fetchedCollection, record.value.id, {
+      sold_out: [...next],
+    });
+    record.value.sold_out = [...next];
+  } catch {
+    return;
+  }
+}
 
 const cart = reactive<Record<string, number>>({});
 const mode = ref<OrderMode>("llevar");
@@ -1160,12 +1214,43 @@ const customer = reactive({ name: "", phone: "", address: "" });
 // Código de socio (opcional, texto plano). No se valida aquí: se estampa en el
 // mensaje de WhatsApp para que el staff lo vea y redima al servir.
 const memberCode = ref("");
+const memberLoading = ref(false);
+
+async function loadMemberFromCode(code: string) {
+  const normalized = code.replace(/\s+/g, "").toUpperCase();
+  if (!normalized) return;
+  memberLoading.value = true;
+  try {
+    const member = await getMemberByCode(normalized);
+    if (member) {
+      customer.name = member.name ?? "";
+      customer.phone = member.phone ?? "";
+      customer.address = member.address ?? "";
+    }
+  } finally {
+    memberLoading.value = false;
+  }
+}
 
 const sendingOrder = ref(false);
 const showThankYou = ref(false);
 // Nombre a mostrar en el modal de agradecimiento; se captura antes de
 // limpiar el formulario (resetOrderForm vacía customer.name).
 const thankYouName = ref("");
+
+watch(memberCode, (code) => {
+  if (props.staffMode) loadMemberFromCode(code);
+});
+
+onMounted(() => {
+  isLoggedIn.value = pb.authStore.isValid;
+  if (props.staffMode) {
+    const code = route.query.code;
+    if (typeof code === "string" && code.trim()) {
+      memberCode.value = code.replace(/\s+/g, "").toUpperCase();
+    }
+  }
+});
 
 /* ===== Taquizas: modelo por orden =====
  * Cada orden es una unidad independiente (tacos = 3 piezas, quesadillas = 2).
