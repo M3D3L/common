@@ -355,14 +355,16 @@
             >
 
               <div class="flex flex-row w-full items-center gap-3">
-                  <div v-if="typeof item.image == 'string'" class="mb-2 h-20 overflow-hidden w-20 rounded-full">
+                  <div>
+                    <div v-if="typeof item.image == 'string'" class="mb-2 h-20 overflow-hidden w-20 rounded-full">
                     
                     <img
                     
                     :src="item.image"
                     :alt="item.name"
-                    class="object-cover"
+                    class="object-cover w-full h-full"
                   />  
+                  </div>
                   </div>
                   
                   <p
