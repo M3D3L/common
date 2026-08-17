@@ -380,6 +380,7 @@ export interface PlacedOrder {
 export interface MenuRecord {
   id: string;
   dishes: MenuCatalog | DayDishes; // catálogo completo (legacy o estructurado)
+  store?: MenuCatalog | DayDishes; // catálogo de la tienda, si existe
   active: DayDishes; // selección disponible (lo que ve el cliente)
   sold_out: string[]; // agotados
   whatsapp?: string; // número del negocio (solo dígitos), si existe el campo

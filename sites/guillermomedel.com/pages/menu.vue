@@ -116,6 +116,7 @@
         </section>
 
         <section
+          v-if="props.useDailyMenu"
           class="flex items-center justify-between rounded-lg border border-primary/10 bg-primary/5 px-3 py-2"
           aria-label="Seleccionar día del menú"
         >
@@ -149,7 +150,7 @@
           </Button>
         </section>
 
-        <section v-if="promoHints.length">
+        <section v-if="props.useDailyMenu && promoHints.length">
           <div class="mb-2 flex items-center gap-2">
             <nuxt-link
               to="/promos"
@@ -832,6 +833,19 @@ import type { PlacedOrder } from "~/utils/comandas";
 
 definePageMeta({ layout: "breezy" });
 
+const props = withDefaults(
+  defineProps<{
+    fetchedCollection?: string;
+    dishesField?: "dishes" | "store";
+    useDailyMenu?: boolean;
+  }>(),
+  {
+    fetchedCollection: "menu",
+    dishesField: "dishes",
+    useDailyMenu: true,
+  },
+);
+
 const { formatCustomerOrder } = useMenuLink();
 const { waLink, isAppleDevice } = useWhatsappOrder();
 const { createItem, fetchCollection } = usePocketBaseCore();
@@ -868,10 +882,11 @@ type MenuRecordFull = MenuRecord & {
   rotation_anchor?: string;
   overrides?: Record<string, WeekOverride>;
   active_date?: string;
+  [key: string]: unknown;
 };
 
 const { record, pending, loadError, load } =
-  useLatestMenuRecord<MenuRecordFull>();
+  useLatestMenuRecord<MenuRecordFull>(props.fetchedCollection);
 
 onMounted(load);
 
@@ -901,6 +916,13 @@ const active = computed<DayDishes>(() => {
   const rec = record.value;
   if (!rec) return EMPTY_DISHES;
 
+  const selectedDishes = rec[props.dishesField];
+  if (!props.useDailyMenu || props.dishesField !== "dishes") {
+    return normalizeDishNames(
+      selectedDishes as Partial<Record<GroupKey, unknown>>,
+    );
+  }
+
   const a = normalizeDishNames(
     rec.active as Partial<Record<GroupKey, unknown>>,
   );
@@ -924,7 +946,10 @@ const active = computed<DayDishes>(() => {
 });
 
 const menuSourceCatalog = computed<Partial<Record<GroupKey, unknown>>>(
-  () => (record.value?.dishes ?? {}) as Partial<Record<GroupKey, unknown>>,
+  () =>
+    (record.value?.[props.dishesField] ?? {}) as Partial<
+      Record<GroupKey, unknown>
+    >,
 );
 
 const menuGroups = computed(() => {

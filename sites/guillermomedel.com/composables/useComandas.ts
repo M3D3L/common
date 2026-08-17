@@ -502,11 +502,28 @@ function createComandasStore() {
     autoMenuApplied = false;
     const rec = r as MenuRecordFull;
     menuRecordId.value = r.id;
+    const dishCatalog = normalizeMenuCatalog(
+      r.dishes as Partial<Record<GroupKey, unknown>>,
+    );
+    const storeCatalog = normalizeMenuCatalog(
+      r.store as Partial<Record<GroupKey, unknown>>,
+    );
+    const combinedCatalog = { ...dishCatalog };
+    Object.entries(storeCatalog).forEach(([key, items]) => {
+      const existing = new Map(
+        (combinedCatalog[key] ?? []).map((item) => [item.name, item]),
+      );
+      items.forEach((item) => {
+        if (!existing.has(item.name)) existing.set(item.name, item);
+      });
+      combinedCatalog[key] = [...existing.values()];
+    });
     catalog.value = catalogToDayDishes(
-      normalizeMenuCatalog(r.dishes as Partial<Record<GroupKey, unknown>>),
+      combinedCatalog,
     );
     syncMenuGroupsFromData({
       ...(r.dishes as Record<string, unknown>),
+      ...(r.store as Record<string, unknown>),
       ...(r.active as Record<string, unknown>),
     });
     soldOut.value = r.sold_out ?? [];

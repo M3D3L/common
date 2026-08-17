@@ -1,4 +1,4 @@
-export function useLatestMenuRecord<T>() {
+export function useLatestMenuRecord<T>(collection = "menu") {
   const { fetchCollection } = usePocketBaseCore();
 
   const record = ref<T | null>(null);
@@ -10,7 +10,7 @@ export function useLatestMenuRecord<T>() {
     loadError.value = false;
     try {
       const res = await fetchCollection(
-        "menu",
+        collection,
         1,
         1,
         "",
