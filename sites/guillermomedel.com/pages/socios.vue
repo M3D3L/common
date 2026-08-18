@@ -87,7 +87,7 @@
           <Users :size="16" class="shrink-0" />
           <span>Todos los socios</span>
           <Badge variant="secondary" class="tabular-nums">
-            {{ allMembers.length }}
+            {{ filteredMembers.length }}
           </Badge>
         </button>
         <div class="flex items-center gap-1">
@@ -193,9 +193,15 @@
           >
             No hay socios registrados.
           </p>
+          <p
+            v-else-if="!filteredMembers.length"
+            class="text-sm text-muted-foreground"
+          >
+            No hay coincidencias para "{{ term.trim() }}".
+          </p>
           <div v-else class="max-h-[28rem] space-y-1.5 overflow-y-auto">
             <div
-              v-for="c in allMembers"
+              v-for="c in filteredMembers"
               :key="c.id"
               class="flex items-center gap-2 p-2.5 border rounded-lg border-border bg-card"
             >
@@ -223,20 +229,60 @@
       <!-- Cabecera de la ficha -->
       <div class="p-5 border-b border-border bg-muted/30 space-y-4">
         <div class="flex items-start justify-between gap-3">
-          <div class="space-y-1">
-            <div class="flex items-center gap-2">
-              <h3 class="text-lg font-bold leading-tight">{{ member.name }}</h3>
-              <Badge
-                v-if="member.status !== 'active'"
-                variant="outline"
-                class="uppercase text-[10px]"
+          <div class="min-w-0 flex-1">
+            <div v-if="!editingIdentity" class="space-y-1">
+              <div class="flex items-center gap-2">
+                <h3 class="text-lg font-bold leading-tight">
+                  {{ member.name }}
+                </h3>
+                <Badge
+                  v-if="member.status !== 'active'"
+                  variant="outline"
+                  class="uppercase text-[10px]"
+                >
+                  {{ statusLabel(member.status) }}
+                </Badge>
+              </div>
+              <p class="text-sm text-muted-foreground tabular-nums">
+                {{ member.phone }}
+              </p>
+              <button
+                class="text-xs font-semibold text-muted-foreground hover:text-foreground"
+                @click="startEditIdentity"
               >
-                {{ statusLabel(member.status) }}
-              </Badge>
+                Editar nombre y teléfono
+              </button>
             </div>
-            <p class="text-sm text-muted-foreground tabular-nums">
-              {{ member.phone }}
-            </p>
+            <div v-else class="space-y-2">
+              <Input
+                v-model="nameDraft"
+                :disabled="busy"
+                placeholder="Nombre completo"
+              />
+              <Input
+                v-model="phoneDraft"
+                :disabled="busy"
+                type="tel"
+                placeholder="10 dígitos"
+              />
+              <div class="flex gap-2">
+                <Button
+                  size="sm"
+                  :disabled="busy || !nameDraft.trim() || !phoneDraft.trim()"
+                  @click="saveIdentity"
+                >
+                  Guardar datos
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  :disabled="busy"
+                  @click="editingIdentity = false"
+                >
+                  Cancelar
+                </Button>
+              </div>
+            </div>
           </div>
           <Badge
             class="tabular-nums bg-primary/10 text-primary hover:bg-primary/10"
@@ -536,8 +582,31 @@ const toastMsg = ref("");
 const allMembers = ref<Member[]>([]);
 const membersDrawerOpen = ref(true);
 const deleting = ref(false);
+const lastSearchTerm = ref("");
+
+const listFilterTerm = computed(() => {
+  const live = term.value.trim();
+  if (live) return live;
+  return searched.value ? lastSearchTerm.value.trim() : "";
+});
+
+const filteredMembers = computed(() => {
+  const q = listFilterTerm.value.toLocaleLowerCase("es-MX");
+  if (!q) return allMembers.value;
+
+  return allMembers.value.filter((m) => {
+    const name = (m.name ?? "").toLocaleLowerCase("es-MX");
+    const code = (m.member_code ?? "").toLocaleLowerCase("es-MX");
+    const phone = (m.phone ?? "").toLocaleLowerCase("es-MX");
+    return name.includes(q) || code.includes(q) || phone.includes(q);
+  });
+});
 
 const history = ref<Redemption[]>([]);
+
+const editingIdentity = ref(false);
+const nameDraft = ref("");
+const phoneDraft = ref("");
 
 const editingAddress = ref(false);
 const addressDraft = ref("");
@@ -617,10 +686,12 @@ async function refresh() {
 
 // --- búsqueda ---
 async function runSearch() {
-  if (!term.value.trim()) return;
+  const q = term.value.trim();
+  if (!q) return;
   searched.value = true;
+  lastSearchTerm.value = q;
   adding.value = false;
-  await checkIn.lookup(term.value.trim());
+  await checkIn.lookup(q);
 }
 async function pick(c: Member) {
   await checkIn.select(c);
@@ -734,6 +805,38 @@ function sendSummary() {
   lines.push("", "¡Gracias por ser parte de Breezy! 🌊");
 
   openWhatsApp(lines.join("\n"), member.value.phone);
+}
+
+function startEditIdentity() {
+  nameDraft.value = member.value?.name ?? "";
+  phoneDraft.value = member.value?.phone ?? "";
+  editingIdentity.value = true;
+}
+async function saveIdentity() {
+  if (!member.value) return;
+
+  const name = nameDraft.value.trim();
+  const phone = phoneDraft.value.trim();
+  if (!name || !phone) {
+    toast("Nombre y teléfono son obligatorios");
+    return;
+  }
+
+  busy.value = true;
+  try {
+    member.value = await members.updateMember(member.value.id, {
+      name,
+      phone,
+    });
+    editingIdentity.value = false;
+    toast("Datos actualizados ✅");
+    await loadMembers();
+  } catch (e: any) {
+    console.error("identity save failed:", e);
+    toast(e?.message ?? "No se pudieron actualizar los datos");
+  } finally {
+    busy.value = false;
+  }
 }
 
 // --- dirección en archivo (confirmada a mano) ---
