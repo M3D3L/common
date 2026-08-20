@@ -6,14 +6,23 @@
 </template>
 
 <script lang="ts" setup>
-const logoSrc =
-  "https://cdn.shopify.com/oxygen-v2/57245/154448/316060/3919871/assets/breezy-BBRcmAK6.png";
+type NavLink = { to: string; label: string };
 
-const links = [
-  { to: "/menu", label: "Menú" },
-  { to: "/menu-semanal", label: "Calendario" },
-  { to: "/promos", label: "Promos" },
-];
+const runtimeConfig = useRuntimeConfig();
+const business = (runtimeConfig.public?.business ?? {}) as {
+  logoUrl?: string;
+  nav?: { publicLinks?: NavLink[] };
+};
+
+const logoSrc = business.logoUrl || "";
+
+const links: NavLink[] = business.nav?.publicLinks?.length
+  ? business.nav.publicLinks
+  : [
+      { to: "/menu", label: "Menú" },
+      { to: "/menu-semanal", label: "Calendario" },
+      { to: "/promos", label: "Promos" },
+    ];
 </script>
 
 <style></style>

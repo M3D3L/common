@@ -51,21 +51,40 @@ export const MODE_LABEL: Record<OrderMode, string> = {
   domicilio: "A domicilio",
 };
 
-// Configuración del mensaje de menú (ajusta precios, horario, persona aquí).
-const MENU_BROADCAST = {
-  greeting:
-    "¡Hola! ¡Buen día! ☀️🌊\nAquí Breezy 🦭 compartiéndote el *Menú del Día* de *Breezy Market* 🌵🌮",
-  price: {
-    one: "$120 MXN",
-    two: "$180 MXN",
-  },
-  cta: "🛒 *¡HAZ TU PEDIDO AQUÍ!*",
-  orderUrl: "https://breezy-meals.com/menu",
-  cutoff: "⏰ _Ordena antes de las 4:00 PM para recibir tu comida calientita._",
-  footer: "🌊 ¡Buen provecho desde San Carlos! 🦭",
-};
-
 export function useWhatsappOrder() {
+  const runtimeConfig = useRuntimeConfig();
+  const business = (runtimeConfig.public?.business ?? {}) as {
+    businessName?: string;
+    menuUrl?: string;
+    menuBroadcast?: {
+      greeting?: string;
+      priceOne?: string;
+      priceTwo?: string;
+      cta?: string;
+      cutoff?: string;
+      footer?: string;
+    };
+  };
+
+  // Configuración del mensaje de menú (ajusta precios, horario, persona aquí).
+  const menuBroadcast = {
+    greeting:
+      business.menuBroadcast?.greeting ||
+      `¡Hola! ¡Buen día! ☀️🌊\nAquí Breezy 🦭 compartiéndote el *Menú del Día* de *${business.businessName || "Breezy Market"}* 🌵🌮`,
+    price: {
+      one: business.menuBroadcast?.priceOne || "$120 MXN",
+      two: business.menuBroadcast?.priceTwo || "$180 MXN",
+    },
+    cta: business.menuBroadcast?.cta || "🛒 *¡HAZ TU PEDIDO AQUÍ!*",
+    orderUrl: business.menuUrl || "https://breezy-meals.com/menu",
+    cutoff:
+      business.menuBroadcast?.cutoff ||
+      "⏰ _Ordena antes de las 4:00 PM para recibir tu comida calientita._",
+    footer:
+      business.menuBroadcast?.footer ||
+      "🌊 ¡Buen provecho desde San Carlos! 🦭",
+  };
+
   // === FORMATO DE COCINA (Limpio de datos personales) ===
   function formatOrder({
     orderNumber,
@@ -159,7 +178,7 @@ export function useWhatsappOrder() {
     const lines: string[] = [];
 
     // Encabezado
-    lines.push(MENU_BROADCAST.greeting, "", "━━━━━━━━━━━━━━━━━━━━");
+    lines.push(menuBroadcast.greeting, "", "━━━━━━━━━━━━━━━━━━━━");
 
     if (date) {
       lines.push(`📅 *${date}*`, "");
@@ -184,19 +203,19 @@ export function useWhatsappOrder() {
       "💰 *PRECIOS*",
       "",
       "🍽️ 1 guiso + 2 guarniciones + bebida",
-      `*${MENU_BROADCAST.price.one}*`,
+      `*${menuBroadcast.price.one}*`,
       "",
       "🍽️🍽️ 2 guisos + 2 guarniciones + bebida",
-      `*${MENU_BROADCAST.price.two}*`,
+      `*${menuBroadcast.price.two}*`,
       "",
       "━━━━━━━━━━━━━━━━━━━━",
       "",
-      MENU_BROADCAST.cta,
-      MENU_BROADCAST.orderUrl,
+      menuBroadcast.cta,
+      menuBroadcast.orderUrl,
       "",
-      MENU_BROADCAST.cutoff,
+      menuBroadcast.cutoff,
       "",
-      MENU_BROADCAST.footer,
+      menuBroadcast.footer,
     );
 
     return lines.join("\n");

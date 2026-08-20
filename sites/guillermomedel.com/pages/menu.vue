@@ -946,18 +946,26 @@ const props = withDefaults(
 );
 
 const { formatCustomerOrder } = useMenuLink();
-const { waLink, isAppleDevice } = useWhatsappOrder();
+const { waLink, isAppleDevice, formatSoldOut } = useWhatsappOrder();
 const { createItem, fetchCollection, updateItem } = usePocketBaseCore();
 const { getMemberByCode } = useMembers();
 const pb = usePocketBase();
 const route = useRoute();
+const runtimeConfig = useRuntimeConfig();
+const businessConfig = (runtimeConfig.public?.business ?? {}) as {
+  whatsappNumber?: string;
+  deliveryFee?: number;
+  logoUrl?: string;
+};
 
 const EMPTY_DISHES: DayDishes = emptyDayDishes();
-const RESTAURANT_WHATSAPP = "6221523259";
-const DELIVERY_FEE = 50;
+const RESTAURANT_WHATSAPP = String(
+  businessConfig.whatsappNumber || runtimeConfig.public.whatsappNumber || "",
+);
+const DELIVERY_FEE = Number(businessConfig.deliveryFee ?? 50);
+const DELIVERY_FEE_LABEL = "Cargo por domicilio";
 // Mismo logo que el header (layouts/breezy.vue), para la marca en el modal.
-const LOGO_SRC =
-  "https://cdn.shopify.com/oxygen-v2/57245/154448/316060/3919871/assets/breezy-BBRcmAK6.png";
+const LOGO_SRC = businessConfig.logoUrl || "";
 // Misma colección/campo que usa el tablero de cocina (useComandas.ts): un
 // registro por orden en `data`, existe mientras esté activa.
 const COMANDAS_COLLECTION = "comandas";
@@ -1189,8 +1197,15 @@ const isLoggedIn = ref(false);
 
 async function toggleOut(name: string) {
   if (!props.staffMode || !record.value) return;
+
+  const wa =
+    typeof window !== "undefined" && !isAppleDevice()
+      ? window.open("", "_blank")
+      : null;
+
   const next = new Set(soldOut.value);
-  if (next.has(name)) next.delete(name);
+  const nowAvailable = next.has(name);
+  if (nowAvailable) next.delete(name);
   else {
     next.add(name);
     cart[name] = 0;
@@ -1202,7 +1217,21 @@ async function toggleOut(name: string) {
     });
     record.value.sold_out = [...next];
   } catch {
+    wa?.close();
     return;
+  }
+
+  const text = formatSoldOut(name, nowAvailable);
+  const url = waLink(text);
+
+  if (typeof window !== "undefined") {
+    if (isAppleDevice()) {
+      window.location.href = url;
+    } else if (wa) {
+      wa.location.href = url;
+    } else {
+      window.open(url, "_blank", "noopener");
+    }
   }
 }
 
@@ -1548,7 +1577,7 @@ const pricingSummaryWithDelivery = computed(() => {
       {
         kind: "item" as const,
         code: "delivery-fee",
-        label: "Cargo por domicilio",
+        label: DELIVERY_FEE_LABEL,
         qty: 1,
         unitPrice: DELIVERY_FEE,
         total: DELIVERY_FEE,
@@ -1655,7 +1684,7 @@ function buildNote() {
     pieces.push(`Taquiza: ${summary}`);
   }
   if (mode.value === "domicilio" && itemCount.value > 0) {
-    pieces.push(`Cargo por domicilio: ${money(DELIVERY_FEE)}`);
+    pieces.push(`${DELIVERY_FEE_LABEL}: ${money(DELIVERY_FEE)}`);
   }
   if (note.value.trim()) pieces.push(note.value.trim());
   return pieces.join(" · ");

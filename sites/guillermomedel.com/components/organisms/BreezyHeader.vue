@@ -26,15 +26,15 @@
         <p
           class="mb-0.5 text-xs font-bold uppercase tracking-widest text-primary transition-colors duration-200"
         >
-          Comida corrida
+          {{ headerCopy.eyebrow }}
         </p>
         <h1
           class="font-heading text-xl sm:text-2xl font-extrabold tracking-tight text-foreground transition-all duration-200"
         >
-          Breezy Meals
+          {{ headerCopy.title }}
         </h1>
         <p class="text-sm font-medium truncate text-muted-foreground">
-          Menú de hoy / Today's Menu
+          {{ headerCopy.subtitle }}
         </p>
       </div>
 
@@ -58,9 +58,9 @@
           class="w-72 sm:w-80 transition-transform duration-300"
         >
           <SheetHeader class="text-left border-b pb-4 mb-4">
-            <SheetTitle class="font-heading text-xl"
-              >Menú de Navegación</SheetTitle
-            >
+            <SheetTitle class="font-heading text-xl">{{
+              headerCopy.menuTitle
+            }}</SheetTitle>
           </SheetHeader>
           <nav class="flex flex-col gap-2">
             <Button
@@ -122,6 +122,19 @@ withDefaults(
 
 const route = useRoute();
 const open = ref(false);
+
+const runtimeConfig = useRuntimeConfig();
+const business = (runtimeConfig.public?.business ?? {}) as {
+  brandName?: string;
+  header?: { eyebrow?: string; subtitle?: string; menuTitle?: string };
+};
+
+const headerCopy = {
+  eyebrow: business.header?.eyebrow || "Comida corrida",
+  title: business.brandName || "Breezy Meals",
+  subtitle: business.header?.subtitle || "Menú de hoy / Today's Menu",
+  menuTitle: business.header?.menuTitle || "Menú de Navegación",
+};
 
 const pb = usePocketBase();
 
