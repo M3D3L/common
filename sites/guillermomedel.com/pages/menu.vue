@@ -96,11 +96,11 @@
 
     <template v-else>
       <!-- Hero -->
-      <main class="mx-auto max-w-lg space-y-8 px-5 pb-44 pt-6">
+      <main ref="menuMainEl" class="mx-auto max-w-lg space-y-8 px-5 pb-44 pt-6">
         <!-- Instrucciones -->
         <section
           v-if="!props.staffMode"
-          class="rounded-lg bg-primary/5 border border-primary/10 p-4"
+          class="js-reveal-item rounded-lg bg-primary/5 border border-primary/10 p-4"
         >
           <h3 class="font-bold text-sm mb-2 flex items-center gap-2">
             <span>💡</span> How to order / Cómo pedir
@@ -120,7 +120,7 @@
 
         <section
           v-if="props.useDailyMenu"
-          class="flex items-center justify-between rounded-lg border border-primary/10 bg-primary/5 px-3 py-2"
+          class="js-reveal-item flex items-center justify-between rounded-lg border border-primary/10 bg-primary/5 px-3 py-2"
           aria-label="Seleccionar día del menú"
         >
           <Button
@@ -177,7 +177,7 @@
             <div
               v-for="promo in promoHints"
               :key="promo.id"
-              class="rounded-md border border-primary/10 bg-background/80 p-2"
+              class="js-reveal-item rounded-md border border-primary/10 bg-background/80 p-2"
             >
               <div class="flex items-start justify-between gap-3">
                 <div class="min-w-0 flex-1">
@@ -244,7 +244,7 @@
           v-show="showGroupSection(group.key)"
           :key="group.key"
           :ref="(el) => setSectionRef(group.key, el)"
-          class="scroll-mt-16"
+          class="js-reveal-section scroll-mt-16"
         >
           <!-- Encabezado = botón que abre/cierra el cajón -->
           <button
@@ -323,7 +323,7 @@
               <div
                 v-for="(order, idx) in taquizaOrders"
                 :key="order.id"
-                class="rounded-md border p-2"
+                class="js-reveal-item rounded-md border p-2"
               >
                 <div class="mb-2 flex items-center justify-between gap-2">
                   <div>
@@ -419,7 +419,7 @@
               <Card
                 v-for="item in groupItems(group.key)"
                 :key="item.name"
-                class="flex items-center gap-3 p-3 transition-colors"
+                class="js-reveal-item flex items-center gap-3 p-3 transition-colors"
                 :class="[
                   isOut(item.name) && 'opacity-60',
                   cart[item.name] > 0 && 'bg-primary/5 ring-1 ring-primary/40',
@@ -551,7 +551,7 @@
           </Tabs>
         </section>
 
-        <section v-if="orderSummaryLines.length">
+        <section v-if="orderSummaryLines.length" class="js-reveal-item">
           <h2
             class="mb-2 text-xs font-bold uppercase tracking-widest text-muted-foreground"
           >
@@ -603,7 +603,7 @@
           </Card>
         </section>
 
-        <section>
+        <section class="js-reveal-item">
           <h2
             class="mb-2 text-xs font-bold uppercase tracking-widest text-muted-foreground"
           >
@@ -1191,6 +1191,79 @@ watch(
 const soldOut = computed<string[]>(() => record.value?.sold_out ?? []);
 const isOut = (n: string) => soldOut.value.includes(n);
 const isLoggedIn = ref(false);
+const menuMainEl = ref<HTMLElement | null>(null);
+
+type GsapRuntime = {
+  gsap: any;
+  ScrollTrigger: any;
+};
+
+let gsapRuntime: GsapRuntime | null = null;
+const revealTriggers: any[] = [];
+let revealRaf: number | null = null;
+
+async function getGsapRuntime(): Promise<GsapRuntime> {
+  if (gsapRuntime) return gsapRuntime;
+
+  const [{ gsap }, { ScrollTrigger }] = await Promise.all([
+    import("gsap"),
+    import("gsap/ScrollTrigger"),
+  ]);
+
+  gsap.registerPlugin(ScrollTrigger);
+  gsapRuntime = { gsap, ScrollTrigger };
+  return gsapRuntime;
+}
+
+function motionReduced(): boolean {
+  if (typeof window === "undefined") return true;
+  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
+
+async function initScrollReveal() {
+  if (!import.meta.client || !menuMainEl.value || motionReduced()) return;
+
+  const { gsap, ScrollTrigger } = await getGsapRuntime();
+  const nodes = menuMainEl.value.querySelectorAll<HTMLElement>(
+    ".js-reveal-item, .js-reveal-section",
+  );
+
+  nodes.forEach((el) => {
+    if (el.dataset.revealInit === "1") return;
+    if (el.offsetParent === null) return;
+
+    el.dataset.revealInit = "1";
+    const tween = gsap.fromTo(
+      el,
+      { autoAlpha: 0, y: 12 },
+      {
+        autoAlpha: 1,
+        y: 0,
+        duration: 0.32,
+        ease: "power1.out",
+        clearProps: "opacity,visibility,transform",
+        scrollTrigger: {
+          trigger: el,
+          start: "top 96%",
+          once: true,
+        },
+      },
+    );
+
+    if (tween.scrollTrigger) revealTriggers.push(tween.scrollTrigger);
+  });
+
+  ScrollTrigger.refresh();
+}
+
+function scheduleRevealRefresh() {
+  if (!import.meta.client) return;
+  if (revealRaf) cancelAnimationFrame(revealRaf);
+  revealRaf = requestAnimationFrame(() => {
+    void initScrollReveal();
+    revealRaf = null;
+  });
+}
 
 async function toggleOut(name: string) {
   if (!props.staffMode || !record.value) return;
@@ -1276,6 +1349,27 @@ onMounted(() => {
       memberCode.value = code.replace(/\s+/g, "").toUpperCase();
     }
   }
+
+  scheduleRevealRefresh();
+});
+
+watch(
+  () => [
+    selectedDate.value,
+    visibleMenuGroups.value.length,
+    openGroups.value.size,
+  ],
+  async () => {
+    await nextTick();
+    scheduleRevealRefresh();
+  },
+  { flush: "post" },
+);
+
+onBeforeUnmount(() => {
+  if (revealRaf) cancelAnimationFrame(revealRaf);
+  revealTriggers.forEach((trigger) => trigger?.kill?.());
+  revealTriggers.length = 0;
 });
 
 /* ===== Taquizas: modelo por orden =====
@@ -1305,6 +1399,15 @@ interface TaquizaOrder {
 }
 
 const taquizaOrders = ref<TaquizaOrder[]>([]);
+
+watch(
+  () => taquizaOrders.value.length,
+  async () => {
+    await nextTick();
+    scheduleRevealRefresh();
+  },
+  { flush: "post" },
+);
 
 let taquizaSeq = 0;
 function nextTaquizaId() {
