@@ -596,7 +596,7 @@
               <div class="flex items-center justify-between gap-3">
                 <p class="font-bold uppercase tracking-wide">Total</p>
                 <p class="text-lg font-bold tabular-nums">
-                  {{ money(pricingSummaryWithDelivery.total) }}
+                  {{ money(pricingSummary.total) }}
                 </p>
               </div>
             </div>
@@ -790,7 +790,7 @@
               v-if="orderSummaryLines.length"
               class="font-semibold tabular-nums"
             >
-              {{ money(pricingSummaryWithDelivery.total) }}
+              {{ money(pricingSummary.total) }}
             </span>
           </div>
 
@@ -954,7 +954,6 @@ const route = useRoute();
 const runtimeConfig = useRuntimeConfig();
 const businessConfig = (runtimeConfig.public?.business ?? {}) as {
   whatsappNumber?: string;
-  deliveryFee?: number;
   logoUrl?: string;
 };
 
@@ -962,8 +961,6 @@ const EMPTY_DISHES: DayDishes = emptyDayDishes();
 const RESTAURANT_WHATSAPP = String(
   businessConfig.whatsappNumber || runtimeConfig.public.whatsappNumber || "",
 );
-const DELIVERY_FEE = Number(businessConfig.deliveryFee ?? 50);
-const DELIVERY_FEE_LABEL = "Cargo por domicilio";
 // Mismo logo que el header (layouts/breezy.vue), para la marca en el modal.
 const LOGO_SRC = businessConfig.logoUrl || "";
 // Misma colección/campo que usa el tablero de cocina (useComandas.ts): un
@@ -1566,30 +1563,7 @@ const pricingSummary = computed(() => {
   });
 });
 
-const pricingSummaryWithDelivery = computed(() => {
-  const base = pricingSummary.value;
-  const shouldAddDelivery = mode.value === "domicilio" && itemCount.value > 0;
-  if (!shouldAddDelivery) return base;
-
-  return {
-    lines: [
-      ...base.lines,
-      {
-        kind: "item" as const,
-        code: "delivery-fee",
-        label: DELIVERY_FEE_LABEL,
-        qty: 1,
-        unitPrice: DELIVERY_FEE,
-        total: DELIVERY_FEE,
-      },
-    ],
-    total: base.total + DELIVERY_FEE,
-  };
-});
-
-const orderSummaryLines = computed(
-  () => pricingSummaryWithDelivery.value.lines,
-);
+const orderSummaryLines = computed(() => pricingSummary.value.lines);
 
 const itemCount = computed(() => cartItems.value.length);
 const totalQty = computed(() =>
@@ -1682,9 +1656,6 @@ function buildNote() {
       .filter(Boolean)
       .join(", ");
     pieces.push(`Taquiza: ${summary}`);
-  }
-  if (mode.value === "domicilio" && itemCount.value > 0) {
-    pieces.push(`${DELIVERY_FEE_LABEL}: ${money(DELIVERY_FEE)}`);
   }
   if (note.value.trim()) pieces.push(note.value.trim());
   return pieces.join(" · ");

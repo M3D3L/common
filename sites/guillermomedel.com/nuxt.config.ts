@@ -98,7 +98,6 @@ export default defineNuxtConfig({
           "6221523259",
         menuUrl:
           process.env.BUSINESS_MENU_URL || "https://breezy-meals.com/menu",
-        deliveryFee: Number(process.env.BUSINESS_DELIVERY_FEE || 50),
         header: {
           eyebrow: process.env.BUSINESS_HEADER_EYEBROW || "Comida corrida",
           subtitle:
@@ -128,6 +127,7 @@ export default defineNuxtConfig({
             { to: "/menu", label: "Menú" },
             { to: "/menu-semanal", label: "Calendario" },
             { to: "/promos", label: "Promos" },
+            { to: "/tienda", label: "Tienda" },
           ],
           staffLinks: [
             { to: "/inicio", label: "🕒" },

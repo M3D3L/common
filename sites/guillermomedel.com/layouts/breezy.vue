@@ -22,6 +22,7 @@ const links: NavLink[] = business.nav?.publicLinks?.length
       { to: "/menu", label: "Menú" },
       { to: "/menu-semanal", label: "Calendario" },
       { to: "/promos", label: "Promos" },
+      { to: "/tienda", label: "Tienda" },
     ];
 </script>
 
