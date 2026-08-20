@@ -66,8 +66,12 @@ if (!links.length) {
 
 const route = useRoute();
 
-const isMenuPage = computed(() => route.path === "/menu");
-const isStorePage = computed(() => route.path === "/tienda");
+const canonicalPath = computed(() =>
+  route.path.length > 1 ? route.path.replace(/\/+$/, "") : route.path,
+);
+
+const isMenuPage = computed(() => canonicalPath.value === "/menu");
+const isStorePage = computed(() => canonicalPath.value === "/tienda");
 const showMenuStoreSwitcher = computed(
   () => isMenuPage.value || isStorePage.value,
 );
