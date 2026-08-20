@@ -627,8 +627,8 @@
             </div>
 
             <!-- Código de socio (opcional). Texto plano: se estampa en el
-                 mensaje de WhatsApp; el staff valida y redime al servir. -->
-            <div class="space-y-1.5">
+                mensaje de WhatsApp; el staff valida y redime al servir. -->
+            <div v-if="props.showMemberCode" class="space-y-1.5">
               <Label for="c-code"
                 >Código de socio / Member code (opcional)</Label
               >
@@ -928,12 +928,14 @@ const props = withDefaults(
     dishesField?: "dishes" | "store";
     useDailyMenu?: boolean;
     staffMode?: boolean;
+    showMemberCode?: boolean;
   }>(),
   {
     fetchedCollection: "menu",
     dishesField: "dishes",
     useDailyMenu: true,
     staffMode: false,
+    showMemberCode: true,
   },
 );
 

@@ -3,6 +3,7 @@
     fetched-collection="menu"
     dishes-field="store"
     :use-daily-menu="false"
+    :show-member-code="false"
   />
 </template>
 
