@@ -100,9 +100,7 @@ export default defineNuxtConfig({
           process.env.BUSINESS_MENU_URL || "https://breezy-meals.com/menu",
         header: {
           eyebrow: process.env.BUSINESS_HEADER_EYEBROW || "Comida corrida",
-          subtitle:
-            process.env.BUSINESS_HEADER_SUBTITLE ||
-            "Menú de hoy / Today's Menu",
+          subtitle: process.env.BUSINESS_HEADER_SUBTITLE || "",
           menuTitle:
             process.env.BUSINESS_HEADER_MENU_TITLE || "Menú de Navegación",
         },

@@ -1,5 +1,6 @@
 <template>
   <Card
+    data-top-stack="header"
     class="sticky top-0 z-50 rounded-none border-x-0 border-t-0 border-b/60 bg-background/95 backdrop-blur-md shadow-xs transition-all duration-300"
   >
     <Head>
@@ -132,7 +133,7 @@ const business = (runtimeConfig.public?.business ?? {}) as {
 const headerCopy = {
   eyebrow: business.header?.eyebrow || "Comida corrida",
   title: business.brandName || "Breezy Meals",
-  subtitle: business.header?.subtitle || "Menú de hoy / Today's Menu",
+  subtitle: business.header?.subtitle || "",
   menuTitle: business.header?.menuTitle || "Menú de Navegación",
 };
 

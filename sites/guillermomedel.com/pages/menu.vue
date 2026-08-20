@@ -202,40 +202,32 @@
              Cada chip abre su cajón y hace scroll hacia él. "Todo" expande o
              colapsa todo. El badge conserva el conteo del carrito aunque el
              cajón esté cerrado, para que el usuario nunca pierda su pedido. -->
-        <div
-          class="sticky top-0 z-20 -mx-5 border-b border-border bg-background/95 px-5 py-2 backdrop-blur"
-        >
+        <div class="-mx-5 border-b border-border bg-background/95 px-5 py-2">
           <div class="flex gap-2 overflow-x-auto pb-0.5">
-            <button
+            <Button
               type="button"
-              class="shrink-0 rounded-full border px-3 py-1.5 text-xs font-bold transition-colors"
-              :class="
-                allGroupsOpen
-                  ? 'border-primary bg-primary text-primary-foreground'
-                  : 'border-border text-muted-foreground hover:bg-muted'
-              "
+              size="sm"
+              class="h-8 shrink-0 rounded-full px-3 text-xs font-bold"
+              :variant="allGroupsOpen ? 'default' : 'outline'"
               @click="toggleAllGroups"
             >
               Todo / All
-            </button>
+            </Button>
 
-            <button
+            <Button
               v-for="group in visibleMenuGroups"
               :key="`chip-${group.key}`"
               type="button"
-              class="shrink-0 rounded-full border px-3 py-1.5 text-xs font-bold transition-colors"
-              :class="
-                isGroupOpen(group.key)
-                  ? 'border-primary bg-primary text-primary-foreground'
-                  : 'border-border text-muted-foreground hover:bg-muted'
-              "
+              size="sm"
+              class="h-8 shrink-0 rounded-full px-3 text-xs font-bold"
+              :variant="isGroupOpen(group.key) ? 'default' : 'outline'"
               @click="focusGroup(group.key)"
             >
               {{ group.label }}
               <span v-if="groupCartCount(group.key)" class="ml-1 tabular-nums"
                 >· {{ groupCartCount(group.key) }}</span
               >
-            </button>
+            </Button>
           </div>
         </div>
 
@@ -1160,6 +1152,38 @@ function setSectionRef(key: string, el: unknown) {
   if (el instanceof HTMLElement) sectionEls[key] = el;
 }
 
+function getHeaderStackOffsetPx(): number {
+  if (typeof window === "undefined") return 0;
+
+  let offset = 0;
+  const stackEls = document.querySelectorAll<HTMLElement>("[data-top-stack]");
+
+  stackEls.forEach((el) => {
+    const rect = el.getBoundingClientRect();
+    // Count only visible top-stack elements currently attached near the top.
+    if (rect.height <= 0) return;
+    if (rect.bottom <= 0) return;
+    if (rect.top >= 220) return;
+    offset = Math.max(offset, rect.bottom);
+  });
+
+  return Math.ceil(offset);
+}
+
+function scrollGroupIntoView(key: GroupKey, behavior: ScrollBehavior) {
+  if (typeof window === "undefined") return;
+  const section = sectionEls[key];
+  if (!section) return;
+
+  const offset = getHeaderStackOffsetPx() + 20;
+  const targetY = Math.max(
+    0,
+    window.scrollY + section.getBoundingClientRect().top - offset,
+  );
+
+  window.scrollTo({ top: targetY, behavior });
+}
+
 // Chip: abre el cajón (si estaba cerrado) y hace scroll suave hacia él.
 async function focusGroup(key: GroupKey) {
   if (!openGroups.value.has(key)) {
@@ -1167,8 +1191,18 @@ async function focusGroup(key: GroupKey) {
     next.add(key);
     openGroups.value = next;
   }
+
   await nextTick();
-  sectionEls[key]?.scrollIntoView({ behavior: "smooth", block: "start" });
+  await new Promise<void>((resolve) =>
+    requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+  );
+
+  scrollGroupIntoView(key, "smooth");
+
+  // Correct once more after layout settles to avoid the "second click" effect.
+  window.setTimeout(() => {
+    scrollGroupIntoView(key, "smooth");
+  }, 140);
 }
 
 // Abre el primer grupo con platillos la primera vez que carga el menú.

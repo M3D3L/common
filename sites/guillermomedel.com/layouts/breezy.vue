@@ -4,6 +4,7 @@
 
     <div
       v-if="showMenuStoreSwitcher"
+      data-top-stack="switcher"
       class="sticky top-[76px] z-40 border-b border-border bg-background/95 px-4 py-2 backdrop-blur"
     >
       <div
