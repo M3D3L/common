@@ -14,6 +14,7 @@ export interface FormatOrderArgs {
   cart: Cart;
   mode: OrderMode;
   dishes: DayDishes; // menú del día agrupado (antes: guisos/sides/bebidas)
+  customer?: Customer;
   taquizaByKind?: {
     tacos?: Record<string, number>;
     quesadillas?: Record<string, number>;
@@ -91,6 +92,7 @@ export function useWhatsappOrder() {
     cart,
     mode,
     dishes,
+    customer,
     taquizaByKind,
     note,
     fulfillDate,
@@ -168,6 +170,19 @@ export function useWhatsappOrder() {
     if (fulfillTime) when.push(`🕒 ${fulfillTime}`);
     if (when.length) {
       lines.push("", `⏱️ Entregar: ${when.join(" · ")}`);
+    }
+
+    if (mode === "domicilio" && customer) {
+      const name = customer.name?.trim();
+      const phone = customer.phone?.trim();
+      const address = customer.address?.trim();
+
+      if (name || phone || address) {
+        lines.push("", "🚀 Datos de entrega");
+        if (name) lines.push(`• Cliente: ${name}`);
+        if (phone) lines.push(`• WhatsApp: ${phone}`);
+        if (address) lines.push(`• Dirección: ${address}`);
+      }
     }
 
     return lines.join("\n");

@@ -1883,7 +1883,10 @@ async function sendOrder() {
   };
   const finalNote = [buildNote(), memberTag].filter(Boolean).join(" · ");
 
+  const number = await nextComandaNumber();
+
   const text = formatCustomerOrder({
+    orderNumber: number,
     name: customer.name,
     cart: { ...cart },
     mode: mode.value,
@@ -1894,8 +1897,6 @@ async function sendOrder() {
     address: customer.address,
     fulfillDate: selectedDate.value,
   });
-
-  const number = await nextComandaNumber();
   await createComanda(number, finalNote, snapshotTaquizaByKind, code);
 
   const url = waLink(text, RESTAURANT_WHATSAPP);

@@ -306,6 +306,7 @@ function createComandasStore() {
       cart,
       mode: mode.value,
       dishes: cloneDishes(today),
+      customer: mode.value === "domicilio" ? customer : undefined,
       taquizaByKind: {
         tacos: { ...taquizaByKind.tacos },
         quesadillas: { ...taquizaByKind.quesadillas },
@@ -999,6 +1000,7 @@ function createComandasStore() {
       cart: order.cart,
       mode: order.mode,
       dishes: cloneDishes(today),
+      customer: order.customer,
       taquizaByKind: snapshot.taquizaByKind,
       note: order.note,
       fulfillDate: order.fulfillDate,

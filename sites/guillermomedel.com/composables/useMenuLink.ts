@@ -12,6 +12,7 @@ export interface SharedMenu {
 }
 
 export interface CustomerOrderArgs {
+  orderNumber?: number;
   name?: string;
   cart: Record<string, number>;
   mode: OrderMode;
@@ -79,6 +80,7 @@ export function useMenuLink() {
 
   /** Mensaje que el cliente envía al negocio (sí incluye sus datos de contacto). */
   function formatCustomerOrder({
+    orderNumber,
     name,
     cart,
     mode,
@@ -92,7 +94,9 @@ export function useMenuLink() {
     address,
     fulfillDate,
   }: CustomerOrderArgs): string {
-    const lines: string[] = ["🧾 Nuevo pedido"];
+    const lines: string[] = [
+      `🧾 Nuevo pedido${orderNumber ? ` #${orderNumber}` : ""}`,
+    ];
     if (name?.trim()) lines.push(`👤 ${name.trim()}`);
     lines.push(`Tipo: ${MODE_LABEL[mode]}`, "");
     if (fulfillDate) lines.push(`📅 Fecha: ${fulfillDate}`, "");
