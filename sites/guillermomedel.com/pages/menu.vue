@@ -1670,6 +1670,8 @@ const cartItems = computed(() =>
 interface PromoProgressRequirement {
   id: string;
   label: string;
+  labelEs: string;
+  labelEn: string;
   required: number;
   current: number;
   missing: number;
@@ -1689,7 +1691,16 @@ interface PromoProgressCard {
 }
 
 function promoRequirementLabel(requirement: PricingPromoRequirement) {
+  const groupLabels: Record<string, { es: string; en: string }> = {
+    guisos: { es: "Guisos", en: "Stews" },
+    caldos: { es: "Caldos", en: "Soups" },
+    sides: { es: "Guarniciones", en: "Sides" },
+    bebidas: { es: "Bebidas", en: "Drinks" },
+  };
+
   if (requirement.targetType === "group") {
+    const mapped = groupLabels[requirement.target];
+    if (mapped) return `${mapped.es} / ${mapped.en}`;
     return groupByKey[requirement.target]?.label ?? requirement.target;
   }
 
@@ -1701,6 +1712,70 @@ function promoRequirementLabel(requirement: PricingPromoRequirement) {
   }
 
   return requirement.target;
+}
+
+function promoRequirementNoun(
+  requirement: PricingPromoRequirement,
+  qty: number,
+  lang: "es" | "en",
+) {
+  if (requirement.targetType === "group") {
+    const nouns: Record<
+      string,
+      { esSing: string; esPlur: string; enSing: string; enPlur: string }
+    > = {
+      guisos: {
+        esSing: "guiso",
+        esPlur: "guisos",
+        enSing: "stew",
+        enPlur: "stews",
+      },
+      caldos: {
+        esSing: "caldo",
+        esPlur: "caldos",
+        enSing: "soup",
+        enPlur: "soups",
+      },
+      sides: {
+        esSing: "guarnicion",
+        esPlur: "guarniciones",
+        enSing: "side",
+        enPlur: "sides",
+      },
+      bebidas: {
+        esSing: "bebida",
+        esPlur: "bebidas",
+        enSing: "drink",
+        enPlur: "drinks",
+      },
+    };
+
+    const noun = nouns[requirement.target];
+    if (noun) {
+      if (lang === "es") return qty === 1 ? noun.esSing : noun.esPlur;
+      return qty === 1 ? noun.enSing : noun.enPlur;
+    }
+  }
+
+  return (
+    promoRequirementLabel(requirement)
+      .split("/")
+      .map((part) => part.trim())[lang === "es" ? 0 : 1] ||
+    promoRequirementLabel(requirement)
+  );
+}
+
+function promoSummaryLang(
+  promo: (typeof menuPricingConfig.promos)[number],
+  lang: "es" | "en",
+) {
+  return promo.match.requirements
+    .map((requirement) => {
+      const qty = requirement.qty;
+      const noun = promoRequirementNoun(requirement, qty, lang);
+      return `${qty} ${noun}`;
+    })
+    .join(" + ");
 }
 
 function promoRequirementCurrentQty(requirement: PricingPromoRequirement) {
@@ -1760,6 +1835,8 @@ const promoProgressCards = computed<PromoProgressCard[]>(() =>
           return {
             id: `${promo.id}-${requirement.targetType}-${requirement.target}`,
             label: promoRequirementLabel(requirement),
+            labelEs: promoRequirementNoun(requirement, required, "es"),
+            labelEn: promoRequirementNoun(requirement, required, "en"),
             required,
             current: Math.min(current, required),
             missing,
@@ -1769,16 +1846,19 @@ const promoProgressCards = computed<PromoProgressCard[]>(() =>
 
       const missingPartsEs = requirements
         .filter((requirement) => requirement.missing > 0)
-        .map((requirement) => `${requirement.missing} ${requirement.label}`);
+        .map((requirement) => `${requirement.missing} ${requirement.labelEs}`);
 
       const missingPartsEn = requirements
         .filter((requirement) => requirement.missing > 0)
-        .map((requirement) => `${requirement.missing} ${requirement.label}`);
+        .map((requirement) => `${requirement.missing} ${requirement.labelEn}`);
+
+      const summaryEs = promo.display?.summary ?? promoSummaryLang(promo, "es");
+      const summaryEn = promoSummaryLang(promo, "en");
 
       return {
         id: promo.id,
         label: promo.label,
-        summary: promoSummary(promo),
+        summary: `${summaryEs} / ${summaryEn}`,
         price: promo.pricing.amount,
         requirements,
         eligible: missingPartsEs.length === 0,
@@ -1837,15 +1917,7 @@ const promoStatusBanner = computed(() => {
 });
 
 function promoSummary(promo: (typeof menuPricingConfig.promos)[number]) {
-  return (
-    promo.display?.summary ??
-    promo.match.requirements
-      .map((requirement) => {
-        const label = promoRequirementLabel(requirement);
-        return `${requirement.qty} ${label}`;
-      })
-      .join(" + ")
-  );
+  return promoSummaryLang(promo, "es");
 }
 
 function promoIsAvailableToday(
