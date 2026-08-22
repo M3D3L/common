@@ -173,7 +173,7 @@
               </Badge>
             </nuxt-link>
             <p class="text-xs font-bold uppercase tracking-wide">
-              Promociones disponibles
+              Promociones disponibles / Available promos
             </p>
           </div>
 
@@ -217,7 +217,9 @@
                     "
                   >
                     {{
-                      requirement.met ? "Listo" : `Falta ${requirement.missing}`
+                      requirement.met
+                        ? "Listo / Ready"
+                        : `Falta ${requirement.missing} / Missing ${requirement.missing}`
                     }}
                   </p>
                 </div>
@@ -235,12 +237,12 @@
               >
                 {{
                   promo.appliedQty > 0
-                    ? `Combo activado: ${promo.label}${
+                    ? `Combo activado / Combo active: ${promo.label}${
                         promo.appliedQty > 1 ? ` x${promo.appliedQty}` : ""
                       }`
                     : promo.eligible
-                      ? "Cumple requisitos, pero comparte guarniciones/bebida con otras promos activas."
-                      : `Te falta: ${promo.missingText}`
+                      ? "Cumple requisitos, pero comparte guarniciones/bebida con otras promos activas. / Meets requirements, but shares sides/drink with other active promos."
+                      : `Te falta / Missing: ${promo.missingTextEs} / ${promo.missingTextEn}`
                 }}
               </p>
             </div>
@@ -1682,7 +1684,8 @@ interface PromoProgressCard {
   requirements: PromoProgressRequirement[];
   eligible: boolean;
   appliedQty: number;
-  missingText: string;
+  missingTextEs: string;
+  missingTextEn: string;
 }
 
 function promoRequirementLabel(requirement: PricingPromoRequirement) {
@@ -1737,6 +1740,13 @@ function joinWithConjunction(parts: string[]) {
   return `${parts.slice(0, -1).join(", ")} y ${parts[parts.length - 1]}`;
 }
 
+function joinWithConjunctionEn(parts: string[]) {
+  if (!parts.length) return "";
+  if (parts.length === 1) return parts[0];
+  if (parts.length === 2) return `${parts[0]} and ${parts[1]}`;
+  return `${parts.slice(0, -1).join(", ")} and ${parts[parts.length - 1]}`;
+}
+
 const promoProgressCards = computed<PromoProgressCard[]>(() =>
   menuPricingConfig.promos
     .filter((promo) => promo.active !== false)
@@ -1757,12 +1767,13 @@ const promoProgressCards = computed<PromoProgressCard[]>(() =>
           };
         });
 
-      const missingParts = requirements
+      const missingPartsEs = requirements
         .filter((requirement) => requirement.missing > 0)
-        .map(
-          (requirement) =>
-            `${requirement.missing} ${requirement.label.toLowerCase()}`,
-        );
+        .map((requirement) => `${requirement.missing} ${requirement.label}`);
+
+      const missingPartsEn = requirements
+        .filter((requirement) => requirement.missing > 0)
+        .map((requirement) => `${requirement.missing} ${requirement.label}`);
 
       return {
         id: promo.id,
@@ -1770,9 +1781,10 @@ const promoProgressCards = computed<PromoProgressCard[]>(() =>
         summary: promoSummary(promo),
         price: promo.pricing.amount,
         requirements,
-        eligible: missingParts.length === 0,
+        eligible: missingPartsEs.length === 0,
         appliedQty: 0,
-        missingText: joinWithConjunction(missingParts),
+        missingTextEs: joinWithConjunction(missingPartsEs),
+        missingTextEn: joinWithConjunctionEn(missingPartsEn),
       };
     }),
 );
@@ -1809,7 +1821,7 @@ const promoStatusBanner = computed(() => {
     );
     return {
       met: true,
-      title: "Promos aplicadas",
+      title: "Promos aplicadas / Applied promos",
       message: labels.join(" · "),
     };
   }
@@ -1819,8 +1831,8 @@ const promoStatusBanner = computed(() => {
 
   return {
     met: false,
-    title: `Vas en camino a ${nextPromo.label}`,
-    message: `Te falta ${nextPromo.missingText} para activar ${money(nextPromo.price)}.`,
+    title: `Vas en camino a ${nextPromo.label} / You're on track for ${nextPromo.label}`,
+    message: `Te falta ${nextPromo.missingTextEs} para activar ${money(nextPromo.price)}. / Missing ${nextPromo.missingTextEn} to activate ${money(nextPromo.price)}.`,
   };
 });
 
