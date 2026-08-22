@@ -154,7 +154,9 @@
         </section>
 
         <section
-          v-if="!props.staffMode && props.useDailyMenu && promoHints.length"
+          v-if="
+            !props.staffMode && props.useDailyMenu && promoProgressCards.length
+          "
         >
           <div class="mb-2 flex items-center gap-2">
             <nuxt-link
@@ -175,7 +177,7 @@
 
           <div class="space-y-2">
             <div
-              v-for="promo in promoHints"
+              v-for="promo in promoProgressCards"
               :key="promo.id"
               class="js-reveal-item rounded-md border border-primary/10 bg-background/80 p-2"
             >
@@ -194,6 +196,41 @@
                   {{ money(promo.price) }}
                 </p>
               </div>
+
+              <div class="mt-2 space-y-1">
+                <div
+                  v-for="requirement in promo.requirements"
+                  :key="requirement.id"
+                  class="flex items-center justify-between gap-2 text-[11px]"
+                >
+                  <p class="text-muted-foreground">
+                    {{ requirement.current }}/{{ requirement.required }}
+                    {{ requirement.label }}
+                  </p>
+                  <p
+                    :class="
+                      requirement.met
+                        ? 'font-semibold text-emerald-700'
+                        : 'font-semibold text-amber-700'
+                    "
+                  >
+                    {{
+                      requirement.met ? "Listo" : `Falta ${requirement.missing}`
+                    }}
+                  </p>
+                </div>
+              </div>
+
+              <p
+                class="mt-2 text-[11px] font-semibold"
+                :class="promo.met ? 'text-emerald-700' : 'text-amber-700'"
+              >
+                {{
+                  promo.met
+                    ? `Combo activado: ${promo.label}`
+                    : `Te falta: ${promo.missingText}`
+                }}
+              </p>
             </div>
           </div>
         </section>
@@ -767,6 +804,33 @@
       >
         <div class="mx-auto max-w-lg space-y-2">
           <div
+            v-if="promoStatusBanner"
+            class="rounded-md border px-3 py-2"
+            :class="
+              promoStatusBanner.met
+                ? 'border-emerald-300 bg-emerald-50'
+                : 'border-amber-300 bg-amber-50'
+            "
+          >
+            <p
+              class="text-xs font-semibold"
+              :class="
+                promoStatusBanner.met ? 'text-emerald-800' : 'text-amber-800'
+              "
+            >
+              {{ promoStatusBanner.title }}
+            </p>
+            <p
+              class="text-[11px]"
+              :class="
+                promoStatusBanner.met ? 'text-emerald-700' : 'text-amber-700'
+              "
+            >
+              {{ promoStatusBanner.message }}
+            </p>
+          </div>
+
+          <div
             class="flex items-center justify-between text-xs text-muted-foreground"
           >
             <span class="tabular-nums">
@@ -917,7 +981,10 @@ import {
 import { MODE_LABEL, type OrderMode } from "~/composables/useWhatsappOrder";
 import usePocketBase from "@common/composables/usePocketbase";
 import { menuPricingConfig } from "~/config/menu-pricing";
-import { priceMenuOrder } from "~/utils/menuPricing";
+import {
+  priceMenuOrder,
+  type PricingPromoRequirement,
+} from "~/utils/menuPricing";
 import type { PlacedOrder } from "~/utils/comandas";
 
 definePageMeta({ layout: "breezy" });
@@ -1586,28 +1653,26 @@ const cartItems = computed(() =>
     .map(([name, qty]) => ({ name, qty })),
 );
 
-const promoHints = computed(() =>
-  menuPricingConfig.promos
-    .filter((promo) => promo.active !== false)
-    .filter((promo) => promoIsAvailableToday(promo))
-    .map((promo) => ({
-      id: promo.id,
-      label: promo.label,
-      summary: promoSummary(promo),
-      price: promo.pricing.amount,
-    })),
-);
+interface PromoProgressRequirement {
+  id: string;
+  label: string;
+  required: number;
+  current: number;
+  missing: number;
+  met: boolean;
+}
 
-interface PromoHint {
+interface PromoProgressCard {
   id: string;
   label: string;
   summary: string;
   price: number;
+  requirements: PromoProgressRequirement[];
+  met: boolean;
+  missingText: string;
 }
 
-function promoRequirementLabel(
-  requirement: (typeof menuPricingConfig.promos)[number]["match"]["requirements"][number],
-) {
+function promoRequirementLabel(requirement: PricingPromoRequirement) {
   if (requirement.targetType === "group") {
     return groupByKey[requirement.target]?.label ?? requirement.target;
   }
@@ -1621,6 +1686,105 @@ function promoRequirementLabel(
 
   return requirement.target;
 }
+
+function promoRequirementCurrentQty(requirement: PricingPromoRequirement) {
+  if (requirement.targetType === "group") {
+    const group = menuGroups.value.find(
+      (entry) => entry.key === requirement.target,
+    );
+    if (!group) return 0;
+
+    return groupItems(group.key).reduce(
+      (sum, item) =>
+        sum +
+        Math.max(0, (cart[item.name] ?? 0) - taquizaTotalForName(item.name)),
+      0,
+    );
+  }
+
+  if (requirement.targetType === "order-unit") {
+    if (requirement.target === "taquiza:tacos")
+      return taquizaOrderCount.value.tacos;
+    if (requirement.target === "taquiza:quesadillas") {
+      return taquizaOrderCount.value.quesadillas;
+    }
+    return 0;
+  }
+
+  return Math.max(
+    0,
+    (cart[requirement.target] ?? 0) - taquizaTotalForName(requirement.target),
+  );
+}
+
+function joinWithConjunction(parts: string[]) {
+  if (!parts.length) return "";
+  if (parts.length === 1) return parts[0];
+  if (parts.length === 2) return `${parts[0]} y ${parts[1]}`;
+  return `${parts.slice(0, -1).join(", ")} y ${parts[parts.length - 1]}`;
+}
+
+const promoProgressCards = computed<PromoProgressCard[]>(() =>
+  menuPricingConfig.promos
+    .filter((promo) => promo.active !== false)
+    .filter((promo) => promoIsAvailableToday(promo))
+    .map((promo) => {
+      const requirements: PromoProgressRequirement[] =
+        promo.match.requirements.map((requirement) => {
+          const current = promoRequirementCurrentQty(requirement);
+          const required = requirement.qty;
+          const missing = Math.max(0, required - current);
+          return {
+            id: `${promo.id}-${requirement.targetType}-${requirement.target}`,
+            label: promoRequirementLabel(requirement),
+            required,
+            current: Math.min(current, required),
+            missing,
+            met: missing === 0,
+          };
+        });
+
+      const missingParts = requirements
+        .filter((requirement) => requirement.missing > 0)
+        .map(
+          (requirement) =>
+            `${requirement.missing} ${requirement.label.toLowerCase()}`,
+        );
+
+      return {
+        id: promo.id,
+        label: promo.label,
+        summary: promoSummary(promo),
+        price: promo.pricing.amount,
+        requirements,
+        met: missingParts.length === 0,
+        missingText: joinWithConjunction(missingParts),
+      };
+    }),
+);
+
+const promoStatusBanner = computed(() => {
+  if (props.staffMode || !props.useDailyMenu || itemCount.value <= 0)
+    return null;
+
+  const activePromo = promoProgressCards.value.find((promo) => promo.met);
+  if (activePromo) {
+    return {
+      met: true,
+      title: "Promo activada",
+      message: `${activePromo.label} aplicada por ${money(activePromo.price)}.`,
+    };
+  }
+
+  const nextPromo = promoProgressCards.value[0];
+  if (!nextPromo) return null;
+
+  return {
+    met: false,
+    title: `Vas en camino a ${nextPromo.label}`,
+    message: `Te falta ${nextPromo.missingText} para activar ${money(nextPromo.price)}.`,
+  };
+});
 
 function promoSummary(promo: (typeof menuPricingConfig.promos)[number]) {
   return (

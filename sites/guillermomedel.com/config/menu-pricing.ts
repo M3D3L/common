@@ -13,24 +13,6 @@ export const menuPricingConfig: PricingConfig = {
   },
   promos: [
     {
-      id: "meal-combo-180",
-      label: "Combo comida completa + extra",
-      priority: 25,
-      display: {
-        summary: "2 guisos + 2 guarniciones + 1 bebida = $180",
-      },
-      match: {
-        requirements: [
-          { targetType: "group", target: "guisos", qty: 2 },
-          { targetType: "group", target: "sides", qty: 2 },
-          { targetType: "group", target: "bebidas", qty: 1 },
-        ],
-      },
-      pricing: {
-        amount: 180,
-      },
-    },
-    {
       id: "meal-combo-120",
       label: "Combo comida completa",
       priority: 20,
