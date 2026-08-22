@@ -318,7 +318,27 @@ export function normalizeMenuCatalog(
 
     const unique = new Map<string, MenuItem>();
     items.forEach((item) => {
-      if (!unique.has(item.name)) unique.set(item.name, item);
+      const existing = unique.get(item.name);
+      if (!existing) {
+        unique.set(item.name, item);
+        return;
+      }
+
+      // Legacy data can contain duplicate names as plain strings (price 0)
+      // and as full objects. Keep the richer/paid version.
+      const preferIncoming =
+        item.price > existing.price ||
+        (!existing.image && !!item.image) ||
+        (!existing.combo && !!item.combo);
+
+      if (preferIncoming) {
+        unique.set(item.name, {
+          ...existing,
+          ...item,
+          image: item.image || existing.image,
+          combo: item.combo || existing.combo,
+        });
+      }
     });
     out[g.key] = [...unique.values()];
   });
@@ -343,12 +363,44 @@ export function dayDishesToCatalog(dishes: DayDishes): MenuCatalog {
   return out;
 }
 
-export function findMenuItemByName(catalog: MenuCatalog, name: string) {
+function canonicalDishName(name: string): string {
+  return name
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+export function findMenuItemByName(
+  catalog: MenuCatalog,
+  name: string,
+  preferredGroup?: GroupKey,
+) {
+  const target = canonicalDishName(name);
+  let bestMatch: { group: GroupKey; item: MenuItem; score: number } | null =
+    null;
+
   for (const g of groupsFromData(catalog as Record<string, unknown>)) {
-    const item = (catalog[g.key] ?? []).find((x) => x.name === name);
-    if (item) return { group: g.key, item };
+    for (const item of catalog[g.key] ?? []) {
+      const exact = item.name === name;
+      const canonical = canonicalDishName(item.name) === target;
+      if (!exact && !canonical) continue;
+
+      const score =
+        (exact ? 1000 : 0) +
+        (g.key === preferredGroup ? 100 : 0) +
+        (item.price > 0 ? 10 : 0) +
+        item.price;
+
+      if (!bestMatch || score > bestMatch.score) {
+        bestMatch = { group: g.key, item, score };
+      }
+    }
   }
-  return null;
+
+  return bestMatch ? { group: bestMatch.group, item: bestMatch.item } : null;
 }
 
 export interface PlacedOrder {

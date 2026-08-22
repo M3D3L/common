@@ -155,7 +155,9 @@
 
         <section
           v-if="
-            !props.staffMode && props.useDailyMenu && promoProgressCards.length
+            !props.staffMode &&
+            props.useDailyMenu &&
+            promoCardsWithAppliedState.length
           "
         >
           <div class="mb-2 flex items-center gap-2">
@@ -177,7 +179,7 @@
 
           <div class="space-y-2">
             <div
-              v-for="promo in promoProgressCards"
+              v-for="promo in promoCardsWithAppliedState"
               :key="promo.id"
               class="js-reveal-item rounded-md border border-primary/10 bg-background/80 p-2"
             >
@@ -223,12 +225,22 @@
 
               <p
                 class="mt-2 text-[11px] font-semibold"
-                :class="promo.met ? 'text-emerald-700' : 'text-amber-700'"
+                :class="
+                  promo.appliedQty > 0
+                    ? 'text-emerald-700'
+                    : promo.eligible
+                      ? 'text-sky-700'
+                      : 'text-amber-700'
+                "
               >
                 {{
-                  promo.met
-                    ? `Combo activado: ${promo.label}`
-                    : `Te falta: ${promo.missingText}`
+                  promo.appliedQty > 0
+                    ? `Combo activado: ${promo.label}${
+                        promo.appliedQty > 1 ? ` x${promo.appliedQty}` : ""
+                      }`
+                    : promo.eligible
+                      ? "Cumple requisitos, pero comparte guarniciones/bebida con otras promos activas."
+                      : `Te falta: ${promo.missingText}`
                 }}
               </p>
             </div>
@@ -1151,9 +1163,9 @@ const activeItems = computed<Record<GroupKey, ActiveMenuItem[]>>(() => {
     const names = active.value[g.key] ?? [];
 
     out[g.key] = names.map((name) => {
-      const found = findMenuItemByName(catalog.value, name);
+      const found = findMenuItemByName(catalog.value, name, g.key);
       if (found?.item) {
-        return { ...found.item, group: found.group };
+        return { ...found.item, group: g.key };
       }
       return {
         name,
@@ -1668,7 +1680,8 @@ interface PromoProgressCard {
   summary: string;
   price: number;
   requirements: PromoProgressRequirement[];
-  met: boolean;
+  eligible: boolean;
+  appliedQty: number;
   missingText: string;
 }
 
@@ -1757,26 +1770,51 @@ const promoProgressCards = computed<PromoProgressCard[]>(() =>
         summary: promoSummary(promo),
         price: promo.pricing.amount,
         requirements,
-        met: missingParts.length === 0,
+        eligible: missingParts.length === 0,
+        appliedQty: 0,
         missingText: joinWithConjunction(missingParts),
       };
     }),
+);
+
+const appliedPromoQtyById = computed(() => {
+  const out = new Map<string, number>();
+  pricingSummary.value.lines
+    .filter((line) => line.kind === "promo")
+    .forEach((line) => {
+      out.set(line.code, (out.get(line.code) ?? 0) + line.qty);
+    });
+  return out;
+});
+
+const promoCardsWithAppliedState = computed(() =>
+  promoProgressCards.value.map((promo) => ({
+    ...promo,
+    appliedQty: appliedPromoQtyById.value.get(promo.id) ?? 0,
+  })),
 );
 
 const promoStatusBanner = computed(() => {
   if (props.staffMode || !props.useDailyMenu || itemCount.value <= 0)
     return null;
 
-  const activePromo = promoProgressCards.value.find((promo) => promo.met);
-  if (activePromo) {
+  const appliedPromos = promoCardsWithAppliedState.value.filter(
+    (promo) => promo.appliedQty > 0,
+  );
+  if (appliedPromos.length) {
+    const labels = appliedPromos.map((promo) =>
+      promo.appliedQty > 1
+        ? `${promo.label} x${promo.appliedQty}`
+        : promo.label,
+    );
     return {
       met: true,
-      title: "Promo activada",
-      message: `${activePromo.label} aplicada por ${money(activePromo.price)}.`,
+      title: "Promos aplicadas",
+      message: labels.join(" · "),
     };
   }
 
-  const nextPromo = promoProgressCards.value[0];
+  const nextPromo = promoCardsWithAppliedState.value[0];
   if (!nextPromo) return null;
 
   return {
