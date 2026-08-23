@@ -27,7 +27,7 @@
     <!-- No service today (weekend / closed week / no menu for today) -->
     <div
       v-else-if="!hasMenu"
-      class="grid min-h-screen place-items-center p-6 text-center"
+      class="grid place-items-center p-6 text-center fixed top-0 left-0 w-full h-full"
     >
       <div
         class="w-full max-w-md rounded-2xl border border-border/60 bg-card/80 p-6 shadow-xl backdrop-blur"

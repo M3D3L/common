@@ -8,34 +8,33 @@
       data-top-stack="switcher"
       class="sticky top-[76px] z-40 border-b border-border bg-background/95 px-4 py-2 backdrop-blur"
     >
-      <div
-        class="mx-auto flex w-full max-w-lg rounded-lg border border-border p-1"
-      >
-        <NuxtLink
-          to="/menu"
-          class="flex-1 rounded-md px-3 py-2 text-center text-sm font-semibold transition-colors"
-          :class="
-            isMenuPage
-              ? 'bg-primary text-primary-foreground'
-              : 'text-muted-foreground hover:bg-muted'
-          "
-        >
-          Menú
-        </NuxtLink>
-        <NuxtLink
-          to="/tienda"
-          class="flex-1 rounded-md px-3 py-2 text-center text-sm font-semibold transition-colors"
-          :class="
-            isStorePage
-              ? 'bg-primary text-primary-foreground'
-              : 'text-muted-foreground hover:bg-muted'
-          "
-        >
-          Tienda
-        </NuxtLink>
+      <div class="max-w-2xl mx-auto px-4 sm:px-6">
+        <div class="mx-auto flex w-full rounded-lg border border-border p-1">
+          <NuxtLink
+            to="/menu"
+            class="flex-1 rounded-md px-3 py-2 text-center text-sm font-semibold transition-colors"
+            :class="
+              isMenuPage
+                ? 'bg-primary text-primary-foreground'
+                : 'text-muted-foreground hover:bg-muted'
+            "
+          >
+            Menú
+          </NuxtLink>
+          <NuxtLink
+            to="/tienda"
+            class="flex-1 rounded-md px-3 py-2 text-center text-sm font-semibold transition-colors"
+            :class="
+              isStorePage
+                ? 'bg-primary text-primary-foreground'
+                : 'text-muted-foreground hover:bg-muted'
+            "
+          >
+            Tienda
+          </NuxtLink>
+        </div>
       </div>
     </div>
-
     <slot />
   </div>
 </template>

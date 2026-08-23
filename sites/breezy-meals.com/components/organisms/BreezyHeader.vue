@@ -15,13 +15,18 @@
       class="flex items-center gap-4 px-4 py-3 mx-auto sm:gap-5 sm:px-6 max-w-7xl"
     >
       <!-- Logo with smooth hover ring transition -->
-      <div class="relative shrink-0 group">
-        <img
-          :src="logoSrc"
-          alt="Logo del restaurante"
-          class="object-cover border-2 rounded-full h-12 w-12 sm:h-14 sm:w-14 border-primary/20 shadow-xs transition-transform duration-300 group-hover:scale-105"
-        />
-      </div>
+      <NuxtLink
+        to="/"
+        class="flex items-center gap-3 shrink-0 transition-all duration-200 hover:scale-[1.02] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+      >
+        <div class="relative shrink-0 group">
+          <img
+            :src="logoSrc"
+            alt="Logo del restaurante"
+            class="object-cover border-2 rounded-full h-12 w-12 sm:h-14 sm:w-14 border-primary/20 shadow-xs transition-transform duration-300 group-hover:scale-105"
+          />
+        </div>
+      </NuxtLink>
 
       <div class="flex flex-col justify-center min-w-0">
         <p
