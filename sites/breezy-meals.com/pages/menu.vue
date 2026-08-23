@@ -134,8 +134,6 @@
           />
         </section>
 
-        <OrganismsMenuModeTabs v-model:mode="mode" />
-
         <OrganismsMenuOrderSummary
           v-if="orderSummaryLines.length"
           :lines="orderSummaryLines"
@@ -143,6 +141,8 @@
           :total-qty="totalQty"
           :total="pricingSummary.total"
         />
+
+        <OrganismsMenuModeTabs v-model:mode="mode" />
 
         <OrganismsMenuCustomerForm
           v-model:member-code="memberCode"
