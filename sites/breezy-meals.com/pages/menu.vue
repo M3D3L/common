@@ -14,17 +14,17 @@
       />
     </div>
 
-    <!-- Cargando -->
+    <!-- Loading -->
     <OrganismsMenuLoadingState v-if="pending" />
 
-    <!-- Error / sin menú publicado -->
+    <!-- Error / no menu published -->
     <OrganismsMenuUnavailableState
       v-else-if="!record"
       :load-error="!!loadError"
       @retry="load"
     />
 
-    <!-- Sin servicio hoy (fin de semana / semana cerrada / sin menú del día) -->
+    <!-- No service today (weekend / closed week / no menu for today) -->
     <div
       v-else-if="!hasMenu"
       class="grid min-h-screen place-items-center p-6 text-center"
@@ -61,7 +61,7 @@
         ref="menuMainEl"
         class="mx-auto max-w-2xl space-y-8 px-4 pb-48 pt-5 sm:px-6 sm:pt-7"
       >
-        <!-- Instrucciones -->
+        <!-- Instructions -->
         <OrganismsMenuInstructions v-if="!props.staffMode" />
 
         <section
@@ -86,10 +86,10 @@
           :money="money"
         />
 
-        <!-- ===== Chips de categoría: filtran a golpe de vista =====
-             Cada chip abre su cajón y hace scroll hacia él. "Todo" expande o
-             colapsa todo. El badge conserva el conteo del carrito aunque el
-             cajón esté cerrado, para que el usuario nunca pierda su pedido. -->
+        <!-- ===== Category chips: filter at a glance =====
+             Each chip opens its section and scrolls to it. "All" expands or
+             collapses everything. The badge keeps the cart count even while
+             the section is closed, so the user never loses track of their order. -->
         <OrganismsMenuCategoryChips
           :groups="visibleMenuGroups"
           :all-open="allGroupsOpen"
@@ -164,7 +164,7 @@
         />
       </main>
 
-      <!-- Barra fija -->
+      <!-- Fixed bar -->
       <OrganismsMenuCartBar
         :promo-status-banner="promoStatusBanner"
         :total-qty="totalQty"
@@ -181,7 +181,7 @@
       />
     </template>
 
-    <!-- Confirmación de pedido -->
+    <!-- Order confirmation -->
     <OrganismsMenuThankYouDialog
       v-model:open="showThankYou"
       :thank-you-name="thankYouName"
@@ -192,32 +192,14 @@
 
 <script lang="ts" setup>
 import { Card } from "@common/components/ui/card";
-import {
-  comboForItem,
-  emptyDayDishes,
-  findMenuItemByName,
-  groups as baseGroups,
-  groupsFromData,
-  normalizeDishNames,
-  normalizeMenuCatalog,
-  todayISO,
-  type DayDishes,
-  type GroupKey,
-  type MenuCatalog,
-  type MenuItem,
-  type MenuRecord,
-} from "~/utils/comandas";
-import {
-  resolveDay,
-  type RotationConfig,
-  type WeekBlock,
-  type WeekOverride,
-} from "~/utils/rotation";
+import { todayISO, type GroupKey } from "~/utils/comandas";
 import { MODE_LABEL, type OrderMode } from "~/composables/useWhatsappOrder";
 import { useTaquizaOrders } from "~/composables/useTaquizaOrders";
 import { useMenuScrollReveal } from "~/composables/useMenuScrollReveal";
 import { useMenuPricing } from "~/composables/useMenuPricing";
 import { useMenuCheckout } from "~/composables/useMenuCheckout";
+import { useMenuData, type MenuRecordFull } from "~/composables/useMenuData";
+import { useMenuGroupAccordion } from "~/composables/useMenuGroupAccordion";
 import usePocketBase from "@common/composables/usePocketbase";
 
 definePageMeta({ layout: "breezy" });
@@ -251,32 +233,23 @@ const businessConfig = (runtimeConfig.public?.business ?? {}) as {
   logoUrl?: string;
 };
 
-const EMPTY_DISHES: DayDishes = emptyDayDishes();
 const RESTAURANT_WHATSAPP = String(
   businessConfig.whatsappNumber || runtimeConfig.public.whatsappNumber || "",
 );
-// Mismo logo que el header (layouts/breezy.vue), para la marca en el modal.
+// Same logo as the header (layouts/breezy.vue), for branding in the modal.
 const LOGO_SRC = businessConfig.logoUrl || "";
-// Misma colección/campo que usa el tablero de cocina (useComandas.ts): un
-// registro por orden en `data`, existe mientras esté activa.
+// Same collection/field used by the kitchen board (useComandas.ts): one
+// record per order in `data`, exists while it's active.
 const COMANDAS_COLLECTION = "comandas";
 const COMANDAS_FIELD = "data";
 
-// Registro `menu` con los campos de rotación.
-type MenuRecordFull = MenuRecord & {
-  store?: MenuCatalog | DayDishes;
-  week_blocks?: WeekBlock[];
-  rotation?: string[];
-  rotation_anchor?: string;
-  overrides?: Record<string, WeekOverride>;
-  active_date?: string;
-  [key: string]: unknown;
-};
-
+// The `menu` record with the rotation fields.
 const { record, pending, loadError, load } =
   useLatestMenuRecord<MenuRecordFull>(props.fetchedCollection);
 
 onMounted(load);
+
+const cart = reactive<Record<string, number>>({});
 
 const selectedDate = ref(todayISO());
 
@@ -295,221 +268,39 @@ function changeMenuDate(days: number) {
   clearCart();
 }
 
-/**
- * Menú del día: mismo criterio que la app de comandas.
- *  1) Si hay un `active` fijado HOY (turno iniciado o ajuste manual), ese manda.
- *  2) Si no, se resuelve la fecha de hoy contra la rotación semanal (bloques).
- */
-const active = computed<DayDishes>(() => {
-  const rec = record.value;
-  if (!rec) return EMPTY_DISHES;
-
-  const selectedDishes = rec[props.dishesField];
-  if (props.staffMode) {
-    return normalizeDishNames(rec.active as Partial<Record<GroupKey, unknown>>);
-  }
-  if (!props.useDailyMenu || props.dishesField !== "dishes") {
-    return normalizeDishNames(
-      selectedDishes as Partial<Record<GroupKey, unknown>>,
-    );
-  }
-
-  const a = normalizeDishNames(
-    rec.active as Partial<Record<GroupKey, unknown>>,
-  );
-  const activeFresh =
-    rec.active_date === selectedDate.value &&
-    groupsFromData(a as Record<string, unknown>).some(
-      (g) => (a[g.key] ?? []).length > 0,
-    );
-  if (activeFresh) return a;
-
-  const cfg: RotationConfig = {
-    blocks: rec.week_blocks ?? [],
-    rotation: rec.rotation ?? [],
-    anchor: rec.rotation_anchor ?? "",
-    overrides: rec.overrides ?? {},
-  };
-  const resolved = resolveDay(selectedDate.value, cfg);
-  return resolved
-    ? normalizeDishNames(resolved.menu as Partial<Record<GroupKey, unknown>>)
-    : EMPTY_DISHES;
+// Menu record + rotation resolution. See composables/useMenuData.ts.
+const {
+  active,
+  menuGroups,
+  hasMenu,
+  groupItems,
+  taquizaGroup,
+  showGroupSection,
+} = useMenuData({
+  record,
+  selectedDate,
+  dishesField: () => props.dishesField,
+  staffMode: () => props.staffMode,
+  useDailyMenu: () => props.useDailyMenu,
 });
 
-const menuSourceCatalog = computed<Partial<Record<GroupKey, unknown>>>(
-  () =>
-    (record.value?.[props.dishesField] ?? {}) as Partial<
-      Record<GroupKey, unknown>
-    >,
-);
-
-const menuGroups = computed(() => {
-  const fromMenu = groupsFromData({
-    ...(menuSourceCatalog.value as Record<string, unknown>),
-    ...(active.value as Record<string, unknown>),
-  });
-  const knownKeys = new Set<string>(baseGroups.map((group) => group.key));
-  const extraGroups = fromMenu.filter((group) => !knownKeys.has(group.key));
-
-  return [...baseGroups, ...extraGroups];
-});
-
-const hasMenu = computed(() =>
-  menuGroups.value.some((g) => active.value[g.key]?.length),
-);
-
-const catalog = computed<MenuCatalog>(() =>
-  normalizeMenuCatalog(menuSourceCatalog.value),
-);
-
-type ActiveMenuItem = MenuItem & { group: GroupKey };
-
-const activeItems = computed<Record<GroupKey, ActiveMenuItem[]>>(() => {
-  const out = {} as Record<GroupKey, ActiveMenuItem[]>;
-
-  menuGroups.value.forEach((g) => {
-    const names = active.value[g.key] ?? [];
-
-    out[g.key] = names.map((name) => {
-      const found = findMenuItemByName(catalog.value, name, g.key);
-      if (found?.item) {
-        return { ...found.item, group: g.key };
-      }
-      return {
-        name,
-        price: 0,
-        combo: comboForItem(null, g.key),
-        group: g.key,
-      };
-    });
-  });
-  return out;
-});
-
-const groupItems = (k: GroupKey) => activeItems.value[k] ?? [];
-const taquizaGroup = baseGroups.find((g) => "pieceOptions" in g) as
-  | ((typeof baseGroups)[number] & {
-      pieceOptions: { tacos: number; quesadillas: number };
-    })
-  | undefined;
-
-function showGroupSection(key: GroupKey) {
-  return groupItems(key).length > 0;
-}
-
-/* ===== Chips + cajones (acordeón) =====
- * `openGroups` = conjunto de grupos abiertos. Los chips y el encabezado de cada
- * sección comparten este estado, así que un chip "activo" siempre corresponde a
- * un cajón abierto. Al arrancar abrimos solo el primer grupo con platillos para
- * no abrumar con toda la lista desplegada. */
-const openGroups = ref<Set<string>>(new Set());
-
-// Grupos que realmente tienen platillos hoy (los que muestran chip).
-const visibleMenuGroups = computed(() =>
-  menuGroups.value.filter((g) => groupItems(g.key).length > 0),
-);
-
-const isGroupOpen = (key: GroupKey) => openGroups.value.has(key);
-
-function toggleGroup(key: GroupKey) {
-  const next = new Set(openGroups.value);
-  next.has(key) ? next.delete(key) : next.add(key);
-  openGroups.value = next;
-}
-
-const allGroupsOpen = computed(
-  () =>
-    visibleMenuGroups.value.length > 0 &&
-    visibleMenuGroups.value.every((g) => openGroups.value.has(g.key)),
-);
-
-function toggleAllGroups() {
-  openGroups.value = allGroupsOpen.value
-    ? new Set()
-    : new Set(visibleMenuGroups.value.map((g) => g.key));
-}
-
-// Conteo del carrito por grupo (badge del chip y del encabezado). Conserva la
-// referencia del pedido aunque el cajón esté cerrado.
-function groupCartCount(key: GroupKey) {
-  return groupItems(key).reduce((sum, item) => sum + (cart[item.name] ?? 0), 0);
-}
-
-// Refs de cada <section> para poder hacer scroll hacia ellas desde el chip.
-const sectionEls: Record<string, HTMLElement> = {};
-function setSectionRef(key: string, el: unknown) {
-  if (el instanceof HTMLElement) sectionEls[key] = el;
-}
-
-function getHeaderStackOffsetPx(): number {
-  if (typeof window === "undefined") return 0;
-
-  let offset = 0;
-  const stackEls = document.querySelectorAll<HTMLElement>("[data-top-stack]");
-
-  stackEls.forEach((el) => {
-    const rect = el.getBoundingClientRect();
-    // Count only visible top-stack elements currently attached near the top.
-    if (rect.height <= 0) return;
-    if (rect.bottom <= 0) return;
-    if (rect.top >= 220) return;
-    offset = Math.max(offset, rect.bottom);
-  });
-
-  return Math.ceil(offset);
-}
-
-function scrollGroupIntoView(key: GroupKey, behavior: ScrollBehavior) {
-  if (typeof window === "undefined") return;
-  const section = sectionEls[key];
-  if (!section) return;
-
-  const offset = getHeaderStackOffsetPx() + 20;
-  const targetY = Math.max(
-    0,
-    window.scrollY + section.getBoundingClientRect().top - offset,
-  );
-
-  window.scrollTo({ top: targetY, behavior });
-}
-
-// Chip: abre el cajón (si estaba cerrado) y hace scroll suave hacia él.
-async function focusGroup(key: GroupKey) {
-  if (!openGroups.value.has(key)) {
-    const next = new Set(openGroups.value);
-    next.add(key);
-    openGroups.value = next;
-  }
-
-  await nextTick();
-  await new Promise<void>((resolve) =>
-    requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
-  );
-
-  scrollGroupIntoView(key, "smooth");
-
-  // Correct once more after layout settles to avoid the "second click" effect.
-  window.setTimeout(() => {
-    scrollGroupIntoView(key, "smooth");
-  }, 140);
-}
-
-// Abre el primer grupo con platillos la primera vez que carga el menú.
-const didInitOpen = ref(false);
-watch(
+// Accordion/chip navigation. See composables/useMenuGroupAccordion.ts.
+const {
+  openGroups,
   visibleMenuGroups,
-  (groups) => {
-    if (!didInitOpen.value && groups.length) {
-      openGroups.value = new Set(
-        props.dishesField === "dishes"
-          ? groups.map((group) => group.key)
-          : [groups[0].key],
-      );
-      didInitOpen.value = true;
-    }
-  },
-  { immediate: true },
-);
+  isGroupOpen,
+  toggleGroup,
+  allGroupsOpen,
+  toggleAllGroups,
+  groupCartCount,
+  setSectionRef,
+  focusGroup,
+} = useMenuGroupAccordion({
+  menuGroups,
+  groupItems,
+  cart,
+  dishesField: () => props.dishesField,
+});
 
 const soldOut = computed<string[]>(() => record.value?.sold_out ?? []);
 const isOut = (n: string) => soldOut.value.includes(n);
@@ -558,29 +349,22 @@ async function toggleOut(name: string) {
   }
 }
 
-const cart = reactive<Record<string, number>>({});
 const mode = ref<OrderMode>("llevar");
 const note = ref("");
 const customer = reactive({ name: "", phone: "", address: "" });
 
-// Código de socio (opcional, texto plano). No se valida aquí: se estampa en el
-// mensaje de WhatsApp para que el staff lo vea y redima al servir.
+// Member code (optional, plain text). Not validated here: it's stamped in
+// the WhatsApp message so staff can see it and redeem it when serving.
 const memberCode = ref("");
-const memberLoading = ref(false);
 
 async function loadMemberFromCode(code: string) {
   const normalized = code.replace(/\s+/g, "").toUpperCase();
   if (!normalized) return;
-  memberLoading.value = true;
-  try {
-    const member = await getMemberByCode(normalized);
-    if (member) {
-      customer.name = member.name ?? "";
-      customer.phone = member.phone ?? "";
-      customer.address = member.address ?? "";
-    }
-  } finally {
-    memberLoading.value = false;
+  const member = await getMemberByCode(normalized);
+  if (member) {
+    customer.name = member.name ?? "";
+    customer.phone = member.phone ?? "";
+    customer.address = member.address ?? "";
   }
 }
 
@@ -614,13 +398,13 @@ watch(
   { flush: "post" },
 );
 
-/* ===== Taquizas: modelo por orden =====
- * Cada orden es una unidad independiente (tacos = 3 piezas, quesadillas = 2).
- * El cliente crea tantas órdenes como quiera; dentro de cada una elige sus
- * guisos hasta el tope de esa orden. El `cart` sigue el invariante que espera
- * la cocina: cart[nombre] = porción normal + suma de esa pieza en todas las
- * órdenes de taquiza (por eso siempre usamos deltas, nunca reasignación).
- * Ver composables/useTaquizaOrders.ts para el detalle de esta lógica.
+/* ===== Taquizas: per-order model =====
+ * Each order is an independent unit (tacos = 3 pieces, quesadillas = 2).
+ * The customer creates as many orders as they want; within each one they pick
+ * their fillings up to that order's cap. The `cart` follows the invariant
+ * the kitchen expects: cart[name] = regular portion + sum of that item across
+ * all taquiza orders (that's why we always use deltas, never reassignment).
+ * See composables/useTaquizaOrders.ts for the details of this logic.
  */
 const {
   taquizaKinds,
@@ -650,7 +434,7 @@ watch(
   { flush: "post" },
 );
 
-/* ===== Hora (para "aquí" y "para llevar"; opcional, sin default) ===== */
+/* ===== Time (for "dine-in" and "takeout"; optional, no default) ===== */
 const hours12 = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"];
 const minutes = [
   "00",
@@ -730,8 +514,8 @@ const needsAddress = computed(
   () => mode.value === "domicilio" && !customer.address.trim(),
 );
 
-// El nombre es opcional para llevar/aquí; a domicilio siempre se requiere
-// para identificar al cliente que recibe.
+// Name is optional for takeout/dine-in; delivery always requires it
+// to identify the customer receiving the order.
 const nameRequired = computed(() => mode.value === "domicilio");
 
 const needsName = computed(() => nameRequired.value && !customer.name.trim());
@@ -760,52 +544,46 @@ function lockReason(k: GroupKey) {
 
 function canAddItem(k: GroupKey) {
   if (isGroupLocked(k)) return false;
-  // Las taquizas no se agregan desde el bloque normal, sino por orden.
+  // Taquizas aren't added from the normal block, only per order.
   if (taquizaGroup && k === taquizaGroup.key) return false;
   return true;
 }
 
 function setQty(k: GroupKey, n: string, d: number) {
-  // El grupo de taquizas se maneja por orden (setOrderFill), nunca aquí.
+  // The taquiza group is handled per order (setOrderFill), never here.
   if (taquizaGroup && k === taquizaGroup.key) return;
   if (d > 0 && !canAddItem(k)) return;
-  applyTaquizaDelta(n, d); // suma/resta relativa: preserva la porción de taquiza
+  applyTaquizaDelta(n, d); // relative add/subtract: preserves the taquiza portion
 }
 
 // Order-send workflow (build note, create comanda, open WhatsApp, reset
 // form). See composables/useMenuCheckout.ts.
-const {
-  sendingOrder,
-  showThankYou,
-  thankYouName,
-  clearCart,
-  resetOrderForm,
-  sendOrder,
-} = useMenuCheckout({
-  cart,
-  mode,
-  note,
-  customer,
-  memberCode,
-  clearTime,
-  clearTaquizaOrders,
-  hasTaquizaOrder,
-  taquizaRules,
-  taquizaOrderCount,
-  taquizaSelectedByKind,
-  taquizaByKind,
-  pickupTime,
-  selectedDate,
-  active,
-  record,
-  canSend,
-  fetchCollection,
-  createItem,
-  formatCustomerOrder,
-  waLink,
-  isAppleDevice,
-  restaurantWhatsapp: RESTAURANT_WHATSAPP,
-  comandasCollection: COMANDAS_COLLECTION,
-  comandasField: COMANDAS_FIELD,
-});
+const { sendingOrder, showThankYou, thankYouName, clearCart, sendOrder } =
+  useMenuCheckout({
+    cart,
+    mode,
+    note,
+    customer,
+    memberCode,
+    clearTime,
+    clearTaquizaOrders,
+    hasTaquizaOrder,
+    taquizaRules,
+    taquizaOrderCount,
+    taquizaSelectedByKind,
+    taquizaByKind,
+    pickupTime,
+    selectedDate,
+    active,
+    record,
+    canSend,
+    fetchCollection,
+    createItem,
+    formatCustomerOrder,
+    waLink,
+    isAppleDevice,
+    restaurantWhatsapp: RESTAURANT_WHATSAPP,
+    comandasCollection: COMANDAS_COLLECTION,
+    comandasField: COMANDAS_FIELD,
+  });
 </script>
