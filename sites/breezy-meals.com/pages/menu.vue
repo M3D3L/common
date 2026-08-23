@@ -871,7 +871,7 @@
           >
             <span class="tabular-nums">
               <template v-if="totalQty">
-                {{ totalQty }} platillo{{ totalQty === 1 ? "" : "s" }} ·
+                {{ totalQty }} {{ totalQty === 1 ? "artículo" : "artículos" }} ·
                 {{ MODE_LABEL[mode] }}
               </template>
               <template v-else>
@@ -921,7 +921,7 @@
     <!-- Confirmación de pedido -->
     <Dialog v-model:open="showThankYou">
       <DialogContent
-        class="max-w-sm rounded-2xl border-border/70 bg-card/95 text-center shadow-2xl backdrop-blur"
+        class="max-w-sm rounded-2xl border-border/70 bg-white text-center shadow-2xl backdrop-blur"
       >
         <div class="flex flex-col items-center gap-2 pt-2">
           <img
@@ -990,13 +990,9 @@ import {
   ChevronDown,
 } from "lucide-vue-next";
 import {
-  DRINK_GROUP_KEYS,
-  MAIN_GROUP_KEYS,
-  SIDE_GROUP_KEYS,
   comboForItem,
   emptyDayDishes,
   findMenuItemByName,
-  groupByKey,
   groups as baseGroups,
   groupsFromData,
   MODES,
@@ -1017,15 +1013,11 @@ import {
   type WeekOverride,
 } from "~/utils/rotation";
 import { MODE_LABEL, type OrderMode } from "~/composables/useWhatsappOrder";
+import { useTaquizaOrders } from "~/composables/useTaquizaOrders";
+import { useMenuScrollReveal } from "~/composables/useMenuScrollReveal";
+import { useMenuPricing } from "~/composables/useMenuPricing";
+import { useMenuCheckout } from "~/composables/useMenuCheckout";
 import usePocketBase from "@common/composables/usePocketbase";
-import { menuPricingConfig } from "~/config/menu-pricing";
-import {
-  priceMenuOrder,
-  type PricingConfig,
-  type PricingPromo,
-  type PricingPromoRequirement,
-} from "~/utils/menuPricing";
-import type { PlacedOrder } from "~/utils/comandas";
 
 definePageMeta({ layout: "breezy" });
 
@@ -1068,90 +1060,6 @@ const LOGO_SRC = businessConfig.logoUrl || "";
 // registro por orden en `data`, existe mientras esté activa.
 const COMANDAS_COLLECTION = "comandas";
 const COMANDAS_FIELD = "data";
-const PRICE_FORMAT = new Intl.NumberFormat("es-MX", {
-  style: "currency",
-  currency: "MXN",
-  maximumFractionDigits: 0,
-});
-
-const runtimePromos = ref<PricingPromo[]>([]);
-
-function toRuntimePromo(record: Record<string, any>): PricingPromo | null {
-  const data =
-    record?.data && typeof record.data === "object" ? record.data : undefined;
-  const id = String(record.promoId || data?.id || record.id || "").trim();
-  const label = String(record.label || data?.label || "").trim();
-  const priority = Number(record.priority ?? data?.priority ?? 0) || 0;
-  const active = Boolean(record.active ?? data?.active ?? true);
-
-  const match = (record.match ?? data?.match) as
-    | { requirements?: PricingPromoRequirement[] }
-    | undefined;
-  const pricing = (record.pricing ?? data?.pricing) as
-    | { amount?: number }
-    | undefined;
-  const display = (record.display ?? data?.display) as
-    | { summary?: string }
-    | undefined;
-
-  const requirements = Array.isArray(match?.requirements)
-    ? match.requirements.filter(
-        (req) =>
-          !!req &&
-          (req.targetType === "group" ||
-            req.targetType === "item" ||
-            req.targetType === "order-unit") &&
-          typeof req.target === "string" &&
-          Number(req.qty) > 0,
-      )
-    : [];
-
-  if (!id || !label || !requirements.length || !Number(pricing?.amount)) {
-    return null;
-  }
-
-  return {
-    id,
-    label,
-    active,
-    priority,
-    match: { requirements },
-    pricing: { amount: Number(pricing?.amount || 0) },
-    display: { summary: String(display?.summary || "").trim() },
-  };
-}
-
-async function loadRuntimePromos() {
-  try {
-    const res = await fetchCollection(
-      "promos",
-      1,
-      200,
-      "active = true",
-      "priority",
-      null,
-      null,
-      true,
-      { requestKey: "menu_runtime_promos" },
-    );
-
-    const promos = res.items
-      .map((item) => toRuntimePromo(item as Record<string, any>))
-      .filter((item): item is PricingPromo => !!item);
-
-    runtimePromos.value = promos;
-  } catch {
-    runtimePromos.value = [];
-  }
-}
-
-const effectivePricingConfig = computed<PricingConfig>(() => ({
-  ...menuPricingConfig,
-  promos:
-    runtimePromos.value.length > 0
-      ? runtimePromos.value
-      : menuPricingConfig.promos,
-}));
 
 const MODE_ICON: Record<string, any> = {
   llevar: ShoppingBag,
@@ -1415,77 +1323,7 @@ const isOut = (n: string) => soldOut.value.includes(n);
 const isLoggedIn = ref(false);
 const menuMainEl = ref<HTMLElement | null>(null);
 
-type GsapRuntime = {
-  gsap: any;
-  ScrollTrigger: any;
-};
-
-let gsapRuntime: GsapRuntime | null = null;
-const revealTriggers: any[] = [];
-let revealRaf: number | null = null;
-
-async function getGsapRuntime(): Promise<GsapRuntime> {
-  if (gsapRuntime) return gsapRuntime;
-
-  const [{ gsap }, { ScrollTrigger }] = await Promise.all([
-    import("gsap"),
-    import("gsap/ScrollTrigger"),
-  ]);
-
-  gsap.registerPlugin(ScrollTrigger);
-  gsapRuntime = { gsap, ScrollTrigger };
-  return gsapRuntime;
-}
-
-function motionReduced(): boolean {
-  if (typeof window === "undefined") return true;
-  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-}
-
-async function initScrollReveal() {
-  if (!import.meta.client || !menuMainEl.value || motionReduced()) return;
-
-  const { gsap, ScrollTrigger } = await getGsapRuntime();
-  const nodes = menuMainEl.value.querySelectorAll<HTMLElement>(
-    ".js-reveal-item, .js-reveal-section",
-  );
-
-  nodes.forEach((el) => {
-    if (el.dataset.revealInit === "1") return;
-    if (el.offsetParent === null) return;
-
-    el.dataset.revealInit = "1";
-    const tween = gsap.fromTo(
-      el,
-      { autoAlpha: 0, y: 12 },
-      {
-        autoAlpha: 1,
-        y: 0,
-        duration: 0.32,
-        ease: "power1.out",
-        clearProps: "opacity,visibility,transform",
-        scrollTrigger: {
-          trigger: el,
-          start: "top 96%",
-          once: true,
-        },
-      },
-    );
-
-    if (tween.scrollTrigger) revealTriggers.push(tween.scrollTrigger);
-  });
-
-  ScrollTrigger.refresh();
-}
-
-function scheduleRevealRefresh() {
-  if (!import.meta.client) return;
-  if (revealRaf) cancelAnimationFrame(revealRaf);
-  revealRaf = requestAnimationFrame(() => {
-    void initScrollReveal();
-    revealRaf = null;
-  });
-}
+const { scheduleRevealRefresh } = useMenuScrollReveal(menuMainEl);
 
 async function toggleOut(name: string) {
   if (!props.staffMode || !record.value) return;
@@ -1553,12 +1391,6 @@ async function loadMemberFromCode(code: string) {
   }
 }
 
-const sendingOrder = ref(false);
-const showThankYou = ref(false);
-// Nombre a mostrar en el modal de agradecimiento; se captura antes de
-// limpiar el formulario (resetOrderForm vacía customer.name).
-const thankYouName = ref("");
-
 watch(memberCode, (code) => {
   if (props.staffMode) loadMemberFromCode(code);
 });
@@ -1589,39 +1421,32 @@ watch(
   { flush: "post" },
 );
 
-onBeforeUnmount(() => {
-  if (revealRaf) cancelAnimationFrame(revealRaf);
-  revealTriggers.forEach((trigger) => trigger?.kill?.());
-  revealTriggers.length = 0;
-});
-
 /* ===== Taquizas: modelo por orden =====
  * Cada orden es una unidad independiente (tacos = 3 piezas, quesadillas = 2).
  * El cliente crea tantas órdenes como quiera; dentro de cada una elige sus
  * guisos hasta el tope de esa orden. El `cart` sigue el invariante que espera
  * la cocina: cart[nombre] = porción normal + suma de esa pieza en todas las
  * órdenes de taquiza (por eso siempre usamos deltas, nunca reasignación).
+ * Ver composables/useTaquizaOrders.ts para el detalle de esta lógica.
  */
-type TaquizaKind = "tacos" | "quesadillas";
-const taquizaKinds: TaquizaKind[] = ["tacos", "quesadillas"];
-
-const taquizaRules = {
-  tacos: taquizaGroup?.pieceOptions?.tacos ?? 3,
-  quesadillas: taquizaGroup?.pieceOptions?.quesadillas ?? 2,
-};
-
-const TAQUIZA_CAP: Record<TaquizaKind, number> = {
-  tacos: taquizaRules.tacos,
-  quesadillas: taquizaRules.quesadillas,
-};
-
-interface TaquizaOrder {
-  id: string;
-  kind: TaquizaKind;
-  fills: Record<string, number>; // guiso -> cantidad en esta orden
-}
-
-const taquizaOrders = ref<TaquizaOrder[]>([]);
+const {
+  taquizaKinds,
+  taquizaRules,
+  TAQUIZA_CAP,
+  taquizaOrders,
+  orderFillTotal,
+  canAddToOrder,
+  applyTaquizaDelta,
+  addTaquizaOrder,
+  removeTaquizaOrder,
+  setOrderFill,
+  taquizaByKind,
+  taquizaOrderCount,
+  taquizaSelectedByKind,
+  hasTaquizaOrder,
+  taquizaTotalForName,
+  clearTaquizaOrders,
+} = useTaquizaOrders(cart, taquizaGroup?.pieceOptions);
 
 watch(
   () => taquizaOrders.value.length,
@@ -1631,100 +1456,6 @@ watch(
   },
   { flush: "post" },
 );
-
-let taquizaSeq = 0;
-function nextTaquizaId() {
-  taquizaSeq += 1;
-  return `tq_${Date.now().toString(36)}_${taquizaSeq}`;
-}
-
-function orderFillTotal(order: TaquizaOrder) {
-  return Object.values(order.fills).reduce((sum, q) => sum + q, 0);
-}
-
-function canAddToOrder(order: TaquizaOrder) {
-  return orderFillTotal(order) < TAQUIZA_CAP[order.kind];
-}
-
-/**
- * Ajuste RELATIVO del cart para piezas de taquiza. Nunca reasigna el total: un
- * guiso puede vivir a la vez en `guisos` y en `taquizas` (p. ej. "Birria"), y
- * ambas porciones comparten la misma llave del cart.
- */
-function applyTaquizaDelta(name: string, delta: number) {
-  const next = (cart[name] ?? 0) + delta;
-  cart[name] = next <= 0 ? 0 : next;
-}
-
-function addTaquizaOrder(kind: TaquizaKind) {
-  taquizaOrders.value.push({ id: nextTaquizaId(), kind, fills: {} });
-}
-
-function removeTaquizaOrder(id: string) {
-  const idx = taquizaOrders.value.findIndex((o) => o.id === id);
-  if (idx === -1) return;
-  const [removed] = taquizaOrders.value.splice(idx, 1);
-  Object.entries(removed.fills).forEach(([name, qty]) => {
-    if (qty > 0) applyTaquizaDelta(name, -qty);
-  });
-}
-
-function setOrderFill(order: TaquizaOrder, name: string, delta: number) {
-  if (delta > 0) {
-    if (!canAddToOrder(order)) return;
-    order.fills[name] = (order.fills[name] ?? 0) + 1;
-    applyTaquizaDelta(name, 1);
-  } else {
-    const cur = order.fills[name] ?? 0;
-    if (cur <= 0) return;
-    const next = cur - 1;
-    if (next <= 0) delete order.fills[name];
-    else order.fills[name] = next;
-    applyTaquizaDelta(name, -1);
-  }
-}
-
-// Vista "por tipo" que espera la cocina (formatCustomerOrder / comandas.ts):
-// aplanamos todas las órdenes a un mapa nombre -> cantidad por tipo.
-const taquizaByKind = computed<Record<TaquizaKind, Record<string, number>>>(
-  () => {
-    const out: Record<TaquizaKind, Record<string, number>> = {
-      tacos: {},
-      quesadillas: {},
-    };
-    taquizaOrders.value.forEach((order) => {
-      Object.entries(order.fills).forEach(([name, qty]) => {
-        if (qty > 0) {
-          out[order.kind][name] = (out[order.kind][name] ?? 0) + qty;
-        }
-      });
-    });
-    return out;
-  },
-);
-
-const taquizaOrderCount = computed<Record<TaquizaKind, number>>(() => ({
-  tacos: taquizaOrders.value.filter((o) => o.kind === "tacos").length,
-  quesadillas: taquizaOrders.value.filter((o) => o.kind === "quesadillas")
-    .length,
-}));
-
-const taquizaSelectedByKind = computed<Record<TaquizaKind, number>>(() => {
-  const sum = (k: TaquizaKind) =>
-    Object.values(taquizaByKind.value[k]).reduce((s, q) => s + q, 0);
-  return { tacos: sum("tacos"), quesadillas: sum("quesadillas") };
-});
-
-const hasTaquizaOrder = computed(() => taquizaOrders.value.length > 0);
-
-/** Piezas de taquiza (todas las órdenes) de un mismo guiso, para no doblar
- *  su conteo en los totales del guiso normal cuando el nombre se comparte. */
-function taquizaTotalForName(name: string) {
-  return (
-    (taquizaByKind.value.tacos[name] ?? 0) +
-    (taquizaByKind.value.quesadillas[name] ?? 0)
-  );
-}
 
 /* ===== Hora (para "aquí" y "para llevar"; opcional, sin default) ===== */
 const hours12 = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"];
@@ -1773,326 +1504,31 @@ const cartItems = computed(() =>
     .map(([name, qty]) => ({ name, qty })),
 );
 
-interface PromoProgressRequirement {
-  id: string;
-  label: string;
-  labelEs: string;
-  labelEn: string;
-  required: number;
-  current: number;
-  missing: number;
-  met: boolean;
-}
-
-interface PromoProgressCard {
-  id: string;
-  label: string;
-  summary: string;
-  price: number;
-  requirements: PromoProgressRequirement[];
-  eligible: boolean;
-  appliedQty: number;
-  missingTextEs: string;
-  missingTextEn: string;
-}
-
-function promoRequirementLabel(requirement: PricingPromoRequirement) {
-  const groupLabels: Record<string, { es: string; en: string }> = {
-    guisos: { es: "Guisos", en: "Stews" },
-    caldos: { es: "Caldos", en: "Soups" },
-    sides: { es: "Guarniciones", en: "Sides" },
-    bebidas: { es: "Bebidas", en: "Drinks" },
-  };
-
-  if (requirement.targetType === "group") {
-    const mapped = groupLabels[requirement.target];
-    if (mapped) return `${mapped.es} / ${mapped.en}`;
-    return groupByKey[requirement.target]?.label ?? requirement.target;
-  }
-
-  if (requirement.targetType === "order-unit") {
-    return (
-      effectivePricingConfig.value.orderUnits?.[requirement.target]?.label ??
-      requirement.target
-    );
-  }
-
-  return requirement.target;
-}
-
-function promoRequirementNoun(
-  requirement: PricingPromoRequirement,
-  qty: number,
-  lang: "es" | "en",
-) {
-  if (requirement.targetType === "group") {
-    const nouns: Record<
-      string,
-      { esSing: string; esPlur: string; enSing: string; enPlur: string }
-    > = {
-      guisos: {
-        esSing: "guiso",
-        esPlur: "guisos",
-        enSing: "stew",
-        enPlur: "stews",
-      },
-      caldos: {
-        esSing: "caldo",
-        esPlur: "caldos",
-        enSing: "soup",
-        enPlur: "soups",
-      },
-      sides: {
-        esSing: "guarnicion",
-        esPlur: "guarniciones",
-        enSing: "side",
-        enPlur: "sides",
-      },
-      bebidas: {
-        esSing: "bebida",
-        esPlur: "bebidas",
-        enSing: "drink",
-        enPlur: "drinks",
-      },
-    };
-
-    const noun = nouns[requirement.target];
-    if (noun) {
-      if (lang === "es") return qty === 1 ? noun.esSing : noun.esPlur;
-      return qty === 1 ? noun.enSing : noun.enPlur;
-    }
-  }
-
-  return (
-    promoRequirementLabel(requirement)
-      .split("/")
-      .map((part) => part.trim())[lang === "es" ? 0 : 1] ||
-    promoRequirementLabel(requirement)
-  );
-}
-
-function promoSummaryLang(promo: PricingPromo, lang: "es" | "en") {
-  return promo.match.requirements
-    .map((requirement) => {
-      const qty = requirement.qty;
-      const noun = promoRequirementNoun(requirement, qty, lang);
-      return `${qty} ${noun}`;
-    })
-    .join(" + ");
-}
-
-function promoRequirementCurrentQty(requirement: PricingPromoRequirement) {
-  if (requirement.targetType === "group") {
-    const group = menuGroups.value.find(
-      (entry) => entry.key === requirement.target,
-    );
-    if (!group) return 0;
-
-    return groupItems(group.key).reduce(
-      (sum, item) =>
-        sum +
-        Math.max(0, (cart[item.name] ?? 0) - taquizaTotalForName(item.name)),
-      0,
-    );
-  }
-
-  if (requirement.targetType === "order-unit") {
-    if (requirement.target === "taquiza:tacos")
-      return taquizaOrderCount.value.tacos;
-    if (requirement.target === "taquiza:quesadillas") {
-      return taquizaOrderCount.value.quesadillas;
-    }
-    return 0;
-  }
-
-  return Math.max(
-    0,
-    (cart[requirement.target] ?? 0) - taquizaTotalForName(requirement.target),
-  );
-}
-
-function joinWithConjunction(parts: string[]) {
-  if (!parts.length) return "";
-  if (parts.length === 1) return parts[0];
-  if (parts.length === 2) return `${parts[0]} y ${parts[1]}`;
-  return `${parts.slice(0, -1).join(", ")} y ${parts[parts.length - 1]}`;
-}
-
-function joinWithConjunctionEn(parts: string[]) {
-  if (!parts.length) return "";
-  if (parts.length === 1) return parts[0];
-  if (parts.length === 2) return `${parts[0]} and ${parts[1]}`;
-  return `${parts.slice(0, -1).join(", ")} and ${parts[parts.length - 1]}`;
-}
-
-const promoProgressCards = computed<PromoProgressCard[]>(() =>
-  effectivePricingConfig.value.promos
-    .filter((promo) => promo.active !== false)
-    .filter((promo) => promoIsAvailableToday(promo))
-    .map((promo) => {
-      const requirements: PromoProgressRequirement[] =
-        promo.match.requirements.map((requirement) => {
-          const current = promoRequirementCurrentQty(requirement);
-          const required = requirement.qty;
-          const missing = Math.max(0, required - current);
-          return {
-            id: `${promo.id}-${requirement.targetType}-${requirement.target}`,
-            label: promoRequirementLabel(requirement),
-            labelEs: promoRequirementNoun(requirement, required, "es"),
-            labelEn: promoRequirementNoun(requirement, required, "en"),
-            required,
-            current: Math.min(current, required),
-            missing,
-            met: missing === 0,
-          };
-        });
-
-      const missingPartsEs = requirements
-        .filter((requirement) => requirement.missing > 0)
-        .map((requirement) => `${requirement.missing} ${requirement.labelEs}`);
-
-      const missingPartsEn = requirements
-        .filter((requirement) => requirement.missing > 0)
-        .map((requirement) => `${requirement.missing} ${requirement.labelEn}`);
-
-      const summaryEs = promo.display?.summary ?? promoSummaryLang(promo, "es");
-      const summaryEn = promoSummaryLang(promo, "en");
-
-      return {
-        id: promo.id,
-        label: promo.label,
-        summary: `${summaryEs} / ${summaryEn}`,
-        price: promo.pricing.amount,
-        requirements,
-        eligible: missingPartsEs.length === 0,
-        appliedQty: 0,
-        missingTextEs: joinWithConjunction(missingPartsEs),
-        missingTextEn: joinWithConjunctionEn(missingPartsEn),
-      };
-    }),
-);
-
-const appliedPromoQtyById = computed(() => {
-  const out = new Map<string, number>();
-  pricingSummary.value.lines
-    .filter((line) => line.kind === "promo")
-    .forEach((line) => {
-      out.set(line.code, (out.get(line.code) ?? 0) + line.qty);
-    });
-  return out;
-});
-
-const promoCardsWithAppliedState = computed(() =>
-  promoProgressCards.value.map((promo) => ({
-    ...promo,
-    appliedQty: appliedPromoQtyById.value.get(promo.id) ?? 0,
-  })),
-);
-
-const promoStatusBanner = computed(() => {
-  if (props.staffMode || !props.useDailyMenu || itemCount.value <= 0)
-    return null;
-
-  const appliedPromos = promoCardsWithAppliedState.value.filter(
-    (promo) => promo.appliedQty > 0,
-  );
-  if (appliedPromos.length) {
-    const labels = appliedPromos.map((promo) =>
-      promo.appliedQty > 1
-        ? `${promo.label} x${promo.appliedQty}`
-        : promo.label,
-    );
-    return {
-      met: true,
-      title: "Promos aplicadas / Applied promos",
-      message: labels.join(" · "),
-    };
-  }
-
-  const nextPromo = promoCardsWithAppliedState.value[0];
-  if (!nextPromo) return null;
-
-  return {
-    met: false,
-    title: `Vas en camino a ${nextPromo.label} / You're on track for ${nextPromo.label}`,
-    message: `Te falta ${nextPromo.missingTextEs} para activar ${money(nextPromo.price)}. / Missing ${nextPromo.missingTextEn} to activate ${money(nextPromo.price)}.`,
-  };
-});
-
-function promoSummary(promo: (typeof menuPricingConfig.promos)[number]) {
-  return promoSummaryLang(promo, "es");
-}
-
-function promoIsAvailableToday(promo: PricingPromo) {
-  return promo.match.requirements.every((requirement) => {
-    if (requirement.targetType === "group") {
-      const group = menuGroups.value.find(
-        (entry) => entry.key === requirement.target,
-      );
-      if (!group) return false;
-      const availableCount = groupItems(group.key).filter(
-        (item) => !isOut(item.name),
-      ).length;
-      return availableCount >= requirement.qty;
-    }
-
-    if (requirement.targetType === "item") {
-      const found = menuGroups.value
-        .flatMap((group) => groupItems(group.key))
-        .find((item) => item.name === requirement.target && !isOut(item.name));
-      return !!found;
-    }
-
-    if (!taquizaGroup) return false;
-    const taquizaAvailable = groupItems(taquizaGroup.key).filter(
-      (item) => !isOut(item.name),
-    ).length;
-    return taquizaAvailable > 0;
-  });
-}
-
-const pricingSummary = computed(() => {
-  const standardItems = menuGroups.value.flatMap((group) => {
-    if (taquizaGroup && group.key === taquizaGroup.key) return [];
-
-    return groupItems(group.key)
-      .map((item) => ({
-        name: item.name,
-        group: group.key,
-        // Resta la porción de taquiza cuando el nombre se comparte, para no
-        // cobrar dos veces un guiso que también es relleno de taquiza.
-        qty: Math.max(
-          0,
-          (cart[item.name] ?? 0) - taquizaTotalForName(item.name),
-        ),
-        unitPrice: item.price ?? 0,
-      }))
-      .filter((entry) => entry.qty > 0);
-  });
-
-  const taquizaUnits = [
-    { code: "taquiza:tacos", qty: taquizaOrderCount.value.tacos },
-    { code: "taquiza:quesadillas", qty: taquizaOrderCount.value.quesadillas },
-  ]
-    .filter((unit) => unit.qty > 0)
-    .map((unit) => ({
-      code: unit.code,
-      qty: unit.qty,
-      label: menuPricingConfig.orderUnits?.[unit.code]?.label ?? unit.code,
-      unitPrice:
-        effectivePricingConfig.value.orderUnits?.[unit.code]?.unitPrice ?? 0,
-    }));
-
-  return priceMenuOrder({
-    items: standardItems,
-    orderUnits: taquizaUnits,
-    config: effectivePricingConfig.value,
-  });
-});
-
-const orderSummaryLines = computed(() => pricingSummary.value.lines);
-
 const itemCount = computed(() => cartItems.value.length);
+
+// Pricing, promo progress cards, and runtime-promo loading for this order.
+// See composables/useMenuPricing.ts.
+const {
+  money,
+  loadRuntimePromos,
+  pricingSummary,
+  orderSummaryLines,
+  promoCardsWithAppliedState,
+  promoStatusBanner,
+} = useMenuPricing({
+  fetchCollection,
+  cart,
+  menuGroups,
+  groupItems,
+  isOut,
+  taquizaGroup,
+  taquizaOrderCount,
+  taquizaTotalForName,
+  itemCount,
+  staffMode: () => props.staffMode,
+  useDailyMenu: () => props.useDailyMenu,
+});
+
 const totalQty = computed(() =>
   cartItems.value.reduce((sum, it) => sum + it.qty, 0),
 );
@@ -2121,10 +1557,6 @@ const hint = computed(() =>
       : "",
 );
 
-function money(value: number) {
-  return PRICE_FORMAT.format(value || 0);
-}
-
 function isGroupLocked(k: GroupKey) {
   return false;
 }
@@ -2147,164 +1579,40 @@ function setQty(k: GroupKey, n: string, d: number) {
   applyTaquizaDelta(n, d); // suma/resta relativa: preserva la porción de taquiza
 }
 
-function clearCart() {
-  for (const k of Object.keys(cart)) cart[k] = 0;
-  taquizaOrders.value = [];
-}
-
-// Deja el formulario listo para un pedido nuevo tras confirmar el envío.
-function resetOrderForm() {
-  clearCart();
-  mode.value = "llevar";
-  note.value = "";
-  customer.name = "";
-  customer.phone = "";
-  customer.address = "";
-  memberCode.value = "";
-  clearTime();
-}
-
-function buildNote() {
-  const pieces: string[] = [];
-  // La hora aplica a "aquí" y "para llevar" (no domicilio).
-  if (pickupTime.value && mode.value !== "domicilio") {
-    const verb = mode.value === "aqui" ? "Llegada" : "Recoger";
-    pieces.push(`${verb} a las ${pickupTime.value}`);
-  }
-  if (hasTaquizaOrder.value) {
-    const summary = [
-      taquizaOrderCount.value.tacos > 0
-        ? `${taquizaOrderCount.value.tacos} orden(es) de tacos (${taquizaRules.tacos} c/u, ${taquizaSelectedByKind.value.tacos} seleccionadas)`
-        : "",
-      taquizaOrderCount.value.quesadillas > 0
-        ? `${taquizaOrderCount.value.quesadillas} orden(es) de quesadillas (${taquizaRules.quesadillas} c/u, ${taquizaSelectedByKind.value.quesadillas} seleccionadas)`
-        : "",
-    ]
-      .filter(Boolean)
-      .join(", ");
-    pieces.push(`Taquiza: ${summary}`);
-  }
-  if (note.value.trim()) pieces.push(note.value.trim());
-  return pieces.join(" · ");
-}
-
-// Número consecutivo para el tablero de cocina: máximo existente + 1. Al no
-// haber columna de status, cualquier registro que quede en la colección es
-// una orden activa.
-async function nextComandaNumber(): Promise<number> {
-  try {
-    const res = await fetchCollection(
-      COMANDAS_COLLECTION,
-      1,
-      300,
-      "",
-      "-created",
-      null,
-      null,
-      true,
-    );
-    const max = res.items.reduce((acc, rec) => {
-      const n = Number((rec as any)[COMANDAS_FIELD]?.number) || 0;
-      return Math.max(acc, n);
-    }, 0);
-    return max + 1;
-  } catch {
-    return Math.floor(Date.now() / 1000) % 100000;
-  }
-}
-
-// Crea la comanda en la BD para que aparezca en el tablero de cocina. Nunca
-// bloquea el envío por WhatsApp: si falla, el pedido igual se manda.
-async function createComanda(
-  number: number,
-  finalNote: string,
-  snapshotTaquizaByKind: Record<TaquizaKind, Record<string, number>>,
-  memberCodeValue: string,
-) {
-  const order: PlacedOrder = {
-    id: `${number}-${Date.now()}`,
-    number,
-    cart: { ...cart },
-    mode: mode.value,
-    note: finalNote,
-    fulfillDate: selectedDate.value,
-    fulfillTime: mode.value !== "domicilio" ? pickupTime.value : "",
-    customer: { ...customer },
-    taquizaOrders: { ...taquizaOrderCount.value },
-    taquizaByKind: snapshotTaquizaByKind,
-    createdAt: Date.now(),
-    memberCode: memberCodeValue || undefined,
-  };
-
-  try {
-    await createItem(COMANDAS_COLLECTION, { [COMANDAS_FIELD]: order });
-  } catch (e) {
-    console.error("No se pudo crear la comanda en cocina", e);
-  }
-}
-
-async function sendOrder() {
-  if (!record.value || !canTrySend.value || sendingOrder.value) return;
-
-  if (!canSend.value) return;
-  sendingOrder.value = true;
-
-  // Abrir la pestaña DENTRO del gesto del click (síncrono): si se abre
-  // después de un `await`, el bloqueador de pop-ups la mata y el fallback
-  // termina navegando la propia página (se "cierra" el menú de golpe) y,
-  // según el navegador, deja dos intentos de apertura visibles.
-  const wa =
-    typeof window !== "undefined" && !isAppleDevice()
-      ? window.open("", "_blank")
-      : null;
-
-  const a = active.value; // menú resuelto (rotación o `active` de hoy)
-
-  // Si hay código de socio, se estampa en la nota Y se guarda como campo
-  // estructurado; el staff descuenta la comida al marcar la orden lista.
-  const code = memberCode.value.replace(/\s+/g, "").toUpperCase();
-  const memberTag = code ? `SOCIO ${code}` : "";
-
-  const snapshotTaquizaByKind = {
-    tacos: { ...taquizaByKind.value.tacos },
-    quesadillas: { ...taquizaByKind.value.quesadillas },
-  };
-  const finalNote = [buildNote(), memberTag].filter(Boolean).join(" · ");
-
-  const number = await nextComandaNumber();
-
-  const text = formatCustomerOrder({
-    orderNumber: number,
-    name: customer.name,
-    cart: { ...cart },
-    mode: mode.value,
-    dishes: a,
-    taquizaByKind: snapshotTaquizaByKind,
-    note: finalNote,
-    phone: customer.phone,
-    address: customer.address,
-    fulfillDate: selectedDate.value,
-  });
-  await createComanda(number, finalNote, snapshotTaquizaByKind, code);
-
-  const url = waLink(text, RESTAURANT_WHATSAPP);
-  if (typeof window !== "undefined") {
-    if (isAppleDevice()) {
-      window.location.href = url;
-    } else if (wa) {
-      wa.location.href = url;
-    } else {
-      window.open(url, "_blank", "noopener");
-    }
-  }
-
-  thankYouName.value = customer.name.trim();
-  resetOrderForm();
-  showThankYou.value = true;
-
-  // Evita doble-tap y mensajes duplicados en móviles.
-  window.setTimeout(() => {
-    sendingOrder.value = false;
-  }, 1200);
-}
+// Order-send workflow (build note, create comanda, open WhatsApp, reset
+// form). See composables/useMenuCheckout.ts.
+const {
+  sendingOrder,
+  showThankYou,
+  thankYouName,
+  clearCart,
+  resetOrderForm,
+  sendOrder,
+} = useMenuCheckout({
+  cart,
+  mode,
+  note,
+  customer,
+  memberCode,
+  clearTime,
+  clearTaquizaOrders,
+  hasTaquizaOrder,
+  taquizaRules,
+  taquizaOrderCount,
+  taquizaSelectedByKind,
+  taquizaByKind,
+  pickupTime,
+  selectedDate,
+  active,
+  record,
+  canSend,
+  fetchCollection,
+  createItem,
+  formatCustomerOrder,
+  waLink,
+  isAppleDevice,
+  restaurantWhatsapp: RESTAURANT_WHATSAPP,
+  comandasCollection: COMANDAS_COLLECTION,
+  comandasField: COMANDAS_FIELD,
+});
 </script>
