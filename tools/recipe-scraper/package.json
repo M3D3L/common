@@ -1,0 +1,12 @@
+{
+  "name": "recipe-scraper",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "extract": "node extract-recipes.mjs",
+    "scrape": "node scrape-cookidoo.mjs"
+  },
+  "dependencies": {
+    "puppeteer": "^25.8.0"
+  }
+}
