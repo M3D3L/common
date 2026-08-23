@@ -2,8 +2,6 @@
   <div
     class="container relative w-full p-6 font-body min-h-screen grid content-center text-foreground md:py-10"
   >
-    <SeoMeta :follow="false" />
-
     <header class="flex items-center gap-3 mb-8">
       <div v-if="view === 'order'" class="flex items-center gap-2 ml-auto">
         <Badge

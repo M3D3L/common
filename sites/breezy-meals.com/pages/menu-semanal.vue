@@ -1,7 +1,5 @@
 <template>
   <main class="mx-auto max-w-7xl space-y-6 px-5 pb-16 pt-6 sm:px-6 lg:py-8">
-    <SeoMeta :follow="false" />
-
     <section>
       <div class="relative p-6 sm:p-8">
         <div

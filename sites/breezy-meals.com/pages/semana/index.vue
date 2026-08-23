@@ -1,7 +1,5 @@
 <template>
   <section class="lg:max-w-3xl px-4 pt-16 pb-28 mx-auto">
-    <SeoMeta :follow="false" />
-
     <div class="mb-8">
       <h2 class="text-2xl font-bold tracking-tight">Preorden semanal</h2>
       <p class="text-sm text-muted-foreground">

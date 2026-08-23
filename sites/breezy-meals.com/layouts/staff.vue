@@ -1,5 +1,6 @@
 <template>
   <div class="relative">
+    <SeoMeta :follow="false" />
     <OrganismsBreezyHeader :logoSrc :links show-auth />
     <slot />
   </div>

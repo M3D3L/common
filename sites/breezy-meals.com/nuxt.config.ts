@@ -21,6 +21,21 @@ export default defineNuxtConfig({
 
   modules: ["@nuxtjs/sitemap"],
 
+  sitemap: {
+    exclude: [
+      "/inicio",
+      "/checklists",
+      "/socios",
+      "/orders",
+      "/promos-dashboard",
+      "/labels",
+      "/menu-items",
+      "/store-items",
+      "/semana/menu",
+      "/semana/calendario",
+    ],
+  },
+
   googleFonts: {
     families: {
       Inter: {
@@ -70,7 +85,21 @@ export default defineNuxtConfig({
       {
         userAgent: "*",
         allow: "/",
-        disallow: ["/api", "/_nuxt", "/blog/admin"],
+        disallow: [
+          "/api",
+          "/_nuxt",
+          "/blog/admin",
+          "/inicio",
+          "/checklists",
+          "/socios",
+          "/orders",
+          "/promos-dashboard",
+          "/labels",
+          "/menu-items",
+          "/store-items",
+          "/semana/menu",
+          "/semana/calendario",
+        ],
       },
     ],
     sitemap: "https://breezy-meals.com/sitemap.xml",

@@ -1,5 +1,6 @@
 <template>
   <div class="relative">
+    <SeoMeta />
     <OrganismsBreezyHeader :logoSrc :links />
 
     <div

@@ -1,7 +1,5 @@
 <template>
   <div class="min-h-screen bg-background text-foreground font-body">
-    <SeoMeta :follow="false" />
-
     <main class="mx-auto max-w-3xl px-5 py-6 space-y-6">
       <header class="flex flex-wrap items-center justify-between gap-3">
         <div>

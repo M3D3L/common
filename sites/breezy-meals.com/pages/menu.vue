@@ -1,7 +1,5 @@
 <template>
   <div class="min-h-screen bg-background text-foreground font-body">
-    <SeoMeta :follow="false" />
-
     <!-- Cargando -->
     <div v-if="pending" class="mx-auto max-w-lg px-5 pt-9 pb-40">
       <div class="mt-12 space-y-3">

@@ -1,7 +1,5 @@
 <template>
   <section class="container mx-auto w-full px-4 py-8 md:py-10">
-    <SeoMeta :follow="false" />
-
     <header class="mb-6 flex flex-wrap items-center justify-between gap-3">
       <div>
         <p
