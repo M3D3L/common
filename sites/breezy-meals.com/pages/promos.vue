@@ -13,7 +13,7 @@
               Promos
             </Badge>
             <Badge variant="outline" class="uppercase tracking-widest">
-              {{ menuPricingConfig.promos.length }} disponibles
+              {{ promos.length }} disponibles
             </Badge>
           </div>
 
@@ -48,9 +48,16 @@
               >
                 Promoción
               </p>
-              <h2 class="mt-1 text-lg font-semibold leading-tight sm:text-xl">
-                {{ promo.label }}
-              </h2>
+              <div class="mt-1 flex flex-wrap items-center gap-2">
+                <h2 class="text-lg font-semibold leading-tight sm:text-xl">
+                  {{ promo.label }}
+                </h2>
+                <Badge
+                  :variant="promo.active !== false ? 'default' : 'secondary'"
+                >
+                  {{ promo.active !== false ? "Activa" : "Inactiva" }}
+                </Badge>
+              </div>
             </div>
 
             <div class="shrink-0 text-right">
@@ -101,11 +108,108 @@ import { Card, CardContent } from "@common/components/ui/card";
 import { Separator } from "@common/components/ui/separator";
 import { menuPricingConfig } from "~/config/menu-pricing";
 import { groupByKey } from "~/utils/comandas";
-import type { PricingPromoRequirement } from "~/utils/menuPricing";
+import type {
+  PricingPromo,
+  PricingPromoRequirement,
+} from "~/utils/menuPricing";
 
 definePageMeta({ layout: "breezy" });
 
-const promos = menuPricingConfig.promos;
+const { fetchCollection } = usePocketBaseCore();
+const promos = ref<PricingPromo[]>([...menuPricingConfig.promos]);
+
+function toRuntimePromo(record: Record<string, any>): PricingPromo | null {
+  const data =
+    record?.data && typeof record.data === "object" ? record.data : undefined;
+  const id = String(record.promoId || data?.id || record.id || "").trim();
+  const label = String(record.label || data?.label || "").trim();
+  const priority = Number(record.priority ?? data?.priority ?? 0) || 0;
+  const active = Boolean(record.active ?? data?.active ?? true);
+  const match = (record.match ?? data?.match) as
+    | { requirements?: PricingPromoRequirement[] }
+    | undefined;
+  const pricing = (record.pricing ?? data?.pricing) as
+    | { amount?: number }
+    | undefined;
+  const display = (record.display ?? data?.display) as
+    | { summary?: string }
+    | undefined;
+
+  const requirements = Array.isArray(match?.requirements)
+    ? match.requirements.filter(
+        (req) =>
+          !!req &&
+          (req.targetType === "group" ||
+            req.targetType === "item" ||
+            req.targetType === "order-unit") &&
+          typeof req.target === "string" &&
+          Number(req.qty) > 0,
+      )
+    : [];
+
+  const amount = Number(pricing?.amount);
+
+  if (!id || !label || !requirements.length || !Number.isFinite(amount)) {
+    return null;
+  }
+
+  return {
+    id,
+    label,
+    active,
+    priority,
+    match: { requirements },
+    pricing: { amount },
+    display: { summary: String(display?.summary || "").trim() },
+  };
+}
+
+function mergePromos(runtime: PricingPromo[]) {
+  const byId = new Map<string, PricingPromo>();
+
+  menuPricingConfig.promos.forEach((promo) => {
+    byId.set(String(promo.id), promo);
+  });
+
+  runtime.forEach((promo) => {
+    byId.set(String(promo.id), promo);
+  });
+
+  return [...byId.values()].sort((a, b) => {
+    const pa = Number(a.priority ?? 0);
+    const pb = Number(b.priority ?? 0);
+    if (pa !== pb) return pa - pb;
+    return String(a.label || "").localeCompare(String(b.label || ""), "es");
+  });
+}
+
+async function loadPromos() {
+  try {
+    const res = await fetchCollection(
+      "promos",
+      1,
+      200,
+      "",
+      "priority,-created",
+      null,
+      null,
+      true,
+      { requestKey: "promos_page_runtime_promos" },
+    );
+
+    const runtime = res.items
+      .map((item) => toRuntimePromo(item as Record<string, any>))
+      .filter((item): item is PricingPromo => !!item);
+
+    promos.value = mergePromos(runtime);
+  } catch {
+    promos.value = mergePromos([]);
+  }
+}
+
+onMounted(() => {
+  void loadPromos();
+});
 
 function money(value: number) {
   return new Intl.NumberFormat("es-MX", {
@@ -130,7 +234,7 @@ function requirementLabel(requirement: PricingPromoRequirement) {
   return requirement.target;
 }
 
-function promoSummary(promo: (typeof menuPricingConfig.promos)[number]) {
+function promoSummary(promo: PricingPromo) {
   return (
     promo.display?.summary ??
     promo.match.requirements

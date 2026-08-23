@@ -1,74 +1,138 @@
-# Nuxt 3 Shadcn-vue Starter Template
-=====================================
-![image](https://github.com/user-attachments/assets/64d24990-0d97-46dd-9e88-406ac591db18)
+# Common Monorepo
 
-## Features
-* Dark Mode
-* Image optimization with @nuxt/image
-* Integration with Tailwind CSS
-* State management with Pinia
-* Utilities and composables from VueUse
-* Icon components from Radix Icons
+This repository contains a shared Nuxt codebase plus multiple domain-specific site apps.
+Each site lives in its own folder under `sites/` and extends the common base configuration.
 
-## Installed Packages
+## What This Repo Contains
 
-* `@nuxt/image`: ^1.8.0
-* `@nuxtjs/tailwindcss`: ^6.12.1
-* `@pinia/nuxt`: ^0.5.4
-* `@vueuse/nuxt`: ^11.0.3
-* `nuxt`: ^3.13.0
-* `pinia`: ^2.2.2
-* `vue`: latest
-* `vue-router`: latest
-* `@radix-icons/vue`: ^1.0.0
-* `@tailwindcss/typography`: ^0.5.15 (dev dependency)
-* `clsx`: ^2.1.1
-* `class-variance-authority`: ^0.7.0
-* `radix-vue`: ^1.9.5
-* `shadcn-nuxt`: ^0.10.4
-* `tailwind-merge`: ^2.5.2
-* `tailwindcss-animate`: ^1.0.7
-* `typescript`: ^5.6.2 (dev dependency)
+- Shared Nuxt foundation at repo root (`nuxt.config.ts`, shared components/composables/assets).
+- Domain-specific sites in `sites/`:
+  - `breezy-meals.com`
+  - `guillermomedel.com`
+  - `relocatetosancarlos.com`
+  - `sancarlosinsider.com`
+  - `vivirensancarlos.com`
+- Cloudflare Worker proxy in `chatgpt-proxy/`.
 
-## Project Structure
+## Architecture
 
-* `components`: Reusable Vue components
-* `layouts`: Page layouts
-* `pages`: Page components
-* `plugins`: Nuxt plugins
-* `store`: Pinia store
+Each site is a standalone Nuxt app with its own:
 
-## Getting Started
+- `nuxt.config.ts`
+- `package.json`
+- `pages/`, `layouts/`, `assets/`, etc.
 
-To get started with this project, run the following commands:
+Most sites extend common root config through Nuxt `extends` so shared behavior stays centralized.
+
+## Requirements
+
+- Node.js 20+
+- npm 10+
+
+## Install Dependencies
+
+Install dependencies where you are going to run commands.
+
+Root:
 
 ```bash
 npm install
+```
+
+Per-site (example):
+
+```bash
+cd sites/breezy-meals.com
+npm install
+```
+
+Proxy worker:
+
+```bash
+cd chatgpt-proxy
+npm install
+```
+
+## Local Development
+
+Run Nuxt from the specific site directory.
+
+Example (Breezy):
+
+```bash
+cd sites/breezy-meals.com
 npm run dev
 ```
 
-This will start the development server and you can access the application at `http://localhost:3000`.
+Example (Guillermo):
 
-## Building for Production
+```bash
+cd sites/guillermomedel.com
+npm run dev
+```
 
-To build the application for production, run the following command:
+Nuxt default local URL is usually:
+
+- `http://localhost:3000`
+
+## Build and Preview
+
+From a site folder:
 
 ```bash
 npm run build
+npm run generate
+npm run preview
 ```
 
-This will generate the production-ready code in the `dist` directory.
+Some site folders also include `preview:prod` for production-like base-path preview.
 
-## Generating Static Site
+## ChatGPT Proxy (Cloudflare Worker)
 
-To generate a static site, run the following command:
+From `chatgpt-proxy/`:
 
 ```bash
-npm run generate
+npm run dev
+npm run test
+npm run deploy
 ```
 
-This will generate a static site in the `dist` directory.
+## Common Commands by Area
 
-## License
+Root app:
 
-This project is licensed under the MIT License.
+- `npm run dev`
+- `npm run build`
+- `npm run generate`
+
+Site apps (`sites/<domain>/`):
+
+- `npm run dev`
+- `npm run build`
+- `npm run generate`
+- `npm run preview`
+- `npm run prepare` (generates dynamic routes where configured)
+
+## Directory Guide
+
+- `assets/`, `components/`, `composables/`, `layouts/`, `pages/`, `plugins/`, `store/`
+  - Shared/common app-level resources.
+- `sites/`
+  - Domain-specific Nuxt apps.
+- `chatgpt-proxy/`
+  - Cloudflare worker and tests.
+- `server/`
+  - Server-side and runtime server pieces for Nuxt where applicable.
+- `reports/`
+  - Project notes and implementation reports.
+
+## Workflow Notes
+
+- Treat each site under `sites/` as its own deployable app.
+- Keep shared logic in root/common when useful.
+- Keep domain-specific pages and business logic inside the correct site folder only.
+
+## Deployment Notes
+
+- Build/deploy each site from its own directory.
+- If old pages appear after route cleanup, redeploy and clear CDN/browser cache.

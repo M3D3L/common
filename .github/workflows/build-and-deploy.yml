@@ -24,6 +24,7 @@ jobs:
   detect-changes:
     runs-on: ubuntu-latest
     outputs:
+      breezymeals: ${{ steps.filter.outputs.breezymeals }}
       guillermomedel: ${{ steps.filter.outputs.guillermomedel }}
       relocatetosancarlos: ${{ steps.filter.outputs.relocatetosancarlos }}
       vivirensancarlos: ${{ steps.filter.outputs.vivirensancarlos }}
@@ -57,6 +58,8 @@ jobs:
               - '.github/workflows/**'
             guillermomedel:
               - 'sites/guillermomedel.com/**'
+            breezymeals:
+              - 'sites/breezy-meals.com/**'
             relocatetosancarlos:
               - 'sites/relocatetosancarlos.com/**'
             vivirensancarlos:
@@ -69,6 +72,10 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          - site: breezymeals
+            domain: breezy-meals.com
+            repo: M3D3L/breezy-meals.com
+            path: ./sites/breezy-meals.com
           - site: guillermomedel
             domain: guillermomedel.com
             repo: M3D3L/guillermomedel.com

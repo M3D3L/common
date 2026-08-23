@@ -1,74 +1,113 @@
-# Nuxt 3 Shadcn-vue Starter Template
-=====================================
-![image](https://github.com/user-attachments/assets/64d24990-0d97-46dd-9e88-406ac591db18)
+# guillermomedel.com
 
-## Features
-* Dark Mode
-* Image optimization with @nuxt/image
-* Integration with Tailwind CSS
-* State management with Pinia
-* Utilities and composables from VueUse
-* Icon components from Radix Icons
+Nuxt app for the Guillermo Medel portfolio and blog.
 
-## Installed Packages
+This site is hosted from this directory and extends shared config from the common repository root.
 
-* `@nuxt/image`: ^1.8.0
-* `@nuxtjs/tailwindcss`: ^6.12.1
-* `@pinia/nuxt`: ^0.5.4
-* `@vueuse/nuxt`: ^11.0.3
-* `nuxt`: ^3.13.0
-* `pinia`: ^2.2.2
-* `vue`: latest
-* `vue-router`: latest
-* `@radix-icons/vue`: ^1.0.0
-* `@tailwindcss/typography`: ^0.5.15 (dev dependency)
-* `clsx`: ^2.1.1
-* `class-variance-authority`: ^0.7.0
-* `radix-vue`: ^1.9.5
-* `shadcn-nuxt`: ^0.10.4
-* `tailwind-merge`: ^2.5.2
-* `tailwindcss-animate`: ^1.0.7
-* `typescript`: ^5.6.2 (dev dependency)
+## Scope
 
-## Project Structure
+This app owns:
 
-* `components`: Reusable Vue components
-* `layouts`: Page layouts
-* `pages`: Page components
-* `plugins`: Nuxt plugins
-* `store`: Pinia store
+- portfolio landing page(s)
+- blog pages and related routes
+- personal branding/SEO for guillermomedel.com
 
-## Getting Started
+This app does not own Breezy Meals operational pages.
 
-To get started with this project, run the following commands:
+## Separation Note
+
+The Breezy Meals app was separated from this site.
+
+- do not add Breezy menu/staff/order routes here
+- keep Breezy business logic in `sites/breezy-meals.com`
+
+## Tech Notes
+
+- Nuxt 3 (SSG-friendly setup)
+- `ssr: false`
+- site URL: `https://guillermomedel.com`
+- sitemap and robots configured in `nuxt.config.ts`
+- dynamic route generation via `scripts/generate-routes.js`
+
+## Requirements
+
+- Node.js 20+
+- npm 10+
+
+## Install
 
 ```bash
 npm install
+```
+
+## Run Locally
+
+```bash
 npm run dev
 ```
 
-This will start the development server and you can access the application at `http://localhost:3000`.
+Default local URL: `http://localhost:3000`
 
-## Building for Production
-
-To build the application for production, run the following command:
+## Build and Preview
 
 ```bash
 npm run build
+npm run generate
+npm run preview
 ```
 
-This will generate the production-ready code in the `dist` directory.
+Production-like preview with base path:
 
-## Generating Static Site
+```bash
+npm run preview:prod
+```
 
-To generate a static site, run the following command:
+## Scripts
+
+- `dev`: start local Nuxt dev server
+- `build`: build app
+- `generate`: generate static output
+- `preview`: generate + preview static output
+- `preview:prod`: production-mode preview with explicit base path
+- `prepare`: generate blog routes (`scripts/generate-routes.js`)
+- `postinstall`: `nuxt prepare`
+
+## Environment Variables
+
+These are read by `nuxt.config.ts` runtime config:
+
+- `POCKETBASE_URL`
+- `WHATSAPP_NUMBER`
+- `NODE_ENV`
+- `BUSINESS_BRAND_NAME`
+- `BUSINESS_NAME`
+- `BUSINESS_LOGO_URL`
+- `BUSINESS_WHATSAPP_NUMBER`
+- `BUSINESS_MENU_URL`
+- `BUSINESS_HEADER_EYEBROW`
+- `BUSINESS_HEADER_SUBTITLE`
+- `BUSINESS_HEADER_MENU_TITLE`
+- `BUSINESS_MENU_BROADCAST_GREETING`
+- `BUSINESS_MENU_BROADCAST_PRICE_ONE`
+- `BUSINESS_MENU_BROADCAST_PRICE_TWO`
+- `BUSINESS_MENU_BROADCAST_CTA`
+- `BUSINESS_MENU_BROADCAST_CUTOFF`
+- `BUSINESS_MENU_BROADCAST_FOOTER`
+
+## Structure
+
+- `pages/`: portfolio/blog route pages
+- `components/`: reusable UI components
+- `composables/`: app-specific composition logic
+- `assets/`: styles and content config
+- `routes/`: generated route lists for prerender/sitemap
+
+## Deployment
+
+Build and deploy from this directory (not from repository root):
 
 ```bash
 npm run generate
 ```
 
-This will generate a static site in the `dist` directory.
-
-## License
-
-This project is licensed under the MIT License.
+Then publish `.output/public` with your hosting workflow.

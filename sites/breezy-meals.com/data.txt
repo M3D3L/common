@@ -1,0 +1,774 @@
+{
+  "dishes": {
+    "guisos": [
+      {
+        "name": "Birria",
+        "price": 0,
+        "combo": {
+          "allowSides": true,
+          "requiredSides": 2,
+          "allowDrink": true,
+          "requiredDrink": true
+        }
+      },
+      {
+        "name": "Cochinita Pibil",
+        "price": 0,
+        "combo": {
+          "allowSides": true,
+          "requiredSides": 2,
+          "allowDrink": true,
+          "requiredDrink": true
+        }
+      },
+      {
+        "name": "Chicharrón en Salsa Verde",
+        "price": 0,
+        "combo": {
+          "allowSides": true,
+          "requiredSides": 2,
+          "allowDrink": true,
+          "requiredDrink": true
+        }
+      },
+      {
+        "name": "Pollo en Crema Chipotle",
+        "price": 0,
+        "combo": {
+          "allowSides": true,
+          "requiredSides": 2,
+          "allowDrink": true,
+          "requiredDrink": true
+        }
+      },
+      {
+        "name": "Pollo en Crema de Rajas",
+        "price": 0,
+        "combo": {
+          "allowSides": true,
+          "requiredSides": 2,
+          "allowDrink": true,
+          "requiredDrink": true
+        }
+      },
+      {
+        "name": "Pollo en Crema de Champiñón y Tocino",
+        "price": 0,
+        "combo": {
+          "allowSides": true,
+          "requiredSides": 2,
+          "allowDrink": true,
+          "requiredDrink": true
+        }
+      },
+      {
+        "name": "Carne Molida a la Boloñesa",
+        "price": 0,
+        "combo": {
+          "allowSides": true,
+          "requiredSides": 2,
+          "allowDrink": true,
+          "requiredDrink": true
+        }
+      },
+      {
+        "name": "Caldo de Albóndigas",
+        "price": 0,
+        "combo": {
+          "allowSides": true,
+          "requiredSides": 2,
+          "allowDrink": true,
+          "requiredDrink": true
+        }
+      },
+      {
+        "name": "Albóndigas de Chipotle Rellenas de Queso",
+        "price": 0,
+        "combo": {
+          "allowSides": true,
+          "requiredSides": 2,
+          "allowDrink": true,
+          "requiredDrink": true
+        }
+      },
+      {
+        "name": "Lasaña de Calabaza",
+        "price": 0,
+        "combo": {
+          "allowSides": true,
+          "requiredSides": 2,
+          "allowDrink": true,
+          "requiredDrink": true
+        }
+      },
+      {
+        "name": "Carne en su jugo con tocino",
+        "price": 0,
+        "combo": {
+          "allowSides": true,
+          "requiredSides": 2,
+          "allowDrink": true,
+          "requiredDrink": true
+        }
+      },
+      {
+        "name": "Teriyaki de Res",
+        "price": 0,
+        "combo": {
+          "allowSides": true,
+          "requiredSides": 2,
+          "allowDrink": true,
+          "requiredDrink": true
+        }
+      },
+      {
+        "name": "Pollo oriental",
+        "price": 0,
+        "combo": {
+          "allowSides": true,
+          "requiredSides": 2,
+          "allowDrink": true,
+          "requiredDrink": true
+        }
+      },
+      {
+        "name": "Discada Norteña (res, cerdo y tocino)",
+        "price": 0,
+        "combo": {
+          "allowSides": true,
+          "requiredSides": 2,
+          "allowDrink": true,
+          "requiredDrink": true
+        }
+      },
+      {
+        "name": "Milanesa de Cerdo",
+        "price": 0,
+        "combo": {
+          "allowSides": true,
+          "requiredSides": 2,
+          "allowDrink": true,
+          "requiredDrink": true
+        }
+      },
+      {
+        "name": "Bistec Ranchero",
+        "price": 0,
+        "combo": {
+          "allowSides": true,
+          "requiredSides": 2,
+          "allowDrink": true,
+          "requiredDrink": true
+        }
+      }
+    ],
+    "taquizas": [
+      {
+        "name": "Birria",
+        "price": 0,
+        "combo": {
+          "allowSides": false,
+          "requiredSides": 0,
+          "allowDrink": true,
+          "requiredDrink": true
+        }
+      },
+      {
+        "name": "Chicharrón en Salsa Verde",
+        "price": 0,
+        "combo": {
+          "allowSides": false,
+          "requiredSides": 0,
+          "allowDrink": true,
+          "requiredDrink": true
+        }
+      },
+      {
+        "name": "Machaca",
+        "price": 0,
+        "combo": {
+          "allowSides": false,
+          "requiredSides": 0,
+          "allowDrink": true,
+          "requiredDrink": true
+        }
+      },
+      {
+        "name": "Marlin",
+        "price": 0,
+        "combo": {
+          "allowSides": false,
+          "requiredSides": 0,
+          "allowDrink": true,
+          "requiredDrink": true
+        }
+      },
+      {
+        "name": "Frijol",
+        "price": 0,
+        "combo": {
+          "allowSides": false,
+          "requiredSides": 0,
+          "allowDrink": true,
+          "requiredDrink": true
+        }
+      },
+      {
+        "name": "Pescado Estilo Baja",
+        "price": 0,
+        "combo": {
+          "allowSides": false,
+          "requiredSides": 0,
+          "allowDrink": true,
+          "requiredDrink": true
+        }
+      }
+    ],
+    "tortas_burgers_burritos": [
+      {
+        "name": "Torta de Cochinita Pibil (con Guarnición de Papas Gajo)",
+        "price": 0,
+        "combo": {
+          "allowSides": false,
+          "requiredSides": 0,
+          "allowDrink": true,
+          "requiredDrink": true
+        }
+      },
+      {
+        "name": "Hamburguesa de Res con Champiñones, Tocino y Cebolla (con Guarnición de Papas Gajo)",
+        "price": 0,
+        "combo": {
+          "allowSides": false,
+          "requiredSides": 0,
+          "allowDrink": true,
+          "requiredDrink": true
+        }
+      },
+      {
+        "name": "Croissants de Jamón y Queso",
+        "price": 0,
+        "combo": {
+          "allowSides": false,
+          "requiredSides": 0,
+          "allowDrink": true,
+          "requiredDrink": true
+        }
+      },
+      {
+        "name": "Burritos de Machaca",
+        "price": 0,
+        "combo": {
+          "allowSides": false,
+          "requiredSides": 0,
+          "allowDrink": true,
+          "requiredDrink": true
+        }
+      },
+      {
+        "name": "Burritos de Huevo con Tocino",
+        "price": 0,
+        "combo": {
+          "allowSides": false,
+          "requiredSides": 0,
+          "allowDrink": true,
+          "requiredDrink": true
+        }
+      },
+      {
+        "name": "Papas Gajo",
+        "price": 0,
+        "combo": {
+          "allowSides": false,
+          "requiredSides": 0,
+          "allowDrink": true,
+          "requiredDrink": true
+        }
+      },
+      {
+        "name": "Papas Gajo con Queso",
+        "price": 0,
+        "combo": {
+          "allowSides": false,
+          "requiredSides": 0,
+          "allowDrink": true,
+          "requiredDrink": true
+        }
+      }
+    ],
+    "sides": [
+      {
+        "name": "Espagueti Rojo",
+        "price": 0,
+        "combo": {
+          "allowSides": false,
+          "requiredSides": 0,
+          "allowDrink": false,
+          "requiredDrink": false
+        }
+      },
+      {
+        "name": "Fettuccine Alfredo",
+        "price": 0,
+        "combo": {
+          "allowSides": false,
+          "requiredSides": 0,
+          "allowDrink": false,
+          "requiredDrink": false
+        }
+      },
+      {
+        "name": "Arroz Naranja",
+        "price": 0,
+        "combo": {
+          "allowSides": false,
+          "requiredSides": 0,
+          "allowDrink": false,
+          "requiredDrink": false
+        }
+      },
+      {
+        "name": "Rajas en Salsa Soya",
+        "price": 0,
+        "combo": {
+          "allowSides": false,
+          "requiredSides": 0,
+          "allowDrink": false,
+          "requiredDrink": false
+        }
+      },
+      {
+        "name": "Puré de Papa",
+        "price": 0,
+        "combo": {
+          "allowSides": false,
+          "requiredSides": 0,
+          "allowDrink": false,
+          "requiredDrink": false
+        }
+      },
+      {
+        "name": "Arroz Blanco",
+        "price": 0,
+        "combo": {
+          "allowSides": false,
+          "requiredSides": 0,
+          "allowDrink": false,
+          "requiredDrink": false
+        }
+      },
+      {
+        "name": "Ensalada Fresca",
+        "price": 0,
+        "combo": {
+          "allowSides": false,
+          "requiredSides": 0,
+          "allowDrink": false,
+          "requiredDrink": false
+        }
+      },
+      {
+        "name": "Frijoles Rancheros",
+        "price": 0,
+        "combo": {
+          "allowSides": false,
+          "requiredSides": 0,
+          "allowDrink": false,
+          "requiredDrink": false
+        }
+      }
+    ],
+    "bebidas": [
+      {
+        "name": "Agua de Melón",
+        "price": 0,
+        "combo": {
+          "allowSides": false,
+          "requiredSides": 0,
+          "allowDrink": false,
+          "requiredDrink": false
+        }
+      },
+      {
+        "name": "Agua de Piña",
+        "price": 0,
+        "combo": {
+          "allowSides": false,
+          "requiredSides": 0,
+          "allowDrink": false,
+          "requiredDrink": false
+        }
+      },
+      {
+        "name": "Limonada de Limón Amarillo",
+        "price": 0,
+        "combo": {
+          "allowSides": false,
+          "requiredSides": 0,
+          "allowDrink": false,
+          "requiredDrink": false
+        }
+      },
+      {
+        "name": "Limonada de Fresa",
+        "price": 0,
+        "combo": {
+          "allowSides": false,
+          "requiredSides": 0,
+          "allowDrink": false,
+          "requiredDrink": false
+        }
+      },
+      {
+        "name": "Té de Limón",
+        "price": 0,
+        "combo": {
+          "allowSides": false,
+          "requiredSides": 0,
+          "allowDrink": false,
+          "requiredDrink": false
+        }
+      },
+      {
+        "name": "Refresco de Sabor",
+        "price": 0,
+        "combo": {
+          "allowSides": false,
+          "requiredSides": 0,
+          "allowDrink": false,
+          "requiredDrink": false
+        }
+      },
+      {
+        "name": "Agua Mineral de Sabor",
+        "price": 0,
+        "combo": {
+          "allowSides": false,
+          "requiredSides": 0,
+          "allowDrink": false,
+          "requiredDrink": false
+        }
+      }
+    ]
+  },
+  "active": {
+    "bebidas": [
+      "Agua de Piña",
+      "Refresco de Sabor",
+      "Agua Mineral de Sabor"
+    ],
+    "guisos": [
+      "Cochinita Pibil"
+    ],
+    "sides": [
+      "Frijoles Rancheros",
+      "Ensalada Fresca",
+      "Arroz Naranja"
+    ],
+    "taquizas": [],
+    "tortas_burgers_burritos": [
+      "Torta de Cochinita Pibil (con Guarnición de Papas Gajo)",
+      "Hamburguesa de Res con Champiñones, Tocino y Cebolla (con Guarnición de Papas Gajo)"
+    ]
+  },
+  "sold_out": [
+    "Hamburguesa de Res con Champiñones, Tocino y Cebolla (con Guarnición de Papas Gajo)"
+  ],
+  "weekly": {
+    "2026-07-20": {
+      "bebidas": [
+        "Agua de Melón",
+        "Refresco de Sabor",
+        "Agua Mineral de Sabor"
+      ],
+      "guisos": [
+        "Pollo en Crema Chipotle",
+        "Pollo en Crema de Champiñón y Tocino"
+      ],
+      "sides": [
+        "Arroz Naranja",
+        "Frijoles Rancheros",
+        "Ensalada Fresca"
+      ]
+    },
+    "2026-07-21": {
+      "bebidas": [
+        "Agua Mineral de Sabor",
+        "Agua de Melón",
+        "Refresco de Sabor"
+      ],
+      "guisos": [
+        "Birria",
+        "Chicharrón en Salsa Verde",
+        "Machaca"
+      ],
+      "sides": [
+        "Ensalada Fresca",
+        "Frijoles Rancheros",
+        "Arroz Naranja"
+      ]
+    },
+    "2026-07-22": {
+      "bebidas": [
+        "Agua de Piña",
+        "Agua Mineral de Sabor",
+        "Refresco de Sabor"
+      ],
+      "guisos": [
+        "Cochinita Pibil"
+      ],
+      "sides": [
+        "Ensalada Fresca",
+        "Frijoles Rancheros",
+        "Arroz Naranja"
+      ]
+    },
+    "2026-07-23": {
+      "bebidas": [
+        "Agua de Piña",
+        "Refresco de Sabor",
+        "Agua Mineral de Sabor"
+      ],
+      "guisos": [
+        "Lasaña de Calabaza",
+        "Caldo de Albóndigas"
+      ],
+      "sides": [
+        "Frijoles Rancheros",
+        "Arroz Naranja",
+        "Ensalada Fresca"
+      ]
+    },
+    "2026-07-24": {
+      "bebidas": [
+        "Té de Limón",
+        "Agua Mineral de Sabor",
+        "Refresco de Sabor"
+      ],
+      "guisos": [
+        "Bistec Ranchero",
+        "Carne en su jugo con tocino"
+      ],
+      "sides": [
+        "Arroz Naranja",
+        "Ensalada Fresca",
+        "Frijoles Rancheros"
+      ]
+    },
+    "2026-07-25": {
+      "bebidas": [],
+      "guisos": [],
+      "sides": []
+    }
+  },
+  "weekly_blocks": [
+    {
+      "color": "#ef4444",
+      "days": {
+        "1": {
+          "bebidas": [
+            "Agua de Melón",
+            "Agua Mineral de Sabor",
+            "Refresco de Sabor"
+          ],
+          "guisos": [
+            "Pollo en Crema Chipotle",
+            "Pollo en Crema de Champiñón y Tocino"
+          ],
+          "sides": [
+            "Arroz Naranja",
+            "Frijoles Rancheros",
+            "Ensalada Fresca"
+          ]
+        },
+        "2": {
+          "bebidas": [
+            "Agua Mineral de Sabor",
+            "Refresco de Sabor",
+            "Limonada de Fresa"
+          ],
+          "guisos": [
+            "Birria",
+            "Chicharrón en Salsa Verde"
+          ],
+          "sides": [
+            "Ensalada Fresca",
+            "Frijoles Rancheros",
+            "Arroz Naranja"
+          ],
+          "taquizas": [
+            "Birria",
+            "Chicharrón en Salsa Verde",
+            "Machaca",
+            "Marlin"
+          ],
+          "tortas_burgers_burritos": [
+            "Torta de Cochinita Pibil (con Guarnición de Papas Gajo)",
+            "Hamburguesa de Res con Champiñones, Tocino y Cebolla (con Guarnición de Papas Gajo)"
+          ]
+        },
+        "3": {
+          "bebidas": [
+            "Agua de Piña",
+            "Refresco de Sabor",
+            "Agua Mineral de Sabor"
+          ],
+          "guisos": [
+            "Cochinita Pibil"
+          ],
+          "sides": [
+            "Frijoles Rancheros",
+            "Ensalada Fresca",
+            "Arroz Naranja"
+          ],
+          "taquizas": [],
+          "tortas_burgers_burritos": [
+            "Torta de Cochinita Pibil (con Guarnición de Papas Gajo)",
+            "Hamburguesa de Res con Champiñones, Tocino y Cebolla (con Guarnición de Papas Gajo)"
+          ]
+        },
+        "4": {
+          "bebidas": [
+            "Refresco de Sabor",
+            "Agua Mineral de Sabor",
+            "Limonada de Limón Amarillo"
+          ],
+          "guisos": [
+            "Lasaña de Calabaza",
+            "Carne Molida a la Boloñesa"
+          ],
+          "sides": [
+            "Frijoles Rancheros",
+            "Arroz Naranja",
+            "Ensalada Fresca"
+          ]
+        },
+        "5": {
+          "bebidas": [
+            "Agua Mineral de Sabor",
+            "Limonada de Fresa",
+            "Refresco de Sabor"
+          ],
+          "guisos": [
+            "Bistec Ranchero",
+            "Carne en su jugo con tocino"
+          ],
+          "sides": [
+            "Arroz Naranja",
+            "Ensalada Fresca",
+            "Frijoles Rancheros"
+          ]
+        },
+        "6": {
+          "bebidas": [
+            "Limonada de Limón Amarillo",
+            "Agua Mineral de Sabor",
+            "Refresco de Sabor"
+          ],
+          "guisos": [
+            "Croissants de Jamón y Queso",
+            "Birria",
+            "Chicharrón en Salsa Verde",
+            "Cochinita Pibil",
+            "Lasaña de Calabaza",
+            "Carne Molida a la Boloñesa"
+          ],
+          "sides": [
+            "Arroz Naranja",
+            "Frijoles Rancheros",
+            "Ensalada Fresca",
+            "Espagueti Rojo"
+          ]
+        }
+      },
+      "id": "semana-a",
+      "name": "Semana A"
+    },
+    {
+      "color": "#22c55e",
+      "days": {
+        "1": {
+          "bebidas": [
+            "Agua de Melón",
+            "Limonada de Limón Amarillo",
+            "Refresco de Sabor"
+          ],
+          "guisos": [
+            "Pollo en Crema de Champiñón y Tocino",
+            "Pollo en Crema Chipotle"
+          ],
+          "sides": [
+            "Frijoles Rancheros",
+            "Arroz Naranja",
+            "Ensalada Fresca"
+          ]
+        },
+        "2": {
+          "bebidas": [
+            "Refresco de Sabor",
+            "Agua Mineral de Sabor",
+            "Agua de Melón"
+          ],
+          "guisos": [
+            "Chicharrón en Salsa Verde",
+            "Birria"
+          ],
+          "sides": [
+            "Ensalada Fresca",
+            "Arroz Naranja",
+            "Frijoles Rancheros"
+          ]
+        },
+        "3": {
+          "bebidas": [
+            "Agua de Piña",
+            "Agua Mineral de Sabor",
+            "Refresco de Sabor"
+          ],
+          "guisos": [
+            "Cochinita Pibil"
+          ],
+          "sides": [
+            "Frijoles Rancheros",
+            "Arroz Naranja",
+            "Ensalada Fresca"
+          ]
+        },
+        "4": {
+          "bebidas": [
+            "Agua Mineral de Sabor",
+            "Refresco de Sabor",
+            "Limonada de Limón Amarillo"
+          ],
+          "guisos": [
+            "Lasaña de Calabaza",
+            "Carne Molida a la Boloñesa"
+          ],
+          "sides": [
+            "Espagueti Rojo",
+            "Frijoles Rancheros",
+            "Ensalada Fresca"
+          ]
+        },
+        "5": {
+          "bebidas": [
+            "Agua Mineral de Sabor",
+            "Refresco de Sabor",
+            "Limonada de Limón Amarillo"
+          ],
+          "guisos": [
+            "Carne en su jugo con tocino",
+            "Bistec Ranchero"
+          ],
+          "sides": [
+            "Ensalada Fresca",
+            "Frijoles Rancheros",
+            "Arroz Naranja"
+          ]
+        }
+      },
+      "id": "semana-b",
+      "name": "Semana B"
+    }
+  ]
+}

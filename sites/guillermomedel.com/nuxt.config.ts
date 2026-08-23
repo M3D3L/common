@@ -87,57 +87,30 @@ export default defineNuxtConfig({
       twitterSite: "@GM3D3L",
       blogType: "posts",
       business: {
-        brandName: process.env.BUSINESS_BRAND_NAME || "Breezy Meals",
-        businessName: process.env.BUSINESS_NAME || "Breezy Market",
-        logoUrl:
-          process.env.BUSINESS_LOGO_URL ||
-          "https://cdn.shopify.com/oxygen-v2/57245/154448/316060/3919871/assets/breezy-BBRcmAK6.png",
+        brandName: process.env.BUSINESS_BRAND_NAME || "Guillermo Medel",
+        businessName: process.env.BUSINESS_NAME || "Guillermo Medel",
+        logoUrl: process.env.BUSINESS_LOGO_URL || "/images/block-me.webp",
         whatsappNumber:
           process.env.BUSINESS_WHATSAPP_NUMBER ||
           process.env.WHATSAPP_NUMBER ||
           "6221523259",
-        menuUrl:
-          process.env.BUSINESS_MENU_URL || "https://breezy-meals.com/menu",
+        menuUrl: process.env.BUSINESS_MENU_URL || "https://guillermomedel.com",
         header: {
-          eyebrow: process.env.BUSINESS_HEADER_EYEBROW || "Comida corrida",
+          eyebrow: process.env.BUSINESS_HEADER_EYEBROW || "Portfolio",
           subtitle: process.env.BUSINESS_HEADER_SUBTITLE || "",
-          menuTitle:
-            process.env.BUSINESS_HEADER_MENU_TITLE || "Menú de Navegación",
+          menuTitle: process.env.BUSINESS_HEADER_MENU_TITLE || "Navigation",
         },
         menuBroadcast: {
-          greeting:
-            process.env.BUSINESS_MENU_BROADCAST_GREETING ||
-            "¡Hola! ¡Buen día! ☀️🌊\nAquí Breezy 🦭 compartiéndote el *Menú del Día* de *Breezy Market* 🌵🌮",
-          priceOne: process.env.BUSINESS_MENU_BROADCAST_PRICE_ONE || "$120 MXN",
-          priceTwo: process.env.BUSINESS_MENU_BROADCAST_PRICE_TWO || "$120 MXN",
-          cta:
-            process.env.BUSINESS_MENU_BROADCAST_CTA ||
-            "🛒 *¡HAZ TU PEDIDO AQUÍ!*",
-          cutoff:
-            process.env.BUSINESS_MENU_BROADCAST_CUTOFF ||
-            "⏰ _Ordena antes de las 4:00 PM para recibir tu comida calientita._",
-          footer:
-            process.env.BUSINESS_MENU_BROADCAST_FOOTER ||
-            "🌊 ¡Buen provecho desde San Carlos! 🦭",
+          greeting: process.env.BUSINESS_MENU_BROADCAST_GREETING || "Hola",
+          priceOne: process.env.BUSINESS_MENU_BROADCAST_PRICE_ONE || "",
+          priceTwo: process.env.BUSINESS_MENU_BROADCAST_PRICE_TWO || "",
+          cta: process.env.BUSINESS_MENU_BROADCAST_CTA || "",
+          cutoff: process.env.BUSINESS_MENU_BROADCAST_CUTOFF || "",
+          footer: process.env.BUSINESS_MENU_BROADCAST_FOOTER || "",
         },
         nav: {
-          publicLinks: [
-            { to: "/menu", label: "Menú" },
-            { to: "/menu-semanal", label: "Calendario" },
-            { to: "/promos", label: "Promos" },
-            { to: "/tienda", label: "Tienda" },
-          ],
-          staffLinks: [
-            { to: "/inicio", label: "🕒" },
-            { to: "/checklists", label: "Checklists" },
-            { to: "/socios", label: "Miembros" },
-            { to: "/orders", label: "Órdenes" },
-            { to: "/menu-items", label: "Menu Items" },
-            { to: "/store-items", label: "Store Items" },
-            { to: "/semana/menu", label: "Menu Control" },
-            { to: "/semana/calendario", label: "Calendario" },
-            { to: "/labels", label: "Etiquetas" },
-          ],
+          publicLinks: [],
+          staffLinks: [],
         },
       },
     },

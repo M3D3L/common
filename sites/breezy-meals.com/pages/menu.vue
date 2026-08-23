@@ -997,6 +997,8 @@ import usePocketBase from "@common/composables/usePocketbase";
 import { menuPricingConfig } from "~/config/menu-pricing";
 import {
   priceMenuOrder,
+  type PricingConfig,
+  type PricingPromo,
   type PricingPromoRequirement,
 } from "~/utils/menuPricing";
 import type { PlacedOrder } from "~/utils/comandas";
@@ -1047,6 +1049,85 @@ const PRICE_FORMAT = new Intl.NumberFormat("es-MX", {
   currency: "MXN",
   maximumFractionDigits: 0,
 });
+
+const runtimePromos = ref<PricingPromo[]>([]);
+
+function toRuntimePromo(record: Record<string, any>): PricingPromo | null {
+  const data =
+    record?.data && typeof record.data === "object" ? record.data : undefined;
+  const id = String(record.promoId || data?.id || record.id || "").trim();
+  const label = String(record.label || data?.label || "").trim();
+  const priority = Number(record.priority ?? data?.priority ?? 0) || 0;
+  const active = Boolean(record.active ?? data?.active ?? true);
+
+  const match = (record.match ?? data?.match) as
+    | { requirements?: PricingPromoRequirement[] }
+    | undefined;
+  const pricing = (record.pricing ?? data?.pricing) as
+    | { amount?: number }
+    | undefined;
+  const display = (record.display ?? data?.display) as
+    | { summary?: string }
+    | undefined;
+
+  const requirements = Array.isArray(match?.requirements)
+    ? match.requirements.filter(
+        (req) =>
+          !!req &&
+          (req.targetType === "group" ||
+            req.targetType === "item" ||
+            req.targetType === "order-unit") &&
+          typeof req.target === "string" &&
+          Number(req.qty) > 0,
+      )
+    : [];
+
+  if (!id || !label || !requirements.length || !Number(pricing?.amount)) {
+    return null;
+  }
+
+  return {
+    id,
+    label,
+    active,
+    priority,
+    match: { requirements },
+    pricing: { amount: Number(pricing?.amount || 0) },
+    display: { summary: String(display?.summary || "").trim() },
+  };
+}
+
+async function loadRuntimePromos() {
+  try {
+    const res = await fetchCollection(
+      "promos",
+      1,
+      200,
+      "active = true",
+      "priority",
+      null,
+      null,
+      true,
+      { requestKey: "menu_runtime_promos" },
+    );
+
+    const promos = res.items
+      .map((item) => toRuntimePromo(item as Record<string, any>))
+      .filter((item): item is PricingPromo => !!item);
+
+    runtimePromos.value = promos;
+  } catch {
+    runtimePromos.value = [];
+  }
+}
+
+const effectivePricingConfig = computed<PricingConfig>(() => ({
+  ...menuPricingConfig,
+  promos:
+    runtimePromos.value.length > 0
+      ? runtimePromos.value
+      : menuPricingConfig.promos,
+}));
 
 const MODE_ICON: Record<string, any> = {
   llevar: ShoppingBag,
@@ -1460,6 +1541,7 @@ watch(memberCode, (code) => {
 
 onMounted(() => {
   isLoggedIn.value = pb.authStore.isValid;
+  void loadRuntimePromos();
   if (props.staffMode) {
     const code = route.query.code;
     if (typeof code === "string" && code.trim()) {
@@ -1706,7 +1788,7 @@ function promoRequirementLabel(requirement: PricingPromoRequirement) {
 
   if (requirement.targetType === "order-unit") {
     return (
-      menuPricingConfig.orderUnits?.[requirement.target]?.label ??
+      effectivePricingConfig.value.orderUnits?.[requirement.target]?.label ??
       requirement.target
     );
   }
@@ -1765,10 +1847,7 @@ function promoRequirementNoun(
   );
 }
 
-function promoSummaryLang(
-  promo: (typeof menuPricingConfig.promos)[number],
-  lang: "es" | "en",
-) {
+function promoSummaryLang(promo: PricingPromo, lang: "es" | "en") {
   return promo.match.requirements
     .map((requirement) => {
       const qty = requirement.qty;
@@ -1823,7 +1902,7 @@ function joinWithConjunctionEn(parts: string[]) {
 }
 
 const promoProgressCards = computed<PromoProgressCard[]>(() =>
-  menuPricingConfig.promos
+  effectivePricingConfig.value.promos
     .filter((promo) => promo.active !== false)
     .filter((promo) => promoIsAvailableToday(promo))
     .map((promo) => {
@@ -1920,9 +1999,7 @@ function promoSummary(promo: (typeof menuPricingConfig.promos)[number]) {
   return promoSummaryLang(promo, "es");
 }
 
-function promoIsAvailableToday(
-  promo: (typeof menuPricingConfig.promos)[number],
-) {
+function promoIsAvailableToday(promo: PricingPromo) {
   return promo.match.requirements.every((requirement) => {
     if (requirement.targetType === "group") {
       const group = menuGroups.value.find(
@@ -1978,13 +2055,14 @@ const pricingSummary = computed(() => {
       code: unit.code,
       qty: unit.qty,
       label: menuPricingConfig.orderUnits?.[unit.code]?.label ?? unit.code,
-      unitPrice: menuPricingConfig.orderUnits?.[unit.code]?.unitPrice ?? 0,
+      unitPrice:
+        effectivePricingConfig.value.orderUnits?.[unit.code]?.unitPrice ?? 0,
     }));
 
   return priceMenuOrder({
     items: standardItems,
     orderUnits: taquizaUnits,
-    config: menuPricingConfig,
+    config: effectivePricingConfig.value,
   });
 });
 
