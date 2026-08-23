@@ -1,7 +1,21 @@
 <template>
-  <div class="min-h-screen bg-background text-foreground font-body">
+  <div
+    class="relative min-h-screen overflow-x-clip bg-gradient-to-b from-background via-background to-muted/20 text-foreground font-body"
+  >
+    <div class="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
+      <div
+        class="absolute -top-20 left-1/2 h-64 w-64 -translate-x-1/2 rounded-full bg-primary/15 blur-3xl"
+      />
+      <div
+        class="absolute bottom-20 -left-20 h-72 w-72 rounded-full bg-sky-400/10 blur-3xl"
+      />
+      <div
+        class="absolute right-0 top-1/3 h-64 w-64 rounded-full bg-emerald-400/10 blur-3xl"
+      />
+    </div>
+
     <!-- Cargando -->
-    <div v-if="pending" class="mx-auto max-w-lg px-5 pt-9 pb-40">
+    <div v-if="pending" class="mx-auto max-w-2xl px-4 pb-44 pt-8 sm:px-6">
       <div class="mt-12 space-y-3">
         <Skeleton class="h-3 w-24" />
         <Skeleton v-for="i in 4" :key="i" class="h-20 w-full rounded-xl" />
@@ -17,7 +31,9 @@
       v-else-if="!record"
       class="grid min-h-screen place-items-center p-6 text-center"
     >
-      <div class="max-w-sm">
+      <div
+        class="w-full max-w-md rounded-2xl border border-border/60 bg-card/80 p-6 shadow-xl backdrop-blur"
+      >
         <p class="mb-4 text-5xl">🍽️</p>
         <h1 class="text-xl font-bold font-heading">
           {{
@@ -33,7 +49,7 @@
               : "El restaurante publica el menú al abrir. Vuelve en un momento."
           }}
         </p>
-        <Button variant="outline" size="sm" class="mt-4" @click="load">
+        <Button variant="outline" size="sm" class="mt-5 w-full" @click="load">
           <ClientOnly><RotateCw :size="15" class="mr-2" /></ClientOnly>
           Reintentar
         </Button>
@@ -45,12 +61,14 @@
       v-else-if="!hasMenu"
       class="grid min-h-screen place-items-center p-6 text-center"
     >
-      <div class="max-w-sm">
+      <div
+        class="w-full max-w-md rounded-2xl border border-border/60 bg-card/80 p-6 shadow-xl backdrop-blur"
+      >
         <p class="mb-4 text-5xl">🗓️</p>
         <h1 class="text-xl font-bold font-heading">Hoy no hay servicio</h1>
 
         <Card
-          class="flex items-center mt-2 justify-between w-full px-3 py-2"
+          class="mt-3 flex w-full items-center justify-between rounded-xl border-border/70 bg-background/70 px-3 py-2"
           aria-label="Seleccionar día del menú"
         >
           <Button
@@ -82,7 +100,7 @@
             <ClientOnly><ChevronRight :size="18" /></ClientOnly>
           </Button>
         </Card>
-        <p class="mt-3 text-sm text-muted-foreground">
+        <p class="mt-4 text-sm text-muted-foreground">
           No hay menú disponible para hoy. ¿Quieres preordenar para los próximos
           días?
         </p>
@@ -94,17 +112,20 @@
 
     <template v-else>
       <!-- Hero -->
-      <main ref="menuMainEl" class="mx-auto max-w-lg space-y-8 px-5 pb-44 pt-6">
+      <main
+        ref="menuMainEl"
+        class="mx-auto max-w-2xl space-y-8 px-4 pb-48 pt-5 sm:px-6 sm:pt-7"
+      >
         <!-- Instrucciones -->
         <section
           v-if="!props.staffMode"
-          class="js-reveal-item rounded-lg bg-primary/5 border border-primary/10 p-4"
+          class="js-reveal-item rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/10 via-background to-background p-4 shadow-sm"
         >
-          <h3 class="font-bold text-sm mb-2 flex items-center gap-2">
+          <h3 class="mb-2 flex items-center gap-2 text-sm font-bold">
             <span>💡</span> How to order / Cómo pedir
           </h3>
           <ol
-            class="text-xs text-muted-foreground space-y-1.5 list-decimal list-inside"
+            class="list-inside list-decimal space-y-1.5 text-xs text-muted-foreground"
           >
             <li>Select your dishes / Selecciona tus platillos.</li>
             <li>Choose delivery/pickup / Elige entrega o recoger.</li>
@@ -118,7 +139,7 @@
 
         <section
           v-if="props.useDailyMenu"
-          class="js-reveal-item flex items-center justify-between rounded-lg border border-primary/10 bg-primary/5 px-3 py-2"
+          class="js-reveal-item sticky top-2 z-20 flex items-center justify-between rounded-2xl border border-primary/20 bg-background/90 px-3 py-2 shadow-sm backdrop-blur"
           aria-label="Seleccionar día del menú"
         >
           <Button
@@ -157,6 +178,7 @@
             props.useDailyMenu &&
             promoCardsWithAppliedState.length
           "
+          class="js-reveal-item rounded-2xl border border-border/70 bg-card/70 p-3 shadow-sm backdrop-blur"
         >
           <div class="mb-2 flex items-center gap-2">
             <nuxt-link
@@ -165,7 +187,7 @@
             >
               <Badge
                 variant="outline"
-                class="border-primary/30 bg-primary/10 text-[10px] uppercase text-primary"
+                class="border-primary/30 bg-primary/10 text-[10px] uppercase tracking-wide text-primary"
               >
                 Promos
               </Badge>
@@ -179,7 +201,7 @@
             <div
               v-for="promo in promoCardsWithAppliedState"
               :key="promo.id"
-              class="js-reveal-item rounded-md border border-primary/10 bg-background/80 p-2"
+              class="js-reveal-item rounded-xl border border-primary/20 bg-background/90 p-3 shadow-sm"
             >
               <div class="flex items-start justify-between gap-3">
                 <div class="min-w-0 flex-1">
@@ -251,12 +273,14 @@
              Cada chip abre su cajón y hace scroll hacia él. "Todo" expande o
              colapsa todo. El badge conserva el conteo del carrito aunque el
              cajón esté cerrado, para que el usuario nunca pierda su pedido. -->
-        <div class="-mx-5 border-b border-border bg-background/95 px-5 py-2">
+        <div
+          class="-mx-4 border-y border-border/70 bg-background/85 px-4 py-2 backdrop-blur sm:-mx-6 sm:px-6"
+        >
           <div class="flex gap-2 overflow-x-auto pb-0.5">
             <Button
               type="button"
               size="sm"
-              class="h-8 shrink-0 rounded-full px-3 text-xs font-bold"
+              class="h-8 shrink-0 rounded-full border border-border/70 px-3 text-xs font-bold"
               :variant="allGroupsOpen ? 'default' : 'outline'"
               @click="toggleAllGroups"
             >
@@ -268,7 +292,7 @@
               :key="`chip-${group.key}`"
               type="button"
               size="sm"
-              class="h-8 shrink-0 rounded-full px-3 text-xs font-bold"
+              class="h-8 shrink-0 rounded-full border border-border/70 px-3 text-xs font-bold"
               :variant="isGroupOpen(group.key) ? 'default' : 'outline'"
               @click="focusGroup(group.key)"
             >
@@ -285,12 +309,12 @@
           v-show="showGroupSection(group.key)"
           :key="group.key"
           :ref="(el) => setSectionRef(group.key, el)"
-          class="js-reveal-section scroll-mt-16"
+          class="js-reveal-section scroll-mt-20 rounded-2xl border border-border/70 bg-card/70 p-3 shadow-sm backdrop-blur"
         >
           <!-- Encabezado = botón que abre/cierra el cajón -->
           <button
             type="button"
-            class="mb-3 flex w-full items-center gap-3 text-left"
+            class="mb-3 flex w-full items-center gap-3 rounded-xl px-2 py-1 text-left transition-colors hover:bg-muted/50"
             :aria-expanded="isGroupOpen(group.key)"
             @click="toggleGroup(group.key)"
           >
@@ -305,7 +329,7 @@
             </h2>
             <span
               v-if="groupCartCount(group.key)"
-              class="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold tabular-nums text-primary"
+              class="rounded-full border border-primary/20 bg-primary/10 px-2 py-0.5 text-[10px] font-bold tabular-nums text-primary"
             >
               {{ groupCartCount(group.key) }} en carrito
             </span>
@@ -333,18 +357,14 @@
                   v-for="kind in taquizaKinds"
                   :key="`add-${kind}`"
                   variant="outline"
-                  class="h-auto flex-col items-start gap-0.5 py-2"
+                  class="h-auto rounded-xl flex flex-col justify-center border-primary/20 bg-background/90 py-2"
                   @click="addTaquizaOrder(kind)"
                 >
                   <span
                     class="flex items-center gap-1.5 text-xs font-bold uppercase"
                   >
                     <ClientOnly><Plus :size="14" /></ClientOnly>
-                    {{
-                      kind === "tacos"
-                        ? "Orden de tacos"
-                        : "Orden de quesadillas"
-                    }}
+                    {{ kind === "tacos" ? "Tacos" : "Quesadillas" }}
                   </span>
                   <span class="text-[11px] font-normal text-background">
                     {{ TAQUIZA_CAP[kind] }} piezas por orden
@@ -364,7 +384,7 @@
               <div
                 v-for="(order, idx) in taquizaOrders"
                 :key="order.id"
-                class="js-reveal-item rounded-md border p-2"
+                class="js-reveal-item rounded-xl border border-border/70 bg-background/90 p-2.5"
               >
                 <div class="mb-2 flex items-center justify-between gap-2">
                   <div>
@@ -392,7 +412,7 @@
                   <Card
                     v-for="item in groupItems(group.key)"
                     :key="`${order.id}-${item.name}`"
-                    class="flex items-center gap-3 p-3"
+                    class="flex items-center gap-3 rounded-xl border border-border/60 p-3"
                     :class="[
                       isOut(item.name) && 'opacity-60',
                       (order.fills[item.name] ?? 0) > 0 &&
@@ -460,7 +480,7 @@
               <Card
                 v-for="item in groupItems(group.key)"
                 :key="item.name"
-                class="js-reveal-item flex items-center gap-3 p-3 transition-colors"
+                class="js-reveal-item flex items-center gap-3 rounded-xl border border-border/60 bg-background/90 p-3 transition-all hover:border-primary/20 hover:shadow-sm"
                 :class="[
                   isOut(item.name) && 'opacity-60',
                   cart[item.name] > 0 && 'bg-primary/5 ring-1 ring-primary/40',
@@ -469,7 +489,7 @@
                 <div class="flex flex-row w-full items-center gap-3">
                   <div
                     v-if="typeof item.image == 'string'"
-                    class="h-20 w-20 shrink-0 overflow-hidden rounded-full"
+                    class="h-20 w-20 shrink-0 overflow-hidden rounded-2xl border border-border/60"
                   >
                     <img
                       :src="item.image"
@@ -567,17 +587,19 @@
 
         <section>
           <h2
-            class="mb-2 text-xs font-bold uppercase tracking-widest text-muted-foreground"
+            class="mb-2 inline-flex items-center rounded-full border border-border/70 bg-muted/40 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-foreground/80"
           >
             ¿Cómo lo quieres? / How do you want it?
           </h2>
           <Tabs v-model="mode">
-            <TabsList class="grid w-full grid-cols-3">
+            <TabsList
+              class="grid w-full grid-cols-3 rounded-xl border border-border/70 bg-card/90 p-1"
+            >
               <TabsTrigger
                 v-for="m in MODES"
                 :key="m"
                 :value="m"
-                class="gap-1.5"
+                class="gap-1.5 rounded-lg border border-transparent px-3 py-2 font-semibold text-muted-foreground transition-all data-[state=active]:border-primary/30 data-[state=active]:bg-primary/15 data-[state=active]:text-primary data-[state=active]:shadow-sm"
               >
                 <ClientOnly>
                   <component
@@ -594,11 +616,11 @@
 
         <section v-if="orderSummaryLines.length" class="js-reveal-item">
           <h2
-            class="mb-2 text-xs font-bold uppercase tracking-widest text-muted-foreground"
+            class="mb-2 inline-flex items-center rounded-full border border-border/70 bg-muted/40 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-foreground/80"
           >
             Totales / Pricing totals
           </h2>
-          <Card class="p-4">
+          <Card class="rounded-2xl border-border/70 bg-card/85 p-4 shadow-sm">
             <div class="space-y-3">
               <div
                 v-for="line in orderSummaryLines"
@@ -646,11 +668,13 @@
 
         <section class="js-reveal-item">
           <h2
-            class="mb-2 text-xs font-bold uppercase tracking-widest text-muted-foreground"
+            class="mb-2 inline-flex items-center rounded-full border border-border/70 bg-muted/40 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-foreground/80"
           >
             Tus datos / Your Info
           </h2>
-          <Card class="space-y-4 p-4">
+          <Card
+            class="space-y-4 rounded-2xl border-border/70 bg-card/85 p-4 shadow-sm"
+          >
             <div class="space-y-1.5">
               <Label for="c-name" class="flex items-center gap-1">
                 Tu nombre / Your name
@@ -812,12 +836,12 @@
 
       <!-- Barra fija -->
       <div
-        class="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-background/95 px-5 py-3 backdrop-blur"
+        class="fixed inset-x-0 bottom-0 z-30 border-t border-border/70 bg-background/80 px-4 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] pt-3 shadow-[0_-10px_30px_-20px_rgba(0,0,0,0.5)] backdrop-blur-xl sm:px-6"
       >
-        <div class="mx-auto max-w-lg space-y-2">
+        <div class="mx-auto max-w-2xl space-y-2">
           <div
             v-if="promoStatusBanner"
-            class="rounded-md border px-3 py-2"
+            class="rounded-xl border px-3 py-2"
             :class="
               promoStatusBanner.met
                 ? 'border-emerald-300 bg-emerald-50'
@@ -867,7 +891,7 @@
               v-if="totalQty"
               variant="outline"
               size="lg"
-              class="shrink-0"
+              class="shrink-0 rounded-xl"
               @click="clearCart"
             >
               <ClientOnly><Trash2 :size="16" class="mr-2" /></ClientOnly>
@@ -875,7 +899,7 @@
             </Button>
             <Button
               size="lg"
-              class="flex-1"
+              class="flex-1 rounded-xl shadow-sm"
               :disabled="!canTrySend || sendingOrder"
               @click="sendOrder"
             >
@@ -896,7 +920,9 @@
 
     <!-- Confirmación de pedido -->
     <Dialog v-model:open="showThankYou">
-      <DialogContent class="max-w-sm text-center">
+      <DialogContent
+        class="max-w-sm rounded-2xl border-border/70 bg-card/95 text-center shadow-2xl backdrop-blur"
+      >
         <div class="flex flex-col items-center gap-2 pt-2">
           <img
             :src="LOGO_SRC"
