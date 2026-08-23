@@ -15,46 +15,14 @@
     </div>
 
     <!-- Cargando -->
-    <div v-if="pending" class="mx-auto max-w-2xl px-4 pb-44 pt-8 sm:px-6">
-      <div class="mt-12 space-y-3">
-        <Skeleton class="h-3 w-24" />
-        <Skeleton v-for="i in 4" :key="i" class="h-20 w-full rounded-xl" />
-      </div>
-      <div class="mt-8 space-y-3">
-        <Skeleton class="h-3 w-24" />
-        <Skeleton v-for="i in 3" :key="i" class="h-20 w-full rounded-xl" />
-      </div>
-    </div>
+    <OrganismsMenuLoadingState v-if="pending" />
 
     <!-- Error / sin menú publicado -->
-    <div
+    <OrganismsMenuUnavailableState
       v-else-if="!record"
-      class="grid min-h-screen place-items-center p-6 text-center"
-    >
-      <div
-        class="w-full max-w-md rounded-2xl border border-border/60 bg-card/80 p-6 shadow-xl backdrop-blur"
-      >
-        <p class="mb-4 text-5xl">🍽️</p>
-        <h1 class="text-xl font-bold font-heading">
-          {{
-            loadError
-              ? "No pudimos cargar el menú"
-              : "El menú aún no está listo"
-          }}
-        </h1>
-        <p class="mt-2 text-sm text-muted-foreground">
-          {{
-            loadError
-              ? "Revisa tu conexión y vuelve a intentarlo."
-              : "El restaurante publica el menú al abrir. Vuelve en un momento."
-          }}
-        </p>
-        <Button variant="outline" size="sm" class="mt-5 w-full" @click="load">
-          <ClientOnly><RotateCw :size="15" class="mr-2" /></ClientOnly>
-          Reintentar
-        </Button>
-      </div>
-    </div>
+      :load-error="!!loadError"
+      @retry="load"
+    />
 
     <!-- Sin servicio hoy (fin de semana / semana cerrada / sin menú del día) -->
     <div
@@ -71,34 +39,11 @@
           class="mt-3 flex w-full items-center justify-between rounded-xl border-border/70 bg-background/70 px-3 py-2"
           aria-label="Seleccionar día del menú"
         >
-          <Button
-            variant="ghost"
-            size="icon"
-            class="h-9 w-9"
-            title="Día anterior"
-            aria-label="Día anterior"
-            @click="changeMenuDate(-1)"
-          >
-            <ClientOnly><ChevronLeft :size="18" /></ClientOnly>
-          </Button>
-          <div class="text-center">
-            <p
-              class="text-[10px] font-bold uppercase tracking-widest text-muted-foreground"
-            >
-              Menú del día
-            </p>
-            <p class="text-sm font-bold capitalize">{{ selectedDateLabel }}</p>
-          </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            class="h-9 w-9"
-            title="Día siguiente"
-            aria-label="Día siguiente"
-            @click="changeMenuDate(1)"
-          >
-            <ClientOnly><ChevronRight :size="18" /></ClientOnly>
-          </Button>
+          <OrganismsMenuDayPicker
+            :label="selectedDateLabel"
+            @prev="changeMenuDate(-1)"
+            @next="changeMenuDate(1)"
+          />
         </Card>
         <p class="mt-4 text-sm text-muted-foreground">
           No hay menú disponible para hoy. ¿Quieres preordenar para los próximos
@@ -117,192 +62,42 @@
         class="mx-auto max-w-2xl space-y-8 px-4 pb-48 pt-5 sm:px-6 sm:pt-7"
       >
         <!-- Instrucciones -->
-        <section
-          v-if="!props.staffMode"
-          class="js-reveal-item rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/10 via-background to-background p-4 shadow-sm"
-        >
-          <h3 class="mb-2 flex items-center gap-2 text-sm font-bold">
-            <span>💡</span> How to order / Cómo pedir
-          </h3>
-          <ol
-            class="list-inside list-decimal space-y-1.5 text-xs text-muted-foreground"
-          >
-            <li>Select your dishes / Selecciona tus platillos.</li>
-            <li>Choose delivery/pickup / Elige entrega o recoger.</li>
-            <li>
-              Fill in your name (required for delivery) / Ingresa tu nombre
-              (requerido para domicilio).
-            </li>
-            <li>Tap "Send" / Presiona "Enviar".</li>
-          </ol>
-        </section>
+        <OrganismsMenuInstructions v-if="!props.staffMode" />
 
         <section
           v-if="props.useDailyMenu"
           class="js-reveal-item sticky top-2 z-20 flex items-center justify-between rounded-2xl border border-primary/20 bg-background/90 px-3 py-2 shadow-sm backdrop-blur"
           aria-label="Seleccionar día del menú"
         >
-          <Button
-            variant="ghost"
-            size="icon"
-            class="h-9 w-9"
-            title="Día anterior"
-            aria-label="Día anterior"
-            @click="changeMenuDate(-1)"
-          >
-            <ClientOnly><ChevronLeft :size="18" /></ClientOnly>
-          </Button>
-          <div class="text-center">
-            <p
-              class="text-[10px] font-bold uppercase tracking-widest text-muted-foreground"
-            >
-              Menú del día
-            </p>
-            <p class="text-sm font-bold capitalize">{{ selectedDateLabel }}</p>
-          </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            class="h-9 w-9"
-            title="Día siguiente"
-            aria-label="Día siguiente"
-            @click="changeMenuDate(1)"
-          >
-            <ClientOnly><ChevronRight :size="18" /></ClientOnly>
-          </Button>
+          <OrganismsMenuDayPicker
+            :label="selectedDateLabel"
+            @prev="changeMenuDate(-1)"
+            @next="changeMenuDate(1)"
+          />
         </section>
 
-        <section
+        <OrganismsMenuPromoList
           v-if="
             !props.staffMode &&
             props.useDailyMenu &&
             promoCardsWithAppliedState.length
           "
-          class="js-reveal-item rounded-2xl border border-border/70 bg-card/70 p-3 shadow-sm backdrop-blur"
-        >
-          <div class="mb-2 flex items-center gap-2">
-            <nuxt-link
-              to="/promos"
-              class="flex items-center gap-1 hover:underline"
-            >
-              <Badge
-                variant="outline"
-                class="border-primary/30 bg-primary/10 text-[10px] uppercase tracking-wide text-primary"
-              >
-                Promos
-              </Badge>
-            </nuxt-link>
-            <p class="text-xs font-bold uppercase tracking-wide">
-              Promociones disponibles / Available promos
-            </p>
-          </div>
-
-          <div class="space-y-2">
-            <div
-              v-for="promo in promoCardsWithAppliedState"
-              :key="promo.id"
-              class="js-reveal-item rounded-xl border border-primary/20 bg-background/90 p-3 shadow-sm"
-            >
-              <div class="flex items-start justify-between gap-3">
-                <div class="min-w-0 flex-1">
-                  <p class="font-semibold leading-tight">
-                    {{ promo.label }}
-                  </p>
-                  <p class="text-[11px] text-muted-foreground">
-                    {{ promo.summary }}
-                  </p>
-                </div>
-                <p
-                  class="shrink-0 text-right text-sm font-bold tabular-nums text-primary"
-                >
-                  {{ money(promo.price) }}
-                </p>
-              </div>
-
-              <div class="mt-2 space-y-1">
-                <div
-                  v-for="requirement in promo.requirements"
-                  :key="requirement.id"
-                  class="flex items-center justify-between gap-2 text-[11px]"
-                >
-                  <p class="text-muted-foreground">
-                    {{ requirement.current }}/{{ requirement.required }}
-                    {{ requirement.label }}
-                  </p>
-                  <p
-                    :class="
-                      requirement.met
-                        ? 'font-semibold text-emerald-700'
-                        : 'font-semibold text-amber-700'
-                    "
-                  >
-                    {{
-                      requirement.met
-                        ? "Listo / Ready"
-                        : `Falta ${requirement.missing} / Missing ${requirement.missing}`
-                    }}
-                  </p>
-                </div>
-              </div>
-
-              <p
-                class="mt-2 text-[11px] font-semibold"
-                :class="
-                  promo.appliedQty > 0
-                    ? 'text-emerald-700'
-                    : promo.eligible
-                      ? 'text-sky-700'
-                      : 'text-amber-700'
-                "
-              >
-                {{
-                  promo.appliedQty > 0
-                    ? `Combo activado / Combo active: ${promo.label}${
-                        promo.appliedQty > 1 ? ` x${promo.appliedQty}` : ""
-                      }`
-                    : promo.eligible
-                      ? "Cumple requisitos, pero comparte guarniciones/bebida con otras promos activas. / Meets requirements, but shares sides/drink with other active promos."
-                      : `Te falta / Missing: ${promo.missingTextEs} / ${promo.missingTextEn}`
-                }}
-              </p>
-            </div>
-          </div>
-        </section>
+          :promo-cards="promoCardsWithAppliedState"
+          :money="money"
+        />
 
         <!-- ===== Chips de categoría: filtran a golpe de vista =====
              Cada chip abre su cajón y hace scroll hacia él. "Todo" expande o
              colapsa todo. El badge conserva el conteo del carrito aunque el
              cajón esté cerrado, para que el usuario nunca pierda su pedido. -->
-        <div
-          class="-mx-4 border-y border-border/70 bg-background/85 px-4 py-2 backdrop-blur sm:-mx-6 sm:px-6"
-        >
-          <div class="flex gap-2 overflow-x-auto pb-0.5">
-            <Button
-              type="button"
-              size="sm"
-              class="h-8 shrink-0 rounded-full border border-border/70 px-3 text-xs font-bold"
-              :variant="allGroupsOpen ? 'default' : 'outline'"
-              @click="toggleAllGroups"
-            >
-              Todo / All
-            </Button>
-
-            <Button
-              v-for="group in visibleMenuGroups"
-              :key="`chip-${group.key}`"
-              type="button"
-              size="sm"
-              class="h-8 shrink-0 rounded-full border border-border/70 px-3 text-xs font-bold"
-              :variant="isGroupOpen(group.key) ? 'default' : 'outline'"
-              @click="focusGroup(group.key)"
-            >
-              {{ group.label }}
-              <span v-if="groupCartCount(group.key)" class="ml-1 tabular-nums"
-                >· {{ groupCartCount(group.key) }}</span
-              >
-            </Button>
-          </div>
-        </div>
+        <OrganismsMenuCategoryChips
+          :groups="visibleMenuGroups"
+          :all-open="allGroupsOpen"
+          :is-group-open="isGroupOpen"
+          :group-cart-count="groupCartCount"
+          @toggle-all="toggleAllGroups"
+          @focus-group="focusGroup"
+        />
 
         <section
           v-for="group in menuGroups"
@@ -311,692 +106,98 @@
           :ref="(el) => setSectionRef(group.key, el)"
           class="js-reveal-section scroll-mt-20 rounded-2xl border border-border/70 bg-card/70 p-3 shadow-sm backdrop-blur"
         >
-          <!-- Encabezado = botón que abre/cierra el cajón -->
-          <button
-            type="button"
-            class="mb-3 flex w-full items-center gap-3 rounded-xl px-2 py-1 text-left transition-colors hover:bg-muted/50"
-            :aria-expanded="isGroupOpen(group.key)"
-            @click="toggleGroup(group.key)"
-          >
-            <h2
-              class="text-xs font-bold uppercase tracking-widest text-muted-foreground"
-            >
-              {{ group.label }}
-              <span
-                class="ml-1 font-semibold tabular-nums text-foreground/50"
-                >{{ groupItems(group.key).length }}</span
-              >
-            </h2>
-            <span
-              v-if="groupCartCount(group.key)"
-              class="rounded-full border border-primary/20 bg-primary/10 px-2 py-0.5 text-[10px] font-bold tabular-nums text-primary"
-            >
-              {{ groupCartCount(group.key) }} en carrito
-            </span>
-            <Separator class="shrink flex-1" />
-            <ClientOnly>
-              <ChevronDown
-                :size="16"
-                class="shrink-0 text-muted-foreground transition-transform duration-200"
-                :class="isGroupOpen(group.key) && 'rotate-180'"
-              />
-            </ClientOnly>
-          </button>
-
-          <!-- Cuerpo del cajón -->
-          <div v-show="isGroupOpen(group.key)">
-            <!-- ===== Taquizas: por orden ===== -->
-            <div
-              v-if="taquizaGroup && group.key === taquizaGroup.key"
-              class="mb-3 space-y-3"
-            >
-              <!-- Crear una orden nueva (tacos o quesadillas). Se pueden agregar
-                   tantas como quiera el cliente; cada una tiene su propio límite. -->
-              <div class="grid grid-cols-2 gap-2">
-                <Button
-                  v-for="kind in taquizaKinds"
-                  :key="`add-${kind}`"
-                  variant="outline"
-                  class="h-auto rounded-xl flex flex-col justify-center border-primary/20 bg-background/90 py-2"
-                  @click="addTaquizaOrder(kind)"
-                >
-                  <span
-                    class="flex items-center gap-1.5 text-xs font-bold uppercase"
-                  >
-                    <ClientOnly><Plus :size="14" /></ClientOnly>
-                    {{ kind === "tacos" ? "Tacos" : "Quesadillas" }}
-                  </span>
-                  <span class="text-[11px] font-normal text-background">
-                    {{ TAQUIZA_CAP[kind] }} piezas por orden
-                  </span>
-                </Button>
-              </div>
-
-              <p
-                v-if="!taquizaOrders.length"
-                class="text-[11px] text-muted-foreground"
-              >
-                Agrega una orden de tacos o quesadillas para elegir tus guisos.
-              </p>
-
-              <!-- Órdenes creadas. Cada tarjeta es una orden independiente con su
-                   propio tope de piezas y su propia selección de guisos. -->
-              <div
-                v-for="(order, idx) in taquizaOrders"
-                :key="order.id"
-                class="js-reveal-item rounded-xl border border-border/70 bg-background/90 p-2.5"
-              >
-                <div class="mb-2 flex items-center justify-between gap-2">
-                  <div>
-                    <p class="text-xs font-bold uppercase">
-                      Orden {{ idx + 1 }} ·
-                      {{ order.kind === "tacos" ? "Tacos" : "Quesadillas" }}
-                    </p>
-                    <p class="text-[11px] text-muted-foreground">
-                      {{ orderFillTotal(order) }}/{{ TAQUIZA_CAP[order.kind] }}
-                      pieza(s)
-                    </p>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    class="h-7 w-7 text-background hover:text-destructive"
-                    :aria-label="`Quitar orden ${idx + 1}`"
-                    @click="removeTaquizaOrder(order.id)"
-                  >
-                    <ClientOnly><Trash2 :size="15" /></ClientOnly>
-                  </Button>
-                </div>
-
-                <div v-if="groupItems(group.key).length" class="space-y-2">
-                  <Card
-                    v-for="item in groupItems(group.key)"
-                    :key="`${order.id}-${item.name}`"
-                    class="flex items-center gap-3 rounded-xl border border-border/60 p-3"
-                    :class="[
-                      isOut(item.name) && 'opacity-60',
-                      (order.fills[item.name] ?? 0) > 0 &&
-                        'bg-primary/5 ring-1 ring-primary/40',
-                    ]"
-                  >
-                    <div class="flex-1">
-                      <p
-                        class="font-semibold leading-tight"
-                        :class="
-                          isOut(item.name) &&
-                          'text-muted-foreground line-through'
-                        "
-                      >
-                        {{ item.name }}
-                      </p>
-                    </div>
-
-                    <div
-                      v-if="!isOut(item.name)"
-                      class="flex shrink-0 items-center gap-1"
-                    >
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        class="h-8 w-8"
-                        :disabled="(order.fills[item.name] ?? 0) <= 0"
-                        @click="setOrderFill(order, item.name, -1)"
-                      >
-                        <ClientOnly><Minus :size="15" /></ClientOnly>
-                      </Button>
-                      <span class="w-6 text-center font-bold tabular-nums">
-                        {{ order.fills[item.name] ?? 0 }}
-                      </span>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        class="h-8 w-8"
-                        :disabled="!canAddToOrder(order)"
-                        @click="setOrderFill(order, item.name, 1)"
-                      >
-                        <ClientOnly><Plus :size="15" /></ClientOnly>
-                      </Button>
-                    </div>
-                  </Card>
-                </div>
-                <p v-else class="text-[11px] text-muted-foreground">
-                  No hay guisos disponibles para taquizas hoy.
-                </p>
-
-                <p class="mt-2 text-[11px] text-muted-foreground">
-                  Máximo {{ TAQUIZA_CAP[order.kind] }} pieza(s) en esta orden.
-                </p>
-              </div>
-            </div>
-
-            <!-- ===== Grupos normales ===== -->
-            <div
-              v-if="
-                groupItems(group.key).length &&
-                !(taquizaGroup && group.key === taquizaGroup.key)
-              "
-              class="space-y-2"
-            >
-              <Card
-                v-for="item in groupItems(group.key)"
-                :key="item.name"
-                class="js-reveal-item flex items-center gap-3 rounded-xl border border-border/60 bg-background/90 p-3 transition-all hover:border-primary/20 hover:shadow-sm"
-                :class="[
-                  isOut(item.name) && 'opacity-60',
-                  cart[item.name] > 0 && 'bg-primary/5 ring-1 ring-primary/40',
-                ]"
-              >
-                <div class="flex flex-row w-full items-center gap-3">
-                  <div
-                    v-if="typeof item.image == 'string'"
-                    class="h-20 w-20 shrink-0 overflow-hidden rounded-2xl border border-border/60"
-                  >
-                    <img
-                      :src="item.image"
-                      :alt="item.name"
-                      class="object-cover w-full h-full"
-                    />
-                  </div>
-
-                  <div class="min-w-0 flex-1">
-                    <p
-                      class="font-semibold leading-tight"
-                      :class="
-                        isOut(item.name) && 'text-muted-foreground line-through'
-                      "
-                    >
-                      {{ item.name }}
-                    </p>
-                    <p
-                      v-if="item?.price !== 0"
-                      class="mt-0.5 text-[11px] font-semibold text-muted-foreground"
-                    >
-                      {{ money(item.price) }}
-                    </p>
-
-                    <Badge
-                      v-if="isOut(item.name)"
-                      variant="outline"
-                      class="mt-1 border-destructive/30 bg-destructive/10 text-[10px] uppercase text-destructive"
-                    >
-                      Agotado
-                    </Badge>
-                  </div>
-
-                  <div
-                    v-if="!isOut(item.name)"
-                    class="flex shrink-0 items-center gap-1"
-                  >
-                    <template v-if="cart[item.name]">
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        class="h-8 w-8"
-                        :aria-label="`Quitar uno de ${item.name}`"
-                        :disabled="isGroupLocked(group.key)"
-                        @click="setQty(group.key, item.name, -1)"
-                      >
-                        <ClientOnly><Minus :size="15" /></ClientOnly>
-                      </Button>
-                      <span
-                        class="w-6 text-center font-bold tabular-nums"
-                        aria-live="polite"
-                        >{{ cart[item.name] }}</span
-                      >
-                    </template>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      class="h-8 w-8"
-                      :aria-label="`Agregar ${item.name}`"
-                      :disabled="!canAddItem(group.key)"
-                      @click="setQty(group.key, item.name, 1)"
-                    >
-                      <ClientOnly><Plus :size="15" /></ClientOnly>
-                    </Button>
-                  </div>
-                  <Button
-                    v-if="props.staffMode && isLoggedIn"
-                    variant="ghost"
-                    size="sm"
-                    class="shrink-0 px-2 text-[10px]"
-                    :class="
-                      isOut(item.name)
-                        ? 'text-destructive hover:text-destructive'
-                        : 'text-green-700 hover:text-green-800'
-                    "
-                    :title="
-                      isOut(item.name) ? 'Marcar disponible' : 'Marcar agotado'
-                    "
-                    @click.stop="toggleOut(item.name)"
-                  >
-                    {{ isOut(item.name) ? "Disponible" : "Agotado" }}
-                  </Button>
-                </div>
-              </Card>
-            </div>
-
-            <p
-              v-if="isGroupLocked(group.key)"
-              class="mt-2 text-[11px] text-muted-foreground"
-            >
-              {{ lockReason(group.key) }}
-            </p>
-          </div>
+          <OrganismsMenuGroupSection
+            :group="group"
+            :is-open="isGroupOpen(group.key)"
+            :items="groupItems(group.key)"
+            :cart-count="groupCartCount(group.key)"
+            :is-taquiza="!!(taquizaGroup && group.key === taquizaGroup.key)"
+            :taquiza-kinds="taquizaKinds"
+            :taquiza-cap="TAQUIZA_CAP"
+            :taquiza-orders="taquizaOrders"
+            :order-fill-total="orderFillTotal"
+            :can-add-to-order="canAddToOrder"
+            :set-order-fill="setOrderFill"
+            :add-taquiza-order="addTaquizaOrder"
+            :remove-taquiza-order="removeTaquizaOrder"
+            :cart="cart"
+            :is-out="isOut"
+            :can-add-group-items="canAddItem(group.key)"
+            :is-locked="isGroupLocked(group.key)"
+            :lock-reason="lockReason(group.key)"
+            :staff-mode="props.staffMode"
+            :is-logged-in="isLoggedIn"
+            :money="money"
+            :set-qty="(name, delta) => setQty(group.key, name, delta)"
+            :toggle-out="toggleOut"
+            @toggle="toggleGroup(group.key)"
+          />
         </section>
 
-        <section>
-          <h2
-            class="mb-2 inline-flex items-center rounded-full border border-border/70 bg-muted/40 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-foreground/80"
-          >
-            ¿Cómo lo quieres? / How do you want it?
-          </h2>
-          <Tabs v-model="mode">
-            <TabsList
-              class="grid w-full grid-cols-3 rounded-xl border border-border/70 bg-card/90 p-1"
-            >
-              <TabsTrigger
-                v-for="m in MODES"
-                :key="m"
-                :value="m"
-                class="gap-1.5 rounded-lg border border-transparent px-3 py-2 font-semibold text-muted-foreground transition-all data-[state=active]:border-primary/30 data-[state=active]:bg-primary/15 data-[state=active]:text-primary data-[state=active]:shadow-sm"
-              >
-                <ClientOnly>
-                  <component
-                    class="mx-auto"
-                    :is="MODE_ICON[m] ?? Utensils"
-                    :size="14"
-                  />
-                </ClientOnly>
-                {{ MODE_SHORT[m] }}
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
-        </section>
+        <OrganismsMenuModeTabs v-model:mode="mode" />
 
-        <section v-if="orderSummaryLines.length" class="js-reveal-item">
-          <h2
-            class="mb-2 inline-flex items-center rounded-full border border-border/70 bg-muted/40 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-foreground/80"
-          >
-            Totales / Pricing totals
-          </h2>
-          <Card class="rounded-2xl border-border/70 bg-card/85 p-4 shadow-sm">
-            <div class="space-y-3">
-              <div
-                v-for="line in orderSummaryLines"
-                :key="`${line.kind}-${line.code}`"
-                class="flex items-start justify-between gap-3"
-              >
-                <div class="min-w-0 flex-1">
-                  <p class="font-semibold leading-tight">{{ line.label }}</p>
-                  <p class="text-[11px] text-muted-foreground">
-                    {{ line.qty }} x
-                    {{
-                      line.unitPrice > 0 ? money(line.unitPrice) : "Incluido"
-                    }}
-                  </p>
-                  <p
-                    v-if="line.detail"
-                    class="text-[11px] text-muted-foreground"
-                  >
-                    Incluye: {{ line.detail }}
-                  </p>
-                </div>
-                <p class="shrink-0 text-right font-semibold tabular-nums">
-                  {{ line.total > 0 ? money(line.total) : "Incluido" }}
-                </p>
-              </div>
+        <OrganismsMenuOrderSummary
+          v-if="orderSummaryLines.length"
+          :lines="orderSummaryLines"
+          :money="money"
+          :total-qty="totalQty"
+          :total="pricingSummary.total"
+        />
 
-              <Separator />
-
-              <div
-                class="flex items-center justify-between text-sm text-muted-foreground"
-              >
-                <span>Total de piezas / Items</span>
-                <span class="font-semibold tabular-nums">{{ totalQty }}</span>
-              </div>
-
-              <div class="flex items-center justify-between gap-3">
-                <p class="font-bold uppercase tracking-wide">Total</p>
-                <p class="text-lg font-bold tabular-nums">
-                  {{ money(pricingSummary.total) }}
-                </p>
-              </div>
-            </div>
-          </Card>
-        </section>
-
-        <section class="js-reveal-item">
-          <h2
-            class="mb-2 inline-flex items-center rounded-full border border-border/70 bg-muted/40 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-foreground/80"
-          >
-            Tus datos / Your Info
-          </h2>
-          <Card
-            class="space-y-4 rounded-2xl border-border/70 bg-card/85 p-4 shadow-sm"
-          >
-            <div class="space-y-1.5">
-              <Label for="c-name" class="flex items-center gap-1">
-                Tu nombre / Your name
-                <span v-if="nameRequired" class="text-destructive">*</span>
-                <span v-else class="text-muted-foreground">(opcional)</span>
-              </Label>
-              <Input
-                id="c-name"
-                v-model="customer.name"
-                placeholder="Ej. Juan Pérez / e.g. John Doe"
-                :class="{
-                  'border-destructive focus-visible:ring-destructive':
-                    itemCount > 0 && nameRequired && !customer.name.trim(),
-                }"
-              />
-              <p
-                v-if="itemCount > 0 && nameRequired && !customer.name.trim()"
-                class="text-[11px] text-destructive"
-              >
-                Required to complete your order / Requerido para completar tu
-                pedido.
-              </p>
-            </div>
-
-            <!-- Código de socio (opcional). Texto plano: se estampa en el
-                mensaje de WhatsApp; el staff valida y redime al servir. -->
-            <div v-if="props.showMemberCode" class="space-y-1.5">
-              <Label for="c-code"
-                >Código de socio / Member code (opcional)</Label
-              >
-              <Input
-                id="c-code"
-                v-model="memberCode"
-                autocomplete="off"
-                placeholder="Ej. GM1234"
-                class="uppercase tracking-widest"
-                @blur="
-                  memberCode = memberCode.replace(/\s+/g, '').toUpperCase()
-                "
-              />
-              <p class="text-[11px] text-muted-foreground">
-                Si eres socio, ingresa tu código para usar una de tus comidas.
-              </p>
-            </div>
-
-            <template v-if="props.staffMode || mode === 'domicilio'">
-              <div class="space-y-1.5">
-                <Label for="c-phone">WhatsApp / Phone</Label>
-                <Input
-                  id="c-phone"
-                  v-model="customer.phone"
-                  type="tel"
-                  placeholder="10 dígitos"
-                />
-              </div>
-
-              <div class="space-y-1.5">
-                <Label for="c-address" class="flex items-center gap-1">
-                  Dirección / Address
-                  <span v-if="mode === 'domicilio'" class="text-destructive"
-                    >*</span
-                  >
-                </Label>
-                <Input
-                  id="c-address"
-                  v-model="customer.address"
-                  placeholder="Calle, número, referencias"
-                  :class="{
-                    'border-destructive focus-visible:ring-destructive':
-                      itemCount > 0 && needsAddress,
-                  }"
-                />
-                <p
-                  v-if="itemCount > 0 && needsAddress"
-                  class="text-[11px] text-destructive"
-                >
-                  Required for delivery / Requerida para envíos a domicilio.
-                </p>
-              </div>
-            </template>
-
-            <!-- Hora: para "aquí" y "para llevar" (no domicilio). Opcional, sin default -->
-            <div v-if="mode !== 'domicilio'" class="space-y-1.5">
-              <Label>{{ timeLabel }} (opcional/optional)</Label>
-              <div class="flex items-center gap-1.5">
-                <Select v-model="selHour">
-                  <SelectTrigger class="flex-1">
-                    <SelectValue placeholder="Hora" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem v-for="h in hours12" :key="h" :value="h">
-                      {{ h }}
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-
-                <span class="font-bold text-muted-foreground">:</span>
-
-                <Select v-model="selMin">
-                  <SelectTrigger class="flex-1">
-                    <SelectValue placeholder="Min" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem v-for="m in minutes" :key="m" :value="m">
-                      {{ m }}
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-
-                <div class="flex overflow-hidden border rounded-md">
-                  <button
-                    type="button"
-                    class="px-2.5 py-2 text-xs font-bold uppercase transition-colors"
-                    :class="
-                      selPeriod === 'am'
-                        ? 'bg-primary text-primary-foreground'
-                        : 'text-muted-foreground hover:bg-muted'
-                    "
-                    @click="selPeriod = 'am'"
-                  >
-                    am
-                  </button>
-                  <button
-                    type="button"
-                    class="px-2.5 py-2 text-xs font-bold uppercase transition-colors border-l"
-                    :class="
-                      selPeriod === 'pm'
-                        ? 'bg-primary text-primary-foreground'
-                        : 'text-muted-foreground hover:bg-muted'
-                    "
-                    @click="selPeriod = 'pm'"
-                  >
-                    pm
-                  </button>
-                </div>
-              </div>
-              <button
-                v-if="selHour || selMin || selPeriod"
-                type="button"
-                class="text-[11px] font-bold underline text-muted-foreground hover:text-primary"
-                @click="clearTime"
-              >
-                Lo antes posible / ASAP
-              </button>
-            </div>
-
-            <div class="space-y-1.5">
-              <Label for="c-note">Nota / Note (opcional/optional)</Label>
-              <Textarea
-                id="c-note"
-                v-model="note"
-                rows="2"
-                placeholder="Sin cebolla, casa roja / No onions, red house…"
-              />
-            </div>
-          </Card>
-        </section>
+        <OrganismsMenuCustomerForm
+          v-model:member-code="memberCode"
+          v-model:note="note"
+          v-model:sel-hour="selHour"
+          v-model:sel-min="selMin"
+          v-model:sel-period="selPeriod"
+          :customer="customer"
+          :item-count="itemCount"
+          :name-required="nameRequired"
+          :needs-address="needsAddress"
+          :show-member-code="props.showMemberCode"
+          :staff-mode="props.staffMode"
+          :mode="mode"
+          :time-label="timeLabel"
+          :hours12="hours12"
+          :minutes="minutes"
+          @clear-time="clearTime"
+        />
       </main>
 
       <!-- Barra fija -->
-      <div
-        class="fixed inset-x-0 bottom-0 z-30 border-t border-border/70 bg-background/80 px-4 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] pt-3 shadow-[0_-10px_30px_-20px_rgba(0,0,0,0.5)] backdrop-blur-xl sm:px-6"
-      >
-        <div class="mx-auto max-w-2xl space-y-2">
-          <div
-            v-if="promoStatusBanner"
-            class="rounded-xl border px-3 py-2"
-            :class="
-              promoStatusBanner.met
-                ? 'border-emerald-300 bg-emerald-50'
-                : 'border-amber-300 bg-amber-50'
-            "
-          >
-            <p
-              class="text-xs font-semibold"
-              :class="
-                promoStatusBanner.met ? 'text-emerald-800' : 'text-amber-800'
-              "
-            >
-              {{ promoStatusBanner.title }}
-            </p>
-            <p
-              class="text-[11px]"
-              :class="
-                promoStatusBanner.met ? 'text-emerald-700' : 'text-amber-700'
-              "
-            >
-              {{ promoStatusBanner.message }}
-            </p>
-          </div>
-
-          <div
-            class="flex items-center justify-between text-xs text-muted-foreground"
-          >
-            <span class="tabular-nums">
-              <template v-if="totalQty">
-                {{ totalQty }} {{ totalQty === 1 ? "artículo" : "artículos" }} ·
-                {{ MODE_LABEL[mode] }}
-              </template>
-              <template v-else>
-                Tu pedido / Your order · {{ MODE_LABEL[mode] }}
-              </template>
-            </span>
-            <span
-              v-if="orderSummaryLines.length"
-              class="font-semibold tabular-nums"
-            >
-              {{ money(pricingSummary.total) }}
-            </span>
-          </div>
-
-          <div class="flex items-center gap-2">
-            <Button
-              v-if="totalQty"
-              variant="outline"
-              size="lg"
-              class="shrink-0 rounded-xl"
-              @click="clearCart"
-            >
-              <ClientOnly><Trash2 :size="16" class="mr-2" /></ClientOnly>
-              Vaciar
-            </Button>
-            <Button
-              size="lg"
-              class="flex-1 rounded-xl shadow-sm"
-              :disabled="!canTrySend || sendingOrder"
-              @click="sendOrder"
-            >
-              <ClientOnly><Send :size="17" class="mr-2" /></ClientOnly>
-              {{ sendingOrder ? "Enviando..." : "Enviar / Send" }}
-            </Button>
-          </div>
-
-          <p
-            v-if="itemCount && !canTrySend"
-            class="text-[11px] text-muted-foreground text-center"
-          >
-            {{ hint }}
-          </p>
-        </div>
-      </div>
+      <OrganismsMenuCartBar
+        :promo-status-banner="promoStatusBanner"
+        :total-qty="totalQty"
+        :item-count="itemCount"
+        :mode-label="MODE_LABEL[mode]"
+        :total="pricingSummary.total"
+        :show-total="orderSummaryLines.length > 0"
+        :money="money"
+        :sending-order="sendingOrder"
+        :can-try-send="canTrySend"
+        :hint="hint"
+        @clear-cart="clearCart"
+        @send-order="sendOrder"
+      />
     </template>
 
     <!-- Confirmación de pedido -->
-    <Dialog v-model:open="showThankYou">
-      <DialogContent
-        class="max-w-sm rounded-2xl border-border/70 bg-white text-center shadow-2xl backdrop-blur"
-      >
-        <div class="flex flex-col items-center gap-2 pt-2">
-          <img
-            :src="LOGO_SRC"
-            alt="Breezy Meals"
-            class="h-16 w-16 rounded-full border-2 border-primary/20 object-cover shadow-xs"
-          />
-        </div>
-        <DialogHeader class="text-center sm:text-center">
-          <DialogTitle class="text-center font-heading text-xl">
-            ¡Gracias {{ thankYouName }} por tu pedido! / Thank you
-            {{ thankYouName }} for your order!
-          </DialogTitle>
-          <DialogDescription class="text-center">
-            Ya lo recibimos en cocina y lo estamos preparando.
-            <br />
-            We've received it in the kitchen and it's being prepared.
-          </DialogDescription>
-        </DialogHeader>
-        <DialogFooter class="sm:justify-center">
-          <Button class="w-full" @click="showThankYou = false">
-            Entendido / Got it
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+    <OrganismsMenuThankYouDialog
+      v-model:open="showThankYou"
+      :thank-you-name="thankYouName"
+      :logo-src="LOGO_SRC"
+    />
   </div>
 </template>
 
 <script lang="ts" setup>
 import { Card } from "@common/components/ui/card";
-import { Button } from "@common/components/ui/button";
-import { Input } from "@common/components/ui/input";
-import { Label } from "@common/components/ui/label";
-import { Badge } from "@common/components/ui/badge";
-import { Separator } from "@common/components/ui/separator";
-import { Tabs, TabsList, TabsTrigger } from "@common/components/ui/tabs";
-import { Textarea } from "@common/components/ui/textarea";
-import { Skeleton } from "@common/components/ui/skeleton";
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from "@common/components/ui/select";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "@common/components/ui/dialog";
-import {
-  Plus,
-  Minus,
-  Send,
-  Trash2,
-  ShoppingBag,
-  Bike,
-  Utensils,
-  RotateCw,
-  ChevronLeft,
-  ChevronRight,
-  ChevronDown,
-} from "lucide-vue-next";
 import {
   comboForItem,
   emptyDayDishes,
   findMenuItemByName,
   groups as baseGroups,
   groupsFromData,
-  MODES,
-  MODE_SHORT,
   normalizeDishNames,
   normalizeMenuCatalog,
   todayISO,
@@ -1060,14 +261,6 @@ const LOGO_SRC = businessConfig.logoUrl || "";
 // registro por orden en `data`, existe mientras esté activa.
 const COMANDAS_COLLECTION = "comandas";
 const COMANDAS_FIELD = "data";
-
-const MODE_ICON: Record<string, any> = {
-  llevar: ShoppingBag,
-  domicilio: Bike,
-  comer: Utensils,
-  aqui: Utensils,
-  local: Utensils,
-};
 
 // Registro `menu` con los campos de rotación.
 type MenuRecordFull = MenuRecord & {

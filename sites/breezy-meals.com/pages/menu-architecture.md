@@ -10,8 +10,9 @@ This document explains how [menu.vue](menu.vue) is organized after the refactor 
 
 ## Current Structure
 
-- Page and UI composition: [menu.vue](menu.vue)
-  (~1600 lines, down from ~2300 before this pass — mostly template + prop/state wiring).
+- Page and state/composable wiring: [menu.vue](menu.vue)
+  (~810 lines, down from ~1600 after extracting the template into components below).
+- Presentational components: [components/organisms/Menu/](../components/organisms/Menu/)
 - Taquiza order-unit domain logic: [composables/useTaquizaOrders.ts](../composables/useTaquizaOrders.ts)
 - Scroll-reveal (GSAP) animation lifecycle: [composables/useMenuScrollReveal.ts](../composables/useMenuScrollReveal.ts)
 - Pricing + promo progress cards + runtime promo loading: [composables/useMenuPricing.ts](../composables/useMenuPricing.ts)
@@ -19,13 +20,38 @@ This document explains how [menu.vue](menu.vue) is organized after the refactor 
 
 ## What Is Inside `menu.vue`
 
-- Template/UI composition (unchanged markup and Tailwind classes).
+- Top-level layout shell (background blobs, loading/error/no-service states) plus the
+  `<main>`/cart-bar/dialog composition, wired to the components in
+  `components/organisms/Menu/`.
 - Menu record loading + daily rotation resolution (`active`, `menuGroups`, `activeItems`).
 - Accordion/chip navigation state (`openGroups`, `focusGroup`, section scroll-into-view).
 - Cart state (`cart`, `customer`, `mode`, `note`, `memberCode`) and simple derived values
   (`cartItems`, `itemCount`, `totalQty`, `needsAddress`, `canSend`, `hint`).
 - Staff "sold out" toggle (`toggleOut`).
 - Wiring calls into the composables above.
+
+## What Is Inside `components/organisms/Menu/`
+
+Each component is presentational: `menu.vue` still owns all reactive state (`cart`,
+`mode`, `openGroups`, taquiza orders, pricing, checkout) and passes it down as props /
+function props, or binds it with `v-model` for simple fields. Leaf components emit
+plain UI events (`@retry`, `@add`, `@toggle`, etc.); `GroupSection` (the one component
+with children) receives already-bound handler functions as props instead of re-emitting.
+
+- `LoadingState.vue` / `UnavailableState.vue` — skeleton and error/no-menu states.
+- `DayPicker.vue` — prev/label/next day selector (previously duplicated markup).
+- `Instructions.vue` — static "how to order" card.
+- `PromoList.vue` — promo progress cards.
+- `CategoryChips.vue` — sticky category chip bar.
+- `GroupSection.vue` — one accordion section per menu group; renders either the
+  taquiza order-unit flow (via `TaquizaOrderCard.vue`) or a plain item list (via
+  `ItemCard.vue`).
+- `TaquizaOrderCard.vue` / `ItemCard.vue` — single taquiza order / single dish row.
+- `ModeTabs.vue` — llevar/domicilio/aquí tabs (`v-model:mode`).
+- `OrderSummary.vue` — pricing line items + total.
+- `CustomerForm.vue` — name/phone/address/member-code/time/note form.
+- `CartBar.vue` — fixed bottom bar (promo banner, totals, clear/send buttons).
+- `ThankYouDialog.vue` — order confirmation modal (`v-model:open`).
 
 ## What Is Inside `useTaquizaOrders`
 
@@ -65,6 +91,8 @@ This document explains how [menu.vue](menu.vue) is organized after the refactor 
 
 - Removes several large cohesive blocks from `menu.vue` without changing templates or styling.
 - Makes taquiza/pricing/checkout behavior easier to unit test in isolation.
+- Splitting the template into `components/organisms/Menu/` components makes each
+  section (promo list, group section, cart bar, etc.) reviewable/testable on its own.
 - Gives clear seams for future order-unit, promo, and checkout features.
 
 ## Next Suggested Refactors
@@ -75,3 +103,5 @@ This document explains how [menu.vue](menu.vue) is organized after the refactor 
    `catalog`, `hasMenu`) into `useMenuData`.
 3. Add lightweight unit tests for `useTaquizaOrders`, `useMenuPricing` promo matching,
    and `useMenuCheckout` note-building edge cases.
+4. Consider splitting `ItemCard.vue`'s staff-only "agotado" toggle button into its own
+   small component if more staff-only affordances get added to the row.
