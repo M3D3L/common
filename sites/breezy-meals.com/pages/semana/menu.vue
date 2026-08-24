@@ -285,7 +285,6 @@
 </template>
 
 <script lang="ts" setup>
-import recipesData from "../../../../tools/recipe-scraper/output/recipes.json";
 import { Button } from "@common/components/ui/button";
 import {
   Dialog,
@@ -370,14 +369,12 @@ const generatorOpen = ref(false);
 const generatedWeekName = ref("");
 const requirements = ref<string[]>([""]);
 const generationError = ref("");
-const recipeCandidates = (recipesData as RecipeCandidate[]).filter(
-  (recipe) => recipe.hasDetail && recipe.ingredients?.length,
+const recipeCandidates = ref<RecipeCandidate[]>([]);
+const recipesById = computed(
+  () => new Map(recipeCandidates.value.map((recipe) => [recipe.id, recipe])),
 );
-const recipesById = new Map(
-  recipeCandidates.map((recipe) => [recipe.id, recipe]),
-);
-const recipesByTitle = new Map(
-  recipeCandidates.map((recipe) => [recipe.title, recipe]),
+const recipesByTitle = computed(
+  () => new Map(recipeCandidates.value.map((recipe) => [recipe.title, recipe])),
 );
 const menuGroups = computed(() =>
   groupsFromData(catalog as unknown as Record<string, unknown>),
@@ -515,7 +512,7 @@ function enableFullCatalogGroup(day: DayDishes, groupKey: GroupKey) {
 }
 
 function isBeefMain(title: string): boolean {
-  const recipe = recipesByTitle.get(title);
+  const recipe = recipesByTitle.value.get(title);
   const text = [title, recipe?.category, ...(recipe?.ingredients ?? [])]
     .filter(Boolean)
     .join(" ");
@@ -625,12 +622,17 @@ async function promoContext() {
 
 async function generateWeek() {
   generationError.value = "";
+  if (!recipeCandidates.value.length) {
+    generationError.value =
+      "No hay recetas detalladas disponibles en la colección recipies.";
+    return;
+  }
   const groups = menuGroups.value.map(({ key, label, kind }) => ({
     key,
     label,
     kind,
   }));
-  const recipeList = recipeCandidates.map(
+  const recipeList = recipeCandidates.value.map(
     ({ id, title, category, ingredients }) => ({
       id,
       title,
@@ -671,7 +673,7 @@ async function generateWeek() {
           const availableNames = new Set(catalog[groupKey] ?? []);
           selections.forEach((selection) => {
             const value = String(selection);
-            const recipe = recipesById.get(value);
+            const recipe = recipesById.value.get(value);
             if (recipe && (groupKey === "guisos" || groupKey === "caldos")) {
               addRecipeMain(day, recipe);
               recipeCount++;
@@ -720,7 +722,7 @@ async function generateWeek() {
     }
 
     const usage = recipeUsage();
-    const mainCandidates = [...recipeCandidates].sort(
+    const mainCandidates = [...recipeCandidates.value].sort(
       (a, b) => (usage.get(a.title) ?? 0) - (usage.get(b.title) ?? 0),
     );
     const usedThisWeek = new Set(
@@ -913,15 +915,29 @@ function toast(m: string) {
 async function load() {
   loading.value = true;
   try {
-    const res = await fetchCollection(
-      "menu",
-      1,
-      1,
-      "",
-      "-created",
-      null,
-      null,
-      true,
+    const [res, recipeResponse] = await Promise.all([
+      fetchCollection("menu", 1, 1, "", "-created", null, null, true),
+      fetchCollection("recipies", 1, 1, "", "-created", null, null, true),
+    ]);
+    const recipeRecord = recipeResponse.items[0] as
+      | { data?: unknown }
+      | undefined;
+    const rawRecipes =
+      typeof recipeRecord?.data === "string"
+        ? JSON.parse(recipeRecord.data)
+        : recipeRecord?.data;
+    recipeCandidates.value = (
+      Array.isArray(rawRecipes) ? rawRecipes : []
+    ).filter((recipe): recipe is RecipeCandidate =>
+      Boolean(
+        recipe &&
+        typeof recipe === "object" &&
+        typeof recipe.id === "string" &&
+        typeof recipe.title === "string" &&
+        recipe.hasDetail &&
+        Array.isArray(recipe.ingredients) &&
+        recipe.ingredients.length,
+      ),
     );
     const rec = res.items[0] as any;
     if (rec) {
