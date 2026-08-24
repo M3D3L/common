@@ -121,12 +121,12 @@
             <div v-else class="grid h-full place-items-center">
               <ImageOff :size="28" class="text-muted-foreground" />
             </div>
-            <Badge
+            <!-- <Badge
               class="absolute left-3 top-3 shadow-sm"
               :variant="statusVariant(recipeStatus(recipe))"
             >
               {{ statusLabel(recipeStatus(recipe)) }}
-            </Badge>
+            </Badge> -->
           </div>
           <CardHeader class="space-y-2 p-4">
             <CardTitle class="line-clamp-2 text-base leading-snug">{{
@@ -389,11 +389,28 @@
     <Dialog v-model:open="formOpen">
       <DialogScrollContent class="max-w-3xl">
         <DialogHeader>
-          <DialogTitle>{{
-            editingRecipeId ? "Editar receta" : "Nueva receta"
-          }}</DialogTitle>
+          <div class="flex flex-wrap items-center justify-between gap-3 pr-8">
+            <DialogTitle>{{
+              editingRecipeId ? "Editar receta" : "Nueva receta"
+            }}</DialogTitle>
+            <Button
+              size="sm"
+              variant="outline"
+              :disabled="aiLoading || saving || !form.title.trim()"
+              @click="completeWithAi"
+            >
+              <LoaderCircle
+                v-if="aiLoading"
+                :size="15"
+                class="mr-2 animate-spin"
+              />
+              <WandSparkles v-else :size="15" class="mr-2" />
+              {{ aiLoading ? "Completando..." : "Completar con IA" }}
+            </Button>
+          </div>
           <DialogDescription>
-            Guarda los datos de la receta en el catálogo compartido.
+            Guarda los datos de la receta en el catálogo compartido. La IA solo
+            completa campos vacíos.
           </DialogDescription>
         </DialogHeader>
 
@@ -441,7 +458,7 @@
             <Input
               id="recipe-servings"
               v-model="form.servings"
-              placeholder="4 porciones"
+              placeholder="10 porciones"
             />
           </div>
           <div class="space-y-1.5">
@@ -577,6 +594,7 @@ import {
   SearchX,
   Trash2,
   Users,
+  WandSparkles,
   X,
 } from "lucide-vue-next";
 
@@ -623,6 +641,7 @@ interface RecipeForm {
 
 const COLLECTION = "recipies";
 const { fetchCollection, createItem, updateItem } = usePocketBaseCore();
+const { run: runChatGPT, loading: aiLoading } = useChatGPT();
 const recipes = ref<Recipe[]>([]);
 const collectionRecordId = ref("");
 const loading = ref(true);
@@ -643,7 +662,7 @@ const emptyForm = (): RecipeForm => ({
   title: "",
   url: "",
   image: "",
-  servings: "",
+  servings: "10 porciones",
   prepTime: "",
   cookTime: "",
   totalTime: "",
@@ -742,6 +761,114 @@ const lines = (value: string) =>
     .split("\n")
     .map((line) => line.trim())
     .filter(Boolean);
+
+type AiRecipeFields = Partial<{
+  category: string;
+  servings: string;
+  prepTime: string;
+  cookTime: string;
+  totalTime: string;
+  ingredients: string[];
+  steps: string[];
+  calories: string;
+  carbs: string;
+  fat: string;
+  protein: string;
+}>;
+
+const missingAiFields = () => {
+  const fields: string[] = [];
+  if (!form.category.trim()) fields.push("category");
+  if (!form.servings.trim()) fields.push("servings");
+  if (!form.prepTime.trim()) fields.push("prepTime");
+  if (!form.cookTime.trim()) fields.push("cookTime");
+  if (!form.totalTime.trim()) fields.push("totalTime");
+  if (!lines(form.ingredientsText).length) fields.push("ingredients");
+  if (!lines(form.stepsText).length) fields.push("steps");
+  if (!form.calories.trim()) fields.push("calories");
+  if (!form.carbs.trim()) fields.push("carbs");
+  if (!form.fat.trim()) fields.push("fat");
+  if (!form.protein.trim()) fields.push("protein");
+  return fields;
+};
+
+const parseAiFields = (raw: string): AiRecipeFields => {
+  const json = raw.match(/```(?:json)?\s*([\s\S]*?)```/i)?.[1] ?? raw;
+  return JSON.parse(json.trim()) as AiRecipeFields;
+};
+
+const completeWithAi = async () => {
+  formError.value = "";
+  const missingFields = missingAiFields();
+  if (!missingFields.length) {
+    formError.value = "No hay campos culinarios pendientes por completar.";
+    return;
+  }
+
+  const command = `Completa únicamente los campos faltantes de una receta para 10 porciones. Usa cocina práctica, cantidades métricas y pasos claros en español. No modifiques ni contradigas los datos existentes. Devuelve solo JSON válido y exclusivamente las claves solicitadas. ingredients y steps deben ser arrays de strings. Los tiempos deben usar formatos como "15 min" o "1 h 20 min". La nutrición debe ser una estimación por porción con unidades, por ejemplo "320 kcal" o "24 g". Si falta información para inferir un campo razonablemente, omítelo en vez de inventar una fuente o URL.`;
+
+  try {
+    const raw = await runChatGPT(command, {
+      missingFields,
+      recipe: {
+        title: form.title.trim(),
+        category: form.category.trim() || undefined,
+        servings: form.servings.trim() || "10 porciones",
+        prepTime: form.prepTime.trim() || undefined,
+        cookTime: form.cookTime.trim() || undefined,
+        totalTime: form.totalTime.trim() || undefined,
+        ingredients: lines(form.ingredientsText),
+        steps: lines(form.stepsText),
+        nutrition: {
+          calories: form.calories.trim() || undefined,
+          carbs: form.carbs.trim() || undefined,
+          fat: form.fat.trim() || undefined,
+          protein: form.protein.trim() || undefined,
+        },
+      },
+    });
+    const result = parseAiFields(raw);
+    const requested = new Set(missingFields);
+    const assignString = (field: keyof RecipeForm, value: unknown) => {
+      if (typeof value === "string" && value.trim() && !form[field].trim()) {
+        form[field] = value.trim();
+      }
+    };
+
+    if (requested.has("category")) assignString("category", result.category);
+    if (requested.has("servings")) assignString("servings", result.servings);
+    if (requested.has("prepTime")) assignString("prepTime", result.prepTime);
+    if (requested.has("cookTime")) assignString("cookTime", result.cookTime);
+    if (requested.has("totalTime")) assignString("totalTime", result.totalTime);
+    if (requested.has("calories")) assignString("calories", result.calories);
+    if (requested.has("carbs")) assignString("carbs", result.carbs);
+    if (requested.has("fat")) assignString("fat", result.fat);
+    if (requested.has("protein")) assignString("protein", result.protein);
+    if (
+      requested.has("ingredients") &&
+      !lines(form.ingredientsText).length &&
+      Array.isArray(result.ingredients)
+    ) {
+      form.ingredientsText = result.ingredients
+        .filter((item) => typeof item === "string")
+        .join("\n");
+    }
+    if (
+      requested.has("steps") &&
+      !lines(form.stepsText).length &&
+      Array.isArray(result.steps)
+    ) {
+      form.stepsText = result.steps
+        .filter((item) => typeof item === "string")
+        .join("\n");
+    }
+  } catch (error) {
+    formError.value =
+      error instanceof Error
+        ? error.message
+        : "No se pudieron completar los campos con IA.";
+  }
+};
 
 const recipeFromForm = (): Recipe => {
   const ingredients = lines(form.ingredientsText);
