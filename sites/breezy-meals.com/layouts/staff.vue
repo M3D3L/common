@@ -10,7 +10,7 @@
 type NavLink = { to: string; label: string };
 
 const runtimeConfig = useRuntimeConfig();
-const business = (runtimeConfig.public?.business ?? {}) as {
+const business = (runtimeConfig.public?.business ?? {}) as unknown as {
   logoUrl?: string;
   nav?: { staffLinks?: NavLink[] };
 };
@@ -27,6 +27,7 @@ const links: NavLink[] = business.nav?.staffLinks?.length
       { to: "/promos-dashboard", label: "Promos" },
       { to: "/menu-items", label: "Menu Items" },
       { to: "/store-items", label: "Store Items" },
+      { to: "/recipies", label: "Recetas" },
       { to: "/semana/menu", label: "Menu Control" },
       { to: "/semana/calendario", label: "Calendario" },
       { to: "/labels", label: "Etiquetas" },

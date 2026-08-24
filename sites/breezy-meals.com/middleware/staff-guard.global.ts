@@ -10,6 +10,7 @@ export default defineNuxtRouteMiddleware((to) => {
     "/labels",
     "/menu-items",
     "/store-items",
+    "/recipies",
     "/semana/menu",
     "/semana/calendario",
   ];

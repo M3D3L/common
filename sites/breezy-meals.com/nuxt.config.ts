@@ -164,6 +164,7 @@ export default defineNuxtConfig({
             { to: "/promos-dashboard", label: "Promos" },
             { to: "/menu-items", label: "Menu Items" },
             { to: "/store-items", label: "Store Items" },
+            { to: "/recipies", label: "Recetas" },
             { to: "/semana/menu", label: "Menu Control" },
             { to: "/semana/calendario", label: "Calendario" },
             { to: "/labels", label: "Etiquetas" },

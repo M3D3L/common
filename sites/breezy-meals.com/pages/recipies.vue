@@ -17,28 +17,6 @@
       </div>
     </header>
 
-    <section class="mb-6 grid grid-cols-3 gap-2 sm:max-w-xl sm:gap-3">
-      <button
-        v-for="summary in summaries"
-        :key="summary.value"
-        type="button"
-        class="rounded-lg border bg-card px-3 py-3 text-left transition-colors hover:bg-muted/60"
-        :class="
-          status === summary.value
-            ? 'border-primary ring-1 ring-primary'
-            : 'border-border'
-        "
-        @click="status = summary.value"
-      >
-        <span class="block text-xl font-bold tabular-nums">{{
-          summary.count
-        }}</span>
-        <span class="mt-0.5 block text-xs text-muted-foreground">{{
-          summary.label
-        }}</span>
-      </button>
-    </section>
-
     <section class="mb-6 flex flex-col gap-3 sm:flex-row">
       <div class="relative min-w-0 flex-1">
         <Search
@@ -69,8 +47,7 @@
         class="shrink-0"
         @click="clearFilters"
       >
-        <X :size="16" class="mr-2" />
-        Limpiar
+        <X :size="16" class="mr-2" /> Limpiar
       </Button>
     </section>
 
@@ -82,9 +59,7 @@
         resultados
       </p>
       <Select v-model="sortBy">
-        <SelectTrigger class="w-44">
-          <SelectValue />
-        </SelectTrigger>
+        <SelectTrigger class="w-44"><SelectValue /></SelectTrigger>
         <SelectContent>
           <SelectItem value="title">Nombre A-Z</SelectItem>
           <SelectItem value="newest">ID más reciente</SelectItem>
@@ -98,7 +73,7 @@
       class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
     >
       <Card
-        v-for="recipe in filteredRecipes"
+        v-for="recipe in visibleRecipes"
         :key="recipe.id"
         class="group min-w-0 cursor-pointer overflow-hidden transition-shadow hover:shadow-md"
         tabindex="0"
@@ -126,9 +101,9 @@
           </Badge>
         </div>
         <CardHeader class="space-y-2 p-4">
-          <CardTitle class="line-clamp-2 text-base leading-snug">
-            {{ recipe.title }}
-          </CardTitle>
+          <CardTitle class="line-clamp-2 text-base leading-snug">{{
+            recipe.title
+          }}</CardTitle>
           <div
             class="flex min-h-5 flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground"
           >
@@ -153,7 +128,16 @@
     </div>
 
     <div
-      v-else
+      v-if="canLoadMore"
+      ref="loadMoreTarget"
+      class="flex min-h-20 items-center justify-center py-6 text-sm text-muted-foreground"
+      aria-live="polite"
+    >
+      Cargando más recetas...
+    </div>
+
+    <div
+      v-if="!filteredRecipes.length"
       class="rounded-lg border border-dashed border-border px-6 py-16 text-center"
     >
       <SearchX :size="32" class="mx-auto text-muted-foreground" />
@@ -197,9 +181,9 @@
                   {{ selectedRecipe.category }}
                 </Badge>
               </div>
-              <SheetTitle class="pt-2 text-2xl leading-tight">
-                {{ selectedRecipe.title }}
-              </SheetTitle>
+              <SheetTitle class="pt-2 text-2xl leading-tight">{{
+                selectedRecipe.title
+              }}</SheetTitle>
               <SheetDescription class="sr-only">
                 Ingredientes y preparación de {{ selectedRecipe.title }}
               </SheetDescription>
@@ -322,17 +306,21 @@
                 <Badge
                   v-if="selectedRecipe.nutrition.calories"
                   variant="outline"
-                  >{{ selectedRecipe.nutrition.calories }}</Badge
                 >
-                <Badge v-if="selectedRecipe.nutrition.protein" variant="outline"
-                  >Proteína {{ selectedRecipe.nutrition.protein }}</Badge
+                  {{ selectedRecipe.nutrition.calories }}
+                </Badge>
+                <Badge
+                  v-if="selectedRecipe.nutrition.protein"
+                  variant="outline"
                 >
-                <Badge v-if="selectedRecipe.nutrition.carbs" variant="outline"
-                  >Carbohidratos {{ selectedRecipe.nutrition.carbs }}</Badge
-                >
-                <Badge v-if="selectedRecipe.nutrition.fat" variant="outline"
-                  >Grasa {{ selectedRecipe.nutrition.fat }}</Badge
-                >
+                  Proteína {{ selectedRecipe.nutrition.protein }}
+                </Badge>
+                <Badge v-if="selectedRecipe.nutrition.carbs" variant="outline">
+                  Carbohidratos {{ selectedRecipe.nutrition.carbs }}
+                </Badge>
+                <Badge v-if="selectedRecipe.nutrition.fat" variant="outline">
+                  Grasa {{ selectedRecipe.nutrition.fat }}
+                </Badge>
               </div>
             </section>
 
@@ -346,9 +334,9 @@
                   <ExternalLink :size="16" class="mr-2" /> Fuente
                 </a>
               </Button>
-              <Button @click="printRecipe">
-                <Printer :size="16" class="mr-2" /> Imprimir
-              </Button>
+              <Button @click="printRecipe"
+                ><Printer :size="16" class="mr-2" /> Imprimir</Button
+              >
             </SheetFooter>
           </div>
         </article>
@@ -358,6 +346,7 @@
 </template>
 
 <script setup lang="ts">
+import { useIntersectionObserver } from "@vueuse/core";
 import recipesData from "../../../tools/recipe-scraper/output/recipes.json";
 import {
   Alert,
@@ -424,11 +413,12 @@ interface Recipe {
 
 const recipes = recipesData as Recipe[];
 const query = ref("");
-const status = ref<"all" | RecipeStatus>("all");
 const category = ref("all");
 const sortBy = ref<"title" | "newest" | "time">("title");
 const selectedRecipe = ref<Recipe | null>(null);
 const detailsOpen = ref(false);
+const loadMoreTarget = ref<HTMLElement | null>(null);
+const visibleCount = ref(24);
 
 const recipeStatus = (recipe: Recipe): RecipeStatus => {
   if (!recipe.hasDetail) return "index";
@@ -448,22 +438,6 @@ const statusVariant = (value: RecipeStatus) =>
       index: "outline",
     }) as const
   )[value];
-
-const summaries = computed(() => [
-  { value: "all" as const, label: "Todas", count: recipes.length },
-  {
-    value: "complete" as const,
-    label: "Completas",
-    count: recipes.filter((recipe) => recipeStatus(recipe) === "complete")
-      .length,
-  },
-  {
-    value: "incomplete" as const,
-    label: "Por completar",
-    count: recipes.filter((recipe) => recipeStatus(recipe) !== "complete")
-      .length,
-  },
-]);
 
 const categories = computed(() =>
   [
@@ -488,11 +462,6 @@ const durationMinutes = (value?: string | null) => {
 const filteredRecipes = computed(() => {
   const term = query.value.trim().toLocaleLowerCase("es");
   const result = recipes.filter((recipe) => {
-    const matchesStatus =
-      status.value === "all" ||
-      (status.value === "incomplete"
-        ? recipeStatus(recipe) !== "complete"
-        : recipeStatus(recipe) === status.value);
     const matchesCategory =
       category.value === "all" ||
       recipe.category
@@ -507,29 +476,29 @@ const filteredRecipes = computed(() => {
       .filter(Boolean)
       .join(" ")
       .toLocaleLowerCase("es");
-    return (
-      matchesStatus && matchesCategory && (!term || haystack.includes(term))
-    );
+    return matchesCategory && (!term || haystack.includes(term));
   });
 
   return result.sort((a, b) => {
-    if (sortBy.value === "newest") {
+    if (sortBy.value === "newest")
       return Number(b.id.slice(1)) - Number(a.id.slice(1));
-    }
-    if (sortBy.value === "time") {
+    if (sortBy.value === "time")
       return durationMinutes(a.totalTime) - durationMinutes(b.totalTime);
-    }
     return a.title.localeCompare(b.title, "es");
   });
 });
 
+const visibleRecipes = computed(() =>
+  filteredRecipes.value.slice(0, visibleCount.value),
+);
+const canLoadMore = computed(
+  () => visibleCount.value < filteredRecipes.value.length,
+);
 const hasFilters = computed(
-  () =>
-    Boolean(query.value) || status.value !== "all" || category.value !== "all",
+  () => Boolean(query.value) || category.value !== "all",
 );
 const clearFilters = () => {
   query.value = "";
-  status.value = "all";
   category.value = "all";
 };
 const openRecipe = (recipe: Recipe) => {
@@ -537,6 +506,17 @@ const openRecipe = (recipe: Recipe) => {
   detailsOpen.value = true;
 };
 const printRecipe = () => window.print();
+
+watch([query, category, sortBy], () => {
+  visibleCount.value = 24;
+});
+useIntersectionObserver(
+  loadMoreTarget,
+  ([entry]) => {
+    if (entry?.isIntersecting && canLoadMore.value) visibleCount.value += 24;
+  },
+  { rootMargin: "300px" },
+);
 
 definePageMeta({ layout: "staff" });
 useSeoMeta({ title: "Recetas | Breezy Meals", robots: "noindex, nofollow" });
