@@ -301,6 +301,11 @@
           Enviar resumen por WhatsApp
         </Button>
 
+        <Button variant="outline" size="sm" @click="printMemberCard">
+          <ClientOnly><Printer :size="15" class="mr-1.5" /></ClientOnly>
+          Imprimir credencial
+        </Button>
+
         <AlertDialog>
           <AlertDialogTrigger as-child>
             <Button
@@ -520,6 +525,17 @@
     >
       {{ toastMsg }}
     </div>
+
+    <!-- Credencial oculta: solo se usa para capturar el markup a imprimir -->
+    <div
+      v-if="member"
+      style="position: absolute; left: -9999px; top: 0"
+      aria-hidden="true"
+    >
+      <div ref="memberCardRef">
+        <AtomsMemberCard :member="member" />
+      </div>
+    </div>
   </section>
 </template>
 
@@ -552,12 +568,14 @@ import {
   RefreshCw,
   Trash2,
   ChevronDown,
+  Printer,
 } from "lucide-vue-next";
 import usePocketBase from "@common/composables/usePocketbase";
 import useCheckIn from "~/composables/useCheckIn";
 import useMembers from "~/composables/useMembers";
 import useMemberships from "~/composables/useMemberships";
 import useRedemptions from "~/composables/useRedemptions";
+import { useLabelExport } from "~/composables/useLabelExport";
 import type { Member, Redemption } from "~/types/membership";
 
 // --- composables (todas autenticadas; sin hooks ni lecturas públicas) ---
@@ -614,6 +632,8 @@ const addressDraft = ref("");
 const adding = ref(false);
 const createError = ref("");
 const form = reactive({ name: "", phone: "", address: "", issueNow: true });
+
+const memberCardRef = ref<HTMLElement | null>(null);
 
 // --- toast ---
 let toastTimer: ReturnType<typeof setTimeout> | undefined;
@@ -805,6 +825,53 @@ function sendSummary() {
   lines.push("", "¡Gracias por ser parte de Breezy! 🌊");
 
   openWhatsApp(lines.join("\n"), member.value.phone);
+}
+
+// --- credencial imprimible (etiqueta redonda con nombre + código de barras) ---
+const { injectFonts } = useLabelExport(
+  "https://fonts.googleapis.com/css2?family=Oswald:wght@700&family=Barlow:wght@400;600;800&display=swap",
+);
+
+function printMemberCard() {
+  const el = memberCardRef.value;
+  if (!el) return;
+  const html = el.innerHTML;
+
+  const iframe = document.createElement("iframe");
+  iframe.style.cssText =
+    "position:fixed;width:2in;height:2in;border:0;opacity:0;top:0;left:0;pointer-events:none;z-index:-9999;";
+  document.body.appendChild(iframe);
+
+  const doc = iframe.contentDocument!;
+  doc.open();
+  doc.write(`
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <meta charset="utf-8" />
+        <script src="https://cdn.tailwindcss.com"><\/script>
+        <style>
+          html, body { margin: 0 !important; padding: 0 !important; background: transparent; overflow: hidden; width: 2in; height: 2in; }
+          @page { margin: 0; size: 2in 2in; }
+          .print-clip { width: 2in; height: 2in; border-radius: 50%; overflow: hidden; clip-path: circle(50% at 50% 50%); position: relative; }
+          .member-card { font-family: 'Barlow', Arial, sans-serif; width: 2in !important; height: 2in !important; border-radius: 50% !important; overflow: hidden !important; box-shadow: none !important; border: 3px solid black !important; }
+          .member-card .font-black { font-family: 'Oswald', Impact, sans-serif; }
+          * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+        </style>
+      </head>
+      <body><div class="print-clip">${html}</div></body>
+    </html>
+  `);
+  injectFonts(doc);
+  doc.close();
+
+  iframe.onload = () => {
+    setTimeout(() => {
+      iframe.contentWindow!.focus();
+      iframe.contentWindow!.print();
+      setTimeout(() => document.body.removeChild(iframe), 1000);
+    }, 800);
+  };
 }
 
 function startEditIdentity() {

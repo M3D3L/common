@@ -206,9 +206,9 @@
           <div class="space-y-6 p-5 sm:p-7 print:p-0 print:pt-5">
             <SheetHeader class="pr-8 text-left">
               <div class="flex flex-wrap items-center gap-2">
-                <Badge :variant="statusVariant(recipeStatus(selectedRecipe))">
+                <!-- <Badge :variant="statusVariant(recipeStatus(selectedRecipe))">
                   {{ statusLabel(recipeStatus(selectedRecipe)) }}
-                </Badge>
+                </Badge> -->
                 <Badge v-if="selectedRecipe.category" variant="outline">
                   {{ selectedRecipe.category }}
                 </Badge>

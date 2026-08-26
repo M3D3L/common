@@ -40,7 +40,11 @@ function normalizeEAN13(raw: string): string | null {
 
 function render() {
   if (!svg.value) return;
-  const normalized = normalizeEAN13(String(props.value ?? "").trim());
+  const raw = String(props.value ?? "").trim();
+  // EAN13 needs digit normalization + check-digit math; other formats
+  // (e.g. CODE128 for alphanumeric member codes) take the raw value as-is.
+  const isEan13 = props.format.toUpperCase() === "EAN13";
+  const normalized = isEan13 ? normalizeEAN13(raw) : raw;
 
   if (!normalized) {
     svg.value.innerHTML = "";
