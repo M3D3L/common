@@ -228,7 +228,7 @@
     <Card v-if="member" class="overflow-hidden mb-6">
       <!-- Cabecera de la ficha -->
       <div class="p-5 border-b border-border bg-muted/30 space-y-4">
-        <div class="flex items-start justify-between gap-3">
+        <div class="flex items-start justify-between gap-4">
           <div class="min-w-0 flex-1">
             <div v-if="!editingIdentity" class="space-y-1">
               <div class="flex items-center gap-2">
@@ -252,6 +252,13 @@
               >
                 Editar nombre y teléfono
               </button>
+              <div>
+                <Badge
+                  class="tabular-nums bg-primary/10 text-primary hover:bg-primary/10"
+                >
+                  {{ member.member_code }}
+                </Badge>
+              </div>
             </div>
             <div v-else class="space-y-2">
               <Input
@@ -284,11 +291,20 @@
               </div>
             </div>
           </div>
-          <Badge
-            class="tabular-nums bg-primary/10 text-primary hover:bg-primary/10"
-          >
-            {{ member.member_code }}
-          </Badge>
+
+          <div class="shrink-0">
+            <MoleculesButtonWrapper
+              :id="member.id"
+              :deletable="false"
+              :editable="false"
+              @print="printMemberCard"
+              @download="downloadMemberCard"
+            >
+              <div ref="memberCardRef">
+                <AtomsMemberCard :member="member" />
+              </div>
+            </MoleculesButtonWrapper>
+          </div>
         </div>
 
         <Button
@@ -299,11 +315,6 @@
         >
           <ClientOnly><MessageCircle :size="15" class="mr-1.5" /></ClientOnly>
           Enviar resumen por WhatsApp
-        </Button>
-
-        <Button variant="outline" size="sm" @click="printMemberCard">
-          <ClientOnly><Printer :size="15" class="mr-1.5" /></ClientOnly>
-          Imprimir credencial
         </Button>
 
         <AlertDialog>
@@ -525,17 +536,6 @@
     >
       {{ toastMsg }}
     </div>
-
-    <!-- Credencial oculta: solo se usa para capturar el markup a imprimir -->
-    <div
-      v-if="member"
-      style="position: absolute; left: -9999px; top: 0"
-      aria-hidden="true"
-    >
-      <div ref="memberCardRef">
-        <AtomsMemberCard :member="member" />
-      </div>
-    </div>
   </section>
 </template>
 
@@ -568,7 +568,6 @@ import {
   RefreshCw,
   Trash2,
   ChevronDown,
-  Printer,
 } from "lucide-vue-next";
 import usePocketBase from "@common/composables/usePocketbase";
 import useCheckIn from "~/composables/useCheckIn";
@@ -828,7 +827,7 @@ function sendSummary() {
 }
 
 // --- credencial imprimible (etiqueta redonda con nombre + código de barras) ---
-const { injectFonts } = useLabelExport(
+const { injectFonts, ensureFontsLoaded, getFontEmbedCSS } = useLabelExport(
   "https://fonts.googleapis.com/css2?family=Oswald:wght@700&family=Barlow:wght@400;600;800&display=swap",
 );
 
@@ -872,6 +871,100 @@ function printMemberCard() {
       setTimeout(() => document.body.removeChild(iframe), 1000);
     }, 800);
   };
+}
+
+async function downloadMemberCard() {
+  const el = memberCardRef.value;
+  if (!el) return;
+  const html = el.innerHTML;
+
+  const [, fontEmbedCSS] = await Promise.all([
+    ensureFontsLoaded(),
+    getFontEmbedCSS(),
+  ]);
+
+  const iframe = document.createElement("iframe");
+  iframe.style.cssText =
+    "position:fixed;width:2in;height:2in;border:0;opacity:0;top:0;left:0;pointer-events:none;z-index:-9999;";
+  document.body.appendChild(iframe);
+
+  const doc = iframe.contentDocument!;
+  doc.open();
+  doc.write(`
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <meta charset="utf-8" />
+        <script src="https://cdn.tailwindcss.com"><\/script>
+        <style>
+          html, body { margin: 0 !important; padding: 0 !important; background: transparent; overflow: hidden; width: 2in; height: 2in; }
+          .member-card { font-family: 'Barlow', Arial, sans-serif; width: 2in !important; height: 2in !important; border-radius: 50% !important; overflow: hidden !important; box-shadow: none !important; border: 3px solid black !important; }
+          .member-card .font-black { font-family: 'Oswald', Impact, sans-serif; }
+          * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+        </style>
+      </head>
+      <body>${html}</body>
+    </html>
+  `);
+  injectFonts(doc);
+  doc.close();
+
+  await new Promise<void>((resolve) => {
+    iframe.onload = () => setTimeout(resolve, 1200);
+  });
+  await iframe.contentDocument?.fonts.ready;
+
+  const { toPng } = await import("html-to-image");
+  const targetEl = iframe.contentDocument!.querySelector(
+    ".member-card",
+  ) as HTMLElement;
+
+  if (!targetEl) {
+    console.error("Could not find .member-card inside iframe");
+    document.body.removeChild(iframe);
+    return;
+  }
+
+  try {
+    const size = targetEl.offsetWidth;
+    const dataUrl = await toPng(targetEl, {
+      pixelRatio: 3,
+      width: size,
+      height: size,
+      backgroundColor: "#ffffff",
+      fontEmbedCSS,
+    });
+
+    const img = new Image();
+    img.src = dataUrl;
+    await new Promise((resolve) => (img.onload = resolve));
+
+    const canvas = document.createElement("canvas");
+    const outputSize = size * 3;
+    canvas.width = outputSize;
+    canvas.height = outputSize;
+    const ctx = canvas.getContext("2d")!;
+
+    ctx.beginPath();
+    ctx.arc(outputSize / 2, outputSize / 2, outputSize / 2, 0, Math.PI * 2);
+    ctx.closePath();
+    ctx.clip();
+    ctx.drawImage(img, 0, 0, outputSize, outputSize);
+
+    canvas.toBlob((blob) => {
+      if (!blob) return;
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${member.value?.name ?? member.value?.id}-credencial.png`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }, "image/png");
+  } catch (err) {
+    console.error("Failed to generate PNG:", err);
+  } finally {
+    document.body.removeChild(iframe);
+  }
 }
 
 function startEditIdentity() {

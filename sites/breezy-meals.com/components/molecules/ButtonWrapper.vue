@@ -9,7 +9,7 @@
       <div
         class="absolute top-1/2 gap-1 -right-4 -translate-y-1/2 flex flex-col items-center p-1 rounded-xl bg-neutral-950/95 backdrop-blur-md border border-neutral-800/60 shadow-xl opacity-0 group-hover:opacity-100 translate-x-1 group-hover:translate-x-0 transition-all duration-200 pointer-events-none group-hover:pointer-events-auto z-10 whitespace-nowrap min-w-[96px]"
       >
-        <AlertDialog>
+        <AlertDialog v-if="deletable">
           <AlertDialogTrigger as-child>
             <Button
               variant="ghost"
@@ -62,6 +62,7 @@
         </AlertDialog>
 
         <Button
+          v-if="editable"
           variant="ghost"
           size="sm"
           class="h-7 w-full px-2.5 rounded-md text-[10px] font-bold tracking-wider uppercase text-neutral-400 hover:text-sky-400 hover:bg-neutral-800/60 transition-colors"
@@ -209,9 +210,14 @@ import {
 import usePocketBaseCore from "@common/composables/usePocketBaseCore";
 import { useLabelZoom } from "~/composables/useLabelZoom";
 
-const props = defineProps<{
-  id: string;
-}>();
+const props = withDefaults(
+  defineProps<{
+    id: string;
+    deletable?: boolean;
+    editable?: boolean;
+  }>(),
+  { deletable: true, editable: true },
+);
 
 const emit = defineEmits<{
   print: [];
