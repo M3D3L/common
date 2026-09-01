@@ -130,7 +130,6 @@ function createComandasStore() {
   // Socios: composables de membresía (mismas que usa /socios).
   const members = useMembers();
   const memberships = useMemberships();
-  const redemptions = useRedemptions();
   const { user } = usePocketBaseCore();
 
   /* ===== Estado ===== */
@@ -912,13 +911,8 @@ function createComandasStore() {
 
   /**
    * Enviar orden.
-   *  1) Si hay código de socio, intentar redimir UNA comida del mes en curso.
-   *     - Éxito -> se etiqueta con "SOCIO XXXX · N restantes" y baja el crédito.
-   *     - Sin crédito / no encontrado -> la orden IGUAL se envía,
-   *       etiquetada con el motivo, y se avisa al staff para cobrar normal.
-   *     Un problema de crédito NUNCA bloquea la orden (la cocina debe recibirla).
-   *  2) Guardar la comanda (payload + columnas denormalizadas + member_code).
-   *  3) WhatsApp.
+   *  1) Guardar la comanda (payload + columnas denormalizadas + member_code).
+   *  2) WhatsApp.
    */
   async function send() {
     if (!itemCount.value || sending.value) return;
@@ -947,12 +941,11 @@ function createComandasStore() {
       },
     };
 
-    // --- Socio: solo se etiqueta aquí. La comida se redime hasta que el
-    // staff marque la orden como lista (completeOrder), así el mismo flujo
-    // sirve para órdenes tomadas en /orders y para las del /menu público.
+    // --- Socio: solo se etiqueta aquí. El saldo se verifica cuando el staff
+    // marque la orden como lista, sin descontar créditos.
     const code = memberCode.value.replace(/\s+/g, "").toUpperCase();
     const memberTag = code ? `SOCIO ${code}` : "";
-    if (code) toast(`Código ${code} anotado; se redime al marcar lista`);
+    if (code) toast(`Código ${code} anotado; se verifica al marcar lista`);
 
     // --- Orden (igual que antes, + nota con etiqueta de socio) ---
     const noteWithTag = [snapshot.note, memberTag].filter(Boolean).join(" · ");
@@ -1041,10 +1034,9 @@ function createComandasStore() {
     toast(msg);
   }
 
-  // Redime UNA comida del socio etiquetado en la orden. Se llama al marcar
-  // lista (plato servido), nunca al crear la orden ni desde /menu público.
-  // Un problema de crédito NUNCA bloquea el cierre de la orden.
-  async function redeemMemberCredit(o: StoredOrder) {
+  // Verifica el saldo del socio al marcar la orden lista, sin descontarlo.
+  // La falta de crédito avisa que se cobrará en efectivo, pero no bloquea.
+  async function checkMemberCredit(o: StoredOrder) {
     const code = o.memberCode;
     if (!code) return;
     try {
@@ -1054,19 +1046,13 @@ function createComandasStore() {
         return;
       }
       const ms = await memberships.getActiveMembership(member.id);
-      if (ms && memberships.isUsable(ms)) {
-        const { remaining } = await redemptions.redeem(ms, {
-          staffId: user?.id,
-        });
-        toast(
-          `Socio ${member.name}: comida registrada (${remaining} restantes)`,
+      if (!ms || !memberships.isUsable(ms)) {
+        window.alert(
+          `${member.name} no tiene créditos disponibles. Esta orden se pagará en efectivo.`,
         );
-      } else {
-        const why = !ms ? "sin membresía" : "sin crédito";
-        toast(`Socio ${member.name}: ${why} — cobra normal`);
       }
     } catch (e) {
-      console.error("socio redeem failed:", e);
+      console.error("socio credit check failed:", e);
       toast("No se pudo verificar al socio; la orden se marca lista igual");
     }
   }
@@ -1086,8 +1072,8 @@ function createComandasStore() {
       }
     }
 
-    if (o.memberCode && !o.memberRedeemed) {
-      await redeemMemberCredit(o);
+    if (o.memberCode) {
+      await checkMemberCredit(o);
     }
 
     // 1) Primero la BD: se borra el registro (misma cola para todos).
