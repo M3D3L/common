@@ -28,8 +28,7 @@ export default function useCheckIn() {
     | "idle"
     | "searching"
     | "choose" // multiple name matches, UI shows a picker
-    | "no_membership" // member found but no grant this month
-    | "expired"
+    | "no_membership" // member found but no credit bucket
     | "exhausted"
     | "ready";
   const status = ref<Status>("idle");
@@ -42,10 +41,6 @@ export default function useCheckIn() {
     const m = membership.value;
     if (!m) {
       status.value = "no_membership";
-      return;
-    }
-    if (memberships.isExpired(m)) {
-      status.value = "expired";
       return;
     }
     if (memberships.remaining(m) <= 0) {
@@ -131,8 +126,8 @@ export default function useCheckIn() {
     }
   };
 
-  /** Issue this month's grant for a member who has none (renewal / first grant). */
-  const issueThisMonth = async (credits = 5) => {
+  /** Issue credits for a member who has no existing bucket. */
+  const issueCredits = async (credits = 5) => {
     if (!member.value) return;
     working.value = true;
     try {
@@ -167,7 +162,7 @@ export default function useCheckIn() {
     lookupByCode,
     select,
     confirmRedeem,
-    issueThisMonth,
+    issueCredits,
     reset,
   };
 }

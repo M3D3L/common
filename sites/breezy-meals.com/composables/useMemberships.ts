@@ -2,12 +2,11 @@
 import type { Membership } from "~/types/membership";
 
 /**
- * useMemberships — the monthly credit bucket.
+ * useMemberships — the member's persistent credit bucket.
  *
- * One active membership per (member, period). "Buying more" tops up the SAME
- * bucket (credits_total += n) rather than creating a second grant, so
- * getActiveMembership is always a single-row lookup. Grants are staff-issued
- * (there is no billing integration); creation is an explicit action.
+ * "Buying more" tops up the latest bucket (credits_total += n) rather than
+ * creating a monthly grant. Existing monthly buckets remain valid, so unused
+ * credits carry forward indefinitely.
  *
  * credits_used is a cache. The authoritative balance is derived from the
  * redemptions ledger (see useRedemptions.recalculate). Everything here that
@@ -24,36 +23,25 @@ export default function useMemberships() {
   const currentPeriod = (d = new Date()) =>
     `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
 
-  /** Last instant of the given period's month (hard expiry point). */
-  const endOfPeriodISO = (period = currentPeriod()): string => {
-    const [y, m] = period.split("-").map(Number);
-    // day 0 of the *next* month = last day of this month
-    return new Date(Date.UTC(y, m, 0, 23, 59, 59, 999)).toISOString();
-  };
-
   // --- Pure balance / validity helpers -------------------------------------
 
   const remaining = (m: Membership) =>
     Math.max(0, m.credits_total - m.credits_used);
 
-  const isExpired = (m: Membership) => new Date(m.expires_date) < new Date();
-
-  /** Usable right now: active, has credits, not past expiry. */
+  /** Usable right now: not cancelled and has credits. */
   const isUsable = (m: Membership) =>
-    m.status === "active" && remaining(m) > 0 && !isExpired(m);
+    m.status !== "cancelled" && remaining(m) > 0;
 
   // --- Lookups --------------------------------------------------------------
 
   /**
-   * The member's bucket for the current period, if any. ignoreCache: balance
-   * decisions must never be stale. Returns null if they have no grant this
-   * month (lapsed / never issued) — identity persists, entitlement doesn't.
+   * The member's latest non-cancelled bucket, if any. Old monthly buckets are
+   * intentionally eligible so their unused credits carry forward.
    */
   const getActiveMembership = async (
     memberId: string,
-    period = currentPeriod(),
   ): Promise<Membership | null> => {
-    const filter = `member = "${memberId}" && period = "${period}" && status != "cancelled"`;
+    const filter = `member = "${memberId}" && status != "cancelled"`;
     const r = await fetchCollection(
       C,
       1,
@@ -77,9 +65,8 @@ export default function useMemberships() {
   // --- Mutations ------------------------------------------------------------
 
   /**
-   * Issue a fresh grant for a member for the given period. If one already
-   * exists for that period, this TOPS IT UP instead of creating a duplicate,
-   * preserving the one-bucket-per-month invariant. Returns the membership.
+   * Issue credits to a member. If a bucket already exists, top it up instead
+   * of creating another one so its remaining balance carries forward.
    */
   const issueMembership = async (
     memberId: string,
@@ -92,7 +79,7 @@ export default function useMemberships() {
     const period = opts.period ?? currentPeriod();
     const credits = opts.credits ?? 5;
 
-    const existing = await getActiveMembership(memberId, period);
+    const existing = await getActiveMembership(memberId);
     if (existing) {
       // Top-up path: same bucket grows.
       return updateItem(C, existing.id, {
@@ -107,7 +94,8 @@ export default function useMemberships() {
       credits_total: credits,
       credits_used: 0,
       issued_date: new Date().toISOString(),
-      expires_date: endOfPeriodISO(period),
+      // Kept for compatibility with the existing PocketBase date field.
+      expires_date: "9999-12-31T23:59:59.999Z",
       status: "active",
       issued_by: opts.issuedBy ?? "",
     }) as Promise<Membership>;
@@ -123,9 +111,7 @@ export default function useMemberships() {
 
   return {
     currentPeriod,
-    endOfPeriodISO,
     remaining,
-    isExpired,
     isUsable,
     getActiveMembership,
     getMembership,

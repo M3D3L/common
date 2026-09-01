@@ -20,18 +20,17 @@ export interface Member extends RecordModel {
 }
 
 /**
- * One monthly bucket of meal credits for a member.
- * Exactly one active row per (member, period) — top-ups increment
- * `credits_total` on the same row rather than creating a second grant.
+ * A persistent bucket of meal credits for a member. Legacy monthly buckets
+ * remain valid; top-ups increment the latest bucket.
  * `credits_used` is a cache; authoritative balance is derived from the ledger.
  */
 export interface Membership extends RecordModel {
   member: string;
-  period: string; // "2026-08"
+  period: string; // issuance period, retained for historical reporting
   credits_total: number;
   credits_used: number;
   issued_date: string;
-  expires_date: string;
+  expires_date: string; // legacy schema field; no longer enforced
   status: "active" | "exhausted" | "expired" | "cancelled";
   issued_by?: string;
 }
@@ -61,7 +60,7 @@ export interface MembershipCheck {
   name?: string;
   remaining?: number;
   period?: string;
-  reason?: "not_found" | "expired" | "exhausted" | "rate_limited";
+  reason?: "not_found" | "exhausted" | "rate_limited";
 }
 
 export type MemberStatus = Member["status"];

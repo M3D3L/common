@@ -914,7 +914,7 @@ function createComandasStore() {
    * Enviar orden.
    *  1) Si hay código de socio, intentar redimir UNA comida del mes en curso.
    *     - Éxito -> se etiqueta con "SOCIO XXXX · N restantes" y baja el crédito.
-   *     - Sin crédito / vencida / no encontrado -> la orden IGUAL se envía,
+   *     - Sin crédito / no encontrado -> la orden IGUAL se envía,
    *       etiquetada con el motivo, y se avisa al staff para cobrar normal.
    *     Un problema de crédito NUNCA bloquea la orden (la cocina debe recibirla).
    *  2) Guardar la comanda (payload + columnas denormalizadas + member_code).
@@ -1062,11 +1062,7 @@ function createComandasStore() {
           `Socio ${member.name}: comida registrada (${remaining} restantes)`,
         );
       } else {
-        const why = !ms
-          ? "sin membresía"
-          : memberships.isExpired(ms)
-            ? "vencida"
-            : "sin crédito";
+        const why = !ms ? "sin membresía" : "sin crédito";
         toast(`Socio ${member.name}: ${why} — cobra normal`);
       }
     } catch (e) {

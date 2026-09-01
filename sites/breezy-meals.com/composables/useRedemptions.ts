@@ -47,7 +47,7 @@ export default function useRedemptions() {
 
   /**
    * Burn one credit. Ledger row first (source of truth), then the cached
-   * counter. Guards against overdraw and expiry. Returns the new remaining.
+   * counter. Guards against overdraw. Returns the new remaining.
    *
    * The caller should pass a *fresh* membership (read with ignoreCache) so the
    * guards see the real balance.
@@ -57,9 +57,7 @@ export default function useRedemptions() {
     opts: { staffId?: string; reason?: string } = {},
   ): Promise<{ redemption: Redemption; remaining: number }> => {
     if (m.credits_used >= m.credits_total)
-      throw new Error("No credits remaining this month");
-    if (new Date(m.expires_date) < new Date())
-      throw new Error("Membership has expired for this month");
+      throw new Error("No credits remaining");
 
     // NOTE: never send "" for the redeemed_by relation — PocketBase rejects an
     // empty string on a relation field (wants a real id or the field omitted).

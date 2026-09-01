@@ -4,9 +4,6 @@
     <div class="flex items-baseline justify-between mb-2">
       <div class="flex items-baseline gap-3">
         <h2 class="text-xl font-bold">Socios</h2>
-        <span class="text-xs text-muted-foreground tabular-nums">
-          {{ currentPeriod() }}
-        </span>
       </div>
       <Button size="sm" @click="openAdd()">
         <ClientOnly><UserPlus :size="15" class="mr-1.5" /></ClientOnly>
@@ -15,7 +12,7 @@
     </div>
     <p class="mb-6 text-muted-foreground">
       Busca por código o nombre para registrar una comida, dar de alta socios o
-      ajustar sus créditos del mes.
+      ajustar sus créditos.
     </p>
 
     <!-- Búsqueda -->
@@ -165,7 +162,7 @@
           <div class="flex items-center space-x-2 pt-1">
             <Checkbox id="issue-now" v-model:checked="form.issueNow" />
             <Label for="issue-now" class="text-sm font-normal cursor-pointer">
-              Dar 5 comidas de {{ currentPeriod() }} al crear
+              Dar 5 comidas al crear
             </Label>
           </div>
           <Button
@@ -389,7 +386,7 @@
 
       <!-- Cuerpo de la ficha -->
       <div class="p-5 space-y-6">
-        <!-- Con membresía activa este mes -->
+        <!-- Con saldo de comidas -->
         <template v-if="membership">
           <div
             class="flex items-end justify-between bg-muted/20 p-4 rounded-xl border border-border/50"
@@ -398,19 +395,13 @@
               <p
                 class="text-[11px] font-bold uppercase tracking-wider text-muted-foreground"
               >
-                Comidas este mes
+                Comidas disponibles
               </p>
               <p class="text-3xl font-black tabular-nums">
                 {{ remaining
                 }}<span class="text-lg text-muted-foreground"
                   >/{{ membership.credits_total }}</span
                 >
-              </p>
-            </div>
-            <div class="text-right text-xs text-muted-foreground">
-              <p>Vence</p>
-              <p class="font-semibold tabular-nums text-foreground">
-                {{ fmtDate(membership.expires_date) }}
               </p>
             </div>
           </div>
@@ -428,13 +419,7 @@
             v-if="status === 'exhausted'"
             class="p-3 text-xs text-center border rounded-lg text-muted-foreground border-border bg-muted/30"
           >
-            Ya usó sus {{ membership.credits_total }} comidas de este mes.
-          </div>
-          <div
-            v-else-if="status === 'expired'"
-            class="p-3 text-xs text-center border rounded-lg text-muted-foreground border-border bg-muted/30"
-          >
-            La membresía de este mes venció.
+            Ya usó sus {{ membership.credits_total }} comidas disponibles.
           </div>
 
           <!-- Agregar comidas -->
@@ -460,13 +445,13 @@
           </div>
         </template>
 
-        <!-- Sin membresía este mes -->
+        <!-- Sin saldo de comidas -->
         <template v-else>
           <div class="py-2 text-center space-y-4">
             <div class="space-y-1">
-              <p class="font-semibold">Sin membresía este mes</p>
+              <p class="font-semibold">Sin comidas disponibles</p>
               <p class="text-sm text-muted-foreground">
-                Este socio no tiene comidas para {{ currentPeriod() }}.
+                Este socio todavía no tiene un saldo de comidas.
               </p>
             </div>
             <div class="grid grid-cols-2 gap-2">
@@ -583,8 +568,6 @@ const members = useMembers();
 const memberships = useMemberships();
 const redemptions = useRedemptions();
 const { openWhatsApp } = useWhatsappOrder();
-
-const { currentPeriod } = memberships;
 
 // spine reactivo del check-in
 const { member, membership, candidates, status, loading, working, remaining } =
@@ -762,7 +745,7 @@ async function archiveSelected() {
 
 async function doIssue() {
   try {
-    await checkIn.issueThisMonth(5);
+    await checkIn.issueCredits(5);
     toast("Membresía creada ✅");
     await refresh();
   } catch (e: any) {
@@ -772,9 +755,9 @@ async function doIssue() {
 }
 
 /**
- * Agrega comidas al mes en curso (pago / renovación). Usa topUp, que escribe
+ * Agrega comidas al saldo (pago / renovación). Usa topUp, que escribe
  * SOLO en `memberships` (updateItem/createItem) — no toca `redemptions`, por
- * eso funciona aunque registrar comida aún no. Si no hay membresía este mes,
+ * eso funciona aunque registrar comida aún no. Si no hay membresía,
  * topUp crea una nueva con esas comidas.
  */
 async function addMeals(n: number) {
@@ -805,7 +788,7 @@ function sendSummary() {
   const balanceLine =
     left > 5
       ? `🍽️ Tienes *${left}* comidas disponibles.`
-      : `🍽️ Te quedan *${left} de ${total}* comidas este mes.`;
+      : `🍽️ Te quedan *${left} de ${total}* comidas disponibles.`;
 
   const recentMeals = history.value
     .filter((h) => h.kind === "meal" && !h.voided)
@@ -813,9 +796,6 @@ function sendSummary() {
     .map((h) => fmtDateTime(h.redeemed_at));
 
   const lines = [`Hola ${member.value.name} 👋`, "", balanceLine];
-  if (membership.value) {
-    lines.push(`📅 Vigencia hasta: ${fmtDate(membership.value.expires_date)}`);
-  }
   lines.push("", `🎫 Tu código: *${member.value.member_code}*`);
   if (recentMeals.length) {
     lines.push("", "📋 *Tus últimas comidas:*");
