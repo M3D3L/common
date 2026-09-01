@@ -130,6 +130,7 @@ function createComandasStore() {
   // Socios: composables de membresía (mismas que usa /socios).
   const members = useMembers();
   const memberships = useMemberships();
+  const redemptions = useRedemptions();
   const { user } = usePocketBaseCore();
 
   /* ===== Estado ===== */
@@ -1034,9 +1035,9 @@ function createComandasStore() {
     toast(msg);
   }
 
-  // Verifica el saldo del socio al marcar la orden lista, sin descontarlo.
-  // La falta de crédito avisa que se cobrará en efectivo, pero no bloquea.
-  async function checkMemberCredit(o: StoredOrder) {
+  // Verifica el saldo al marcar la orden lista y descuenta una comida cuando
+  // está disponible. La falta de crédito avisa que se cobrará en efectivo.
+  async function redeemMemberCredit(o: StoredOrder) {
     const code = o.memberCode;
     if (!code) return;
     try {
@@ -1050,9 +1051,15 @@ function createComandasStore() {
         window.alert(
           `${member.name} no tiene créditos disponibles. Esta orden se pagará en efectivo.`,
         );
+        return;
       }
+
+      const { remaining } = await redemptions.redeem(ms, {
+        staffId: user?.id,
+      });
+      toast(`Socio ${member.name}: comida registrada (${remaining} restantes)`);
     } catch (e) {
-      console.error("socio credit check failed:", e);
+      console.error("socio redeem failed:", e);
       toast("No se pudo verificar al socio; la orden se marca lista igual");
     }
   }
@@ -1073,7 +1080,7 @@ function createComandasStore() {
     }
 
     if (o.memberCode) {
-      await checkMemberCredit(o);
+      await redeemMemberCredit(o);
     }
 
     // 1) Primero la BD: se borra el registro (misma cola para todos).
