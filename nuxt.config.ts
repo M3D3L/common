@@ -19,6 +19,21 @@ export default defineNuxtConfig({
     componentDir: "./components/ui",
   },
 
+  hooks: {
+    "components:dirs"(dirs) {
+      const sharedComponentsDir = path.resolve(__dirname, "components");
+      const sharedDir = dirs.find(
+        (dir) =>
+          typeof dir !== "string" &&
+          path.resolve(dir.path) === sharedComponentsDir,
+      );
+
+      if (sharedDir && typeof sharedDir !== "string") {
+        sharedDir.extensions = ["vue"];
+      }
+    },
+  },
+
   build: {
     transpile: ["vueuc"],
   },
