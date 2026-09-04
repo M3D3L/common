@@ -514,7 +514,11 @@ const cartItems = computed(() =>
 const itemCount = computed(() => cartItems.value.length);
 const deliveryFee = ref(60);
 const appliedDeliveryFee = computed(() =>
-  mode.value === "domicilio" ? Math.max(0, Number(deliveryFee.value) || 0) : 0,
+  mode.value === "domicilio"
+    ? props.staffMode
+      ? Math.max(0, Number(deliveryFee.value) || 0)
+      : 60
+    : 0,
 );
 const activePromoId = ref<string | null>(null);
 
@@ -631,6 +635,7 @@ const { sendingOrder, showThankYou, thankYouName, clearCart, sendOrder } =
     pricingLines: orderSummaryLines,
     pricingSubtotal: computed(() => pricingSummary.value.total),
     deliveryFee,
+    appliedDeliveryFee,
     pickupTime,
     selectedDate,
     active,

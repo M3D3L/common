@@ -44,6 +44,7 @@ export function useMenuCheckout(params: {
   pricingLines: ComputedRef<PricingLine[]>;
   pricingSubtotal: ComputedRef<number>;
   deliveryFee: Ref<number>;
+  appliedDeliveryFee: ComputedRef<number>;
   pickupTime: ComputedRef<string>;
   selectedDate: Ref<string>;
   active: ComputedRef<DayDishes>;
@@ -80,6 +81,7 @@ export function useMenuCheckout(params: {
     pricingLines,
     pricingSubtotal,
     deliveryFee,
+    appliedDeliveryFee,
     pickupTime,
     selectedDate,
     active,
@@ -273,10 +275,7 @@ export function useMenuCheckout(params: {
     memberCodeValue: string,
     includeOrderPricing: boolean,
   ) {
-    const appliedDeliveryFee =
-      mode.value === "domicilio"
-        ? Math.max(0, Number(deliveryFee.value) || 0)
-        : 0;
+    const orderDeliveryFee = appliedDeliveryFee.value;
     const order: PlacedOrder = {
       id: `${number}-${Date.now()}`,
       number,
@@ -291,9 +290,9 @@ export function useMenuCheckout(params: {
       createdAt: Date.now(),
       memberCode: memberCodeValue || undefined,
       pricingSubtotal: includeOrderPricing ? pricingSubtotal.value : undefined,
-      deliveryFee: includeOrderPricing ? appliedDeliveryFee : undefined,
+      deliveryFee: includeOrderPricing ? orderDeliveryFee : undefined,
       pricingTotal: includeOrderPricing
-        ? pricingSubtotal.value + appliedDeliveryFee
+        ? pricingSubtotal.value + orderDeliveryFee
         : undefined,
       redeemMemberMeal: !!draft.promo,
       promo: draft.promo,
@@ -328,11 +327,8 @@ export function useMenuCheckout(params: {
     const memberTag = code ? `SOCIO ${code}` : "";
 
     const finalNote = [buildNote(), memberTag].filter(Boolean).join(" · ");
-    const appliedDeliveryFee =
-      mode.value === "domicilio"
-        ? Math.max(0, Number(deliveryFee.value) || 0)
-        : 0;
-    const pricingTotal = pricingSubtotal.value + appliedDeliveryFee;
+    const orderDeliveryFee = appliedDeliveryFee.value;
+    const pricingTotal = pricingSubtotal.value + orderDeliveryFee;
     const drafts = buildComandaDrafts();
     const firstNumber = await nextComandaNumber();
     const numberedDrafts = drafts.map((draft, index) => ({
@@ -356,7 +352,7 @@ export function useMenuCheckout(params: {
           address: customer.address,
           fulfillDate: selectedDate.value,
           pricingSubtotal: pricingSubtotal.value,
-          deliveryFee: appliedDeliveryFee,
+          deliveryFee: orderDeliveryFee,
           pricingTotal,
         })
       : formatCustomerOrder({
@@ -374,7 +370,7 @@ export function useMenuCheckout(params: {
           address: customer.address,
           fulfillDate: selectedDate.value,
           pricingSubtotal: pricingSubtotal.value,
-          deliveryFee: appliedDeliveryFee,
+          deliveryFee: orderDeliveryFee,
           pricingTotal,
         });
     for (const [index, draft] of numberedDrafts.entries()) {

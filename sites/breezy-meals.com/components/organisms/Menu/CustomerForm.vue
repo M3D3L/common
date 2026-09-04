@@ -85,7 +85,7 @@
 
         <div v-if="mode === 'domicilio'" class="space-y-1.5">
           <Label for="c-delivery-fee">Costo de envío / Delivery fee</Label>
-          <div class="relative">
+          <div v-if="staffMode" class="relative">
             <span
               class="pointer-events-none absolute inset-y-0 left-3 flex items-center font-semibold text-muted-foreground"
             >
@@ -101,7 +101,14 @@
               class="pl-7 tabular-nums"
             />
           </div>
-          <p class="text-[11px] text-muted-foreground">
+          <div
+            v-else
+            class="flex h-10 items-center justify-between rounded-md border border-border bg-muted/40 px-3"
+          >
+            <span class="text-sm text-muted-foreground">Envío desde</span>
+            <span class="font-bold tabular-nums">$60 MXN</span>
+          </div>
+          <p v-if="staffMode" class="text-[11px] text-muted-foreground">
             Desde $60 MXN; ajústalo según la ubicación.
           </p>
         </div>

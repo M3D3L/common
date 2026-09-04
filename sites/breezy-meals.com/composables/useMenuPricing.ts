@@ -498,7 +498,10 @@ export function useMenuPricing(params: {
     const nextPromo =
       promoCardsWithAppliedState.value.find(
         (promo) => promo.id === activePromoId?.(),
-      ) ?? promoCardsWithAppliedState.value[0];
+      ) ??
+      promoCardsWithAppliedState.value.find((promo) =>
+        promo.requirements.some((requirement) => requirement.selected > 0),
+      );
     if (!nextPromo) return null;
 
     return {
