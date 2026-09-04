@@ -1,13 +1,25 @@
 import { ref, type ComputedRef, type Ref } from "vue";
 import type { DayDishes, PlacedOrder } from "~/utils/comandas";
 import type { OrderMode } from "~/composables/useWhatsappOrder";
-import type { TaquizaKind } from "~/composables/useTaquizaOrders";
-import type { CustomerOrderArgs } from "~/composables/useMenuLink";
+import type { TaquizaKind, TaquizaOrder } from "~/composables/useTaquizaOrders";
+import type {
+  CombinedCustomerOrderArgs,
+  CustomerOrderArgs,
+} from "~/composables/useMenuLink";
+import type { PricingLine } from "~/utils/menuPricing";
 
 interface Customer {
   name: string;
   phone: string;
   address: string;
+}
+
+interface ComandaDraft {
+  label: string;
+  cart: Record<string, number>;
+  taquizaOrders: Record<TaquizaKind, number>;
+  taquizaByKind: Record<TaquizaKind, Record<string, number>>;
+  promo?: PlacedOrder["promo"];
 }
 
 /**
@@ -20,6 +32,7 @@ export function useMenuCheckout(params: {
   note: Ref<string>;
   customer: Customer;
   memberCode: Ref<string>;
+  resetCustomerAfterSend: () => boolean;
   clearTime: () => void;
   clearTaquizaOrders: () => void;
   hasTaquizaOrder: ComputedRef<boolean>;
@@ -27,6 +40,8 @@ export function useMenuCheckout(params: {
   taquizaOrderCount: ComputedRef<Record<TaquizaKind, number>>;
   taquizaSelectedByKind: ComputedRef<Record<TaquizaKind, number>>;
   taquizaByKind: ComputedRef<Record<TaquizaKind, Record<string, number>>>;
+  taquizaOrders: Ref<TaquizaOrder[]>;
+  pricingLines: ComputedRef<PricingLine[]>;
   pickupTime: ComputedRef<string>;
   selectedDate: Ref<string>;
   active: ComputedRef<DayDishes>;
@@ -38,6 +53,7 @@ export function useMenuCheckout(params: {
     data: Record<string, unknown>,
   ) => Promise<unknown>;
   formatCustomerOrder: (args: CustomerOrderArgs) => string;
+  formatCombinedCustomerOrder: (args: CombinedCustomerOrderArgs) => string;
   waLink: (text: string, phone?: string) => string;
   isAppleDevice: () => boolean;
   restaurantWhatsapp: string;
@@ -50,6 +66,7 @@ export function useMenuCheckout(params: {
     note,
     customer,
     memberCode,
+    resetCustomerAfterSend,
     clearTime,
     clearTaquizaOrders,
     hasTaquizaOrder,
@@ -57,6 +74,8 @@ export function useMenuCheckout(params: {
     taquizaOrderCount,
     taquizaSelectedByKind,
     taquizaByKind,
+    taquizaOrders,
+    pricingLines,
     pickupTime,
     selectedDate,
     active,
@@ -65,6 +84,7 @@ export function useMenuCheckout(params: {
     fetchCollection,
     createItem,
     formatCustomerOrder,
+    formatCombinedCustomerOrder,
     waLink,
     isAppleDevice,
     restaurantWhatsapp,
@@ -74,8 +94,7 @@ export function useMenuCheckout(params: {
 
   const sendingOrder = ref(false);
   const showThankYou = ref(false);
-  // Nombre a mostrar en el modal de agradecimiento; se captura antes de
-  // limpiar el formulario (resetOrderForm vacía customer.name).
+  // Nombre a mostrar en el modal de agradecimiento.
   const thankYouName = ref("");
 
   function clearCart() {
@@ -83,16 +102,20 @@ export function useMenuCheckout(params: {
     clearTaquizaOrders();
   }
 
-  // Deja el formulario listo para un pedido nuevo tras confirmar el envío.
+  // Limpia lo propio del pedido. En el menú público conserva los datos de la
+  // sesión para que una segunda orden solo requiera elegir comida.
   function resetOrderForm() {
     clearCart();
-    mode.value = "llevar";
     note.value = "";
-    customer.name = "";
-    customer.phone = "";
-    customer.address = "";
-    memberCode.value = "";
     clearTime();
+
+    if (resetCustomerAfterSend()) {
+      mode.value = "llevar";
+      customer.name = "";
+      customer.phone = "";
+      customer.address = "";
+      memberCode.value = "";
+    }
   }
 
   function buildNote() {
@@ -102,21 +125,113 @@ export function useMenuCheckout(params: {
       const verb = mode.value === "aqui" ? "Llegada" : "Recoger";
       pieces.push(`${verb} a las ${pickupTime.value}`);
     }
-    if (hasTaquizaOrder.value) {
-      const summary = [
-        taquizaOrderCount.value.tacos > 0
-          ? `${taquizaOrderCount.value.tacos} orden(es) de tacos (${taquizaRules.tacos} c/u, ${taquizaSelectedByKind.value.tacos} seleccionadas)`
-          : "",
-        taquizaOrderCount.value.quesadillas > 0
-          ? `${taquizaOrderCount.value.quesadillas} orden(es) de quesadillas (${taquizaRules.quesadillas} c/u, ${taquizaSelectedByKind.value.quesadillas} seleccionadas)`
-          : "",
-      ]
-        .filter(Boolean)
-        .join(", ");
-      pieces.push(`Taquiza: ${summary}`);
-    }
     if (note.value.trim()) pieces.push(note.value.trim());
     return pieces.join(" · ");
+  }
+
+  function emptyTaquizaByKind() {
+    return { tacos: {}, quesadillas: {} } as Record<
+      TaquizaKind,
+      Record<string, number>
+    >;
+  }
+
+  function addQty(target: Record<string, number>, name: string, qty: number) {
+    target[name] = (target[name] ?? 0) + qty;
+  }
+
+  function buildComandaDrafts(): ComandaDraft[] {
+    const remainingCart = Object.fromEntries(
+      Object.entries(cart).filter(([, qty]) => qty > 0),
+    );
+    const remainingTaquizaOrders = taquizaOrders.value.map((order) => ({
+      ...order,
+      fills: { ...order.fills },
+    }));
+    const drafts: ComandaDraft[] = [];
+    const applicationByPromo = new Map<string, number>();
+
+    pricingLines.value
+      .filter((line) => line.kind === "promo")
+      .forEach((line) => {
+        line.promoApplications?.forEach((application) => {
+          const cartForMeal: Record<string, number> = {};
+          const taquizaForMeal = emptyTaquizaByKind();
+          const taquizaCounts = { tacos: 0, quesadillas: 0 };
+
+          application.items.forEach((item) => {
+            addQty(cartForMeal, item.name, item.qty);
+            remainingCart[item.name] = Math.max(
+              0,
+              (remainingCart[item.name] ?? 0) - item.qty,
+            );
+          });
+
+          application.orderUnits.forEach((unit) => {
+            const kind = unit.code.split(":").at(-1) as TaquizaKind;
+            if (kind !== "tacos" && kind !== "quesadillas") return;
+
+            for (let index = 0; index < unit.qty; index += 1) {
+              const orderIndex = remainingTaquizaOrders.findIndex(
+                (order) => order.kind === kind,
+              );
+              if (orderIndex < 0) break;
+              const [order] = remainingTaquizaOrders.splice(orderIndex, 1);
+              taquizaCounts[kind] += 1;
+              Object.entries(order.fills).forEach(([name, qty]) => {
+                addQty(cartForMeal, name, qty);
+                addQty(taquizaForMeal[kind], name, qty);
+                remainingCart[name] = Math.max(
+                  0,
+                  (remainingCart[name] ?? 0) - qty,
+                );
+              });
+            }
+          });
+
+          const applicationNumber =
+            (applicationByPromo.get(line.code) ?? 0) + 1;
+          applicationByPromo.set(line.code, applicationNumber);
+          drafts.push({
+            label: line.label,
+            cart: cartForMeal,
+            taquizaOrders: taquizaCounts,
+            taquizaByKind: taquizaForMeal,
+            promo: {
+              id: line.code,
+              label: line.label,
+              application: applicationNumber,
+            },
+          });
+        });
+      });
+
+    const extrasCart = Object.fromEntries(
+      Object.entries(remainingCart).filter(([, qty]) => qty > 0),
+    );
+    if (Object.keys(extrasCart).length) {
+      const extrasTaquiza = emptyTaquizaByKind();
+      remainingTaquizaOrders.forEach((order) => {
+        Object.entries(order.fills).forEach(([name, qty]) => {
+          addQty(extrasTaquiza[order.kind], name, qty);
+        });
+      });
+      drafts.push({
+        label: drafts.length ? "Extras" : "Pedido",
+        cart: extrasCart,
+        taquizaOrders: {
+          tacos: remainingTaquizaOrders.filter(
+            (order) => order.kind === "tacos",
+          ).length,
+          quesadillas: remainingTaquizaOrders.filter(
+            (order) => order.kind === "quesadillas",
+          ).length,
+        },
+        taquizaByKind: extrasTaquiza,
+      });
+    }
+
+    return drafts;
   }
 
   // Número consecutivo para el tablero de cocina: máximo existente + 1. Al no
@@ -149,22 +264,24 @@ export function useMenuCheckout(params: {
   async function createComanda(
     number: number,
     finalNote: string,
-    snapshotTaquizaByKind: Record<TaquizaKind, Record<string, number>>,
+    draft: ComandaDraft,
     memberCodeValue: string,
   ) {
     const order: PlacedOrder = {
       id: `${number}-${Date.now()}`,
       number,
-      cart: { ...cart },
+      cart: draft.cart,
       mode: mode.value,
       note: finalNote,
       fulfillDate: selectedDate.value,
       fulfillTime: mode.value !== "domicilio" ? pickupTime.value : "",
       customer: { ...customer },
-      taquizaOrders: { ...taquizaOrderCount.value },
-      taquizaByKind: snapshotTaquizaByKind,
+      taquizaOrders: draft.taquizaOrders,
+      taquizaByKind: draft.taquizaByKind,
       createdAt: Date.now(),
       memberCode: memberCodeValue || undefined,
+      redeemMemberMeal: !!draft.promo,
+      promo: draft.promo,
     };
 
     try {
@@ -195,27 +312,48 @@ export function useMenuCheckout(params: {
     const code = memberCode.value.replace(/\s+/g, "").toUpperCase();
     const memberTag = code ? `SOCIO ${code}` : "";
 
-    const snapshotTaquizaByKind = {
-      tacos: { ...taquizaByKind.value.tacos },
-      quesadillas: { ...taquizaByKind.value.quesadillas },
-    };
     const finalNote = [buildNote(), memberTag].filter(Boolean).join(" · ");
+    const drafts = buildComandaDrafts();
+    const firstNumber = await nextComandaNumber();
+    const numberedDrafts = drafts.map((draft, index) => ({
+      ...draft,
+      number: firstNumber + index,
+    }));
 
-    const number = await nextComandaNumber();
-
-    const text = formatCustomerOrder({
-      orderNumber: number,
-      name: customer.name,
-      cart: { ...cart },
-      mode: mode.value,
-      dishes: a,
-      taquizaByKind: snapshotTaquizaByKind,
-      note: finalNote,
-      phone: customer.phone,
-      address: customer.address,
-      fulfillDate: selectedDate.value,
-    });
-    await createComanda(number, finalNote, snapshotTaquizaByKind, code);
+    const text = numberedDrafts.some((draft) => draft.promo)
+      ? formatCombinedCustomerOrder({
+          name: customer.name,
+          mode: mode.value,
+          dishes: a,
+          sections: numberedDrafts.map((draft) => ({
+            orderNumber: draft.number,
+            label: draft.label,
+            cart: draft.cart,
+            taquizaByKind: draft.taquizaByKind,
+          })),
+          note: finalNote,
+          phone: customer.phone,
+          address: customer.address,
+          fulfillDate: selectedDate.value,
+        })
+      : formatCustomerOrder({
+          orderNumber: firstNumber,
+          name: customer.name,
+          cart: { ...cart },
+          mode: mode.value,
+          dishes: a,
+          taquizaByKind: {
+            tacos: { ...taquizaByKind.value.tacos },
+            quesadillas: { ...taquizaByKind.value.quesadillas },
+          },
+          note: finalNote,
+          phone: customer.phone,
+          address: customer.address,
+          fulfillDate: selectedDate.value,
+        });
+    for (const draft of numberedDrafts) {
+      await createComanda(draft.number, finalNote, draft, code);
+    }
 
     const url = waLink(text, restaurantWhatsapp);
     if (typeof window !== "undefined") {

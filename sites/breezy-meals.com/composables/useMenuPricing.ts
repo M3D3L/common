@@ -5,6 +5,7 @@ import {
   priceMenuOrder,
   type PricingConfig,
   type PricingPromo,
+  type PricingPromoApplication,
   type PricingPromoRequirement,
 } from "~/utils/menuPricing";
 import type { TaquizaKind } from "~/composables/useTaquizaOrders";
@@ -19,12 +20,15 @@ interface MenuGroupDef {
   label?: string;
 }
 
-interface PromoProgressRequirement {
+export interface PromoProgressRequirement {
   id: string;
+  targetType: PricingPromoRequirement["targetType"];
+  target: string;
   label: string;
   labelEs: string;
   labelEn: string;
   required: number;
+  selected: number;
   current: number;
   missing: number;
   met: boolean;
@@ -38,6 +42,7 @@ export interface PromoProgressCard {
   requirements: PromoProgressRequirement[];
   eligible: boolean;
   appliedQty: number;
+  applications: PricingPromoApplication[];
   missingTextEs: string;
   missingTextEn: string;
 }
@@ -123,6 +128,7 @@ export function useMenuPricing(params: {
   itemCount: ComputedRef<number>;
   staffMode: () => boolean;
   useDailyMenu: () => boolean;
+  activePromoId?: () => string | null;
 }) {
   const {
     fetchCollection,
@@ -136,6 +142,7 @@ export function useMenuPricing(params: {
     itemCount,
     staffMode,
     useDailyMenu,
+    activePromoId,
   } = params;
 
   function money(value: number) {
@@ -168,13 +175,21 @@ export function useMenuPricing(params: {
     }
   }
 
-  const effectivePricingConfig = computed<PricingConfig>(() => ({
-    ...menuPricingConfig,
-    promos:
+  const effectivePricingConfig = computed<PricingConfig>(() => {
+    const promos =
       runtimePromos.value.length > 0
         ? runtimePromos.value
-        : menuPricingConfig.promos,
-  }));
+        : menuPricingConfig.promos;
+    const preferredId = activePromoId?.();
+    const orderedPromos = preferredId
+      ? [...promos].sort(
+          (left, right) =>
+            Number(right.id === preferredId) - Number(left.id === preferredId),
+        )
+      : promos;
+
+    return { ...menuPricingConfig, promos: orderedPromos };
+  });
 
   function promoRequirementLabel(requirement: PricingPromoRequirement) {
     const groupLabels: Record<string, { es: string; en: string }> = {
@@ -187,7 +202,12 @@ export function useMenuPricing(params: {
     if (requirement.targetType === "group") {
       const mapped = groupLabels[requirement.target];
       if (mapped) return `${mapped.es} / ${mapped.en}`;
-      return groupByKey[requirement.target]?.label ?? requirement.target;
+      return (
+        menuGroups.value.find((group) => group.key === requirement.target)
+          ?.label ??
+        groupByKey[requirement.target]?.label ??
+        requirement.target
+      );
     }
 
     if (requirement.targetType === "order-unit") {
@@ -337,10 +357,13 @@ export function useMenuPricing(params: {
             const missing = Math.max(0, required - current);
             return {
               id: `${promo.id}-${requirement.targetType}-${requirement.target}`,
+              targetType: requirement.targetType,
+              target: requirement.target,
               label: promoRequirementLabel(requirement),
               labelEs: promoRequirementNoun(requirement, required, "es"),
               labelEn: promoRequirementNoun(requirement, required, "en"),
               required,
+              selected: current,
               current: Math.min(current, required),
               missing,
               met: missing === 0,
@@ -371,6 +394,7 @@ export function useMenuPricing(params: {
           requirements,
           eligible: missingPartsEs.length === 0,
           appliedQty: 0,
+          applications: [],
           missingTextEs: joinWithConjunction(missingPartsEs),
           missingTextEn: joinWithConjunctionEn(missingPartsEn),
         };
@@ -421,21 +445,33 @@ export function useMenuPricing(params: {
 
   const orderSummaryLines = computed(() => pricingSummary.value.lines);
 
-  const appliedPromoQtyById = computed(() => {
-    const out = new Map<string, number>();
-    pricingSummary.value.lines
-      .filter((line) => line.kind === "promo")
-      .forEach((line) => {
-        out.set(line.code, (out.get(line.code) ?? 0) + line.qty);
-      });
-    return out;
-  });
-
   const promoCardsWithAppliedState = computed(() =>
-    promoProgressCards.value.map((promo) => ({
-      ...promo,
-      appliedQty: appliedPromoQtyById.value.get(promo.id) ?? 0,
-    })),
+    promoProgressCards.value.map((promo) => {
+      const applications = pricingSummary.value.lines
+        .filter((line) => line.kind === "promo" && line.code === promo.id)
+        .flatMap((line) => line.promoApplications ?? []);
+      const appliedQty = applications.length;
+      return {
+        ...promo,
+        appliedQty,
+        applications,
+        requirements: promo.requirements.map((requirement) => {
+          const current = Math.min(
+            requirement.required,
+            Math.max(
+              0,
+              requirement.selected - appliedQty * requirement.required,
+            ),
+          );
+          return {
+            ...requirement,
+            current,
+            missing: requirement.required - current,
+            met: current >= requirement.required,
+          };
+        }),
+      };
+    }),
   );
 
   const promoStatusBanner = computed(() => {
@@ -457,7 +493,10 @@ export function useMenuPricing(params: {
       };
     }
 
-    const nextPromo = promoCardsWithAppliedState.value[0];
+    const nextPromo =
+      promoCardsWithAppliedState.value.find(
+        (promo) => promo.id === activePromoId?.(),
+      ) ?? promoCardsWithAppliedState.value[0];
     if (!nextPromo) return null;
 
     return {

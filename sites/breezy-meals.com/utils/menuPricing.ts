@@ -55,6 +55,20 @@ export interface PricingLine {
   unitPrice: number;
   total: number;
   detail?: string;
+  promoApplications?: PricingPromoApplication[];
+}
+
+export interface PricingPromoApplication {
+  items: Array<{
+    name: string;
+    group: string;
+    qty: number;
+  }>;
+  orderUnits: Array<{
+    code: string;
+    label: string;
+    qty: number;
+  }>;
 }
 
 interface PriceOrderArgs {
@@ -209,6 +223,12 @@ function mergePricingLines(lines: PricingLine[]) {
     if (existing) {
       existing.qty += line.qty;
       existing.total += line.total;
+      if (line.promoApplications?.length) {
+        existing.promoApplications = [
+          ...(existing.promoApplications ?? []),
+          ...line.promoApplications,
+        ];
+      }
       if (line.detail) {
         const nextDetails = new Set(
           [existing.detail, line.detail].filter(Boolean) as string[],
@@ -231,6 +251,7 @@ function applyPromoOnce(
 ) {
   const nextConsumed = cloneConsumed(consumed);
   const pickedLabels: string[] = [];
+  const pickedUnits: AvailableUnit[] = [];
 
   for (const requirement of promo.match.requirements) {
     const matches = units
@@ -251,8 +272,38 @@ function applyPromoOnce(
     matches.slice(0, requirement.qty).forEach(({ index, unit }) => {
       nextConsumed[index] = true;
       pickedLabels.push(unit.label);
+      pickedUnits.push(unit);
     });
   }
+
+  const itemCounts = new Map<
+    string,
+    PricingPromoApplication["items"][number]
+  >();
+  const orderUnitCounts = new Map<
+    string,
+    PricingPromoApplication["orderUnits"][number]
+  >();
+  pickedUnits.forEach((unit) => {
+    if (unit.kind === "item" && unit.group && unit.itemName) {
+      const key = `${unit.group}:${unit.itemName}`;
+      const existing = itemCounts.get(key);
+      if (existing) existing.qty += 1;
+      else
+        itemCounts.set(key, { name: unit.itemName, group: unit.group, qty: 1 });
+      return;
+    }
+
+    const existing = orderUnitCounts.get(unit.code);
+    if (existing) existing.qty += 1;
+    else {
+      orderUnitCounts.set(unit.code, {
+        code: unit.code,
+        label: unit.label,
+        qty: 1,
+      });
+    }
+  });
 
   return {
     consumed: nextConsumed,
@@ -264,6 +315,12 @@ function applyPromoOnce(
       unitPrice: promo.pricing.amount,
       total: promo.pricing.amount,
       detail: summarizeLabels(pickedLabels),
+      promoApplications: [
+        {
+          items: [...itemCounts.values()],
+          orderUnits: [...orderUnitCounts.values()],
+        },
+      ],
     },
   };
 }

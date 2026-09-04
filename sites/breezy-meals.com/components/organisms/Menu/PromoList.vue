@@ -1,112 +1,92 @@
 <template>
   <section
-    class="js-reveal-item rounded-2xl border border-border/70 bg-card/70 p-3 shadow-sm backdrop-blur"
+    v-if="buildablePromoCards.length"
+    class="js-reveal-item border-y border-primary/15 py-5"
   >
-    <div class="mb-2 flex items-center gap-2">
-      <nuxt-link to="/promos" class="flex items-center gap-1 hover:underline">
-        <Badge
-          variant="outline"
-          class="border-primary/30 bg-primary/10 text-[10px] uppercase tracking-wide text-primary"
+    <div class="mb-4 flex items-end justify-between gap-4">
+      <div class="flex min-w-0 items-center gap-3">
+        <span
+          class="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-secondary/20 text-primary"
         >
-          Promos
-        </Badge>
-      </nuxt-link>
-      <p class="text-xs font-bold uppercase tracking-wide">
-        Promociones disponibles / Available promos
-      </p>
+          <ShoppingBasket class="h-5 w-5" />
+        </span>
+        <div>
+          <p
+            class="text-[10px] font-bold uppercase tracking-widest text-muted-foreground"
+          >
+            Promociones
+          </p>
+          <h2 class="text-xl font-bold leading-tight text-primary">
+            Arma tu combo
+          </h2>
+        </div>
+      </div>
+      <NuxtLink
+        to="/promos"
+        class="shrink-0 text-xs font-semibold text-primary underline-offset-4 hover:underline"
+      >
+        Ver detalles
+      </NuxtLink>
     </div>
 
-    <Accordion type="multiple" class="space-y-2">
-      <AccordionItem
-        v-for="promo in promoCards"
+    <div class="grid gap-3 sm:grid-cols-2">
+      <Button
+        v-for="promo in buildablePromoCards"
         :key="promo.id"
-        :value="promo.id"
-        class="js-reveal-item rounded-xl border border-primary/20 bg-background/90 px-3 shadow-sm"
+        type="button"
+        variant="outline"
+        class="js-reveal-item group h-auto min-h-20 w-full justify-start gap-3 rounded-lg border-primary/20 px-3 py-3 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary/60 hover:shadow-md"
+        :class="
+          promo.id === activePromoId && 'border-primary ring-1 ring-primary/30'
+        "
+        style="
+          background-color: var(--background) !important;
+          color: var(--foreground) !important;
+        "
+        @click="$emit('select-promo', promo.id)"
       >
-        <AccordionTrigger class="py-3 hover:no-underline">
-          <div
-            class="flex min-w-0 flex-1 items-center justify-between gap-3 pr-3"
-          >
-            <p class="font-semibold leading-tight">
-              {{ promo.label }}
-            </p>
-            <p
-              class="shrink-0 text-right text-sm font-bold tabular-nums text-primary"
-            >
-              {{ money(promo.price) }}
-            </p>
-          </div>
-        </AccordionTrigger>
-
-        <AccordionContent class="pb-3">
-          <p class="mb-2 text-[11px] text-muted-foreground">
-            {{ promo.summary }}
-          </p>
-
-          <div class="space-y-1">
-            <div
-              v-for="requirement in promo.requirements"
-              :key="requirement.id"
-              class="flex items-center justify-between gap-2 text-[11px]"
-            >
-              <p class="text-muted-foreground">
-                {{ requirement.current }}/{{ requirement.required }}
-                {{ requirement.label }}
-              </p>
-              <p
-                :class="
-                  requirement.met
-                    ? 'font-semibold text-emerald-700'
-                    : 'font-semibold text-amber-700'
-                "
-              >
-                {{
-                  requirement.met
-                    ? "Listo / Ready"
-                    : `Falta ${requirement.missing} / Missing ${requirement.missing}`
-                }}
-              </p>
-            </div>
-          </div>
-
-          <p
-            class="mt-2 text-[11px] font-semibold"
-            :class="
-              promo.appliedQty > 0
-                ? 'text-emerald-700'
-                : promo.eligible
-                  ? 'text-sky-700'
-                  : 'text-amber-700'
-            "
-          >
-            {{
-              promo.appliedQty > 0
-                ? `Combo activado / Combo active: ${promo.label}${
-                    promo.appliedQty > 1 ? ` x${promo.appliedQty}` : ""
-                  }`
-                : promo.eligible
-                  ? "Cumple requisitos, pero comparte guarniciones/bebida con otras promos activas. / Meets requirements, but shares sides/drink with other active promos."
-                  : `Te falta / Missing: ${promo.missingTextEs} / ${promo.missingTextEn}`
-            }}
-          </p>
-        </AccordionContent>
-      </AccordionItem>
-    </Accordion>
+        <span
+          class="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-primary/10 text-primary"
+        >
+          <BadgePercent class="h-4 w-4" />
+        </span>
+        <span class="min-w-0 flex-1">
+          <span class="block font-bold leading-snug text-foreground">
+            {{ promo.label }}
+          </span>
+          <span class="mt-1 block text-lg font-bold tabular-nums text-primary">
+            {{ money(promo.price) }}
+          </span>
+        </span>
+        <ArrowRight
+          class="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-1 group-hover:text-primary"
+        />
+      </Button>
+    </div>
   </section>
 </template>
 
 <script lang="ts" setup>
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@common/components/ui/accordion";
-import { Badge } from "@common/components/ui/badge";
+import { Button } from "@common/components/ui/button";
+import { ArrowRight, BadgePercent, ShoppingBasket } from "lucide-vue-next";
 import type { PromoProgressCard } from "~/composables/useMenuPricing";
 
-defineProps<{
+const props = defineProps<{
   promoCards: PromoProgressCard[];
   money: (value: number) => string;
+  activePromoId?: string | null;
 }>();
+
+defineEmits<{ "select-promo": [promoId: string] }>();
+
+function canGuidePromo(promo: PromoProgressCard) {
+  return promo.requirements.every(
+    (requirement) =>
+      requirement.targetType === "group" || requirement.targetType === "item",
+  );
+}
+
+const buildablePromoCards = computed(() =>
+  props.promoCards.filter(canGuidePromo),
+);
 </script>

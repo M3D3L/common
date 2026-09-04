@@ -30,6 +30,24 @@ export interface CustomerOrderArgs {
   fulfillDate?: string;
 }
 
+export interface CustomerOrderSection {
+  orderNumber: number;
+  label: string;
+  cart: Record<string, number>;
+  taquizaByKind?: CustomerOrderArgs["taquizaByKind"];
+}
+
+export interface CombinedCustomerOrderArgs {
+  name?: string;
+  mode: OrderMode;
+  dishes: DayDishes;
+  sections: CustomerOrderSection[];
+  note?: string;
+  phone?: string;
+  address?: string;
+  fulfillDate?: string;
+}
+
 const MENU_PATH = "/menu";
 
 /* ===== base64url seguro con acentos/emoji ===== */
@@ -186,5 +204,58 @@ export function useMenuLink() {
     return lines.join("\n");
   }
 
-  return { encodeMenu, decodeMenu, buildMenuUrl, formatCustomerOrder };
+  function formatCombinedCustomerOrder({
+    name,
+    mode,
+    dishes,
+    sections,
+    note,
+    phone,
+    address,
+    fulfillDate,
+  }: CombinedCustomerOrderArgs): string {
+    const numbers = sections.map((section) => section.orderNumber);
+    const numberLabel =
+      numbers.length > 1
+        ? ` #${numbers[0]}-${numbers.at(-1)}`
+        : ` #${numbers[0]}`;
+    const lines = [`🧾 Nuevo pedido${numberLabel}`];
+
+    if (name?.trim()) lines.push(`👤 ${name.trim()}`);
+    lines.push(`Tipo: ${MODE_LABEL[mode]}`);
+    if (fulfillDate) lines.push(`📅 Fecha: ${fulfillDate}`);
+
+    sections.forEach((section, index) => {
+      const sectionLines = formatCustomerOrder({
+        cart: section.cart,
+        mode,
+        dishes,
+        taquizaByKind: section.taquizaByKind,
+      })
+        .split("\n")
+        .slice(3);
+      lines.push(
+        "",
+        `${index + 1}. ${section.label} · Comanda #${section.orderNumber}`,
+        ...sectionLines,
+      );
+    });
+
+    const clean = note?.trim();
+    if (clean) lines.push("", `📝 Nota: ${clean}`);
+    if (mode === "domicilio" && address?.trim()) {
+      lines.push("", `🏠 Dirección: ${address.trim()}`);
+    }
+    if (phone?.trim()) lines.push(`📱 Tel: ${phone.trim()}`);
+
+    return lines.join("\n");
+  }
+
+  return {
+    encodeMenu,
+    decodeMenu,
+    buildMenuUrl,
+    formatCustomerOrder,
+    formatCombinedCustomerOrder,
+  };
 }

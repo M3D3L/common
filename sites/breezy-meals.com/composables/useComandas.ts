@@ -1035,11 +1035,11 @@ function createComandasStore() {
     toast(msg);
   }
 
-  // Verifica el saldo al marcar la orden lista y descuenta una comida cuando
-  // está disponible. La falta de crédito avisa que se cobrará en efectivo.
+  // Verifica el saldo al marcar una comida promocional lista. Las comandas de
+  // extras y los pedidos normales nunca consumen créditos de membresía.
   async function redeemMemberCredit(o: StoredOrder) {
     const code = o.memberCode;
-    if (!code) return;
+    if (!code || !o.redeemMemberMeal) return;
     try {
       const member = await members.getMemberByCode(code);
       if (!member) {
@@ -1056,6 +1056,7 @@ function createComandasStore() {
 
       const { remaining } = await redemptions.redeem(ms, {
         staffId: user?.id,
+        reason: `Comanda #${o.number}${o.promo?.label ? ` · ${o.promo.label}` : ""}`,
       });
       toast(`Socio ${member.name}: comida registrada (${remaining} restantes)`);
     } catch (e) {
@@ -1079,7 +1080,7 @@ function createComandasStore() {
       }
     }
 
-    if (o.memberCode) {
+    if (o.memberCode && o.redeemMemberMeal) {
       await redeemMemberCredit(o);
     }
 

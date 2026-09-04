@@ -89,55 +89,73 @@
           "
           :promo-cards="promoCardsWithAppliedState"
           :money="money"
+          :active-promo-id="activePromoId"
+          @select-promo="selectPromo"
         />
 
-        <!-- ===== Category chips: filter at a glance =====
-             Each chip opens its section and scrolls to it. "All" expands or
-             collapses everything. The badge keeps the cart count even while
-             the section is closed, so the user never loses track of their order. -->
-        <OrganismsMenuCategoryChips
-          :groups="visibleMenuGroups"
-          :all-open="allGroupsOpen"
-          :is-group-open="isGroupOpen"
-          :group-cart-count="groupCartCount"
-          @toggle-all="toggleAllGroups"
-          @focus-group="focusGroup"
-        />
-
-        <section
-          v-for="group in menuGroups"
-          v-show="showGroupSection(group.key)"
-          :key="group.key"
-          :ref="(el) => setSectionRef(group.key, el)"
-          class="js-reveal-section scroll-mt-20 rounded-2xl border border-border/70 bg-card/70 p-3 shadow-sm backdrop-blur"
-        >
-          <OrganismsMenuGroupSection
-            :group="group"
-            :is-open="isGroupOpen(group.key)"
-            :items="groupItems(group.key)"
-            :cart-count="groupCartCount(group.key)"
-            :is-taquiza="!!(taquizaGroup && group.key === taquizaGroup.key)"
-            :taquiza-kinds="taquizaKinds"
-            :taquiza-cap="TAQUIZA_CAP"
-            :taquiza-orders="taquizaOrders"
-            :order-fill-total="orderFillTotal"
-            :can-add-to-order="canAddToOrder"
-            :set-order-fill="setOrderFill"
-            :add-taquiza-order="addTaquizaOrder"
-            :remove-taquiza-order="removeTaquizaOrder"
+        <div v-if="activePromo" ref="promoBuilderEl" class="scroll-mt-40">
+          <OrganismsMenuPromoBuilder
+            :promo="activePromo"
             :cart="cart"
+            :menu-groups="menuGroups"
+            :group-items="groupItems"
             :is-out="isOut"
-            :can-add-group-items="canAddItem(group.key)"
-            :is-locked="isGroupLocked(group.key)"
-            :lock-reason="lockReason(group.key)"
-            :staff-mode="props.staffMode"
-            :is-logged-in="isLoggedIn"
+            :can-add-group-items="canAddItem"
             :money="money"
-            :set-qty="(name, delta) => setQty(group.key, name, delta)"
-            :toggle-out="toggleOut"
-            @toggle="toggleGroup(group.key)"
+            :set-qty="setQty"
+            @close="activePromoId = null"
           />
-        </section>
+        </div>
+
+        <template v-else>
+          <!-- ===== Category chips: filter at a glance =====
+               Each chip opens its section and scrolls to it. "All" expands or
+               collapses everything. The badge keeps the cart count even while
+               the section is closed, so the user never loses track of their order. -->
+          <OrganismsMenuCategoryChips
+            :groups="visibleMenuGroups"
+            :all-open="allGroupsOpen"
+            :is-group-open="isGroupOpen"
+            :group-cart-count="groupCartCount"
+            @toggle-all="toggleAllGroups"
+            @focus-group="focusGroup"
+          />
+
+          <section
+            v-for="group in menuGroups"
+            v-show="showGroupSection(group.key)"
+            :key="group.key"
+            :ref="(el) => setSectionRef(group.key, el)"
+            class="js-reveal-section scroll-mt-20 rounded-2xl border border-border/70 bg-card/70 p-3 shadow-sm backdrop-blur"
+          >
+            <OrganismsMenuGroupSection
+              :group="group"
+              :is-open="isGroupOpen(group.key)"
+              :items="groupItems(group.key)"
+              :cart-count="groupCartCount(group.key)"
+              :is-taquiza="!!(taquizaGroup && group.key === taquizaGroup.key)"
+              :taquiza-kinds="taquizaKinds"
+              :taquiza-cap="TAQUIZA_CAP"
+              :taquiza-orders="taquizaOrders"
+              :order-fill-total="orderFillTotal"
+              :can-add-to-order="canAddToOrder"
+              :set-order-fill="setOrderFill"
+              :add-taquiza-order="addTaquizaOrder"
+              :remove-taquiza-order="removeTaquizaOrder"
+              :cart="cart"
+              :is-out="isOut"
+              :can-add-group-items="canAddItem(group.key)"
+              :is-locked="isGroupLocked(group.key)"
+              :lock-reason="lockReason(group.key)"
+              :staff-mode="props.staffMode"
+              :is-logged-in="isLoggedIn"
+              :money="money"
+              :set-qty="(name, delta) => setQty(group.key, name, delta)"
+              :toggle-out="toggleOut"
+              @toggle="toggleGroup(group.key)"
+            />
+          </section>
+        </template>
 
         <OrganismsMenuOrderSummary
           v-if="orderSummaryLines.length"
@@ -226,7 +244,7 @@ const props = withDefaults(
   },
 );
 
-const { formatCustomerOrder } = useMenuLink();
+const { formatCustomerOrder, formatCombinedCustomerOrder } = useMenuLink();
 const { waLink, isAppleDevice, formatSoldOut } = useWhatsappOrder();
 const { createItem, fetchCollection, updateItem } = usePocketBaseCore();
 const { getMemberByCode } = useMembers();
@@ -273,6 +291,7 @@ function changeMenuDate(days: number) {
   const date = new Date(`${selectedDate.value}T12:00:00`);
   date.setDate(date.getDate() + days);
   selectedDate.value = date.toISOString().slice(0, 10);
+  activePromoId.value = null;
   clearCart();
 }
 
@@ -490,6 +509,7 @@ const cartItems = computed(() =>
 );
 
 const itemCount = computed(() => cartItems.value.length);
+const activePromoId = ref<string | null>(null);
 
 // Pricing, promo progress cards, and runtime-promo loading for this order.
 // See composables/useMenuPricing.ts.
@@ -512,7 +532,21 @@ const {
   itemCount,
   staffMode: () => props.staffMode,
   useDailyMenu: () => props.useDailyMenu,
+  activePromoId: () => activePromoId.value,
 });
+
+const activePromo = computed(() =>
+  promoCardsWithAppliedState.value.find(
+    (promo) => promo.id === activePromoId.value,
+  ),
+);
+const promoBuilderEl = ref<HTMLElement | null>(null);
+
+async function selectPromo(promoId: string) {
+  activePromoId.value = promoId;
+  await nextTick();
+  promoBuilderEl.value?.scrollIntoView({ behavior: "smooth", block: "start" });
+}
 
 const totalQty = computed(() =>
   cartItems.value.reduce((sum, it) => sum + it.qty, 0),
@@ -573,6 +607,7 @@ const { sendingOrder, showThankYou, thankYouName, clearCart, sendOrder } =
     note,
     customer,
     memberCode,
+    resetCustomerAfterSend: () => props.staffMode,
     clearTime,
     clearTaquizaOrders,
     hasTaquizaOrder,
@@ -580,6 +615,8 @@ const { sendingOrder, showThankYou, thankYouName, clearCart, sendOrder } =
     taquizaOrderCount,
     taquizaSelectedByKind,
     taquizaByKind,
+    taquizaOrders,
+    pricingLines: orderSummaryLines,
     pickupTime,
     selectedDate,
     active,
@@ -588,6 +625,7 @@ const { sendingOrder, showThankYou, thankYouName, clearCart, sendOrder } =
     fetchCollection,
     createItem,
     formatCustomerOrder,
+    formatCombinedCustomerOrder,
     waLink,
     isAppleDevice,
     restaurantWhatsapp: RESTAURANT_WHATSAPP,
