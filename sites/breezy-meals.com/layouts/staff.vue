@@ -1,7 +1,13 @@
 <template>
   <div class="relative">
     <SeoMeta :follow="false" />
-    <OrganismsBreezyHeader :logoSrc :links show-auth />
+    <OrganismsBreezyHeader
+      :logoSrc
+      :links
+      show-auth
+      show-menu-broadcast
+      @send-menu="sendTodayMenu"
+    />
     <slot />
   </div>
 </template>
@@ -16,21 +22,23 @@ const business = (runtimeConfig.public?.business ?? {}) as unknown as {
 };
 
 const logoSrc = business.logoUrl || "";
+const { sendTodayMenu } = provideComandas();
 
 const links: NavLink[] = business.nav?.staffLinks?.length
   ? business.nav.staffLinks
   : [
       { to: "/inicio", label: "🕒" },
-      { to: "/checklists", label: "Checklists" },
+      { to: "/listas", label: "Listas" },
       { to: "/socios", label: "Miembros" },
-      { to: "/orders", label: "Órdenes" },
-      { to: "/promos-dashboard", label: "Promos" },
-      { to: "/menu-items", label: "Menu Items" },
-      { to: "/store-items", label: "Store Items" },
-      { to: "/recipies", label: "Recetas" },
-      { to: "/semana/menu", label: "Menu Control" },
+      { to: "/menu", label: "Menú" },
+      { to: "/comandas", label: "Comandas" },
+      { to: "/promociones", label: "Promociones" },
+      { to: "/platillos", label: "Platillos" },
+      { to: "/productos", label: "Productos" },
+      { to: "/recetas", label: "Recetas" },
+      { to: "/semana/menu", label: "Menú semanal" },
       { to: "/semana/calendario", label: "Calendario" },
-      { to: "/labels", label: "Etiquetas" },
+      { to: "/etiquetas", label: "Etiquetas" },
     ];
 </script>
 

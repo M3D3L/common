@@ -508,7 +508,7 @@ import {
 import { menuPricingConfig } from "~/config/menu-pricing";
 import type { PricingPromo } from "~/utils/menuPricing";
 
-definePageMeta({ layout: "staff" });
+definePageMeta({ layout: "staff", alias: "/promos-dashboard" });
 
 const COLLECTION = "promos";
 const { fetchCollection, createItem, updateItem, deleteItem } =

@@ -336,5 +336,6 @@ onMounted(load);
 
 definePageMeta({
   layout: "staff",
+  alias: "/menu-items",
 });
 </script>

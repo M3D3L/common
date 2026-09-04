@@ -408,7 +408,7 @@
 
           <!-- Colocar orden -->
           <Button as-child size="lg" class="w-full">
-            <NuxtLink :to="`/orders?code=${member.member_code}`">
+            <NuxtLink :to="`/menu?code=${member.member_code}`">
               <ClientOnly><ClipboardList :size="18" class="mr-2" /></ClientOnly>
               Colocar orden
             </NuxtLink>
@@ -469,7 +469,7 @@
               </Button>
             </div>
             <Button as-child variant="outline" size="sm" class="w-full">
-              <NuxtLink :to="`/orders?code=${member.member_code}`">
+              <NuxtLink :to="`/menu?code=${member.member_code}`">
                 <ClientOnly
                   ><ClipboardList :size="15" class="mr-1.5"
                 /></ClientOnly>

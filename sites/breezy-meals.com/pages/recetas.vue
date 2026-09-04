@@ -1051,7 +1051,7 @@ useIntersectionObserver(
 
 onMounted(loadRecipes);
 
-definePageMeta({ layout: "staff" });
+definePageMeta({ layout: "staff", alias: "/recipies" });
 useSeoMeta({ title: "Recetas | Breezy Meals", robots: "noindex, nofollow" });
 </script>
 

@@ -81,6 +81,16 @@
             </Button>
 
             <Button
+              v-if="showMenuBroadcast && isLoggedIn"
+              variant="outline"
+              class="justify-start h-11 mt-2 text-base font-medium"
+              @click="handleSendMenu"
+            >
+              <Send class="w-4 h-4 mr-2" />
+              Enviar menú del día
+            </Button>
+
+            <Button
               v-if="showAuth && isLoggedIn"
               variant="outline"
               class="justify-start h-11 mt-2 text-base font-medium"
@@ -106,7 +116,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@common/components/ui/sheet";
-import { Menu, LogOut } from "lucide-vue-next";
+import { Menu, LogOut, Send } from "lucide-vue-next";
 import usePocketBase from "@common/composables/usePocketbase";
 
 interface NavLink {
@@ -119,12 +129,16 @@ withDefaults(
     logoSrc: string;
     links?: NavLink[];
     showAuth?: boolean;
+    showMenuBroadcast?: boolean;
   }>(),
   {
     links: () => [],
     showAuth: false,
+    showMenuBroadcast: false,
   },
 );
+
+const emit = defineEmits<{ "send-menu": [] }>();
 
 const route = useRoute();
 const open = ref(false);
@@ -170,6 +184,11 @@ const handleSignOut = async () => {
   syncAuth(); // update immediately, don't wait on the listener
   open.value = false;
   await navigateTo("/");
+};
+
+const handleSendMenu = () => {
+  open.value = false;
+  emit("send-menu");
 };
 
 const isActive = (to: string) =>

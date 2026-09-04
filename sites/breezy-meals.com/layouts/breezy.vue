@@ -32,6 +32,13 @@
           >
             Tienda
           </NuxtLink>
+          <NuxtLink
+            v-if="isStaff"
+            to="/comandas"
+            class="flex-1 rounded-md px-3 py-2 text-center text-sm font-semibold text-muted-foreground transition-colors hover:bg-muted"
+          >
+            Comandas
+          </NuxtLink>
         </div>
       </div>
     </div>
@@ -40,6 +47,8 @@
 </template>
 
 <script lang="ts" setup>
+import usePocketBase from "@common/composables/usePocketbase";
+
 type NavLink = { to: string; label: string };
 
 const runtimeConfig = useRuntimeConfig();
@@ -66,6 +75,12 @@ if (!links.length) {
 }
 
 const route = useRoute();
+const pb = usePocketBase();
+const isStaff = ref(false);
+
+onMounted(() => {
+  isStaff.value = pb.authStore.isValid;
+});
 
 const canonicalPath = computed(() =>
   route.path.length > 1 ? route.path.replace(/\/+$/, "") : route.path,

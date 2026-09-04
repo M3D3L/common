@@ -85,7 +85,7 @@
 
         <div v-if="mode === 'domicilio'" class="space-y-1.5">
           <Label for="c-delivery-fee">Costo de envío / Delivery fee</Label>
-          <div v-if="staffMode" class="relative">
+          <div v-if="canEditDeliveryFee" class="relative">
             <span
               class="pointer-events-none absolute inset-y-0 left-3 flex items-center font-semibold text-muted-foreground"
             >
@@ -108,7 +108,10 @@
             <span class="text-sm text-muted-foreground">Envío desde</span>
             <span class="font-bold tabular-nums">$60 MXN</span>
           </div>
-          <p v-if="staffMode" class="text-[11px] text-muted-foreground">
+          <p
+            v-if="canEditDeliveryFee"
+            class="text-[11px] text-muted-foreground"
+          >
             Desde $60 MXN; ajústalo según la ubicación.
           </p>
         </div>
@@ -213,6 +216,7 @@ defineProps<{
   needsAddress: boolean;
   showMemberCode: boolean;
   staffMode: boolean;
+  canEditDeliveryFee: boolean;
   mode: OrderMode;
   timeLabel: string;
   hours12: string[];

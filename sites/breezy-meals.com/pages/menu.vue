@@ -177,6 +177,7 @@
           :needs-address="needsAddress"
           :show-member-code="props.showMemberCode"
           :staff-mode="props.staffMode"
+          :can-edit-delivery-fee="isLoggedIn"
           :mode="mode"
           :time-label="timeLabel"
           :hours12="hours12"
@@ -223,7 +224,7 @@ import { useMenuData, type MenuRecordFull } from "~/composables/useMenuData";
 import { useMenuGroupAccordion } from "~/composables/useMenuGroupAccordion";
 import usePocketBase from "@common/composables/usePocketbase";
 
-definePageMeta({ layout: "breezy" });
+definePageMeta({ layout: "breezy", alias: "/orders" });
 
 const props = withDefaults(
   defineProps<{
@@ -404,6 +405,7 @@ watch(memberCode, (code) => {
 
 onMounted(() => {
   isLoggedIn.value = pb.authStore.isValid;
+  if (isLoggedIn.value) setPageLayout("staff");
   void loadRuntimePromos();
   if (props.staffMode) {
     const code = route.query.code;
@@ -515,7 +517,7 @@ const itemCount = computed(() => cartItems.value.length);
 const deliveryFee = ref(60);
 const appliedDeliveryFee = computed(() =>
   mode.value === "domicilio"
-    ? props.staffMode
+    ? isLoggedIn.value
       ? Math.max(0, Number(deliveryFee.value) || 0)
       : 60
     : 0,

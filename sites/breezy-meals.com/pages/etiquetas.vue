@@ -11,7 +11,7 @@
         <div
           class="flex items-center justify-between md:justify-start gap-3 w-full md:w-auto"
         >
-          <NuxtLink to="/orders" class="flex items-center gap-3">
+          <NuxtLink to="/menu" class="flex items-center gap-3">
             <div class="flex items-center gap-3">
               <div
                 class="w-7 h-7 rounded-md bg-neutral-900 dark:bg-white flex items-center justify-center shrink-0"
@@ -204,7 +204,7 @@ import {
 import { useNutritionalLabels } from "~/composables/useNutritionalLabels";
 import usePocketBaseCore from "@common/composables/usePocketBaseCore";
 
-definePageMeta({ layout: "none" });
+definePageMeta({ layout: "none", alias: "/labels" });
 
 const { fetchCollection } = usePocketBaseCore();
 const { transformRecord } = useNutritionalLabels();

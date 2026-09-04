@@ -3,9 +3,10 @@
 </template>
 
 <script setup lang="ts">
-import StoreItems from "~/pages/menu-items.vue";
+import StoreItems from "~/pages/platillos.vue";
 
 definePageMeta({
   layout: "staff",
+  alias: "/store-items",
 });
 </script>

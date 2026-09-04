@@ -47,8 +47,8 @@
             : "Las órdenes nuevas aparecerán aquí de forma automática."
         }}
       </p>
-      <Button variant="outline" size="sm" class="mt-4" @click="view = 'order'">
-        Crear una orden
+      <Button as-child variant="outline" size="sm" class="mt-4">
+        <NuxtLink to="/menu">Crear una orden</NuxtLink>
       </Button>
     </div>
 
@@ -67,5 +67,5 @@ import { Card } from "@common/components/ui/card";
 import { Button } from "@common/components/ui/button";
 import { FILTER_OPTIONS } from "~/utils/comandas";
 
-const { view, orders, filter, statCards, filteredOrders } = useComandas();
+const { orders, filter, statCards, filteredOrders } = useComandas();
 </script>
