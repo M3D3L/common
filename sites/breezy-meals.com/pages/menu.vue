@@ -400,14 +400,14 @@ async function loadMemberFromCode(code: string) {
 }
 
 watch(memberCode, (code) => {
-  if (props.staffMode) loadMemberFromCode(code);
+  if (props.staffMode || isLoggedIn.value) loadMemberFromCode(code);
 });
 
 onMounted(() => {
   isLoggedIn.value = pb.authStore.isValid;
   if (isLoggedIn.value) setPageLayout("staff");
   void loadRuntimePromos();
-  if (props.staffMode) {
+  if (props.staffMode || isLoggedIn.value) {
     const code = route.query.code;
     if (typeof code === "string" && code.trim()) {
       memberCode.value = code.replace(/\s+/g, "").toUpperCase();
