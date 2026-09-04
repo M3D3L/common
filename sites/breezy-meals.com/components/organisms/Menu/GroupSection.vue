@@ -5,9 +5,7 @@
     :aria-expanded="isOpen"
     @click="$emit('toggle')"
   >
-    <h2
-      class="text-xs font-bold uppercase tracking-widest text-muted-foreground"
-    >
+    <h2 class="text-xl font-bold uppercase tracking-widest text-primary">
       {{ group.label }}
       <span class="ml-1 font-semibold tabular-nums text-foreground/50">{{
         items.length

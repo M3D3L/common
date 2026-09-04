@@ -124,7 +124,7 @@ export default defineNuxtConfig({
         whatsappNumber:
           process.env.BUSINESS_WHATSAPP_NUMBER ||
           process.env.WHATSAPP_NUMBER ||
-          "6221523259",
+          "526221523259",
         menuUrl:
           process.env.BUSINESS_MENU_URL || "https://breezy-meals.com/menu",
         header: {

@@ -54,12 +54,17 @@
         </Button>
         <Button
           size="lg"
-          class="flex-1 rounded-xl shadow-sm"
+          class="flex-1 rounded-xl bg-[#25D366] font-bold text-white shadow-sm hover:bg-[#20bd5a]"
           :disabled="!canTrySend || sendingOrder"
           @click="$emit('send-order')"
         >
-          <ClientOnly><Send :size="17" class="mr-2" /></ClientOnly>
-          {{ sendingOrder ? "Enviando..." : "Enviar / Send" }}
+          <img
+            src="/icons/whatsapp.svg"
+            alt=""
+            aria-hidden="true"
+            class="mr-2 h-5 w-5"
+          />
+          {{ sendingOrder ? "Enviando..." : "Pedir por WhatsApp" }}
         </Button>
       </div>
 
@@ -75,7 +80,7 @@
 
 <script lang="ts" setup>
 import { Button } from "@common/components/ui/button";
-import { Trash2, Send } from "lucide-vue-next";
+import { Trash2 } from "lucide-vue-next";
 
 defineProps<{
   promoStatusBanner: { met: boolean; title: string; message: string } | null;

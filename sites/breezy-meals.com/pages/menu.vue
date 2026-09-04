@@ -41,6 +41,7 @@
         >
           <OrganismsMenuDayPicker
             :label="selectedDateLabel"
+            :previous-disabled="isPreviousDateDisabled"
             @prev="changeMenuDate(-1)"
             @next="changeMenuDate(1)"
           />
@@ -62,7 +63,10 @@
         class="mx-auto max-w-2xl space-y-8 px-4 pb-48 pt-5 sm:px-6 sm:pt-7"
       >
         <!-- Instructions -->
-        <OrganismsMenuInstructions v-if="!props.staffMode" />
+        <OrganismsMenuInstructions
+          v-if="!props.staffMode"
+          :whatsapp-number="RESTAURANT_WHATSAPP"
+        />
 
         <section
           v-if="props.useDailyMenu"
@@ -71,6 +75,7 @@
         >
           <OrganismsMenuDayPicker
             :label="selectedDateLabel"
+            :previous-disabled="isPreviousDateDisabled"
             @prev="changeMenuDate(-1)"
             @next="changeMenuDate(1)"
           />
@@ -252,6 +257,7 @@ onMounted(load);
 const cart = reactive<Record<string, number>>({});
 
 const selectedDate = ref(todayISO());
+const isPreviousDateDisabled = computed(() => selectedDate.value <= todayISO());
 
 const selectedDateLabel = computed(() =>
   new Date(`${selectedDate.value}T12:00:00`).toLocaleDateString("es-MX", {
@@ -262,6 +268,8 @@ const selectedDateLabel = computed(() =>
 );
 
 function changeMenuDate(days: number) {
+  if (days < 0 && isPreviousDateDisabled.value) return;
+
   const date = new Date(`${selectedDate.value}T12:00:00`);
   date.setDate(date.getDate() + days);
   selectedDate.value = date.toISOString().slice(0, 10);

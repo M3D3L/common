@@ -5,6 +5,7 @@
     class="h-9 w-9"
     title="Día anterior"
     aria-label="Día anterior"
+    :disabled="previousDisabled"
     @click="$emit('prev')"
   >
     <ClientOnly><ChevronLeft :size="18" /></ClientOnly>
@@ -33,6 +34,6 @@
 import { Button } from "@common/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-vue-next";
 
-defineProps<{ label: string }>();
+defineProps<{ label: string; previousDisabled?: boolean }>();
 defineEmits<{ prev: []; next: [] }>();
 </script>
