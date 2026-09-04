@@ -1,4 +1,23 @@
 import path from "path";
+import { defineNuxtModule } from "@nuxt/kit";
+
+const configureSharedComponents = defineNuxtModule({
+  meta: { name: "configure-shared-components" },
+  setup(_options, nuxt) {
+    nuxt.hook("components:dirs", (dirs) => {
+      const sharedComponentsDir = path.resolve(__dirname, "components");
+      const sharedUiDir = path.resolve(sharedComponentsDir, "ui");
+
+      dirs.forEach((dir) => {
+        if (typeof dir === "string") return;
+
+        const resolvedPath = path.resolve(dir.path);
+        if (resolvedPath === sharedComponentsDir) dir.extensions = ["vue"];
+        if (resolvedPath === sharedUiDir) dir.pattern = "__disabled__";
+      });
+    });
+  },
+});
 
 export default defineNuxtConfig({
   compatibilityDate: "2025-08-30",
@@ -13,25 +32,11 @@ export default defineNuxtConfig({
     "@nuxtjs/google-fonts",
     "nuxt-swiper",
     "@nuxtjs/sitemap",
+    configureSharedComponents,
   ],
   shadcn: {
     prefix: "",
-    componentDir: "./components/ui",
-  },
-
-  hooks: {
-    "components:dirs"(dirs) {
-      const sharedComponentsDir = path.resolve(__dirname, "components");
-      const sharedDir = dirs.find(
-        (dir) =>
-          typeof dir !== "string" &&
-          path.resolve(dir.path) === sharedComponentsDir,
-      );
-
-      if (sharedDir && typeof sharedDir !== "string") {
-        sharedDir.extensions = ["vue"];
-      }
-    },
+    componentDir: path.resolve(__dirname, "components/ui"),
   },
 
   build: {

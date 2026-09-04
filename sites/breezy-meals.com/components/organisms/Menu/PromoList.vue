@@ -1,7 +1,7 @@
 <template>
   <section
     v-if="buildablePromoCards.length"
-    class="js-reveal-item border-y border-primary/15 py-5"
+    class="js-reveal-item border-t border-primary/15 py-5"
   >
     <div class="mb-4 flex items-end justify-between gap-4">
       <div class="flex min-w-0 items-center gap-3">
