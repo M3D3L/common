@@ -1,35 +1,49 @@
 <template>
-  <div
-    class="container relative w-full p-6 font-body min-h-screen grid content-center text-foreground md:py-10"
-  >
-    <header class="flex items-center gap-3 mb-8">
-      <div v-if="view === 'order'" class="flex items-center gap-2 ml-auto">
-        <Badge
-          class="px-3 py-1.5 text-sm bg-primary/10 text-primary hover:bg-primary/10 tabular-nums"
-        >
-          Orden #{{ counter }}
-        </Badge>
-        <Button variant="outline" size="sm" @click="view = 'orders'">
-          <ClientOnly><ClipboardList :size="15" class="mr-1.5" /></ClientOnly>
-          Comandas
-          <Badge
-            v-if="orders.length"
-            class="ml-1.5 h-5 min-w-5 justify-center px-1 text-[11px] tabular-nums"
+  <div class="relative min-h-screen bg-background font-body text-foreground">
+    <header
+      class="sticky top-0 z-40 border-b border-border/70 bg-background/90 px-4 py-3 shadow-sm backdrop-blur-xl"
+    >
+      <div class="mx-auto flex max-w-2xl items-center gap-2">
+        <div v-if="view === 'order'" class="min-w-0 flex-1">
+          <p
+            class="text-[10px] font-bold uppercase tracking-widest text-muted-foreground"
           >
-            {{ orders.length }}
-          </Badge>
-        </Button>
-        <Button variant="outline" size="sm" @click="sendTodayMenu">
-          <ClientOnly><Send :size="15" class="mr-1.5" /></ClientOnly>
-          Enviar menú del día
-        </Button>
-      </div>
+            Empleados
+          </p>
+          <h1 class="truncate text-lg font-bold text-primary">Nueva orden</h1>
+        </div>
+        <div v-else class="min-w-0 flex-1">
+          <p
+            class="text-[10px] font-bold uppercase tracking-widest text-muted-foreground"
+          >
+            Cocina
+          </p>
+          <h1 class="truncate text-lg font-bold text-primary">Comandas</h1>
+        </div>
 
-      <div
-        v-else-if="view === 'orders'"
-        class="flex items-center gap-2 ml-auto"
-      >
-        <Button variant="outline" size="sm" @click="view = 'order'">
+        <template v-if="view === 'order'">
+          <Button variant="outline" size="sm" @click="view = 'orders'">
+            <ClientOnly><ClipboardList :size="15" class="mr-1.5" /></ClientOnly>
+            Comandas
+            <Badge
+              v-if="orders.length"
+              class="ml-1.5 h-5 min-w-5 justify-center px-1 text-[11px] tabular-nums"
+            >
+              {{ orders.length }}
+            </Badge>
+          </Button>
+          <Button variant="outline" size="sm" @click="sendTodayMenu">
+            <ClientOnly><Send :size="15" class="mr-1.5" /></ClientOnly>
+            <span class="hidden sm:inline">Enviar menú</span>
+          </Button>
+        </template>
+
+        <Button
+          v-if="view === 'orders'"
+          variant="outline"
+          size="sm"
+          @click="view = 'order'"
+        >
           <ClientOnly><ArrowLeft :size="15" class="mr-1.5" /></ClientOnly>
           Nueva orden
         </Button>
@@ -42,8 +56,11 @@
       dishes-field="dishes"
       :use-daily-menu="false"
       :staff-mode="true"
+      :show-promos="true"
     />
-    <OrganismsComandasOrders v-else />
+    <div v-else class="mx-auto max-w-7xl px-4 py-6 sm:px-6">
+      <OrganismsComandasOrders />
+    </div>
 
     <Transition name="toast">
       <div
@@ -63,7 +80,7 @@ import { Send, ClipboardList, ArrowLeft } from "lucide-vue-next";
 import MenuPage from "~/pages/menu.vue";
 
 const store = provideComandas();
-const { view, counter, orders, toastMsg, sendTodayMenu } = store;
+const { view, orders, toastMsg, sendTodayMenu } = store;
 
 // Si venimos de /socios con ?code=GM1234, precargar el PIN del socio y
 // mandar directo a la pantalla de orden.

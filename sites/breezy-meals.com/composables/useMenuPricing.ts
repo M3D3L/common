@@ -128,6 +128,7 @@ export function useMenuPricing(params: {
   itemCount: ComputedRef<number>;
   staffMode: () => boolean;
   useDailyMenu: () => boolean;
+  showPromoStatus?: () => boolean;
   activePromoId?: () => string | null;
 }) {
   const {
@@ -142,6 +143,7 @@ export function useMenuPricing(params: {
     itemCount,
     staffMode,
     useDailyMenu,
+    showPromoStatus,
     activePromoId,
   } = params;
 
@@ -348,7 +350,6 @@ export function useMenuPricing(params: {
   const promoProgressCards = computed<PromoProgressCard[]>(() =>
     effectivePricingConfig.value.promos
       .filter((promo) => promo.active !== false)
-      .filter((promo) => promoIsAvailableToday(promo))
       .map((promo) => {
         const requirements: PromoProgressRequirement[] =
           promo.match.requirements.map((requirement) => {
@@ -475,7 +476,8 @@ export function useMenuPricing(params: {
   );
 
   const promoStatusBanner = computed(() => {
-    if (staffMode() || !useDailyMenu() || itemCount.value <= 0) return null;
+    const visible = showPromoStatus?.() ?? (!staffMode() && useDailyMenu());
+    if (!visible || itemCount.value <= 0) return null;
 
     const appliedPromos = promoCardsWithAppliedState.value.filter(
       (promo) => promo.appliedQty > 0,

@@ -422,6 +422,9 @@ export interface PlacedOrder {
   };
   createdAt: number;
   memberCode?: string;
+  pricingSubtotal?: number;
+  deliveryFee?: number;
+  pricingTotal?: number;
   redeemMemberMeal?: boolean;
   promo?: {
     id: string;

@@ -82,6 +82,29 @@
             Required for delivery / Requerida para envíos a domicilio.
           </p>
         </div>
+
+        <div v-if="mode === 'domicilio'" class="space-y-1.5">
+          <Label for="c-delivery-fee">Costo de envío / Delivery fee</Label>
+          <div class="relative">
+            <span
+              class="pointer-events-none absolute inset-y-0 left-3 flex items-center font-semibold text-muted-foreground"
+            >
+              $
+            </span>
+            <Input
+              id="c-delivery-fee"
+              v-model.number="deliveryFee"
+              type="number"
+              min="0"
+              step="10"
+              inputmode="decimal"
+              class="pl-7 tabular-nums"
+            />
+          </div>
+          <p class="text-[11px] text-muted-foreground">
+            Desde $60 MXN; ajústalo según la ubicación.
+          </p>
+        </div>
       </template>
 
       <!-- Hora: para "aquí" y "para llevar" (no domicilio). Opcional, sin default -->
@@ -192,6 +215,7 @@ defineEmits<{ "clear-time": [] }>();
 
 const memberCode = defineModel<string>("memberCode", { required: true });
 const note = defineModel<string>("note", { required: true });
+const deliveryFee = defineModel<number>("deliveryFee", { required: true });
 const selHour = defineModel<string | undefined>("selHour");
 const selMin = defineModel<string | undefined>("selMin");
 const selPeriod = defineModel<"am" | "pm" | undefined>("selPeriod");

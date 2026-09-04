@@ -141,6 +141,12 @@
 
         <AccordionContent class="pb-4 pl-10">
           <div class="space-y-2">
+            <p
+              v-if="!itemsForRequirement(requirement).length"
+              class="rounded-md border border-dashed border-border bg-muted/40 px-3 py-3 text-xs text-muted-foreground"
+            >
+              No hay opciones disponibles hoy para este paso.
+            </p>
             <OrganismsMenuItemCard
               v-for="item in itemsForRequirement(requirement)"
               :key="item.name"

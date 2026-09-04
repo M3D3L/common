@@ -82,11 +82,7 @@
         </section>
 
         <OrganismsMenuPromoList
-          v-if="
-            !props.staffMode &&
-            props.useDailyMenu &&
-            promoCardsWithAppliedState.length
-          "
+          v-if="promosVisible && promoCardsWithAppliedState.length"
           :promo-cards="promoCardsWithAppliedState"
           :money="money"
           :active-promo-id="activePromoId"
@@ -162,7 +158,8 @@
           :lines="orderSummaryLines"
           :money="money"
           :total-qty="totalQty"
-          :total="pricingSummary.total"
+          :delivery-fee="appliedDeliveryFee"
+          :total="orderTotal"
         />
 
         <OrganismsMenuModeTabs v-model:mode="mode" />
@@ -170,6 +167,7 @@
         <OrganismsMenuCustomerForm
           v-model:member-code="memberCode"
           v-model:note="note"
+          v-model:delivery-fee="deliveryFee"
           v-model:sel-hour="selHour"
           v-model:sel-min="selMin"
           v-model:sel-period="selPeriod"
@@ -193,7 +191,7 @@
         :total-qty="totalQty"
         :item-count="itemCount"
         :mode-label="MODE_LABEL[mode]"
-        :total="pricingSummary.total"
+        :total="orderTotal"
         :show-total="orderSummaryLines.length > 0"
         :money="money"
         :sending-order="sendingOrder"
@@ -234,6 +232,7 @@ const props = withDefaults(
     useDailyMenu?: boolean;
     staffMode?: boolean;
     showMemberCode?: boolean;
+    showPromos?: boolean;
   }>(),
   {
     fetchedCollection: "menu",
@@ -242,6 +241,10 @@ const props = withDefaults(
     staffMode: false,
     showMemberCode: true,
   },
+);
+
+const promosVisible = computed(
+  () => props.showPromos || (!props.staffMode && props.useDailyMenu),
 );
 
 const { formatCustomerOrder, formatCombinedCustomerOrder } = useMenuLink();
@@ -509,6 +512,10 @@ const cartItems = computed(() =>
 );
 
 const itemCount = computed(() => cartItems.value.length);
+const deliveryFee = ref(60);
+const appliedDeliveryFee = computed(() =>
+  mode.value === "domicilio" ? Math.max(0, Number(deliveryFee.value) || 0) : 0,
+);
 const activePromoId = ref<string | null>(null);
 
 // Pricing, promo progress cards, and runtime-promo loading for this order.
@@ -532,8 +539,13 @@ const {
   itemCount,
   staffMode: () => props.staffMode,
   useDailyMenu: () => props.useDailyMenu,
+  showPromoStatus: () => promosVisible.value,
   activePromoId: () => activePromoId.value,
 });
+
+const orderTotal = computed(
+  () => pricingSummary.value.total + appliedDeliveryFee.value,
+);
 
 const activePromo = computed(() =>
   promoCardsWithAppliedState.value.find(
@@ -617,6 +629,8 @@ const { sendingOrder, showThankYou, thankYouName, clearCart, sendOrder } =
     taquizaByKind,
     taquizaOrders,
     pricingLines: orderSummaryLines,
+    pricingSubtotal: computed(() => pricingSummary.value.total),
+    deliveryFee,
     pickupTime,
     selectedDate,
     active,

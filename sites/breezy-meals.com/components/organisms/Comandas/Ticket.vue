@@ -174,6 +174,28 @@
       Nota: {{ order.note }}
     </p>
 
+    <div
+      v-if="order.pricingTotal !== undefined"
+      class="mt-2 space-y-1 rounded-lg border border-border bg-muted/40 p-2 text-xs"
+    >
+      <div class="flex justify-between">
+        <span class="text-muted-foreground">Alimentos</span>
+        <span class="font-semibold tabular-nums">{{
+          money(order.pricingSubtotal ?? 0)
+        }}</span>
+      </div>
+      <div v-if="order.deliveryFee" class="flex justify-between">
+        <span class="text-muted-foreground">Envío</span>
+        <span class="font-semibold tabular-nums">{{
+          money(order.deliveryFee)
+        }}</span>
+      </div>
+      <div class="flex justify-between border-t border-border pt-1 font-bold">
+        <span>Total</span>
+        <span class="tabular-nums">{{ money(order.pricingTotal) }}</span>
+      </div>
+    </div>
+
     <!-- Footer buttons -->
     <div class="flex items-center gap-2 mt-4">
       <Button size="sm" class="flex-1" @click="completeOrder(order)">
@@ -214,6 +236,14 @@ const props = defineProps<{ order: PlacedOrder }>();
 
 const { completeOrder, discardOrder, catalog } = useComandas();
 const { fetchCollection } = usePocketBaseCore();
+
+function money(value: number) {
+  return new Intl.NumberFormat("es-MX", {
+    style: "currency",
+    currency: "MXN",
+    maximumFractionDigits: 0,
+  }).format(value);
+}
 
 const ticketGroups = computed(() =>
   groupsFromData(catalog.value as Record<string, unknown>),

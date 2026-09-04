@@ -36,6 +36,14 @@
           <span class="font-semibold tabular-nums">{{ totalQty }}</span>
         </div>
 
+        <div
+          v-if="deliveryFee > 0"
+          class="flex items-center justify-between gap-3 text-sm"
+        >
+          <p class="font-semibold">Envío / Delivery</p>
+          <p class="font-semibold tabular-nums">{{ money(deliveryFee) }}</p>
+        </div>
+
         <div class="flex items-center justify-between gap-3">
           <p class="font-bold uppercase tracking-wide">Total</p>
           <p class="text-lg font-bold tabular-nums">
@@ -57,5 +65,6 @@ defineProps<{
   money: (value: number) => string;
   totalQty: number;
   total: number;
+  deliveryFee?: number;
 }>();
 </script>

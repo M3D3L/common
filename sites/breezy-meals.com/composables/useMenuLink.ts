@@ -28,6 +28,9 @@ export interface CustomerOrderArgs {
   phone?: string;
   address?: string;
   fulfillDate?: string;
+  pricingSubtotal?: number;
+  deliveryFee?: number;
+  pricingTotal?: number;
 }
 
 export interface CustomerOrderSection {
@@ -46,9 +49,20 @@ export interface CombinedCustomerOrderArgs {
   phone?: string;
   address?: string;
   fulfillDate?: string;
+  pricingSubtotal?: number;
+  deliveryFee?: number;
+  pricingTotal?: number;
 }
 
 const MENU_PATH = "/menu";
+
+function money(value: number): string {
+  return new Intl.NumberFormat("es-MX", {
+    style: "currency",
+    currency: "MXN",
+    maximumFractionDigits: 0,
+  }).format(value);
+}
 
 /* ===== base64url seguro con acentos/emoji ===== */
 function toB64Url(str: string): string {
@@ -111,6 +125,9 @@ export function useMenuLink() {
     phone,
     address,
     fulfillDate,
+    pricingSubtotal,
+    deliveryFee,
+    pricingTotal,
   }: CustomerOrderArgs): string {
     const lines: string[] = [
       `🧾 Nuevo pedido${orderNumber ? ` #${orderNumber}` : ""}`,
@@ -201,6 +218,15 @@ export function useMenuLink() {
       lines.push(`📱 Tel: ${phone.trim()}`);
     }
 
+    if (pricingTotal !== undefined) {
+      lines.push("", "💰 Total");
+      if (deliveryFee && deliveryFee > 0) {
+        lines.push(`• Alimentos: ${money(pricingSubtotal ?? 0)}`);
+        lines.push(`• Envío: ${money(deliveryFee)}`);
+      }
+      lines.push(`*Total: ${money(pricingTotal)}*`);
+    }
+
     return lines.join("\n");
   }
 
@@ -213,6 +239,9 @@ export function useMenuLink() {
     phone,
     address,
     fulfillDate,
+    pricingSubtotal,
+    deliveryFee,
+    pricingTotal,
   }: CombinedCustomerOrderArgs): string {
     const numbers = sections.map((section) => section.orderNumber);
     const numberLabel =
@@ -247,6 +276,15 @@ export function useMenuLink() {
       lines.push("", `🏠 Dirección: ${address.trim()}`);
     }
     if (phone?.trim()) lines.push(`📱 Tel: ${phone.trim()}`);
+
+    if (pricingTotal !== undefined) {
+      lines.push("", "💰 Total");
+      if (deliveryFee && deliveryFee > 0) {
+        lines.push(`• Alimentos: ${money(pricingSubtotal ?? 0)}`);
+        lines.push(`• Envío: ${money(deliveryFee)}`);
+      }
+      lines.push(`*Total: ${money(pricingTotal)}*`);
+    }
 
     return lines.join("\n");
   }

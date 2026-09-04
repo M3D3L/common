@@ -42,6 +42,8 @@ export function useMenuCheckout(params: {
   taquizaByKind: ComputedRef<Record<TaquizaKind, Record<string, number>>>;
   taquizaOrders: Ref<TaquizaOrder[]>;
   pricingLines: ComputedRef<PricingLine[]>;
+  pricingSubtotal: ComputedRef<number>;
+  deliveryFee: Ref<number>;
   pickupTime: ComputedRef<string>;
   selectedDate: Ref<string>;
   active: ComputedRef<DayDishes>;
@@ -76,6 +78,8 @@ export function useMenuCheckout(params: {
     taquizaByKind,
     taquizaOrders,
     pricingLines,
+    pricingSubtotal,
+    deliveryFee,
     pickupTime,
     selectedDate,
     active,
@@ -108,6 +112,7 @@ export function useMenuCheckout(params: {
     clearCart();
     note.value = "";
     clearTime();
+    deliveryFee.value = 60;
 
     if (resetCustomerAfterSend()) {
       mode.value = "llevar";
@@ -266,7 +271,12 @@ export function useMenuCheckout(params: {
     finalNote: string,
     draft: ComandaDraft,
     memberCodeValue: string,
+    includeOrderPricing: boolean,
   ) {
+    const appliedDeliveryFee =
+      mode.value === "domicilio"
+        ? Math.max(0, Number(deliveryFee.value) || 0)
+        : 0;
     const order: PlacedOrder = {
       id: `${number}-${Date.now()}`,
       number,
@@ -280,6 +290,11 @@ export function useMenuCheckout(params: {
       taquizaByKind: draft.taquizaByKind,
       createdAt: Date.now(),
       memberCode: memberCodeValue || undefined,
+      pricingSubtotal: includeOrderPricing ? pricingSubtotal.value : undefined,
+      deliveryFee: includeOrderPricing ? appliedDeliveryFee : undefined,
+      pricingTotal: includeOrderPricing
+        ? pricingSubtotal.value + appliedDeliveryFee
+        : undefined,
       redeemMemberMeal: !!draft.promo,
       promo: draft.promo,
     };
@@ -313,6 +328,11 @@ export function useMenuCheckout(params: {
     const memberTag = code ? `SOCIO ${code}` : "";
 
     const finalNote = [buildNote(), memberTag].filter(Boolean).join(" · ");
+    const appliedDeliveryFee =
+      mode.value === "domicilio"
+        ? Math.max(0, Number(deliveryFee.value) || 0)
+        : 0;
+    const pricingTotal = pricingSubtotal.value + appliedDeliveryFee;
     const drafts = buildComandaDrafts();
     const firstNumber = await nextComandaNumber();
     const numberedDrafts = drafts.map((draft, index) => ({
@@ -335,6 +355,9 @@ export function useMenuCheckout(params: {
           phone: customer.phone,
           address: customer.address,
           fulfillDate: selectedDate.value,
+          pricingSubtotal: pricingSubtotal.value,
+          deliveryFee: appliedDeliveryFee,
+          pricingTotal,
         })
       : formatCustomerOrder({
           orderNumber: firstNumber,
@@ -350,9 +373,12 @@ export function useMenuCheckout(params: {
           phone: customer.phone,
           address: customer.address,
           fulfillDate: selectedDate.value,
+          pricingSubtotal: pricingSubtotal.value,
+          deliveryFee: appliedDeliveryFee,
+          pricingTotal,
         });
-    for (const draft of numberedDrafts) {
-      await createComanda(draft.number, finalNote, draft, code);
+    for (const [index, draft] of numberedDrafts.entries()) {
+      await createComanda(draft.number, finalNote, draft, code, index === 0);
     }
 
     const url = waLink(text, restaurantWhatsapp);
