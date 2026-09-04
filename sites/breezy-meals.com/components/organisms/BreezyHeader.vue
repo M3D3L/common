@@ -61,7 +61,7 @@
         </SheetTrigger>
         <SheetContent
           side="right"
-          class="w-72 sm:w-80 transition-transform duration-300"
+          class="w-72 overflow-y-auto overscroll-contain sm:w-80 transition-transform duration-300"
         >
           <SheetHeader class="text-left border-b pb-4 mb-4">
             <SheetTitle class="font-heading text-xl">{{
