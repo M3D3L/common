@@ -181,6 +181,7 @@ onBeforeUnmount(() => {
 
 const handleSignOut = async () => {
   pb.authStore.clear();
+  localStorage.removeItem("pocketbase_auth");
   document.cookie = pb.authStore.exportToCookie({
     expires: new Date(0),
     httpOnly: false,

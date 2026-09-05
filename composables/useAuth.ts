@@ -178,6 +178,7 @@ export default function useAuth() {
       pb.authStore.clear();
 
       if (import.meta.client) {
+        localStorage.removeItem("pocketbase_auth");
         // Clear the auth cookie
         document.cookie = pb.authStore.exportToCookie({
           expires: new Date(0), // Expire immediately
