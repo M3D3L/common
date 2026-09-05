@@ -64,7 +64,7 @@
       >
         <!-- Instructions -->
         <OrganismsMenuInstructions
-          v-if="!props.staffMode"
+          v-if="!staffMode"
           :whatsapp-number="RESTAURANT_WHATSAPP"
         />
 
@@ -143,7 +143,7 @@
               :can-add-group-items="canAddItem(group.key)"
               :is-locked="isGroupLocked(group.key)"
               :lock-reason="lockReason(group.key)"
-              :staff-mode="props.staffMode"
+              :staff-mode="staffMode"
               :is-logged-in="isLoggedIn"
               :money="money"
               :set-qty="(name, delta) => setQty(group.key, name, delta)"
@@ -176,7 +176,7 @@
           :name-required="nameRequired"
           :needs-address="needsAddress"
           :show-member-code="props.showMemberCode"
-          :staff-mode="props.staffMode"
+          :staff-mode="staffMode"
           :can-edit-delivery-fee="isLoggedIn"
           :mode="mode"
           :time-label="timeLabel"
@@ -244,15 +244,16 @@ const props = withDefaults(
   },
 );
 
-const promosVisible = computed(
-  () => props.showPromos || (!props.staffMode && props.useDailyMenu),
-);
-
 const { formatCustomerOrder, formatCombinedCustomerOrder } = useMenuLink();
 const { waLink, isAppleDevice, formatSoldOut } = useWhatsappOrder();
 const { createItem, fetchCollection, updateItem } = usePocketBaseCore();
 const { getMemberByCode } = useMembers();
 const pb = usePocketBase();
+const isLoggedIn = ref(false);
+const staffMode = computed(() => props.staffMode || isLoggedIn.value);
+const promosVisible = computed(
+  () => props.showPromos || (!staffMode.value && props.useDailyMenu),
+);
 const route = useRoute();
 const runtimeConfig = useRuntimeConfig();
 const businessConfig = (runtimeConfig.public?.business ?? {}) as {
@@ -311,7 +312,7 @@ const {
   record,
   selectedDate,
   dishesField: () => props.dishesField,
-  staffMode: () => props.staffMode,
+  staffMode: () => staffMode.value,
   useDailyMenu: () => props.useDailyMenu,
 });
 
@@ -335,13 +336,12 @@ const {
 
 const soldOut = computed<string[]>(() => record.value?.sold_out ?? []);
 const isOut = (n: string) => soldOut.value.includes(n);
-const isLoggedIn = ref(false);
 const menuMainEl = ref<HTMLElement | null>(null);
 
 const { scheduleRevealRefresh } = useMenuScrollReveal(menuMainEl);
 
 async function toggleOut(name: string) {
-  if (!props.staffMode || !record.value) return;
+  if (!isLoggedIn.value || !record.value) return;
 
   const wa =
     typeof window !== "undefined" && !isAppleDevice()
@@ -400,14 +400,21 @@ async function loadMemberFromCode(code: string) {
 }
 
 watch(memberCode, (code) => {
-  if (props.staffMode || isLoggedIn.value) loadMemberFromCode(code);
+  if (staffMode.value) loadMemberFromCode(code);
 });
 
-onMounted(() => {
+const syncAuth = () => {
   isLoggedIn.value = pb.authStore.isValid;
+};
+
+let stopAuthListener: (() => void) | undefined;
+
+onMounted(() => {
+  syncAuth();
+  stopAuthListener = pb.authStore.onChange(syncAuth);
   if (isLoggedIn.value) setPageLayout("staff");
   void loadRuntimePromos();
-  if (props.staffMode || isLoggedIn.value) {
+  if (staffMode.value) {
     const code = route.query.code;
     if (typeof code === "string" && code.trim()) {
       memberCode.value = code.replace(/\s+/g, "").toUpperCase();
@@ -415,6 +422,10 @@ onMounted(() => {
   }
 
   scheduleRevealRefresh();
+});
+
+onBeforeUnmount(() => {
+  stopAuthListener?.();
 });
 
 watch(
@@ -543,7 +554,7 @@ const {
   taquizaOrderCount,
   taquizaTotalForName,
   itemCount,
-  staffMode: () => props.staffMode,
+  staffMode: () => staffMode.value,
   useDailyMenu: () => props.useDailyMenu,
   showPromoStatus: () => promosVisible.value,
   activePromoId: () => activePromoId.value,
@@ -625,7 +636,7 @@ const { sendingOrder, showThankYou, thankYouName, clearCart, sendOrder } =
     note,
     customer,
     memberCode,
-    resetCustomerAfterSend: () => props.staffMode,
+    resetCustomerAfterSend: () => staffMode.value,
     clearTime,
     clearTaquizaOrders,
     hasTaquizaOrder,
