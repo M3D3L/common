@@ -41,6 +41,7 @@ const STORAGE_KEY = "comandas";
 const COMANDAS_COLLECTION = "comandas";
 // ⚠️ Nombre del campo JSON en tu colección `comandas`.
 const COMANDAS_FIELD = "data";
+const SOUND_STORAGE_KEY = "comandas:sound-enabled";
 
 // Autoseleccionar el menú del día desde la rotación semanal cuando no hay
 // un `active` fresco (de hoy) guardado.
@@ -193,6 +194,55 @@ function createComandasStore() {
   const isRefreshing = ref(false);
   const live = ref(false); // true cuando las suscripciones están activas
   const sending = ref(false); // evita doble-envío por doble-tap
+  const soundEnabled = ref(false);
+  const soundReady = ref(false);
+  let audioContext: AudioContext | null = null;
+
+  async function prepareSound() {
+    audioContext ??= new AudioContext();
+    if (audioContext.state === "suspended") await audioContext.resume();
+    soundReady.value = audioContext.state === "running";
+    return soundReady.value;
+  }
+
+  async function playOrderSound(confirmation = false) {
+    if (!soundEnabled.value || !(await prepareSound())) return;
+
+    const start = audioContext!.currentTime;
+    const frequencies = confirmation ? [660, 880] : [880, 880, 1175];
+    frequencies.forEach((frequency, index) => {
+      const toneStart = start + index * 0.18;
+      const oscillator = audioContext!.createOscillator();
+      const gain = audioContext!.createGain();
+      oscillator.type = "sine";
+      oscillator.frequency.value = frequency;
+      gain.gain.setValueAtTime(0.0001, toneStart);
+      gain.gain.exponentialRampToValueAtTime(0.22, toneStart + 0.015);
+      gain.gain.exponentialRampToValueAtTime(0.0001, toneStart + 0.13);
+      oscillator.connect(gain).connect(audioContext!.destination);
+      oscillator.start(toneStart);
+      oscillator.stop(toneStart + 0.14);
+    });
+  }
+
+  async function toggleOrderSound() {
+    soundEnabled.value = !soundEnabled.value;
+    localStorage.setItem(SOUND_STORAGE_KEY, String(soundEnabled.value));
+
+    if (soundEnabled.value) {
+      await playOrderSound(true);
+      toast("Sonido de nuevas órdenes activado");
+    } else {
+      soundReady.value = false;
+      await audioContext?.close();
+      audioContext = null;
+      toast("Sonido de nuevas órdenes desactivado");
+    }
+  }
+
+  function unlockSound() {
+    if (soundEnabled.value && !soundReady.value) void prepareSound();
+  }
 
   /* ===== Helpers de estado (derivados de `groups`) ===== */
   function syncMenuGroupsFromData(raw?: Record<string, unknown> | null) {
@@ -706,7 +756,12 @@ function createComandasStore() {
     if (e.action === "delete") {
       removeByRecordId(rec.id);
     } else {
-      upsertOrder(recordToOrder(rec));
+      const order = recordToOrder(rec);
+      upsertOrder(order);
+      if (e.action === "create") {
+        void playOrderSound();
+        toast(`Nueva orden #${order.number}`);
+      }
     }
     persist();
   }
@@ -1138,6 +1193,9 @@ function createComandasStore() {
 
   onMounted(async () => {
     load(); // cache local (pintado instantáneo)
+    soundEnabled.value = localStorage.getItem(SOUND_STORAGE_KEY) === "true";
+    document.addEventListener("pointerdown", unlockSound, { once: true });
+    document.addEventListener("keydown", unlockSound, { once: true });
     await loadMenu(); // catálogo + selección (auto desde rotación) + menuRecordId
     await Promise.all([loadActiveOrders(), seedCounter()]);
     await startLive(); // realtime en vez de polling
@@ -1147,7 +1205,10 @@ function createComandasStore() {
   onBeforeUnmount(() => {
     if (import.meta.client) {
       document.removeEventListener("visibilitychange", onVisibility);
+      document.removeEventListener("pointerdown", unlockSound);
+      document.removeEventListener("keydown", unlockSound);
     }
+    void audioContext?.close();
     stopLive();
   });
 
@@ -1173,6 +1234,8 @@ function createComandasStore() {
     isRefreshing,
     live,
     sending,
+    soundEnabled,
+    soundReady,
     menuSource,
     activeBlockName,
     menuGroups,
@@ -1209,6 +1272,7 @@ function createComandasStore() {
     send,
     completeOrder,
     discardOrder,
+    toggleOrderSound,
     refreshNow: resync,
   };
 }
@@ -1219,6 +1283,12 @@ const COMANDAS_KEY: InjectionKey<ComandasStore> = Symbol("comandas");
 
 /** Se llama UNA vez, en la página. Crea el store y lo comparte con las vistas. */
 export function provideComandas() {
+  const existingStore = inject(COMANDAS_KEY, null);
+  if (existingStore) {
+    provide(COMANDAS_KEY, existingStore);
+    return existingStore;
+  }
+
   const store = createComandasStore();
   provide(COMANDAS_KEY, store);
   return store;

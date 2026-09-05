@@ -13,12 +13,38 @@
           <h1 class="truncate text-lg font-bold text-primary">Comandas</h1>
         </div>
 
-        <Button as-child variant="outline" size="sm">
-          <NuxtLink to="/menu">
-            <ClientOnly><Plus :size="15" class="mr-1.5" /></ClientOnly>
-            Nueva orden
-          </NuxtLink>
-        </Button>
+        <div class="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            :aria-pressed="soundEnabled"
+            :title="
+              soundEnabled
+                ? 'Desactivar sonido de nuevas órdenes'
+                : 'Activar sonido de nuevas órdenes'
+            "
+            @click="toggleOrderSound"
+          >
+            <ClientOnly>
+              <BellRing v-if="soundEnabled" :size="15" class="mr-1.5" />
+              <BellOff v-else :size="15" class="mr-1.5" />
+            </ClientOnly>
+            {{
+              soundEnabled
+                ? soundReady
+                  ? "Sonido activo"
+                  : "Sonido"
+                : "Sonido"
+            }}
+          </Button>
+
+          <Button as-child variant="outline" size="sm">
+            <NuxtLink to="/menu">
+              <ClientOnly><Plus :size="15" class="mr-1.5" /></ClientOnly>
+              Nueva orden
+            </NuxtLink>
+          </Button>
+        </div>
       </div>
     </header>
 
@@ -39,9 +65,10 @@
 
 <script lang="ts" setup>
 import { Button } from "@common/components/ui/button";
-import { Plus } from "lucide-vue-next";
+import { BellOff, BellRing, Plus } from "lucide-vue-next";
 
-const { toastMsg } = provideComandas();
+const { soundEnabled, soundReady, toastMsg, toggleOrderSound } =
+  provideComandas();
 
 definePageMeta({ layout: "staff" });
 </script>
