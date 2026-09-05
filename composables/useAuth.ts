@@ -68,7 +68,7 @@ export default function useAuth() {
   }, true);
 
   async function register(
-    credentials: RegisterCredentials
+    credentials: RegisterCredentials,
   ): Promise<AuthResult> {
     // Validate passwords match
     if (credentials.password !== credentials.passwordConfirm) {
@@ -151,7 +151,7 @@ export default function useAuth() {
   }
 
   async function loginWithOAuth(
-    provider: "google" | "github" | "facebook" | "discord"
+    provider: "google" | "github" | "facebook" | "discord",
   ): Promise<AuthResult> {
     try {
       await pb.collection("users").authWithOAuth2({ provider });
@@ -181,7 +181,10 @@ export default function useAuth() {
         // Clear the auth cookie
         document.cookie = pb.authStore.exportToCookie({
           expires: new Date(0), // Expire immediately
+          httpOnly: false,
           path: "/",
+          sameSite: "lax",
+          secure: false,
         });
       }
 

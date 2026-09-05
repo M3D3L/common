@@ -181,6 +181,13 @@ onBeforeUnmount(() => {
 
 const handleSignOut = async () => {
   pb.authStore.clear();
+  document.cookie = pb.authStore.exportToCookie({
+    expires: new Date(0),
+    httpOnly: false,
+    path: "/",
+    sameSite: "lax",
+    secure: false,
+  });
   syncAuth(); // update immediately, don't wait on the listener
   open.value = false;
   await navigateTo("/");

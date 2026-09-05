@@ -19,7 +19,11 @@
     >
       <div
         v-if="errorMessage"
+        ref="errorAlert"
+        id="login-error"
         role="alert"
+        aria-live="assertive"
+        tabindex="-1"
         class="mb-5 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2.5 text-sm font-medium text-destructive"
       >
         {{ errorMessage }}
@@ -40,6 +44,8 @@
             autocomplete="username"
             autocapitalize="none"
             spellcheck="false"
+            :aria-describedby="errorMessage ? 'login-error' : undefined"
+            :aria-invalid="!!errorMessage"
             required
             class="h-12 w-full rounded-md border border-input bg-background pl-10 pr-3 text-base outline-none transition-colors placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/20"
             placeholder="tu@correo.com"
@@ -61,6 +67,8 @@
             v-model="password"
             :type="showPassword ? 'text' : 'password'"
             autocomplete="current-password"
+            :aria-describedby="errorMessage ? 'login-error' : undefined"
+            :aria-invalid="!!errorMessage"
             required
             class="h-12 w-full rounded-md border border-input bg-background pl-10 pr-12 text-base outline-none transition-colors placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/20"
             placeholder="Tu contraseña"
@@ -128,6 +136,17 @@ const password = ref("");
 const showPassword = ref(false);
 const isSubmitting = ref(false);
 const errorMessage = ref("");
+const errorAlert = ref<HTMLElement | null>(null);
+
+watch([email, password], () => {
+  errorMessage.value = "";
+});
+
+const showError = async (message: string) => {
+  errorMessage.value = message;
+  await nextTick();
+  errorAlert.value?.focus();
+};
 
 const redirectPath = computed(() => {
   const source =
@@ -141,7 +160,7 @@ const handleSubmit = async () => {
   errorMessage.value = "";
 
   if (!email.value.trim() || !password.value) {
-    errorMessage.value = "Ingresa tu correo y contraseña.";
+    await showError("Ingresa tu correo y contraseña.");
     return;
   }
 
@@ -154,13 +173,13 @@ const handleSubmit = async () => {
     });
 
     if (!result.success) {
-      errorMessage.value = "El correo o la contraseña no son correctos.";
+      await showError("El correo o la contraseña no son correctos.");
       return;
     }
 
     await navigateTo(redirectPath.value, { replace: true });
   } catch {
-    errorMessage.value = "No se pudo iniciar sesión. Intenta de nuevo.";
+    await showError("No se pudo iniciar sesión. Intenta de nuevo.");
   } finally {
     isSubmitting.value = false;
   }
