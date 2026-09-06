@@ -1,5 +1,7 @@
 <template>
-  <main class="min-h-[calc(100vh-76px)] bg-background text-foreground">
+  <main
+    class="membership-page min-h-[calc(100vh-76px)] bg-background text-foreground"
+  >
     <section class="border-b border-border bg-primary/5">
       <div
         class="mx-auto grid max-w-5xl gap-8 px-5 py-10 md:grid-cols-[1fr_340px] md:items-end md:px-8 md:py-14"
@@ -28,7 +30,9 @@
       </div>
     </section>
 
-    <section class="mx-auto max-w-3xl px-5 py-8 md:px-8 md:py-12">
+    <section
+      class="membership-content mx-auto max-w-3xl px-5 pt-8 md:px-8 md:pt-12"
+    >
       <Alert v-if="errorMessage" variant="destructive" class="mb-5">
         <CircleAlert :size="18" />
         <AlertTitle>No se pudo enviar</AlertTitle>
@@ -71,7 +75,10 @@
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form class="space-y-6" @submit.prevent="submitRequest">
+          <form
+            class="membership-form space-y-6"
+            @submit.prevent="submitRequest"
+          >
             <div class="grid gap-4 sm:grid-cols-2">
               <div class="space-y-1.5 sm:col-span-2">
                 <Label for="membership-name">Nombre completo</Label>
@@ -177,7 +184,11 @@
                   class="flex min-h-24 cursor-pointer items-center justify-center gap-3 rounded-md border border-dashed border-primary/60 bg-background px-4 text-center text-sm font-semibold hover:bg-primary/5"
                 >
                   <ImageUp :size="20" />
-                  {{ proofName || "Tomar foto o elegir imagen" }}
+                  {{
+                    processingProof
+                      ? "Optimizando imagen..."
+                      : proofName || "Tomar foto o elegir imagen"
+                  }}
                 </label>
                 <input
                   id="payment-proof"
@@ -189,7 +200,7 @@
                   @change="selectProof"
                 />
                 <p class="text-xs text-muted-foreground">
-                  JPG, PNG o WebP. Máximo 5 MB.
+                  JPG, PNG o WebP. Se optimizará antes de enviar.
                 </p>
               </div>
             </div>
@@ -203,7 +214,11 @@
               </AlertDescription>
             </Alert>
 
-            <Button class="h-12 w-full" type="submit" :disabled="submitting">
+            <Button
+              class="h-12 w-full"
+              type="submit"
+              :disabled="submitting || processingProof"
+            >
               {{
                 submitting
                   ? "Enviando..."
@@ -233,6 +248,7 @@ import {
 } from "@common/components/ui/card";
 import { Input } from "@common/components/ui/input";
 import { Label } from "@common/components/ui/label";
+import { compressImage } from "@common/composables/useImageCompression";
 import { Check, CircleAlert, ImageUp, Landmark, Store } from "lucide-vue-next";
 
 definePageMeta({ layout: "breezy" });
@@ -243,7 +259,12 @@ const submitting = ref(false);
 const errorMessage = ref("");
 const submittedReference = ref("");
 const paymentProof = ref<File>();
-const proofName = computed(() => paymentProof.value?.name ?? "");
+const processingProof = ref(false);
+const proofName = computed(() => {
+  if (!paymentProof.value) return "";
+  const sizeKB = Math.max(1, Math.round(paymentProof.value.size / 1024));
+  return `${paymentProof.value.name} · ${sizeKB} KB`;
+});
 const form = reactive({
   name: "",
   phone: "",
@@ -252,16 +273,38 @@ const form = reactive({
   paymentMethod: "transfer" as "transfer" | "in_store",
 });
 
-function selectProof(event: Event) {
-  paymentProof.value = (event.target as HTMLInputElement).files?.[0];
+async function selectProof(event: Event) {
+  const input = event.target as HTMLInputElement;
+  const file = input.files?.[0];
+  if (!file) return;
+
+  errorMessage.value = "";
+  paymentProof.value = undefined;
+  if (file.size > 20 * 1024 * 1024) {
+    input.value = "";
+    errorMessage.value = "La imagen original supera el máximo de 20 MB";
+    return;
+  }
+  processingProof.value = true;
+  try {
+    paymentProof.value = await compressImage(file, {
+      format: "webp",
+      maxSizeMB: 0.35,
+      maxWidthOrHeight: 1600,
+      quality: 0.65,
+      fileName: "comprobante-pago",
+    });
+  } catch {
+    input.value = "";
+    errorMessage.value =
+      "No se pudo optimizar la imagen. Intenta con otra foto.";
+  } finally {
+    processingProof.value = false;
+  }
 }
 
 async function submitRequest() {
   errorMessage.value = "";
-  if (paymentProof.value && paymentProof.value.size > 5 * 1024 * 1024) {
-    errorMessage.value = "El comprobante supera el máximo de 5 MB";
-    return;
-  }
   submitting.value = true;
   try {
     const record = await requests.submit({
@@ -289,4 +332,32 @@ function resetForm() {
   submittedReference.value = "";
   errorMessage.value = "";
 }
+
+onMounted(() => {
+  document.documentElement.classList.add("membership-scroll-active");
+});
+
+onBeforeUnmount(() => {
+  document.documentElement.classList.remove("membership-scroll-active");
+});
 </script>
+
+<style scoped>
+.membership-page {
+  min-height: calc(100dvh - 76px);
+  overflow-x: clip;
+}
+
+.membership-content {
+  padding-bottom: calc(2rem + env(safe-area-inset-bottom, 0px));
+}
+
+.membership-form :is(input, button, [role="button"]) {
+  scroll-margin-block: 6rem;
+}
+
+:global(html.membership-scroll-active) {
+  scroll-behavior: auto !important;
+  scroll-padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+}
+</style>

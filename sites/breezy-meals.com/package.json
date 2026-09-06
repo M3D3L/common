@@ -60,7 +60,6 @@
     "@nuxtjs/tailwindcss": "^6.12.2",
     "@tailwindcss/typography": "^0.5.16",
     "@types/node": "^24.9.1",
-    "baseline-browser-mapping": "^2.11.21",
     "cross-env": "^10.0.0",
     "typescript": "^5.7.2"
   }

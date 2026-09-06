@@ -126,7 +126,7 @@
 
 <script lang="ts" setup>
 import { Plus, Edit, Trash2, RotateCcw } from "lucide-vue-next";
-import imageCompression from "browser-image-compression";
+import { compressImage as compressImageFile } from "../../composables/useImageCompression";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -159,7 +159,7 @@ const props = withDefaults(
   {
     format: "webp",
     quality: 80,
-  }
+  },
 );
 
 const emit = defineEmits<{
@@ -175,7 +175,7 @@ const isDragging = ref(false);
 const hasProcessedInitialImage = ref(false);
 
 const isUnsavedFile = computed(
-  () => props.image instanceof File || props.image instanceof Blob
+  () => props.image instanceof File || props.image instanceof Blob,
 );
 
 const resolvedImagePropUrl = computed(() => {
@@ -203,29 +203,15 @@ const openFileDialog = () => {
 
 const compressImage = async (file: File): Promise<File> => {
   processing.value = true;
-  const targetType = `image/${props.format === "jpeg" ? "jpeg" : props.format}`;
-
-  const options = {
-    maxSizeMB: 1,
-    maxWidthOrHeight: props.width || props.height || 1920,
-    useWebWorker: true,
-    initialQuality: props.quality / 100,
-    fileType: targetType,
-  };
 
   try {
-    const compressedBlob = await imageCompression(file, options);
-
-    const cleanName = props.name
-      ? props.name
-          .toLowerCase()
-          .replace(/[^a-z0-9]/g, "-")
-          .replace(/-+/g, "-")
-      : file.name.split(".")[0];
-
-    const fileName = `${cleanName}.${props.format}`;
-
-    return new File([compressedBlob], fileName, { type: targetType });
+    return await compressImageFile(file, {
+      format: props.format,
+      maxSizeMB: 1,
+      maxWidthOrHeight: props.width || props.height || 1920,
+      quality: props.quality / 100,
+      fileName: props.name,
+    });
   } catch (error) {
     console.error("Image compression failed:", error);
     return file;
@@ -301,7 +287,7 @@ watch(
       processFile(newVal as File);
     }
   },
-  { immediate: true }
+  { immediate: true },
 );
 
 onBeforeUnmount(() => {
