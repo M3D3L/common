@@ -45,6 +45,7 @@ export interface Membership extends RecordModel {
 export interface Redemption extends RecordModel {
   membership: string;
   member: string;
+  payment_request?: string;
   redeemed_at: string;
   redeemed_by?: string;
   kind: "meal" | "adjustment" | "topup_note";
@@ -52,6 +53,32 @@ export interface Redemption extends RecordModel {
   reason?: string;
   voided: boolean;
   void_reason?: string;
+}
+
+export type MembershipPaymentMethod = "transfer" | "in_store";
+export type MembershipPaymentStatus =
+  | "submitted"
+  | "approved"
+  | "rejected"
+  | "cancelled";
+
+export interface MembershipPaymentRequest extends RecordModel {
+  name: string;
+  phone: string;
+  address?: string;
+  existing_member_code?: string;
+  payment_method: MembershipPaymentMethod;
+  payment_proof?: string;
+  offer_code: string;
+  status: MembershipPaymentStatus;
+  member?: string;
+  membership?: string;
+  approved_amount?: number;
+  approved_credits?: number;
+  reviewed_by?: string;
+  reviewed_at?: string;
+  review_note?: string;
+  applied_at?: string;
 }
 
 /** Shape returned by the public /api/membership/check route. Minimal on purpose. */

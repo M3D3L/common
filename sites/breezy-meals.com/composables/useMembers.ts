@@ -82,8 +82,17 @@ export default function useMembers() {
   };
 
   /** Lists all non-archived members for staff-facing member pickers. */
-  const listMembers = (page = 1, perPage = 100) =>
-    fetchCollection(C, page, perPage, 'status != "archived"', "name");
+  const listMembers = (page = 1, perPage = 100, ignoreCache = false) =>
+    fetchCollection(
+      C,
+      page,
+      perPage,
+      'status != "archived"',
+      "name",
+      null,
+      null,
+      ignoreCache,
+    );
 
   /** Exact-PIN lookup (staff-side; the public route is separate). */
   const getMemberByCode = async (code: string): Promise<Member | null> => {

@@ -714,10 +714,10 @@ async function pick(c: Member) {
 async function loadMembers() {
   listLoading.value = true;
   try {
-    const firstPage = await members.listMembers();
+    const firstPage = await members.listMembers(1, 100, true);
     const pages: Array<{ items: unknown[] }> = await Promise.all(
       Array.from({ length: Math.max(0, firstPage.totalPages - 1) }, (_, i) =>
-        members.listMembers(i + 2),
+        members.listMembers(i + 2, 100, true),
       ),
     );
     allMembers.value = [
