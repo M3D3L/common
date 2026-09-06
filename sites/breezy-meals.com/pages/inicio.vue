@@ -1,9 +1,7 @@
 <template>
-  <div
-    class="absolute bottom-0 left-0 right-0 top-0 mx-auto grid h-screen max-w-2xl content-center items-center px-4 py-8"
-  >
-    <OrganismsClockIn :current-user="currentUser" />
-  </div>
+  <main class="min-h-[calc(100vh-5rem)] px-4 py-8">
+    <OrganismsClockIn :current-user="currentUser" :is-admin="isManager" />
+  </main>
 </template>
 
 <script lang="ts" setup>
@@ -11,18 +9,24 @@ import usePocketBase from "@common/composables/usePocketbase";
 
 const pb = usePocketBase();
 
-const isAdmin = true;
+const isManager = ref(false);
+const currentUser = ref({ id: "", name: "" });
 
-// Identidad automática desde la cuenta con sesión iniciada.
-// Ajusta el campo del nombre si tu colección `users` usa otro.
-const currentUser = computed(() => ({
-  id: pb.authStore.model?.id ?? "",
-  name:
-    pb.authStore.model?.name ||
-    pb.authStore.model?.username ||
-    pb.authStore.model?.email ||
-    "Usuario",
-}));
+function syncAuth() {
+  const model = pb.authStore.model;
+  isManager.value = model?.verified === true;
+  currentUser.value = {
+    id: model?.id ?? "",
+    name: model?.name || model?.username || model?.email || "Usuario",
+  };
+}
+
+let stopAuthListener: (() => void) | undefined;
+onMounted(() => {
+  syncAuth();
+  stopAuthListener = pb.authStore.onChange(syncAuth);
+});
+onBeforeUnmount(() => stopAuthListener?.());
 
 definePageMeta({
   layout: "staff",

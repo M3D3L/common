@@ -1,5 +1,5 @@
 <template>
-  <Card class="max-w-md mx-auto p-5 sm:p-6">
+  <Card class="w-full max-w-2xl mx-auto p-5 sm:p-6">
     <!-- Reloj en vivo -->
     <div class="flex items-center gap-3 pb-4 mb-4 border-b border-border">
       <div
@@ -89,7 +89,7 @@
       </div>
     </div>
 
-    <!-- ===== RESUMEN (horas + exportar) ===== -->
+    <!-- ===== RESUMEN (turnos + exportar) ===== -->
     <div v-else-if="tab === 'resumen'">
       <!-- Selector de periodo -->
       <div class="flex gap-1 mb-4">
@@ -107,53 +107,73 @@
           :variant="period === 'all' ? 'secondary' : 'ghost'"
           @click="period = 'all'"
         >
-          Todo
+          Historial completo
         </Button>
       </div>
 
-      <p
-        class="text-xs font-bold tracking-widest uppercase text-muted-foreground"
-      >
-        {{ rangeLabel }}
-      </p>
+      <div class="flex items-end justify-between gap-3 mb-3">
+        <div>
+          <p class="text-sm font-bold">Registros de asistencia</p>
+          <p class="mt-0.5 text-xs text-muted-foreground">{{ rangeLabel }}</p>
+        </div>
+        <p class="text-sm font-bold tabular-nums whitespace-nowrap">
+          {{ fmtDur(rangeTotalMinutes) }} total
+        </p>
+      </div>
 
       <div
-        v-if="!people.length"
+        v-if="loading"
         class="py-8 text-sm text-center text-muted-foreground"
       >
-        Sin registros.
+        Cargando registros…
       </div>
-      <div v-else class="divide-y divide-border">
-        <div
-          v-for="m in people"
-          :key="m.id"
-          class="flex items-center gap-3 py-3"
+      <div
+        v-else-if="!personSummaries.length"
+        class="py-8 text-sm text-center text-muted-foreground"
+      >
+        No hay entradas registradas en este periodo.
+      </div>
+      <div v-else class="space-y-3">
+        <section
+          v-for="person in personSummaries"
+          :key="person.id"
+          class="overflow-hidden border rounded-lg border-border"
         >
-          <span
-            class="w-2 h-2 rounded-full shrink-0"
-            :class="isIn(m.id) ? 'bg-green-500' : 'bg-muted-foreground/30'"
-          ></span>
-          <div class="flex-1 min-w-0">
-            <p class="font-semibold truncate">{{ m.name }}</p>
-            <p class="text-xs text-muted-foreground tabular-nums">
-              Hoy {{ fmtDur(workedMinutes(m.id, todayStr, todayStr)) }}
-              <template v-if="isIn(m.id)">
-                · dentro desde {{ lastTime(m.id) }}</template
-              >
-            </p>
+          <div class="flex items-center gap-3 px-3 py-2.5 bg-muted/40">
+            <span
+              class="w-2 h-2 rounded-full shrink-0"
+              :class="
+                isIn(person.id) ? 'bg-green-500' : 'bg-muted-foreground/30'
+              "
+            ></span>
+            <p class="font-semibold truncate">{{ person.name }}</p>
+            <span class="ml-auto text-sm font-bold tabular-nums">
+              {{ fmtDur(person.totalMinutes) }}
+            </span>
           </div>
-          <span class="text-sm font-bold tabular-nums">
-            {{ fmtDur(workedMinutes(m.id, rangeFrom, rangeTo)) }}
-          </span>
-        </div>
-      </div>
-      <div class="flex items-center pt-3 mt-1 border-t border-border">
-        <span class="text-sm font-semibold">
-          Total {{ period === "week" ? "semana" : "periodo" }}
-        </span>
-        <span class="ml-auto text-sm font-bold tabular-nums">
-          {{ fmtDur(rangeTotalMinutes) }}
-        </span>
+          <div class="divide-y divide-border">
+            <div
+              v-for="(shift, index) in person.shifts"
+              :key="`${shift.inAt}-${index}`"
+              class="grid grid-cols-[minmax(0,1fr)_auto] gap-x-4 gap-y-1 px-3 py-2.5"
+            >
+              <p class="text-sm font-medium capitalize">
+                {{ formatShiftDate(shift.date) }}
+              </p>
+              <p class="text-sm font-semibold text-right tabular-nums">
+                {{ fmtDur(shift.mins) }}
+              </p>
+              <p class="text-xs text-muted-foreground tabular-nums">
+                Entrada {{ timeOf(shift.inAt) }}
+                <span class="mx-1">·</span>
+                <template v-if="shift.outAt">
+                  Salida {{ timeOf(shift.outAt) }}
+                </template>
+                <span v-else class="font-medium text-green-600">En turno</span>
+              </p>
+            </div>
+          </div>
+        </section>
       </div>
 
       <!-- Descargas (solo admin) -->
@@ -224,6 +244,12 @@ interface Person {
 interface ClockData {
   punches: Punch[];
 }
+interface Shift {
+  date: string;
+  inAt: string;
+  outAt: string | null;
+  mins: number;
+}
 
 const { subscribe, unsubscribe } = usePocketBaseCore();
 const { loadPunches, createPunch } = useNormalizedOperations();
@@ -245,11 +271,18 @@ const props = defineProps({
 const loading = ref(true);
 const data = reactive<ClockData>({ punches: [] });
 
-const tab = ref<"reloj" | "resumen">("reloj");
+const tab = ref<"reloj" | "resumen">(props.isAdmin ? "resumen" : "reloj");
 const tabs = [
   { key: "reloj", label: "Reloj" },
   { key: "resumen", label: "Resumen" },
 ] as const;
+
+watch(
+  () => props.isAdmin,
+  (isAdmin) => {
+    if (isAdmin) tab.value = "resumen";
+  },
+);
 
 const period = ref<"week" | "all">("week");
 const busy = ref(false);
@@ -367,9 +400,16 @@ function timeOf(iso: string): string {
     minute: "2-digit",
   });
 }
+function formatShiftDate(date: string): string {
+  return new Date(`${date}T00:00:00`).toLocaleDateString("es-MX", {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+  });
+}
 
 // Turnos (entrada→salida) de un usuario en [from,to]. Turno abierto: outAt=null.
-function buildShifts(userId: string, from: string, to: string) {
+function buildShifts(userId: string, from: string, to: string): Shift[] {
   const ps = punchesOf(userId).filter((p) => {
     const d = localDay(p.at);
     return d >= from && d <= to;
@@ -411,6 +451,22 @@ const rangeTotalMinutes = computed(() =>
     (sum, m) => sum + workedMinutes(m.id, rangeFrom.value, rangeTo.value),
     0,
   ),
+);
+const personSummaries = computed(() =>
+  people.value
+    .map((person) => {
+      const shifts = buildShifts(
+        person.id,
+        rangeFrom.value,
+        rangeTo.value,
+      ).sort((a, b) => b.inAt.localeCompare(a.inAt));
+      return {
+        ...person,
+        shifts,
+        totalMinutes: shifts.reduce((sum, shift) => sum + shift.mins, 0),
+      };
+    })
+    .filter((person) => person.shifts.length > 0),
 );
 
 /* ===== Exportar CSV (sin dependencias) ===== */
