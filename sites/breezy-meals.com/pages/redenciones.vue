@@ -1,5 +1,5 @@
 <template>
-  <section class="mx-auto w-full max-w-2xl px-4 py-8 sm:px-6 md:py-10">
+  <section class="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 md:py-10">
     <header class="mb-6 flex flex-wrap items-end justify-between gap-3">
       <div>
         <p

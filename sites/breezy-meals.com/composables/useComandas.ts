@@ -218,6 +218,7 @@ function createComandasStore() {
   const sending = ref(false); // evita doble-envío por doble-tap
   const soundEnabled = ref(false);
   const soundReady = ref(false);
+  const unreadOrderCount = ref(0);
   let audioContext: AudioContext | null = null;
 
   async function prepareSound() {
@@ -830,6 +831,7 @@ function createComandasStore() {
       upsertOrder(order);
       void normalizedComandas.syncLines(rec.id, order).catch(() => undefined);
       if (e.action === "create") {
+        if (document.hidden) unreadOrderCount.value += 1;
         void playOrderSound();
         toast(`Nueva orden #${order.number}`);
       }
@@ -887,7 +889,10 @@ function createComandasStore() {
   }
 
   function onVisibility() {
-    if (import.meta.client && !document.hidden) resync();
+    if (import.meta.client && !document.hidden) {
+      unreadOrderCount.value = 0;
+      resync();
+    }
   }
 
   /* ===== Persistencia local (cache offline de las activas) ===== */
@@ -1324,6 +1329,7 @@ function createComandasStore() {
     sending,
     soundEnabled,
     soundReady,
+    unreadOrderCount,
     menuSource,
     activeBlockName,
     menuGroups,

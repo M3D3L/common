@@ -67,8 +67,21 @@
 import { Button } from "@common/components/ui/button";
 import { BellOff, BellRing, Plus } from "lucide-vue-next";
 
-const { soundEnabled, soundReady, toastMsg, toggleOrderSound } =
-  provideComandas();
+const {
+  soundEnabled,
+  soundReady,
+  toastMsg,
+  unreadOrderCount,
+  toggleOrderSound,
+} = provideComandas();
+
+useHead({
+  title: computed(() =>
+    unreadOrderCount.value
+      ? `(${unreadOrderCount.value}) Nueva comanda | Breezy Meals`
+      : "Comandas | Breezy Meals",
+  ),
+});
 
 definePageMeta({ layout: "staff" });
 </script>
