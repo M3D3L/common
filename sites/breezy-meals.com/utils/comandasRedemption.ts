@@ -12,6 +12,10 @@ export function shouldRedeemOnReady(order: RedeemableComanda): boolean {
   return Boolean(order.memberCode?.trim() && order.redeemMemberMeal);
 }
 
+export function requiresPaymentOnReady(order: RedeemableComanda): boolean {
+  return !shouldRedeemOnReady(order);
+}
+
 export function redemptionReasonForOrder(order: IdentifiedComanda): string {
   return [`Comanda #${order.number}`, order.promo?.label]
     .filter(Boolean)

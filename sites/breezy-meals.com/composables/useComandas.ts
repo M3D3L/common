@@ -38,6 +38,7 @@ import {
 } from "~/composables/useWhatsappOrder";
 import type { RecordModel } from "pocketbase";
 import {
+  requiresPaymentOnReady,
   redemptionReasonForOrder,
   shouldRedeemOnReady,
 } from "~/utils/comandasRedemption";
@@ -1171,21 +1172,19 @@ function createComandasStore() {
 
   // Verifica el saldo al marcar la orden lista y descuenta una comida cuando
   // está disponible. La falta de crédito avisa que se cobrará en efectivo.
-  async function redeemMemberCredit(o: StoredOrder) {
+  async function redeemMemberCredit(o: StoredOrder): Promise<boolean> {
     const code = o.memberCode;
-    if (!code) return;
+    if (!code) return false;
     try {
       const member = await members.getMemberByCode(code);
       if (!member) {
         toast(`Código ${code}: socio no encontrado — cobra normal`);
-        return;
+        return false;
       }
       const ms = await memberships.getActiveMembership(member.id);
       if (!ms || !memberships.isUsable(ms)) {
-        window.alert(
-          `${member.name} no tiene créditos disponibles. Esta orden se pagará en efectivo.`,
-        );
-        return;
+        toast(`${member.name} no tiene créditos — confirma el cobro`);
+        return false;
       }
 
       const { remaining } = await redemptions.redeem(ms, {
@@ -1193,13 +1192,22 @@ function createComandasStore() {
         reason: redemptionReasonForOrder(o),
       });
       toast(`Socio ${member.name}: comida registrada (${remaining} restantes)`);
+      return true;
     } catch (e) {
       console.error("socio redeem failed:", e);
-      toast("No se pudo verificar al socio; la orden se marca lista igual");
+      toast("No se pudo redimir; confirma el cobro antes de marcar lista");
+      return false;
     }
   }
 
-  async function completeOrder(o: StoredOrder) {
+  async function completeOrder(
+    o: StoredOrder,
+    options: { paymentConfirmed?: boolean } = {},
+  ): Promise<"completed" | "payment-required" | "failed"> {
+    if (requiresPaymentOnReady(o) && !options.paymentConfirmed) {
+      return "payment-required";
+    }
+
     const wa = openBlankTab();
     let memberPhone = "";
     let memberName = "";
@@ -1214,8 +1222,12 @@ function createComandasStore() {
       }
     }
 
-    if (shouldRedeemOnReady(o)) {
-      await redeemMemberCredit(o);
+    if (shouldRedeemOnReady(o) && !options.paymentConfirmed) {
+      const redeemed = await redeemMemberCredit(o);
+      if (!redeemed) {
+        wa?.close();
+        return "payment-required";
+      }
     }
 
     // 1) Primero la BD: conserva el registro y cambia su estado para historial.
@@ -1227,7 +1239,7 @@ function createComandasStore() {
       console.error("No se pudo cerrar la orden en el servidor", e);
       wa?.close();
       toast(`No se pudo cerrar la orden #${o.number}; reintenta`);
-      return;
+      return "failed";
     }
     // 2) Fuera del tablero (localmente; realtime lo confirmará).
     orders.value = orders.value.filter((x) => x.id !== o.id);
@@ -1248,6 +1260,7 @@ function createComandasStore() {
       wa?.close();
     }
     toast(`Orden #${o.number} lista`);
+    return "completed";
   }
 
   function sendDeliveryDetails(o: StoredOrder) {

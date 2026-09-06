@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  requiresPaymentOnReady,
   redemptionReasonForOrder,
   shouldRedeemOnReady,
 } from "../utils/comandasRedemption.ts";
@@ -21,6 +22,18 @@ test("only an explicitly eligible member comanda redeems when ready", () => {
 test("marking a comanda without a member code ready does not redeem", () => {
   assert.equal(shouldRedeemOnReady({}), false);
   assert.equal(shouldRedeemOnReady({ memberCode: "   " }), false);
+});
+
+test("non-redeemable comandas require payment before ready", () => {
+  assert.equal(requiresPaymentOnReady({}), true);
+  assert.equal(
+    requiresPaymentOnReady({ memberCode: "GM4218", redeemMemberMeal: false }),
+    true,
+  );
+  assert.equal(
+    requiresPaymentOnReady({ memberCode: "GM4218", redeemMemberMeal: true }),
+    false,
+  );
 });
 
 test("a completed comanda records its order and promotion context", () => {

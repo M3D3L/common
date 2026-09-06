@@ -204,12 +204,101 @@
       </div>
     </div>
 
+    <div
+      v-if="!readonly"
+      class="mt-3 flex items-start gap-2 rounded-lg border p-3"
+      :class="
+        requiresPayment
+          ? 'border-amber-600 bg-amber-100 text-amber-950'
+          : 'border-emerald-600 bg-emerald-100 text-emerald-950'
+      "
+    >
+      <ClientOnly>
+        <AlertTriangle
+          v-if="requiresPayment"
+          :size="18"
+          class="mt-0.5 shrink-0"
+        />
+        <BadgeCheck v-else :size="18" class="mt-0.5 shrink-0" />
+      </ClientOnly>
+      <div class="min-w-0">
+        <p
+          class="text-sm font-bold"
+          :class="requiresPayment ? 'text-amber-950' : 'text-emerald-950'"
+        >
+          {{ requiresPayment ? "Cobro requerido" : "Redención disponible" }}
+        </p>
+        <p class="mt-0.5 text-xs leading-relaxed">
+          <template v-if="requiresPayment">
+            Esta comanda no se redimirá. Confirma el pago
+            <template v-if="order.pricingTotal !== undefined">
+              de {{ money(order.pricingTotal) }}</template
+            >
+            antes de marcarla lista.
+          </template>
+          <template v-else>
+            Al marcarla lista se descontará una comida de la membresía.
+          </template>
+        </p>
+      </div>
+    </div>
+
     <!-- Footer buttons -->
     <div v-if="!readonly" class="flex items-center gap-2 mt-4">
-      <Button size="sm" class="flex-1" @click="completeOrder(order)">
-        <ClientOnly><Check :size="15" class="mr-1.5" /></ClientOnly>
-        Marcar lista
-      </Button>
+      <AlertDialog v-model:open="readyDialogOpen">
+        <AlertDialogTrigger as-child>
+          <Button size="sm" class="flex-1">
+            <ClientOnly>
+              <CreditCard v-if="requiresPayment" :size="15" class="mr-1.5" />
+              <Check v-else :size="15" class="mr-1.5" />
+            </ClientOnly>
+            {{
+              requiresPayment
+                ? "Cobrar y marcar lista"
+                : "Redimir y marcar lista"
+            }}
+          </Button>
+        </AlertDialogTrigger>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {{
+                requiresPayment ? "¿Pago confirmado?" : "¿Redimir esta comida?"
+              }}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              <template v-if="requiresPayment">
+                La comanda #{{ order.number }} no califica para redención.
+                Confirma que el cliente pagó
+                <template v-if="order.pricingTotal !== undefined">
+                  {{ money(order.pricingTotal) }}</template
+                >
+                antes de retirarla de comandas activas.
+              </template>
+              <template v-else>
+                Se descontará una comida de la membresía y la comanda #{{
+                  order.number
+                }}
+                se marcará lista.
+              </template>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel :disabled="completing"
+              >Cancelar</AlertDialogCancel
+            >
+            <AlertDialogAction :disabled="completing" @click="confirmReady">
+              {{
+                completing
+                  ? "Procesando…"
+                  : requiresPayment
+                    ? "Pago confirmado · Marcar lista"
+                    : "Redimir · Marcar lista"
+              }}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       <Button
         v-if="order.mode === 'domicilio'"
         variant="outline"
@@ -237,7 +326,25 @@
 import { Card } from "@common/components/ui/card";
 import { Button } from "@common/components/ui/button";
 import { Badge } from "@common/components/ui/badge";
-import { Check, MessageCircle, Trash2 } from "lucide-vue-next";
+import {
+  AlertTriangle,
+  BadgeCheck,
+  Check,
+  CreditCard,
+  MessageCircle,
+  Trash2,
+} from "lucide-vue-next";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@common/components/ui/alert-dialog";
 import {
   groups,
   groupsFromData,
@@ -249,6 +356,7 @@ import {
   getGroupLines,
   type PlacedOrder,
 } from "~/utils/comandas";
+import { requiresPaymentOnReady } from "~/utils/comandasRedemption";
 
 const props = withDefaults(
   defineProps<{ order: PlacedOrder; readonly?: boolean }>(),
@@ -258,6 +366,26 @@ const props = withDefaults(
 const { completeOrder, sendDeliveryDetails, discardOrder, catalog } =
   useComandas();
 const { fetchCollection } = usePocketBaseCore();
+const readyDialogOpen = ref(false);
+const redemptionFailed = ref(false);
+const completing = ref(false);
+const requiresPayment = computed(
+  () => redemptionFailed.value || requiresPaymentOnReady(props.order),
+);
+
+async function confirmReady() {
+  completing.value = true;
+  const result = await completeOrder(props.order, {
+    paymentConfirmed: requiresPayment.value,
+  });
+  completing.value = false;
+
+  if (result === "payment-required") {
+    redemptionFailed.value = true;
+    await nextTick();
+    readyDialogOpen.value = true;
+  }
+}
 
 function money(value: number) {
   return new Intl.NumberFormat("es-MX", {
