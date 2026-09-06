@@ -3,7 +3,7 @@
     <header
       class="sticky top-0 z-40 border-b border-border/70 bg-background/90 px-4 py-3 shadow-sm backdrop-blur-xl"
     >
-      <div class="flex w-full items-center gap-3">
+      <div class="mx-auto flex w-full max-w-7xl items-center gap-3">
         <div class="min-w-0 flex-1">
           <p
             class="text-[10px] font-bold uppercase tracking-widest text-muted-foreground"
@@ -48,7 +48,7 @@
       </div>
     </header>
 
-    <main class="w-full px-4 py-6 sm:px-6">
+    <main class="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6">
       <OrganismsComandasOrders />
     </main>
 
