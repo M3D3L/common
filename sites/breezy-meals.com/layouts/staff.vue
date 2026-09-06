@@ -30,6 +30,7 @@ const links: NavLink[] = business.nav?.staffLinks?.length
       { to: "/inicio", label: "🕒" },
       { to: "/listas", label: "Listas" },
       { to: "/socios", label: "Miembros" },
+      { to: "/redenciones", label: "Redenciones" },
       { to: "/menu", label: "Menú" },
       { to: "/comandas", label: "Comandas" },
       { to: "/promociones", label: "Promociones" },

@@ -37,7 +37,10 @@ import {
   type Customer,
 } from "~/composables/useWhatsappOrder";
 import type { RecordModel } from "pocketbase";
-import { shouldRedeemOnReady } from "~/utils/comandasRedemption";
+import {
+  redemptionReasonForOrder,
+  shouldRedeemOnReady,
+} from "~/utils/comandasRedemption";
 
 /* ===== Config ===== */
 const STORAGE_KEY = "comandas";
@@ -1116,6 +1119,7 @@ function createComandasStore() {
 
       const { remaining } = await redemptions.redeem(ms, {
         staffId: user?.id,
+        reason: redemptionReasonForOrder(o),
       });
       toast(`Socio ${member.name}: comida registrada (${remaining} restantes)`);
     } catch (e) {

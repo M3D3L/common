@@ -479,6 +479,15 @@
           </div>
         </template>
 
+        <Button as-child variant="outline" class="w-full">
+          <NuxtLink
+            :to="{ path: '/redenciones', query: { member: member.id } }"
+          >
+            <ClientOnly><ReceiptText :size="16" class="mr-2" /></ClientOnly>
+            Ver redenciones
+          </NuxtLink>
+        </Button>
+
         <Separator />
 
         <!-- Historial -->
@@ -551,6 +560,7 @@ import {
   X,
   Users,
   RefreshCw,
+  ReceiptText,
   Trash2,
   ChevronDown,
 } from "lucide-vue-next";

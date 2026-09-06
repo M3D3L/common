@@ -1,6 +1,16 @@
 // composables/useRedemptions.ts
 import type { Membership, Redemption } from "~/types/membership";
 
+export interface AdminRedemptionInput {
+  memberId: string;
+  membershipId: string;
+  kind: Redemption["kind"];
+  amount: number;
+  redeemedAt: string;
+  reason?: string;
+  staffId?: string;
+}
+
 /**
  * useRedemptions — the append-only ledger and the ONLY place credits move.
  *
@@ -175,6 +185,154 @@ export default function useRedemptions() {
     return used;
   };
 
+  // --- Administrative corrections -----------------------------------------
+
+  const getMembership = (id: string) =>
+    fetchRecord(M, id, true) as Promise<Membership>;
+
+  const applyAdjustmentDeltas = async (deltas: Map<string, number>) => {
+    for (const [membershipId, delta] of deltas) {
+      if (!delta) continue;
+      const membership = await getMembership(membershipId);
+      const creditsTotal = Math.max(
+        membership.credits_used,
+        membership.credits_total + delta,
+      );
+      await updateItem(M, membership.id, {
+        credits_total: creditsTotal,
+        status:
+          membership.status === "cancelled"
+            ? "cancelled"
+            : creditsTotal > membership.credits_used
+              ? "active"
+              : "exhausted",
+      });
+    }
+  };
+
+  const recalculateMemberships = async (ids: Set<string>) => {
+    for (const membershipId of ids) {
+      await recalculate(await getMembership(membershipId));
+    }
+  };
+
+  const adminData = (input: AdminRedemptionInput) => {
+    const data: Record<string, unknown> = {
+      membership: input.membershipId,
+      member: input.memberId,
+      redeemed_at: input.redeemedAt,
+      kind: input.kind,
+      amount:
+        input.kind === "meal"
+          ? 1
+          : input.kind === "topup_note"
+            ? 0
+            : input.amount,
+      reason: input.reason?.trim() ?? "",
+    };
+    if (input.staffId) data.redeemed_by = input.staffId;
+    return data;
+  };
+
+  const createAdministrative = async (
+    input: AdminRedemptionInput,
+  ): Promise<Redemption> => {
+    const redemption = (await createItem(C, {
+      ...adminData(input),
+      voided: false,
+    })) as Redemption;
+
+    if (input.kind === "meal") {
+      await recalculateMemberships(new Set([input.membershipId]));
+      await touchMemberActivity(input.memberId, +1);
+    } else if (input.kind === "adjustment") {
+      await applyAdjustmentDeltas(
+        new Map([[input.membershipId, input.amount]]),
+      );
+    }
+    return redemption;
+  };
+
+  const updateAdministrative = async (
+    current: Redemption,
+    input: AdminRedemptionInput,
+  ): Promise<Redemption> => {
+    const updated = (await updateItem(
+      C,
+      current.id,
+      adminData(input),
+    )) as Redemption;
+    if (current.voided) return updated;
+
+    const mealMemberships = new Set<string>();
+    if (current.kind === "meal") mealMemberships.add(current.membership);
+    if (input.kind === "meal") mealMemberships.add(input.membershipId);
+    await recalculateMemberships(mealMemberships);
+
+    const adjustmentDeltas = new Map<string, number>();
+    if (current.kind === "adjustment") {
+      adjustmentDeltas.set(current.membership, -current.amount);
+    }
+    if (input.kind === "adjustment") {
+      adjustmentDeltas.set(
+        input.membershipId,
+        (adjustmentDeltas.get(input.membershipId) ?? 0) + input.amount,
+      );
+    }
+    await applyAdjustmentDeltas(adjustmentDeltas);
+
+    if (current.kind === "meal" && input.kind !== "meal") {
+      await touchMemberActivity(current.member, -1);
+    } else if (current.kind !== "meal" && input.kind === "meal") {
+      await touchMemberActivity(input.memberId, +1);
+    } else if (current.kind === "meal" && current.member !== input.memberId) {
+      await touchMemberActivity(current.member, -1);
+      await touchMemberActivity(input.memberId, +1);
+    }
+    return updated;
+  };
+
+  const voidAdministrative = async (
+    redemption: Redemption,
+    reason: string,
+  ): Promise<void> => {
+    if (redemption.voided) return;
+    if (!reason.trim())
+      throw new Error("A reason is required to void a redemption");
+    if (redemption.kind === "meal") {
+      await voidRedemption(
+        redemption,
+        await getMembership(redemption.membership),
+        reason.trim(),
+      );
+      return;
+    }
+    await updateItem(C, redemption.id, {
+      voided: true,
+      void_reason: reason.trim(),
+    });
+    if (redemption.kind === "adjustment") {
+      await applyAdjustmentDeltas(
+        new Map([[redemption.membership, -redemption.amount]]),
+      );
+    }
+  };
+
+  const restoreAdministrative = async (
+    redemption: Redemption,
+  ): Promise<void> => {
+    if (!redemption.voided) return;
+    await updateItem(C, redemption.id, { voided: false, void_reason: "" });
+    if (redemption.kind === "meal") {
+      await recalculateMemberships(new Set([redemption.membership]));
+      await touchMemberActivity(redemption.member, +1);
+    } else if (redemption.kind === "adjustment") {
+      await applyAdjustmentDeltas(
+        new Map([[redemption.membership, redemption.amount]]),
+      );
+    }
+  };
+
   // --- History --------------------------------------------------------------
 
   /** Ledger for one member, newest first (admin history view). */
@@ -191,6 +349,18 @@ export default function useRedemptions() {
       "-redeemed_at",
     );
 
+  const listAdministrative = (page = 1, perPage = 200) =>
+    fetchCollection(
+      C,
+      page,
+      perPage,
+      "",
+      "-redeemed_at",
+      "member,membership,redeemed_by",
+      null,
+      true,
+    );
+
   return {
     redeem,
     voidRedemption,
@@ -198,5 +368,10 @@ export default function useRedemptions() {
     recalculate,
     memberHistory,
     membershipHistory,
+    listAdministrative,
+    createAdministrative,
+    updateAdministrative,
+    voidAdministrative,
+    restoreAdministrative,
   };
 }

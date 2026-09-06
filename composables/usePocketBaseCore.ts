@@ -116,19 +116,20 @@ export default function usePocketBaseCore() {
   const fetchRecord = async (
     collection: string,
     id: string | number,
+    ignoreCache: boolean = false,
   ): Promise<RecordModel> => {
     const stringId = id.toString();
     const cacheKey = getCacheKey("fetchRecord", { collection, id: stringId });
 
     const cached = getCache<RecordModel>(cacheKey);
-    if (cached) return cached;
+    if (cached && !ignoreCache) return cached;
 
     try {
       const record = await pb.collection(collection).getOne(stringId, {
         requestKey: `record_${collection}_${stringId}`,
       });
 
-      setCache(cacheKey, record);
+      if (!ignoreCache) setCache(cacheKey, record);
       return record;
     } catch (error: any) {
       if (error.isAbort) throw error;

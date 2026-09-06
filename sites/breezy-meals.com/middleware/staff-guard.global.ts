@@ -6,6 +6,7 @@ export default defineNuxtRouteMiddleware((to) => {
     "/listas",
     "/checklists",
     "/socios",
+    "/redenciones",
     "/comandas",
     "/promociones",
     "/promos-dashboard",
