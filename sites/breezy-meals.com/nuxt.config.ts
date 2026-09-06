@@ -1,13 +1,32 @@
 import path from "path";
-import { blogRoutes } from "./routes/blogRoutes";
 
 export default defineNuxtConfig({
   compatibilityDate: "2025-08-30",
   nitro: {
     preset: "github-pages",
     prerender: {
-      routes: [...blogRoutes, "/sitemap.xml"],
+      routes: ["/sitemap.xml"],
       crawlLinks: true,
+    },
+  },
+  hooks: {
+    "pages:extend"(pages) {
+      const removeDisabledRoutes = (routes: typeof pages) => {
+        for (let index = routes.length - 1; index >= 0; index -= 1) {
+          const route = routes[index];
+          if (
+            route.path === "/register" ||
+            route.path === "/blog" ||
+            route.path.startsWith("/blog/")
+          ) {
+            routes.splice(index, 1);
+          } else if (route.children) {
+            removeDisabledRoutes(route.children as typeof pages);
+          }
+        }
+      };
+
+      removeDisabledRoutes(pages);
     },
   },
   app: {
@@ -139,7 +158,6 @@ export default defineNuxtConfig({
       siteName: "Breezy Meals",
       siteUrl: "https://www.breezy-meals.com",
       twitterSite: "@breezymeals",
-      blogType: "posts",
       business: {
         brandName: process.env.BUSINESS_BRAND_NAME || "Breezy Meals",
         businessName: process.env.BUSINESS_NAME || "Breezy Market",

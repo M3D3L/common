@@ -63,14 +63,13 @@ npm run preview:prod
 - `generate`: generate static output
 - `preview`: generate + preview static output
 - `preview:prod`: production-mode preview with explicit base path
-- `prepare`: generate blog routes (`scripts/generate-routes.js`)
 - `postinstall`: `nuxt prepare`
 
 ## Environment Variables
 
 These are read by `nuxt.config.ts` runtime config:
 
-- `POCKETBASE_URL`
+- `BREEZY_MEALS_POCKETBASE_URL`
 - `WHATSAPP_NUMBER`
 - `NODE_ENV`
 - `BUSINESS_BRAND_NAME`

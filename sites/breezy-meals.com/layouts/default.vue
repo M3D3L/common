@@ -14,15 +14,6 @@
       <main class="w-full">
         <slot />
       </main>
-      <SectionsBlogColumn
-        class="pb-16"
-        :h1="isBlogPage"
-        :showPagination="isBlogPage"
-        :perPage="isBlogPage ? 10 : 5"
-        type="posts"
-        v-bind="blogSection"
-        :title="blogSection.title"
-      />
       <SectionsContact
         :contactInfo
         :social-links="socials"
@@ -52,16 +43,7 @@ import {
   siteMap,
   contactSection,
   socials,
-  blogSection,
 } from "~/assets/configs/layout";
 import Modal from "@common/components/ui/modal/Modal.vue";
 import DebugBar from "@common/components/DebugBar.vue";
-
-const route = useRoute();
-
-const isBlogPage = computed(() => {
-  // Remove leading and trailing slashes, then lowercase
-  const path = route.path.replace(/^\/|\/$/g, "").toLowerCase();
-  return path === "blog";
-});
 </script>

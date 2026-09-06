@@ -9,8 +9,7 @@
     "test": "node --test tests/*.test.ts",
     "preview": "nuxt generate && vite preview --outDir .output/public",
     "preview:prod": "NODE_ENV=production nuxt generate && vite preview --outDir .output/public --base /portfolio2025/",
-    "postinstall": "nuxt prepare",
-    "prepare": "node scripts/generate-routes.js"
+    "postinstall": "nuxt prepare"
   },
   "dependencies": {
     "@nuxt/icon": "^1.12.0",
