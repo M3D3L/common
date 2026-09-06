@@ -484,37 +484,49 @@ function createChecklistsStore() {
     toast("Checklist reabierta");
   }
 
-  async function setItemAssignee(item: ChecklistItem, assignedTo: string) {
+  async function setItemAssignee(
+    item: ChecklistItem,
+    assignedTo: string,
+    recurring = false,
+  ) {
     if (!isManager.value || !item.recordId) return;
-    const effectiveAssignment = assignmentFor(item.recordId);
-    const datedAssignment = assignments.value.find(
+    const businessDate = recurring
+      ? RECURRING_ASSIGNMENT_DATE
+      : selectedDate.value;
+    const targetAssignment = assignments.value.find(
       (assignment) =>
         assignment.itemRecordId === item.recordId &&
-        assignment.businessDate === selectedDate.value,
+        assignment.businessDate === businessDate,
     );
     try {
       if (!assignedTo) {
-        if (effectiveAssignment) {
-          await deleteChecklistAssignment(effectiveAssignment.id);
+        if (targetAssignment) {
+          await deleteChecklistAssignment(targetAssignment.id);
           assignments.value = assignments.value.filter(
-            (entry) => entry.id !== effectiveAssignment.id,
+            (entry) => entry.id !== targetAssignment.id,
           );
         }
-        toast("Tarea sin asignar");
+        toast(
+          recurring ? "Asignación recurrente eliminada" : "Excepción eliminada",
+        );
         return;
       }
       const saved = await saveChecklistAssignment({
         itemRecordId: item.recordId,
-        businessDate: selectedDate.value,
+        businessDate,
         assignedTo,
         assignedBy: currentUserId.value,
       });
-      assignments.value = datedAssignment
+      assignments.value = targetAssignment
         ? assignments.value.map((entry) =>
-            entry.id === datedAssignment.id ? saved : entry,
+            entry.id === targetAssignment.id ? saved : entry,
           )
         : [...assignments.value, saved];
-      toast(`Asignada a ${staffName(assignedTo)}`);
+      toast(
+        recurring
+          ? `Todos los ${WEEKDAY_SHORT[selectedWeekday.value]}: ${staffName(assignedTo)}`
+          : `Asignada a ${staffName(assignedTo)}`,
+      );
     } catch (error) {
       console.error("Could not assign checklist item", error);
       toast("No se pudo asignar la tarea");

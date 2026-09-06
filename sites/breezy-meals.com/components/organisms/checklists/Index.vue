@@ -22,6 +22,41 @@
         </Button>
       </div>
 
+      <div
+        class="inline-flex w-full rounded-md border border-border p-1 sm:w-auto"
+        role="group"
+        aria-label="Alcance de asignación"
+      >
+        <button
+          type="button"
+          class="inline-flex h-8 flex-1 items-center justify-center rounded px-3 text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:flex-none"
+          :class="
+            assignmentScope === 'date'
+              ? 'bg-primary text-primary-foreground shadow-sm'
+              : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+          "
+          :aria-pressed="assignmentScope === 'date'"
+          @click="assignmentScope = 'date'"
+        >
+          <CalendarDays :size="15" class="mr-2" />
+          Solo esta fecha
+        </button>
+        <button
+          type="button"
+          class="inline-flex h-8 flex-1 items-center justify-center rounded px-3 text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:flex-none"
+          :class="
+            assignmentScope === 'recurring'
+              ? 'bg-primary text-primary-foreground shadow-sm'
+              : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+          "
+          :aria-pressed="assignmentScope === 'recurring'"
+          @click="assignmentScope = 'recurring'"
+        >
+          <Repeat2 :size="15" class="mr-2" />
+          Todos los {{ selectedWeekdayLabel }}
+        </button>
+      </div>
+
       <div class="flex items-center gap-2">
         <Button
           variant="ghost"
@@ -426,11 +461,13 @@ import {
 } from "@common/components/ui/select";
 import {
   Archive,
+  CalendarDays,
   Check,
   ChevronLeft,
   ChevronRight,
   Pencil,
   Plus,
+  Repeat2,
 } from "lucide-vue-next";
 import {
   isItemDone,
@@ -441,6 +478,7 @@ import {
 
 const {
   selectedDate,
+  selectedWeekday,
   weekStrip,
   selectedPretty,
   isSelectedClosed,
@@ -469,6 +507,20 @@ const {
   updateTask,
   archiveTask,
 } = useChecklists();
+
+const assignmentScope = ref<"date" | "recurring">("recurring");
+const weekdayNames = [
+  "domingos",
+  "lunes",
+  "martes",
+  "miércoles",
+  "jueves",
+  "viernes",
+  "sábados",
+];
+const selectedWeekdayLabel = computed(
+  () => weekdayNames[selectedWeekday.value],
+);
 
 const taskDialogOpen = ref(false);
 const savingTask = ref(false);
@@ -524,7 +576,11 @@ const assignmentValue = (item: ChecklistItem) =>
 
 function onAssigneeChange(item: ChecklistItem, value: unknown) {
   const assignedTo = String(value);
-  void setItemAssignee(item, assignedTo === "__unassigned" ? "" : assignedTo);
+  void setItemAssignee(
+    item,
+    assignedTo === "__unassigned" ? "" : assignedTo,
+    assignmentScope.value === "recurring",
+  );
 }
 
 function onInput(listId: string, item: ChecklistItem, e: Event) {
