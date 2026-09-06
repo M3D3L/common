@@ -1,0 +1,5332 @@
+[
+  {
+    "id": "_pb_users_auth_",
+    "name": "users",
+    "type": "auth",
+    "system": false,
+    "schema": [
+      {
+        "system": false,
+        "id": "users_avatar",
+        "name": "avatar",
+        "type": "file",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "mimeTypes": [
+            "image/jpeg",
+            "image/png",
+            "image/svg+xml",
+            "image/gif",
+            "image/webp"
+          ],
+          "thumbs": null,
+          "maxSelect": 1,
+          "maxSize": 5242880,
+          "protected": false
+        }
+      },
+      {
+        "system": false,
+        "id": "athimyeg",
+        "name": "bio",
+        "type": "text",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "sdn4amuo",
+        "name": "role",
+        "type": "relation",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "collectionId": "i72eiewfbkuzmz1",
+          "cascadeDelete": false,
+          "minSelect": null,
+          "maxSelect": 1,
+          "displayFields": null
+        }
+      },
+      {
+        "system": false,
+        "id": "x8ldhmuo",
+        "name": "name",
+        "type": "text",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "p3ewzmdo",
+        "name": "title",
+        "type": "text",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "kwuiheuy",
+        "name": "phone",
+        "type": "text",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "sbgpni7o",
+        "name": "socials",
+        "type": "json",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "maxSize": 2000000
+        }
+      }
+    ],
+    "indexes": [],
+    "listRule": "@request.auth.id != \"\"",
+    "viewRule": "@request.auth.id != \"\"",
+    "createRule": null,
+    "updateRule": "id = @request.auth.id",
+    "deleteRule": null,
+    "options": {
+      "allowEmailAuth": true,
+      "allowOAuth2Auth": true,
+      "allowUsernameAuth": true,
+      "exceptEmailDomains": null,
+      "manageRule": null,
+      "minPasswordLength": 8,
+      "onlyEmailDomains": [],
+      "onlyVerified": false,
+      "requireEmail": false
+    }
+  },
+  {
+    "id": "n8vlzyhiq8ng0ur",
+    "name": "Images",
+    "type": "base",
+    "system": false,
+    "schema": [
+      {
+        "system": false,
+        "id": "szjrspje",
+        "name": "field",
+        "type": "file",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "mimeTypes": [],
+          "thumbs": [],
+          "maxSelect": 1,
+          "maxSize": 5242880,
+          "protected": false
+        }
+      }
+    ],
+    "indexes": [],
+    "listRule": "",
+    "viewRule": "",
+    "createRule": null,
+    "updateRule": null,
+    "deleteRule": null,
+    "options": {}
+  },
+  {
+    "id": "i72eiewfbkuzmz1",
+    "name": "categories",
+    "type": "base",
+    "system": false,
+    "schema": [
+      {
+        "system": false,
+        "id": "egq6xnlc",
+        "name": "nameEn",
+        "type": "text",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "p01a8qoc",
+        "name": "nameSp",
+        "type": "text",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "3eykv0jy",
+        "name": "slug",
+        "type": "text",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      }
+    ],
+    "indexes": [],
+    "listRule": null,
+    "viewRule": null,
+    "createRule": null,
+    "updateRule": null,
+    "deleteRule": null,
+    "options": {}
+  },
+  {
+    "id": "brzassignrslt01",
+    "name": "checklist_assignment_results",
+    "type": "base",
+    "system": false,
+    "schema": [
+      {
+        "system": false,
+        "id": "carassign",
+        "name": "assignment",
+        "type": "relation",
+        "required": true,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "collectionId": "brzcheckassign1",
+          "cascadeDelete": true,
+          "minSelect": null,
+          "maxSelect": 1,
+          "displayFields": null
+        }
+      },
+      {
+        "system": false,
+        "id": "cardone1",
+        "name": "done",
+        "type": "bool",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {}
+      },
+      {
+        "system": false,
+        "id": "carnumber",
+        "name": "number_value",
+        "type": "number",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "noDecimal": false
+        }
+      },
+      {
+        "system": false,
+        "id": "cartext1",
+        "name": "text_value",
+        "type": "text",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "carcheck",
+        "name": "checked_at",
+        "type": "date",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": "",
+          "max": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "caruser1",
+        "name": "completed_by",
+        "type": "relation",
+        "required": true,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "collectionId": "_pb_users_auth_",
+          "cascadeDelete": false,
+          "minSelect": null,
+          "maxSelect": 1,
+          "displayFields": null
+        }
+      },
+      {
+        "system": false,
+        "id": "carname1",
+        "name": "completed_by_name",
+        "type": "text",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      }
+    ],
+    "indexes": [
+      "CREATE INDEX `idx_checklist_assignment_result_time` ON `checklist_assignment_results` (`assignment`, `checked_at`)"
+    ],
+    "listRule": "@request.auth.verified = true || assignment.assigned_to = @request.auth.id",
+    "viewRule": "@request.auth.verified = true || assignment.assigned_to = @request.auth.id",
+    "createRule": "@request.auth.verified = true || (assignment.assigned_to = @request.auth.id && completed_by = @request.auth.id)",
+    "updateRule": "@request.auth.verified = true",
+    "deleteRule": "@request.auth.verified = true",
+    "options": {}
+  },
+  {
+    "id": "brzcheckassign1",
+    "name": "checklist_assignments",
+    "type": "base",
+    "system": false,
+    "schema": [
+      {
+        "system": false,
+        "id": "caitem01",
+        "name": "item",
+        "type": "relation",
+        "required": true,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "collectionId": "brzcheckitem001",
+          "cascadeDelete": false,
+          "minSelect": null,
+          "maxSelect": 1,
+          "displayFields": null
+        }
+      },
+      {
+        "system": false,
+        "id": "cabizday",
+        "name": "business_date",
+        "type": "text",
+        "required": true,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "caassgn1",
+        "name": "assigned_to",
+        "type": "relation",
+        "required": true,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "collectionId": "_pb_users_auth_",
+          "cascadeDelete": false,
+          "minSelect": null,
+          "maxSelect": 1,
+          "displayFields": null
+        }
+      },
+      {
+        "system": false,
+        "id": "caassignby",
+        "name": "assigned_by",
+        "type": "relation",
+        "required": true,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "collectionId": "_pb_users_auth_",
+          "cascadeDelete": false,
+          "minSelect": null,
+          "maxSelect": 1,
+          "displayFields": null
+        }
+      },
+      {
+        "system": false,
+        "id": "canotes1",
+        "name": "notes",
+        "type": "text",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "casort01",
+        "name": "sort_order",
+        "type": "number",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "noDecimal": false
+        }
+      }
+    ],
+    "indexes": [
+      "CREATE UNIQUE INDEX `idx_checklist_assignment_day_item` ON `checklist_assignments` (`business_date`, `item`)",
+      "CREATE INDEX `idx_checklist_assignment_user_day` ON `checklist_assignments` (`assigned_to`, `business_date`)"
+    ],
+    "listRule": "@request.auth.verified = true || assigned_to = @request.auth.id",
+    "viewRule": "@request.auth.verified = true || assigned_to = @request.auth.id",
+    "createRule": "@request.auth.verified = true",
+    "updateRule": "@request.auth.verified = true",
+    "deleteRule": "@request.auth.verified = true",
+    "options": {}
+  },
+  {
+    "id": "brzcheckitem001",
+    "name": "checklist_items",
+    "type": "base",
+    "system": false,
+    "schema": [
+      {
+        "system": false,
+        "id": "cisection",
+        "name": "section",
+        "type": "relation",
+        "required": true,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "collectionId": "brzchecksect001",
+          "cascadeDelete": true,
+          "minSelect": null,
+          "maxSelect": 1,
+          "displayFields": null
+        }
+      },
+      {
+        "system": false,
+        "id": "cilegacy",
+        "name": "legacy_id",
+        "type": "text",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "cilabel1",
+        "name": "label",
+        "type": "text",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "cikind01",
+        "name": "kind",
+        "type": "select",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "maxSelect": 1,
+          "values": [
+            "check",
+            "number",
+            "text"
+          ]
+        }
+      },
+      {
+        "system": false,
+        "id": "cirequir",
+        "name": "required",
+        "type": "bool",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {}
+      },
+      {
+        "system": false,
+        "id": "ciunit01",
+        "name": "unit",
+        "type": "text",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "cimin001",
+        "name": "minimum",
+        "type": "number",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "noDecimal": false
+        }
+      },
+      {
+        "system": false,
+        "id": "cimax001",
+        "name": "maximum",
+        "type": "number",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "noDecimal": false
+        }
+      },
+      {
+        "system": false,
+        "id": "cihint01",
+        "name": "hint",
+        "type": "text",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "cidays01",
+        "name": "days",
+        "type": "json",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "maxSize": 2000000
+        }
+      },
+      {
+        "system": false,
+        "id": "cisort01",
+        "name": "sort_order",
+        "type": "number",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "noDecimal": true
+        }
+      },
+      {
+        "system": false,
+        "id": "cisrcidx",
+        "name": "source_index",
+        "type": "number",
+        "required": true,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "noDecimal": true
+        }
+      },
+      {
+        "system": false,
+        "id": "cipaylod",
+        "name": "legacy_payload",
+        "type": "json",
+        "required": true,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "maxSize": 2000000
+        }
+      },
+      {
+        "system": false,
+        "id": "ciactive",
+        "name": "active",
+        "type": "bool",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {}
+      }
+    ],
+    "indexes": [
+      "CREATE UNIQUE INDEX `idx_checklist_item_source` ON `checklist_items` (`section`, `source_index`)"
+    ],
+    "listRule": "@request.auth.id != \"\"",
+    "viewRule": "@request.auth.id != \"\"",
+    "createRule": "@request.auth.verified = true",
+    "updateRule": "@request.auth.verified = true",
+    "deleteRule": "@request.auth.verified = true",
+    "options": {}
+  },
+  {
+    "id": "brzcheckrslt001",
+    "name": "checklist_results",
+    "type": "base",
+    "system": false,
+    "schema": [
+      {
+        "system": false,
+        "id": "cresrun1",
+        "name": "run",
+        "type": "relation",
+        "required": true,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "collectionId": "brzcheckruns001",
+          "cascadeDelete": true,
+          "minSelect": null,
+          "maxSelect": 1,
+          "displayFields": null
+        }
+      },
+      {
+        "system": false,
+        "id": "cresitem",
+        "name": "item",
+        "type": "relation",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "collectionId": "brzcheckitem001",
+          "cascadeDelete": false,
+          "minSelect": null,
+          "maxSelect": 1,
+          "displayFields": null
+        }
+      },
+      {
+        "system": false,
+        "id": "cresleg1",
+        "name": "legacy_item_id",
+        "type": "text",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "cresdone",
+        "name": "done",
+        "type": "bool",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {}
+      },
+      {
+        "system": false,
+        "id": "cresnum1",
+        "name": "number_value",
+        "type": "number",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "noDecimal": false
+        }
+      },
+      {
+        "system": false,
+        "id": "crestext",
+        "name": "text_value",
+        "type": "text",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "cresat01",
+        "name": "checked_at",
+        "type": "date",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": "",
+          "max": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "cresatms",
+        "name": "checked_at_ms",
+        "type": "number",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "noDecimal": true
+        }
+      },
+      {
+        "system": false,
+        "id": "cresuser",
+        "name": "checked_by",
+        "type": "relation",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "collectionId": "_pb_users_auth_",
+          "cascadeDelete": false,
+          "minSelect": null,
+          "maxSelect": 1,
+          "displayFields": null
+        }
+      },
+      {
+        "system": false,
+        "id": "cresname",
+        "name": "checked_by_name",
+        "type": "text",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "crespayl",
+        "name": "legacy_payload",
+        "type": "json",
+        "required": true,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "maxSize": 2000000
+        }
+      }
+    ],
+    "indexes": [
+      "CREATE UNIQUE INDEX `idx_checklist_result_item` ON `checklist_results` (`run`, `legacy_item_id`)"
+    ],
+    "listRule": "@request.auth.id != \"\"",
+    "viewRule": "@request.auth.id != \"\"",
+    "createRule": "@request.auth.id != \"\"",
+    "updateRule": "@request.auth.id != \"\"",
+    "deleteRule": "@request.auth.id != \"\"",
+    "options": {}
+  },
+  {
+    "id": "brzcheckruns001",
+    "name": "checklist_runs",
+    "type": "base",
+    "system": false,
+    "schema": [
+      {
+        "system": false,
+        "id": "crtempl1",
+        "name": "template",
+        "type": "relation",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "collectionId": "brzchecktmpl001",
+          "cascadeDelete": false,
+          "minSelect": null,
+          "maxSelect": 1,
+          "displayFields": null
+        }
+      },
+      {
+        "system": false,
+        "id": "crlegacy",
+        "name": "legacy_template_id",
+        "type": "text",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "crbizday",
+        "name": "business_date",
+        "type": "text",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "crstart1",
+        "name": "started_at",
+        "type": "date",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": "",
+          "max": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "crdone01",
+        "name": "completed_at",
+        "type": "date",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": "",
+          "max": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "crstartm",
+        "name": "started_at_ms",
+        "type": "number",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "noDecimal": true
+        }
+      },
+      {
+        "system": false,
+        "id": "crdonems",
+        "name": "completed_at_ms",
+        "type": "number",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "noDecimal": true
+        }
+      },
+      {
+        "system": false,
+        "id": "cruser01",
+        "name": "performed_by",
+        "type": "relation",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "collectionId": "_pb_users_auth_",
+          "cascadeDelete": false,
+          "minSelect": null,
+          "maxSelect": 1,
+          "displayFields": null
+        }
+      },
+      {
+        "system": false,
+        "id": "crbyname",
+        "name": "performed_by_name",
+        "type": "text",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "crstatus",
+        "name": "status",
+        "type": "select",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "maxSelect": 1,
+          "values": [
+            "in_progress",
+            "done"
+          ]
+        }
+      },
+      {
+        "system": false,
+        "id": "crsource",
+        "name": "source_record",
+        "type": "text",
+        "required": true,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "crpayload",
+        "name": "legacy_payload",
+        "type": "json",
+        "required": true,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "maxSize": 2000000
+        }
+      }
+    ],
+    "indexes": [
+      "CREATE UNIQUE INDEX `idx_checklist_run_day` ON `checklist_runs` (`source_record`, `legacy_template_id`, `business_date`)"
+    ],
+    "listRule": "@request.auth.id != \"\"",
+    "viewRule": "@request.auth.id != \"\"",
+    "createRule": "@request.auth.id != \"\"",
+    "updateRule": "@request.auth.id != \"\"",
+    "deleteRule": "@request.auth.id != \"\"",
+    "options": {}
+  },
+  {
+    "id": "brzchecksect001",
+    "name": "checklist_sections",
+    "type": "base",
+    "system": false,
+    "schema": [
+      {
+        "system": false,
+        "id": "cstempl1",
+        "name": "template",
+        "type": "relation",
+        "required": true,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "collectionId": "brzchecktmpl001",
+          "cascadeDelete": true,
+          "minSelect": null,
+          "maxSelect": 1,
+          "displayFields": null
+        }
+      },
+      {
+        "system": false,
+        "id": "cslegacy",
+        "name": "legacy_key",
+        "type": "text",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "cslabel1",
+        "name": "label",
+        "type": "text",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "cssort01",
+        "name": "sort_order",
+        "type": "number",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "noDecimal": true
+        }
+      },
+      {
+        "system": false,
+        "id": "cssrcidx",
+        "name": "source_index",
+        "type": "number",
+        "required": true,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "noDecimal": true
+        }
+      },
+      {
+        "system": false,
+        "id": "cspaylod",
+        "name": "legacy_payload",
+        "type": "json",
+        "required": true,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "maxSize": 2000000
+        }
+      }
+    ],
+    "indexes": [
+      "CREATE UNIQUE INDEX `idx_checklist_section_source` ON `checklist_sections` (`template`, `source_index`)"
+    ],
+    "listRule": "@request.auth.id != \"\"",
+    "viewRule": "@request.auth.id != \"\"",
+    "createRule": "@request.auth.id != \"\"",
+    "updateRule": "@request.auth.id != \"\"",
+    "deleteRule": "@request.auth.id != \"\"",
+    "options": {}
+  },
+  {
+    "id": "brzchecktmpl001",
+    "name": "checklist_templates",
+    "type": "base",
+    "system": false,
+    "schema": [
+      {
+        "system": false,
+        "id": "ctlegacy",
+        "name": "legacy_id",
+        "type": "text",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "cttitle1",
+        "name": "title",
+        "type": "text",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "ctdescr1",
+        "name": "description",
+        "type": "text",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "cticon01",
+        "name": "icon",
+        "type": "text",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "ctsort01",
+        "name": "sort_order",
+        "type": "number",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "noDecimal": true
+        }
+      },
+      {
+        "system": false,
+        "id": "ctactive",
+        "name": "active",
+        "type": "bool",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {}
+      },
+      {
+        "system": false,
+        "id": "ctdays01",
+        "name": "days",
+        "type": "json",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "maxSize": 2000000
+        }
+      },
+      {
+        "system": false,
+        "id": "ctsource",
+        "name": "source_record",
+        "type": "text",
+        "required": true,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "ctsrcidx",
+        "name": "source_index",
+        "type": "number",
+        "required": true,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "noDecimal": true
+        }
+      },
+      {
+        "system": false,
+        "id": "ctpayload",
+        "name": "legacy_payload",
+        "type": "json",
+        "required": true,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "maxSize": 2000000
+        }
+      }
+    ],
+    "indexes": [
+      "CREATE UNIQUE INDEX `idx_checklist_template_source` ON `checklist_templates` (`source_record`, `source_index`)"
+    ],
+    "listRule": "@request.auth.id != \"\"",
+    "viewRule": "@request.auth.id != \"\"",
+    "createRule": "@request.auth.id != \"\"",
+    "updateRule": "@request.auth.id != \"\"",
+    "deleteRule": "@request.auth.id != \"\"",
+    "options": {}
+  },
+  {
+    "id": "brzclockentry01",
+    "name": "clock_entries",
+    "type": "base",
+    "system": false,
+    "schema": [
+      {
+        "system": false,
+        "id": "ceuser01",
+        "name": "staff_user",
+        "type": "relation",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "collectionId": "_pb_users_auth_",
+          "cascadeDelete": false,
+          "minSelect": null,
+          "maxSelect": 1,
+          "displayFields": null
+        }
+      },
+      {
+        "system": false,
+        "id": "celegacy",
+        "name": "legacy_user_id",
+        "type": "text",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "cename01",
+        "name": "staff_name",
+        "type": "text",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "cedirect",
+        "name": "direction",
+        "type": "select",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "maxSelect": 1,
+          "values": [
+            "in",
+            "out"
+          ]
+        }
+      },
+      {
+        "system": false,
+        "id": "ceoccur1",
+        "name": "occurred_at",
+        "type": "date",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": "",
+          "max": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "ceatraw1",
+        "name": "legacy_occurred_at",
+        "type": "text",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "cesource",
+        "name": "source_record",
+        "type": "text",
+        "required": true,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "ceindex1",
+        "name": "source_index",
+        "type": "number",
+        "required": true,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "noDecimal": true
+        }
+      },
+      {
+        "system": false,
+        "id": "cehash01",
+        "name": "source_hash",
+        "type": "text",
+        "required": true,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "cepaylod",
+        "name": "legacy_payload",
+        "type": "json",
+        "required": true,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "maxSize": 2000000
+        }
+      }
+    ],
+    "indexes": [
+      "CREATE UNIQUE INDEX `idx_clock_entry_source` ON `clock_entries` (`source_record`, `source_index`)",
+      "CREATE INDEX `idx_clock_entry_user_time` ON `clock_entries` (`legacy_user_id`, `occurred_at`)"
+    ],
+    "listRule": "@request.auth.id != \"\"",
+    "viewRule": "@request.auth.id != \"\"",
+    "createRule": "@request.auth.id != \"\"",
+    "updateRule": "@request.auth.id != \"\"",
+    "deleteRule": "@request.auth.id != \"\"",
+    "options": {}
+  },
+  {
+    "id": "brzorderlines01",
+    "name": "comanda_lines",
+    "type": "base",
+    "system": false,
+    "schema": [
+      {
+        "system": false,
+        "id": "clcomanda",
+        "name": "comanda",
+        "type": "relation",
+        "required": true,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "collectionId": "7pnmvktzc496xgu",
+          "cascadeDelete": true,
+          "minSelect": null,
+          "maxSelect": 1,
+          "displayFields": null
+        }
+      },
+      {
+        "system": false,
+        "id": "clitem001",
+        "name": "menu_item",
+        "type": "relation",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "collectionId": "brzmenuitems001",
+          "cascadeDelete": false,
+          "minSelect": null,
+          "maxSelect": 1,
+          "displayFields": null
+        }
+      },
+      {
+        "system": false,
+        "id": "clname001",
+        "name": "item_name",
+        "type": "text",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "clqty0001",
+        "name": "quantity",
+        "type": "number",
+        "required": true,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "noDecimal": true
+        }
+      },
+      {
+        "system": false,
+        "id": "clunitprc",
+        "name": "unit_price",
+        "type": "number",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "noDecimal": false
+        }
+      },
+      {
+        "system": false,
+        "id": "cltotal01",
+        "name": "line_total",
+        "type": "number",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "noDecimal": false
+        }
+      },
+      {
+        "system": false,
+        "id": "clsort001",
+        "name": "sort_order",
+        "type": "number",
+        "required": true,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "noDecimal": true
+        }
+      },
+      {
+        "system": false,
+        "id": "clpayload",
+        "name": "legacy_payload",
+        "type": "json",
+        "required": true,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "maxSize": 2000000
+        }
+      }
+    ],
+    "indexes": [
+      "CREATE UNIQUE INDEX `idx_comanda_line_order` ON `comanda_lines` (`comanda`, `sort_order`)"
+    ],
+    "listRule": "@request.auth.id != \"\"",
+    "viewRule": "@request.auth.id != \"\"",
+    "createRule": "@request.auth.id != \"\"",
+    "updateRule": "@request.auth.id != \"\"",
+    "deleteRule": "@request.auth.id != \"\"",
+    "options": {}
+  },
+  {
+    "id": "7pnmvktzc496xgu",
+    "name": "comandas",
+    "type": "base",
+    "system": false,
+    "schema": [
+      {
+        "system": false,
+        "id": "ulvzaq92",
+        "name": "data",
+        "type": "json",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "maxSize": 2000000
+        }
+      },
+      {
+        "system": false,
+        "id": "coorderuid",
+        "name": "order_uid",
+        "type": "text",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "conumber01",
+        "name": "order_number",
+        "type": "number",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "noDecimal": true
+        }
+      },
+      {
+        "system": false,
+        "id": "costatus01",
+        "name": "status",
+        "type": "select",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "maxSelect": 1,
+          "values": [
+            "active",
+            "ready",
+            "discarded"
+          ]
+        }
+      },
+      {
+        "system": false,
+        "id": "comode0001",
+        "name": "mode",
+        "type": "select",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "maxSelect": 1,
+          "values": [
+            "llevar",
+            "aqui",
+            "domicilio"
+          ]
+        }
+      },
+      {
+        "system": false,
+        "id": "coplacedat",
+        "name": "placed_at",
+        "type": "date",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": "",
+          "max": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "cofulfildt",
+        "name": "fulfill_date",
+        "type": "text",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "cofulfiltm",
+        "name": "fulfill_time",
+        "type": "text",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "cocustname",
+        "name": "customer_name",
+        "type": "text",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "cocustphon",
+        "name": "customer_phone",
+        "type": "text",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "cocustaddr",
+        "name": "customer_address",
+        "type": "text",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "comembercd",
+        "name": "member_code",
+        "type": "text",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "cosubtotal",
+        "name": "subtotal",
+        "type": "number",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "noDecimal": false
+        }
+      },
+      {
+        "system": false,
+        "id": "codelivfee",
+        "name": "delivery_fee",
+        "type": "number",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "noDecimal": false
+        }
+      },
+      {
+        "system": false,
+        "id": "cototal001",
+        "name": "total",
+        "type": "number",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "noDecimal": false
+        }
+      },
+      {
+        "system": false,
+        "id": "copromoid1",
+        "name": "promo_id",
+        "type": "text",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "copromolbl",
+        "name": "promo_label",
+        "type": "text",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "cosnaphash",
+        "name": "snapshot_hash",
+        "type": "text",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      }
+    ],
+    "indexes": [],
+    "listRule": "@request.auth.id != \"\"",
+    "viewRule": "@request.auth.id != \"\"",
+    "createRule": "",
+    "updateRule": "@request.auth.id != \"\"",
+    "deleteRule": "@request.auth.id != \"\"",
+    "options": {}
+  },
+  {
+    "id": "t4p6v1kvolimc27",
+    "name": "inbox",
+    "type": "base",
+    "system": false,
+    "schema": [
+      {
+        "system": false,
+        "id": "y9dghko7",
+        "name": "email",
+        "type": "email",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "exceptDomains": null,
+          "onlyDomains": null
+        }
+      },
+      {
+        "system": false,
+        "id": "yaljedge",
+        "name": "message",
+        "type": "text",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      }
+    ],
+    "indexes": [],
+    "listRule": null,
+    "viewRule": null,
+    "createRule": "",
+    "updateRule": null,
+    "deleteRule": null,
+    "options": {}
+  },
+  {
+    "id": "u2ighk148f9f8zn",
+    "name": "labels",
+    "type": "base",
+    "system": false,
+    "schema": [
+      {
+        "system": false,
+        "id": "crfx9yvo",
+        "name": "name",
+        "type": "text",
+        "required": true,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "qqjuwlxs",
+        "name": "sub",
+        "type": "text",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "rg07nyie",
+        "name": "ing",
+        "type": "text",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "ehnobus3",
+        "name": "alg",
+        "type": "text",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "vsi6w5gz",
+        "name": "pair",
+        "type": "text",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "7jwmjwuj",
+        "name": "portion_size",
+        "type": "number",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "noDecimal": false
+        }
+      },
+      {
+        "system": false,
+        "id": "0mzvaj4b",
+        "name": "seals",
+        "type": "json",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "maxSize": 2000000
+        }
+      },
+      {
+        "system": false,
+        "id": "adrcfv3l",
+        "name": "rows",
+        "type": "json",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "maxSize": 2000000
+        }
+      },
+      {
+        "system": false,
+        "id": "doybrdpr",
+        "name": "total_size",
+        "type": "number",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "noDecimal": false
+        }
+      },
+      {
+        "system": false,
+        "id": "3spcfsj2",
+        "name": "energia_kcal_100g",
+        "type": "number",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "noDecimal": false
+        }
+      },
+      {
+        "system": false,
+        "id": "xq8ai7bd",
+        "name": "energia_kj_100g",
+        "type": "number",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "noDecimal": false
+        }
+      },
+      {
+        "system": false,
+        "id": "lpljcxn4",
+        "name": "proteina_g_100g",
+        "type": "number",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "noDecimal": false
+        }
+      },
+      {
+        "system": false,
+        "id": "b5lurhkj",
+        "name": "grasas_totales_g_100g",
+        "type": "number",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "noDecimal": false
+        }
+      },
+      {
+        "system": false,
+        "id": "iye3nrvq",
+        "name": "grasas_saturadas_g_100g",
+        "type": "number",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "noDecimal": false
+        }
+      },
+      {
+        "system": false,
+        "id": "ab8tmrbf",
+        "name": "grasas_trans_g_100g",
+        "type": "number",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "noDecimal": false
+        }
+      },
+      {
+        "system": false,
+        "id": "tqt8cws9",
+        "name": "carbohidratos_disponibles_g_100g",
+        "type": "number",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "noDecimal": false
+        }
+      },
+      {
+        "system": false,
+        "id": "h4cbbvft",
+        "name": "azucares_totales_g_100g",
+        "type": "number",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "noDecimal": false
+        }
+      },
+      {
+        "system": false,
+        "id": "mlrukray",
+        "name": "azucares_anadidos_g_100g",
+        "type": "number",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "noDecimal": false
+        }
+      },
+      {
+        "system": false,
+        "id": "w9ks54bn",
+        "name": "fibra_g_100g",
+        "type": "number",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "noDecimal": false
+        }
+      },
+      {
+        "system": false,
+        "id": "fy0flicq",
+        "name": "sodio_mg_100g",
+        "type": "number",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "noDecimal": false
+        }
+      },
+      {
+        "system": false,
+        "id": "l3ld9atx",
+        "name": "leyendas",
+        "type": "json",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "maxSize": 2000000
+        }
+      },
+      {
+        "system": false,
+        "id": "vzaxq0ew",
+        "name": "expiration",
+        "type": "text",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "2m4tp3em",
+        "name": "type",
+        "type": "select",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "maxSelect": 1,
+          "values": [
+            "meal",
+            "snack",
+            "drink",
+            "sweet"
+          ]
+        }
+      }
+    ],
+    "indexes": [],
+    "listRule": "@request.auth.id != \"\"",
+    "viewRule": "@request.auth.id != \"\"",
+    "createRule": "@request.auth.id != \"\"",
+    "updateRule": "@request.auth.id != \"\"",
+    "deleteRule": "@request.auth.id != \"\"",
+    "options": {}
+  },
+  {
+    "id": "5r730r7vsiilgv0",
+    "name": "members",
+    "type": "base",
+    "system": false,
+    "schema": [
+      {
+        "system": false,
+        "id": "jxn7oykn",
+        "name": "name",
+        "type": "text",
+        "required": true,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "u8olqgh2",
+        "name": "phone",
+        "type": "text",
+        "required": true,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "vijxfpfe",
+        "name": "member_code",
+        "type": "text",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "umqlpwa8",
+        "name": "address",
+        "type": "text",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "kpdfaqmf",
+        "name": "status",
+        "type": "select",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "maxSelect": 1,
+          "values": [
+            "active",
+            "dormant",
+            "archived"
+          ]
+        }
+      },
+      {
+        "system": false,
+        "id": "8zmhapmc",
+        "name": "last_active_at",
+        "type": "date",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": "",
+          "max": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "tqhktj8p",
+        "name": "total_orders",
+        "type": "number",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "noDecimal": false
+        }
+      },
+      {
+        "system": false,
+        "id": "tccdv43q",
+        "name": "joined_date",
+        "type": "date",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": "",
+          "max": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "d0funfgq",
+        "name": "notes",
+        "type": "editor",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "convertUrls": false
+        }
+      }
+    ],
+    "indexes": [
+      "CREATE UNIQUE INDEX `idx_IoPF1gG` ON `members` (`member_code`)"
+    ],
+    "listRule": "@request.auth.id != \"\"",
+    "viewRule": "@request.auth.id != \"\"",
+    "createRule": "@request.auth.id != \"\"",
+    "updateRule": "@request.auth.id != \"\"",
+    "deleteRule": "@request.auth.id != \"\"",
+    "options": {}
+  },
+  {
+    "id": "brzmemberpay01",
+    "name": "membership_payment_requests",
+    "type": "base",
+    "system": false,
+    "schema": [
+      {
+        "system": false,
+        "id": "mprname1",
+        "name": "name",
+        "type": "text",
+        "required": true,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "mprphone",
+        "name": "phone",
+        "type": "text",
+        "required": true,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "mpraddr1",
+        "name": "address",
+        "type": "text",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "mprmembercode",
+        "name": "existing_member_code",
+        "type": "text",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "mprmethod",
+        "name": "payment_method",
+        "type": "select",
+        "required": true,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "maxSelect": 1,
+          "values": [
+            "transfer",
+            "in_store"
+          ]
+        }
+      },
+      {
+        "system": false,
+        "id": "mprproof",
+        "name": "payment_proof",
+        "type": "file",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "mimeTypes": [
+            "image/jpeg",
+            "image/png",
+            "image/webp"
+          ],
+          "thumbs": [
+            "320x320"
+          ],
+          "maxSelect": 1,
+          "maxSize": 5242880,
+          "protected": true
+        }
+      },
+      {
+        "system": false,
+        "id": "mproffer",
+        "name": "offer_code",
+        "type": "text",
+        "required": true,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "mprstatus",
+        "name": "status",
+        "type": "select",
+        "required": true,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "maxSelect": 1,
+          "values": [
+            "submitted",
+            "approved",
+            "rejected",
+            "cancelled"
+          ]
+        }
+      },
+      {
+        "system": false,
+        "id": "mprmember",
+        "name": "member",
+        "type": "relation",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "collectionId": "5r730r7vsiilgv0",
+          "cascadeDelete": false,
+          "minSelect": null,
+          "maxSelect": 1,
+          "displayFields": null
+        }
+      },
+      {
+        "system": false,
+        "id": "mprmembership",
+        "name": "membership",
+        "type": "relation",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "collectionId": "10yv9mmef5frnko",
+          "cascadeDelete": false,
+          "minSelect": null,
+          "maxSelect": 1,
+          "displayFields": null
+        }
+      },
+      {
+        "system": false,
+        "id": "mpramount",
+        "name": "approved_amount",
+        "type": "number",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "noDecimal": false
+        }
+      },
+      {
+        "system": false,
+        "id": "mprcredits",
+        "name": "approved_credits",
+        "type": "number",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "noDecimal": true
+        }
+      },
+      {
+        "system": false,
+        "id": "mprreviewer",
+        "name": "reviewed_by",
+        "type": "relation",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "collectionId": "_pb_users_auth_",
+          "cascadeDelete": false,
+          "minSelect": null,
+          "maxSelect": 1,
+          "displayFields": null
+        }
+      },
+      {
+        "system": false,
+        "id": "mprreviewed",
+        "name": "reviewed_at",
+        "type": "date",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": "",
+          "max": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "mprnote1",
+        "name": "review_note",
+        "type": "text",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "mprapplied",
+        "name": "applied_at",
+        "type": "date",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": "",
+          "max": ""
+        }
+      }
+    ],
+    "indexes": [
+      "CREATE INDEX `idx_membership_payment_status` ON `membership_payment_requests` (`status`, `created`)",
+      "CREATE INDEX `idx_membership_payment_phone` ON `membership_payment_requests` (`phone`)"
+    ],
+    "listRule": "@request.auth.id != \"\"",
+    "viewRule": "@request.auth.id != \"\"",
+    "createRule": "offer_code = \"meal-pack-5\" && status = \"submitted\" && reviewed_by = \"\" && reviewed_at = \"\" && member = \"\" && membership = \"\" && approved_amount = 0 && approved_credits = 0 && applied_at = \"\" && review_note = \"\" && ((payment_method = \"transfer\" && payment_proof != \"\") || payment_method = \"in_store\")",
+    "updateRule": "@request.auth.id != \"\"",
+    "deleteRule": "@request.auth.verified = true",
+    "options": {}
+  },
+  {
+    "id": "10yv9mmef5frnko",
+    "name": "memberships",
+    "type": "base",
+    "system": false,
+    "schema": [
+      {
+        "system": false,
+        "id": "ktlossmt",
+        "name": "member",
+        "type": "relation",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "collectionId": "5r730r7vsiilgv0",
+          "cascadeDelete": false,
+          "minSelect": null,
+          "maxSelect": 1,
+          "displayFields": null
+        }
+      },
+      {
+        "system": false,
+        "id": "ykuqpdoj",
+        "name": "period",
+        "type": "text",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "mlbebhg2",
+        "name": "credits_total",
+        "type": "number",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "noDecimal": false
+        }
+      },
+      {
+        "system": false,
+        "id": "xdm6ahfb",
+        "name": "credits_used",
+        "type": "number",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "noDecimal": false
+        }
+      },
+      {
+        "system": false,
+        "id": "joh3pwuw",
+        "name": "issued_date",
+        "type": "date",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": "",
+          "max": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "rgtk1qy5",
+        "name": "expires_date",
+        "type": "date",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": "",
+          "max": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "7d7gbwnx",
+        "name": "status",
+        "type": "select",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "maxSelect": 1,
+          "values": [
+            "active",
+            "exhausted",
+            "expired",
+            "cancelled"
+          ]
+        }
+      },
+      {
+        "system": false,
+        "id": "oaggya52",
+        "name": "issued_by",
+        "type": "relation",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "collectionId": "_pb_users_auth_",
+          "cascadeDelete": false,
+          "minSelect": null,
+          "maxSelect": 1,
+          "displayFields": null
+        }
+      }
+    ],
+    "indexes": [
+      "CREATE UNIQUE INDEX `idx_Sdx8Oky` ON `memberships` (\n  `member`,\n  `period`\n)"
+    ],
+    "listRule": "@request.auth.id != \"\"",
+    "viewRule": "@request.auth.id != \"\"",
+    "createRule": "@request.auth.id != \"\"",
+    "updateRule": "@request.auth.id != \"\"",
+    "deleteRule": "@request.auth.id != \"\"",
+    "options": {}
+  },
+  {
+    "id": "eyo86eymxgiyifl",
+    "name": "menu",
+    "type": "base",
+    "system": false,
+    "schema": [
+      {
+        "system": false,
+        "id": "kzqyubj1",
+        "name": "dishes",
+        "type": "json",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "maxSize": 2000000
+        }
+      },
+      {
+        "system": false,
+        "id": "iz6pirjt",
+        "name": "active",
+        "type": "json",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "maxSize": 2000000
+        }
+      },
+      {
+        "system": false,
+        "id": "27gd287l",
+        "name": "sold_out",
+        "type": "json",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "maxSize": 2000000
+        }
+      },
+      {
+        "system": false,
+        "id": "hyejrxbt",
+        "name": "weekly",
+        "type": "json",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "maxSize": 2000000
+        }
+      },
+      {
+        "system": false,
+        "id": "nhu6l4yh",
+        "name": "week_blocks",
+        "type": "json",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "maxSize": 2000000
+        }
+      },
+      {
+        "system": false,
+        "id": "6ezlthul",
+        "name": "rotation",
+        "type": "json",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "maxSize": 2000000
+        }
+      },
+      {
+        "system": false,
+        "id": "hyyv1ftf",
+        "name": "rotation_anchor",
+        "type": "text",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "mlnccjyj",
+        "name": "overrides",
+        "type": "json",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "maxSize": 2000000
+        }
+      },
+      {
+        "system": false,
+        "id": "hibc3u0g",
+        "name": "store",
+        "type": "json",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "maxSize": 2000000
+        }
+      }
+    ],
+    "indexes": [],
+    "listRule": "",
+    "viewRule": "",
+    "createRule": "@request.auth.id != \"\"",
+    "updateRule": "@request.auth.id != \"\"",
+    "deleteRule": "@request.auth.id != \"\"",
+    "options": {}
+  },
+  {
+    "id": "brzmenucateg001",
+    "name": "menu_categories",
+    "type": "base",
+    "system": false,
+    "schema": [
+      {
+        "system": false,
+        "id": "mckey0001",
+        "name": "key",
+        "type": "text",
+        "required": true,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "mclabel01",
+        "name": "label",
+        "type": "text",
+        "required": true,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "mckind001",
+        "name": "kind",
+        "type": "select",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "maxSelect": 1,
+          "values": [
+            "main",
+            "side",
+            "drink"
+          ]
+        }
+      },
+      {
+        "system": false,
+        "id": "mcsort001",
+        "name": "sort_order",
+        "type": "number",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "noDecimal": true
+        }
+      },
+      {
+        "system": false,
+        "id": "mcsource1",
+        "name": "source_record",
+        "type": "text",
+        "required": true,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "mcpayload",
+        "name": "legacy_payload",
+        "type": "json",
+        "required": true,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "maxSize": 2000000
+        }
+      }
+    ],
+    "indexes": [
+      "CREATE UNIQUE INDEX `idx_menu_category_key` ON `menu_categories` (`source_record`, `key`)"
+    ],
+    "listRule": "",
+    "viewRule": "",
+    "createRule": "@request.auth.id != \"\"",
+    "updateRule": "@request.auth.id != \"\"",
+    "deleteRule": "@request.auth.id != \"\"",
+    "options": {}
+  },
+  {
+    "id": "brzdayitems0001",
+    "name": "menu_day_items",
+    "type": "base",
+    "system": false,
+    "schema": [
+      {
+        "system": false,
+        "id": "mdiday001",
+        "name": "day",
+        "type": "relation",
+        "required": true,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "collectionId": "brzweekdays0001",
+          "cascadeDelete": true,
+          "minSelect": null,
+          "maxSelect": 1,
+          "displayFields": null
+        }
+      },
+      {
+        "system": false,
+        "id": "mdiitem01",
+        "name": "item",
+        "type": "relation",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "collectionId": "brzmenuitems001",
+          "cascadeDelete": false,
+          "minSelect": null,
+          "maxSelect": 1,
+          "displayFields": null
+        }
+      },
+      {
+        "system": false,
+        "id": "mdicateg1",
+        "name": "category",
+        "type": "relation",
+        "required": true,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "collectionId": "brzmenucateg001",
+          "cascadeDelete": false,
+          "minSelect": null,
+          "maxSelect": 1,
+          "displayFields": null
+        }
+      },
+      {
+        "system": false,
+        "id": "mdiname01",
+        "name": "legacy_name",
+        "type": "text",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "mdisort01",
+        "name": "sort_order",
+        "type": "number",
+        "required": true,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "noDecimal": true
+        }
+      },
+      {
+        "system": false,
+        "id": "mdipayload",
+        "name": "legacy_payload",
+        "type": "json",
+        "required": true,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "maxSize": 2000000
+        }
+      }
+    ],
+    "indexes": [
+      "CREATE UNIQUE INDEX `idx_menu_day_item_order` ON `menu_day_items` (`day`, `category`, `sort_order`)"
+    ],
+    "listRule": "",
+    "viewRule": "",
+    "createRule": "@request.auth.id != \"\"",
+    "updateRule": "@request.auth.id != \"\"",
+    "deleteRule": "@request.auth.id != \"\"",
+    "options": {}
+  },
+  {
+    "id": "brzmenuitems001",
+    "name": "menu_items",
+    "type": "base",
+    "system": false,
+    "schema": [
+      {
+        "system": false,
+        "id": "micategor",
+        "name": "category",
+        "type": "relation",
+        "required": true,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "collectionId": "brzmenucateg001",
+          "cascadeDelete": false,
+          "minSelect": null,
+          "maxSelect": 1,
+          "displayFields": null
+        }
+      },
+      {
+        "system": false,
+        "id": "misurface",
+        "name": "surface",
+        "type": "select",
+        "required": true,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "maxSelect": 1,
+          "values": [
+            "dishes",
+            "store"
+          ]
+        }
+      },
+      {
+        "system": false,
+        "id": "miname001",
+        "name": "name",
+        "type": "text",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "miprice01",
+        "name": "price",
+        "type": "number",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "noDecimal": false
+        }
+      },
+      {
+        "system": false,
+        "id": "miimage01",
+        "name": "image_url",
+        "type": "text",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "micombo01",
+        "name": "combo",
+        "type": "json",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "maxSize": 2000000
+        }
+      },
+      {
+        "system": false,
+        "id": "misource1",
+        "name": "source_record",
+        "type": "text",
+        "required": true,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "misrcidx1",
+        "name": "source_index",
+        "type": "number",
+        "required": true,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "noDecimal": true
+        }
+      },
+      {
+        "system": false,
+        "id": "mipayload",
+        "name": "legacy_payload",
+        "type": "json",
+        "required": true,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "maxSize": 2000000
+        }
+      }
+    ],
+    "indexes": [
+      "CREATE UNIQUE INDEX `idx_menu_item_source` ON `menu_items` (`source_record`, `surface`, `category`, `source_index`)",
+      "CREATE INDEX `idx_menu_item_name` ON `menu_items` (`name`)"
+    ],
+    "listRule": "",
+    "viewRule": "",
+    "createRule": "@request.auth.id != \"\"",
+    "updateRule": "@request.auth.id != \"\"",
+    "deleteRule": "@request.auth.id != \"\"",
+    "options": {}
+  },
+  {
+    "id": "brzrotations001",
+    "name": "menu_rotation_slots",
+    "type": "base",
+    "system": false,
+    "schema": [
+      {
+        "system": false,
+        "id": "mrssched1",
+        "name": "schedule",
+        "type": "relation",
+        "required": true,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "collectionId": "brzschedules001",
+          "cascadeDelete": true,
+          "minSelect": null,
+          "maxSelect": 1,
+          "displayFields": null
+        }
+      },
+      {
+        "system": false,
+        "id": "mrsblock1",
+        "name": "block",
+        "type": "relation",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "collectionId": "brzweekblock001",
+          "cascadeDelete": false,
+          "minSelect": null,
+          "maxSelect": 1,
+          "displayFields": null
+        }
+      },
+      {
+        "system": false,
+        "id": "mrslegid1",
+        "name": "legacy_block_id",
+        "type": "text",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "mrssort01",
+        "name": "sort_order",
+        "type": "number",
+        "required": true,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "noDecimal": true
+        }
+      },
+      {
+        "system": false,
+        "id": "mrspayload",
+        "name": "legacy_payload",
+        "type": "json",
+        "required": true,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "maxSize": 2000000
+        }
+      }
+    ],
+    "indexes": [
+      "CREATE UNIQUE INDEX `idx_menu_rotation_order` ON `menu_rotation_slots` (`schedule`, `sort_order`)"
+    ],
+    "listRule": "",
+    "viewRule": "",
+    "createRule": "@request.auth.id != \"\"",
+    "updateRule": "@request.auth.id != \"\"",
+    "deleteRule": "@request.auth.id != \"\"",
+    "options": {}
+  },
+  {
+    "id": "brzschedules001",
+    "name": "menu_schedules",
+    "type": "base",
+    "system": false,
+    "schema": [
+      {
+        "system": false,
+        "id": "msmenu001",
+        "name": "menu",
+        "type": "relation",
+        "required": true,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "collectionId": "eyo86eymxgiyifl",
+          "cascadeDelete": false,
+          "minSelect": null,
+          "maxSelect": 1,
+          "displayFields": null
+        }
+      },
+      {
+        "system": false,
+        "id": "msanchor1",
+        "name": "rotation_anchor",
+        "type": "text",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "mssource1",
+        "name": "source_record",
+        "type": "text",
+        "required": true,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "mspayload",
+        "name": "legacy_payload",
+        "type": "json",
+        "required": true,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "maxSize": 2000000
+        }
+      }
+    ],
+    "indexes": [
+      "CREATE UNIQUE INDEX `idx_menu_schedule_source` ON `menu_schedules` (`source_record`)"
+    ],
+    "listRule": "",
+    "viewRule": "",
+    "createRule": "@request.auth.id != \"\"",
+    "updateRule": "@request.auth.id != \"\"",
+    "deleteRule": "@request.auth.id != \"\"",
+    "options": {}
+  },
+  {
+    "id": "brzserviceday01",
+    "name": "menu_service_days",
+    "type": "base",
+    "system": false,
+    "schema": [
+      {
+        "system": false,
+        "id": "msdsched1",
+        "name": "schedule",
+        "type": "relation",
+        "required": true,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "collectionId": "brzschedules001",
+          "cascadeDelete": false,
+          "minSelect": null,
+          "maxSelect": 1,
+          "displayFields": null
+        }
+      },
+      {
+        "system": false,
+        "id": "msdbizday",
+        "name": "business_date",
+        "type": "text",
+        "required": true,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "msdsource",
+        "name": "source_kind",
+        "type": "select",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "maxSelect": 1,
+          "values": [
+            "auto",
+            "manual",
+            "legacy"
+          ]
+        }
+      },
+      {
+        "system": false,
+        "id": "msdblock1",
+        "name": "block",
+        "type": "relation",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "collectionId": "brzweekblock001",
+          "cascadeDelete": false,
+          "minSelect": null,
+          "maxSelect": 1,
+          "displayFields": null
+        }
+      },
+      {
+        "system": false,
+        "id": "msdclosed1",
+        "name": "closed",
+        "type": "bool",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {}
+      },
+      {
+        "system": false,
+        "id": "msdpayload",
+        "name": "legacy_payload",
+        "type": "json",
+        "required": true,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "maxSize": 2000000
+        }
+      }
+    ],
+    "indexes": [
+      "CREATE UNIQUE INDEX `idx_menu_service_day` ON `menu_service_days` (`schedule`, `business_date`)"
+    ],
+    "listRule": "",
+    "viewRule": "",
+    "createRule": "@request.auth.id != \"\"",
+    "updateRule": "@request.auth.id != \"\"",
+    "deleteRule": "@request.auth.id != \"\"",
+    "options": {}
+  },
+  {
+    "id": "brzserviceitm01",
+    "name": "menu_service_items",
+    "type": "base",
+    "system": false,
+    "schema": [
+      {
+        "system": false,
+        "id": "msiservic",
+        "name": "service_day",
+        "type": "relation",
+        "required": true,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "collectionId": "brzserviceday01",
+          "cascadeDelete": true,
+          "minSelect": null,
+          "maxSelect": 1,
+          "displayFields": null
+        }
+      },
+      {
+        "system": false,
+        "id": "msiitem01",
+        "name": "item",
+        "type": "relation",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "collectionId": "brzmenuitems001",
+          "cascadeDelete": false,
+          "minSelect": null,
+          "maxSelect": 1,
+          "displayFields": null
+        }
+      },
+      {
+        "system": false,
+        "id": "msicateg1",
+        "name": "category",
+        "type": "relation",
+        "required": true,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "collectionId": "brzmenucateg001",
+          "cascadeDelete": false,
+          "minSelect": null,
+          "maxSelect": 1,
+          "displayFields": null
+        }
+      },
+      {
+        "system": false,
+        "id": "msiname01",
+        "name": "legacy_name",
+        "type": "text",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "msisort01",
+        "name": "sort_order",
+        "type": "number",
+        "required": true,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "noDecimal": true
+        }
+      },
+      {
+        "system": false,
+        "id": "msisold01",
+        "name": "sold_out",
+        "type": "bool",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {}
+      },
+      {
+        "system": false,
+        "id": "msipayload",
+        "name": "legacy_payload",
+        "type": "json",
+        "required": true,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "maxSize": 2000000
+        }
+      }
+    ],
+    "indexes": [
+      "CREATE UNIQUE INDEX `idx_menu_service_item` ON `menu_service_items` (`service_day`, `category`, `sort_order`)"
+    ],
+    "listRule": "",
+    "viewRule": "",
+    "createRule": "@request.auth.id != \"\"",
+    "updateRule": "@request.auth.id != \"\"",
+    "deleteRule": "@request.auth.id != \"\"",
+    "options": {}
+  },
+  {
+    "id": "brzweekblock001",
+    "name": "menu_week_blocks",
+    "type": "base",
+    "system": false,
+    "schema": [
+      {
+        "system": false,
+        "id": "mblegacy1",
+        "name": "legacy_id",
+        "type": "text",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "mbname001",
+        "name": "name",
+        "type": "text",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "mbcolor01",
+        "name": "color",
+        "type": "text",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "mbsort001",
+        "name": "sort_order",
+        "type": "number",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "noDecimal": true
+        }
+      },
+      {
+        "system": false,
+        "id": "mbsource1",
+        "name": "source_record",
+        "type": "text",
+        "required": true,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "mbsrcidx1",
+        "name": "source_index",
+        "type": "number",
+        "required": true,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "noDecimal": true
+        }
+      },
+      {
+        "system": false,
+        "id": "mbpayload",
+        "name": "legacy_payload",
+        "type": "json",
+        "required": true,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "maxSize": 2000000
+        }
+      }
+    ],
+    "indexes": [
+      "CREATE UNIQUE INDEX `idx_menu_block_source` ON `menu_week_blocks` (`source_record`, `source_index`)"
+    ],
+    "listRule": "",
+    "viewRule": "",
+    "createRule": "@request.auth.id != \"\"",
+    "updateRule": "@request.auth.id != \"\"",
+    "deleteRule": "@request.auth.id != \"\"",
+    "options": {}
+  },
+  {
+    "id": "brzweekdays0001",
+    "name": "menu_week_days",
+    "type": "base",
+    "system": false,
+    "schema": [
+      {
+        "system": false,
+        "id": "mdblock01",
+        "name": "block",
+        "type": "relation",
+        "required": true,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "collectionId": "brzweekblock001",
+          "cascadeDelete": true,
+          "minSelect": null,
+          "maxSelect": 1,
+          "displayFields": null
+        }
+      },
+      {
+        "system": false,
+        "id": "mdweekday",
+        "name": "weekday",
+        "type": "number",
+        "required": true,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "noDecimal": true
+        }
+      },
+      {
+        "system": false,
+        "id": "mdsrcidx1",
+        "name": "source_index",
+        "type": "number",
+        "required": true,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "noDecimal": true
+        }
+      },
+      {
+        "system": false,
+        "id": "mdpayload",
+        "name": "legacy_payload",
+        "type": "json",
+        "required": true,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "maxSize": 2000000
+        }
+      }
+    ],
+    "indexes": [
+      "CREATE UNIQUE INDEX `idx_menu_block_day` ON `menu_week_days` (`block`, `weekday`)"
+    ],
+    "listRule": "",
+    "viewRule": "",
+    "createRule": "@request.auth.id != \"\"",
+    "updateRule": "@request.auth.id != \"\"",
+    "deleteRule": "@request.auth.id != \"\"",
+    "options": {}
+  },
+  {
+    "id": "brzweekoverrd01",
+    "name": "menu_week_overrides",
+    "type": "base",
+    "system": false,
+    "schema": [
+      {
+        "system": false,
+        "id": "mwosched1",
+        "name": "schedule",
+        "type": "relation",
+        "required": true,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "collectionId": "brzschedules001",
+          "cascadeDelete": true,
+          "minSelect": null,
+          "maxSelect": 1,
+          "displayFields": null
+        }
+      },
+      {
+        "system": false,
+        "id": "mwomonday",
+        "name": "week_monday",
+        "type": "text",
+        "required": true,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "mwokind01",
+        "name": "kind",
+        "type": "select",
+        "required": true,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "maxSelect": 1,
+          "values": [
+            "block",
+            "closed"
+          ]
+        }
+      },
+      {
+        "system": false,
+        "id": "mwoblock1",
+        "name": "block",
+        "type": "relation",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "collectionId": "brzweekblock001",
+          "cascadeDelete": false,
+          "minSelect": null,
+          "maxSelect": 1,
+          "displayFields": null
+        }
+      },
+      {
+        "system": false,
+        "id": "mwolegid1",
+        "name": "legacy_block_id",
+        "type": "text",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "mwopayload",
+        "name": "legacy_payload",
+        "type": "json",
+        "required": true,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "maxSize": 2000000
+        }
+      }
+    ],
+    "indexes": [
+      "CREATE UNIQUE INDEX `idx_menu_override_week` ON `menu_week_overrides` (`schedule`, `week_monday`)"
+    ],
+    "listRule": "",
+    "viewRule": "",
+    "createRule": "@request.auth.id != \"\"",
+    "updateRule": "@request.auth.id != \"\"",
+    "deleteRule": "@request.auth.id != \"\"",
+    "options": {}
+  },
+  {
+    "id": "brzmigrationrun",
+    "name": "migration_runs",
+    "type": "base",
+    "system": false,
+    "schema": [
+      {
+        "system": false,
+        "id": "migrkey1",
+        "name": "migration_key",
+        "type": "text",
+        "required": true,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "migrstat",
+        "name": "status",
+        "type": "select",
+        "required": true,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "maxSelect": 1,
+          "values": [
+            "running",
+            "verified",
+            "failed"
+          ]
+        }
+      },
+      {
+        "system": false,
+        "id": "migrhash",
+        "name": "source_hash",
+        "type": "text",
+        "required": true,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "migrcnts",
+        "name": "counts",
+        "type": "json",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "maxSize": 2000000
+        }
+      },
+      {
+        "system": false,
+        "id": "migrerrs",
+        "name": "errors",
+        "type": "json",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "maxSize": 2000000
+        }
+      },
+      {
+        "system": false,
+        "id": "migrstrt",
+        "name": "started_at",
+        "type": "date",
+        "required": true,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": "",
+          "max": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "migrdone",
+        "name": "completed_at",
+        "type": "date",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": "",
+          "max": ""
+        }
+      }
+    ],
+    "indexes": [
+      "CREATE UNIQUE INDEX `idx_migration_key` ON `migration_runs` (`migration_key`)"
+    ],
+    "listRule": "@request.auth.id != \"\"",
+    "viewRule": "@request.auth.id != \"\"",
+    "createRule": "@request.auth.id != \"\"",
+    "updateRule": "@request.auth.id != \"\"",
+    "deleteRule": "@request.auth.id != \"\"",
+    "options": {}
+  },
+  {
+    "id": "9so8yxx3gmfej2t",
+    "name": "posts",
+    "type": "base",
+    "system": false,
+    "schema": [
+      {
+        "system": false,
+        "id": "htnnib2k",
+        "name": "title",
+        "type": "text",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "qqixxqdo",
+        "name": "description",
+        "type": "text",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "ewpawxfx",
+        "name": "content",
+        "type": "editor",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "convertUrls": false
+        }
+      },
+      {
+        "system": false,
+        "id": "1yvoozml",
+        "name": "video",
+        "type": "text",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "3otakxvm",
+        "name": "slug",
+        "type": "text",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "n5s471ie",
+        "name": "tags",
+        "type": "json",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "maxSize": 2000000
+        }
+      },
+      {
+        "system": false,
+        "id": "xgwj4h9o",
+        "name": "author",
+        "type": "relation",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "collectionId": "_pb_users_auth_",
+          "cascadeDelete": false,
+          "minSelect": null,
+          "maxSelect": 1,
+          "displayFields": null
+        }
+      },
+      {
+        "system": false,
+        "id": "fdww24dx",
+        "name": "cover_image",
+        "type": "file",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "mimeTypes": [],
+          "thumbs": [],
+          "maxSelect": 1,
+          "maxSize": 5242880,
+          "protected": false
+        }
+      },
+      {
+        "system": false,
+        "id": "ounnmyru",
+        "name": "sub_title",
+        "type": "text",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      }
+    ],
+    "indexes": [],
+    "listRule": "",
+    "viewRule": "",
+    "createRule": null,
+    "updateRule": null,
+    "deleteRule": null,
+    "options": {}
+  },
+  {
+    "id": "dtzsdu7ff0htx4j",
+    "name": "promos",
+    "type": "base",
+    "system": false,
+    "schema": [
+      {
+        "system": false,
+        "id": "zxth8vw3",
+        "name": "promoId",
+        "type": "text",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "xxeqbzcu",
+        "name": "label",
+        "type": "text",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "7czo8qn2",
+        "name": "priority",
+        "type": "number",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "noDecimal": false
+        }
+      },
+      {
+        "system": false,
+        "id": "qwkhh3tm",
+        "name": "active",
+        "type": "bool",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {}
+      },
+      {
+        "system": false,
+        "id": "4yp44bgb",
+        "name": "match",
+        "type": "json",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "maxSize": 2000000
+        }
+      },
+      {
+        "system": false,
+        "id": "hs0kuff3",
+        "name": "pricing",
+        "type": "json",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "maxSize": 2000000
+        }
+      },
+      {
+        "system": false,
+        "id": "8nnr0hwz",
+        "name": "display",
+        "type": "json",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "maxSize": 2000000
+        }
+      },
+      {
+        "system": false,
+        "id": "promoredeem01",
+        "name": "redemption",
+        "type": "json",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "maxSize": 2000000
+        }
+      }
+    ],
+    "indexes": [],
+    "listRule": "",
+    "viewRule": "",
+    "createRule": "@request.auth.id != \"\"",
+    "updateRule": "@request.auth.id != \"\"",
+    "deleteRule": "@request.auth.id != \"\"",
+    "options": {}
+  },
+  {
+    "id": "8xs1a6elkvya9py",
+    "name": "properties",
+    "type": "base",
+    "system": false,
+    "schema": [
+      {
+        "system": false,
+        "id": "tdvge24a",
+        "name": "title",
+        "type": "text",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "s1cfowws",
+        "name": "description",
+        "type": "text",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "is0pqb3k",
+        "name": "content",
+        "type": "editor",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "convertUrls": false
+        }
+      },
+      {
+        "system": false,
+        "id": "uxlseyg1",
+        "name": "video",
+        "type": "text",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "lni9ijf1",
+        "name": "slug",
+        "type": "text",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "umnltehx",
+        "name": "tags",
+        "type": "json",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "maxSize": 2000000
+        }
+      },
+      {
+        "system": false,
+        "id": "jff5lao4",
+        "name": "cover_image",
+        "type": "file",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "mimeTypes": [],
+          "thumbs": [],
+          "maxSelect": 1,
+          "maxSize": 5242880,
+          "protected": false
+        }
+      },
+      {
+        "system": false,
+        "id": "9m8qv1mm",
+        "name": "sub_title",
+        "type": "text",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "ozz4eb9x",
+        "name": "type",
+        "type": "select",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "maxSelect": 1,
+          "values": [
+            "property",
+            "rental",
+            "lot"
+          ]
+        }
+      },
+      {
+        "system": false,
+        "id": "zusfmzut",
+        "name": "price",
+        "type": "number",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "noDecimal": false
+        }
+      },
+      {
+        "system": false,
+        "id": "bqyyq4mt",
+        "name": "address",
+        "type": "text",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "v5phfp7m",
+        "name": "bedrooms",
+        "type": "number",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "noDecimal": false
+        }
+      },
+      {
+        "system": false,
+        "id": "y25ec0td",
+        "name": "bathrooms",
+        "type": "number",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "noDecimal": false
+        }
+      },
+      {
+        "system": false,
+        "id": "occgtaoy",
+        "name": "area",
+        "type": "number",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "noDecimal": false
+        }
+      },
+      {
+        "system": false,
+        "id": "ulnwmlau",
+        "name": "lotSize",
+        "type": "number",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "noDecimal": false
+        }
+      },
+      {
+        "system": false,
+        "id": "9rpk5uwf",
+        "name": "amenities",
+        "type": "json",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "maxSize": 2000000
+        }
+      },
+      {
+        "system": false,
+        "id": "atyisyvm",
+        "name": "gallery",
+        "type": "file",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "mimeTypes": [],
+          "thumbs": [],
+          "maxSelect": 99,
+          "maxSize": 5242880,
+          "protected": false
+        }
+      },
+      {
+        "system": false,
+        "id": "bw6piy0w",
+        "name": "lat",
+        "type": "text",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "ioffnwsn",
+        "name": "long",
+        "type": "text",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "wlqjaqle",
+        "name": "author",
+        "type": "relation",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "collectionId": "_pb_users_auth_",
+          "cascadeDelete": false,
+          "minSelect": null,
+          "maxSelect": 1,
+          "displayFields": null
+        }
+      },
+      {
+        "system": false,
+        "id": "t0al7mb1",
+        "name": "pricingType",
+        "type": "select",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "maxSelect": 1,
+          "values": [
+            "per/night",
+            "per/month",
+            "usd",
+            "mxn"
+          ]
+        }
+      },
+      {
+        "system": false,
+        "id": "vxcftpri",
+        "name": "featured",
+        "type": "bool",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {}
+      },
+      {
+        "system": false,
+        "id": "vchlyflf",
+        "name": "keywords",
+        "type": "text",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "4kg5duyc",
+        "name": "description_Sp",
+        "type": "text",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "d09ti9ku",
+        "name": "content_Sp",
+        "type": "editor",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "convertUrls": false
+        }
+      },
+      {
+        "system": false,
+        "id": "bevnz9oy",
+        "name": "sub_title_Sp",
+        "type": "text",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "lp5dijzc",
+        "name": "keywords_Sp",
+        "type": "text",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "elwxpmqr",
+        "name": "amenities_Sp",
+        "type": "json",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "maxSize": 2000000
+        }
+      }
+    ],
+    "indexes": [],
+    "listRule": "",
+    "viewRule": "",
+    "createRule": "@request.auth.verified = true",
+    "updateRule": "@request.auth.verified = true",
+    "deleteRule": "@request.auth.verified = true",
+    "options": {}
+  },
+  {
+    "id": "brzrecipeing001",
+    "name": "recipe_ingredients",
+    "type": "base",
+    "system": false,
+    "schema": [
+      {
+        "system": false,
+        "id": "rirecipe",
+        "name": "recipe",
+        "type": "relation",
+        "required": true,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "collectionId": "brzrecipes00001",
+          "cascadeDelete": true,
+          "minSelect": null,
+          "maxSelect": 1,
+          "displayFields": null
+        }
+      },
+      {
+        "system": false,
+        "id": "ritext01",
+        "name": "text",
+        "type": "text",
+        "required": true,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "risort01",
+        "name": "sort_order",
+        "type": "number",
+        "required": true,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "noDecimal": true
+        }
+      }
+    ],
+    "indexes": [
+      "CREATE UNIQUE INDEX `idx_recipe_ingredient_order` ON `recipe_ingredients` (`recipe`, `sort_order`)"
+    ],
+    "listRule": "@request.auth.id != \"\"",
+    "viewRule": "@request.auth.id != \"\"",
+    "createRule": "@request.auth.id != \"\"",
+    "updateRule": "@request.auth.id != \"\"",
+    "deleteRule": "@request.auth.id != \"\"",
+    "options": {}
+  },
+  {
+    "id": "brzrecipestp001",
+    "name": "recipe_steps",
+    "type": "base",
+    "system": false,
+    "schema": [
+      {
+        "system": false,
+        "id": "rsrecipe",
+        "name": "recipe",
+        "type": "relation",
+        "required": true,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "collectionId": "brzrecipes00001",
+          "cascadeDelete": true,
+          "minSelect": null,
+          "maxSelect": 1,
+          "displayFields": null
+        }
+      },
+      {
+        "system": false,
+        "id": "rstext01",
+        "name": "instruction",
+        "type": "text",
+        "required": true,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "rssort01",
+        "name": "sort_order",
+        "type": "number",
+        "required": true,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "noDecimal": true
+        }
+      }
+    ],
+    "indexes": [
+      "CREATE UNIQUE INDEX `idx_recipe_step_order` ON `recipe_steps` (`recipe`, `sort_order`)"
+    ],
+    "listRule": "@request.auth.id != \"\"",
+    "viewRule": "@request.auth.id != \"\"",
+    "createRule": "@request.auth.id != \"\"",
+    "updateRule": "@request.auth.id != \"\"",
+    "deleteRule": "@request.auth.id != \"\"",
+    "options": {}
+  },
+  {
+    "id": "brzrecipes00001",
+    "name": "recipes",
+    "type": "base",
+    "system": false,
+    "schema": [
+      {
+        "system": false,
+        "id": "rclegacy",
+        "name": "legacy_id",
+        "type": "text",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "rctitle1",
+        "name": "title",
+        "type": "text",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "rcurl001",
+        "name": "source_url",
+        "type": "text",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "rcimage1",
+        "name": "image_url",
+        "type": "text",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "rcservng",
+        "name": "servings",
+        "type": "text",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "rcprep01",
+        "name": "prep_time",
+        "type": "text",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "rccook01",
+        "name": "cook_time",
+        "type": "text",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "rctotal1",
+        "name": "total_time",
+        "type": "text",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "rccateg1",
+        "name": "category",
+        "type": "text",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "rccal001",
+        "name": "calories",
+        "type": "text",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "rccarb01",
+        "name": "carbs",
+        "type": "text",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "rcfat001",
+        "name": "fat",
+        "type": "text",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "rcprot01",
+        "name": "protein",
+        "type": "text",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "rcdetail",
+        "name": "has_detail",
+        "type": "bool",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {}
+      },
+      {
+        "system": false,
+        "id": "rcsource",
+        "name": "source_record",
+        "type": "text",
+        "required": true,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "rcsrcidx",
+        "name": "source_index",
+        "type": "number",
+        "required": true,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "noDecimal": true
+        }
+      },
+      {
+        "system": false,
+        "id": "rcpayload",
+        "name": "legacy_payload",
+        "type": "json",
+        "required": true,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "maxSize": 2000000
+        }
+      }
+    ],
+    "indexes": [
+      "CREATE UNIQUE INDEX `idx_recipe_source` ON `recipes` (`source_record`, `source_index`)",
+      "CREATE INDEX `idx_recipe_category` ON `recipes` (`category`)"
+    ],
+    "listRule": "@request.auth.id != \"\"",
+    "viewRule": "@request.auth.id != \"\"",
+    "createRule": "@request.auth.id != \"\"",
+    "updateRule": "@request.auth.id != \"\"",
+    "deleteRule": "@request.auth.id != \"\"",
+    "options": {}
+  },
+  {
+    "id": "8cloacv4wtd3usm",
+    "name": "recipies",
+    "type": "base",
+    "system": false,
+    "schema": [
+      {
+        "system": false,
+        "id": "vizmdivk",
+        "name": "data",
+        "type": "json",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "maxSize": 2000000
+        }
+      }
+    ],
+    "indexes": [],
+    "listRule": "@request.auth.id != \"\"",
+    "viewRule": "@request.auth.id != \"\"",
+    "createRule": "@request.auth.id != \"\"",
+    "updateRule": "@request.auth.id != \"\"",
+    "deleteRule": "@request.auth.id != \"\"",
+    "options": {}
+  },
+  {
+    "id": "mdhlk8k1bjda3xg",
+    "name": "redemptions",
+    "type": "base",
+    "system": false,
+    "schema": [
+      {
+        "system": false,
+        "id": "ulzxmudr",
+        "name": "membership",
+        "type": "relation",
+        "required": true,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "collectionId": "10yv9mmef5frnko",
+          "cascadeDelete": false,
+          "minSelect": null,
+          "maxSelect": 1,
+          "displayFields": null
+        }
+      },
+      {
+        "system": false,
+        "id": "ctx3jz9g",
+        "name": "member",
+        "type": "relation",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "collectionId": "5r730r7vsiilgv0",
+          "cascadeDelete": false,
+          "minSelect": null,
+          "maxSelect": 1,
+          "displayFields": null
+        }
+      },
+      {
+        "system": false,
+        "id": "ooraagte",
+        "name": "redeemed_at",
+        "type": "date",
+        "required": true,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": "",
+          "max": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "gvter1jr",
+        "name": "redeemed_by",
+        "type": "relation",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "collectionId": "_pb_users_auth_",
+          "cascadeDelete": false,
+          "minSelect": null,
+          "maxSelect": 1,
+          "displayFields": null
+        }
+      },
+      {
+        "system": false,
+        "id": "ik6sgycl",
+        "name": "kind",
+        "type": "select",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "maxSelect": 1,
+          "values": [
+            "meal",
+            "adjustment",
+            "topup_note"
+          ]
+        }
+      },
+      {
+        "system": false,
+        "id": "dsum0nwz",
+        "name": "amount",
+        "type": "number",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "noDecimal": false
+        }
+      },
+      {
+        "system": false,
+        "id": "waasgr4q",
+        "name": "reason",
+        "type": "text",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "wgr9cyzl",
+        "name": "voided",
+        "type": "bool",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {}
+      },
+      {
+        "system": false,
+        "id": "12qsvdue",
+        "name": "void_reason",
+        "type": "text",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "rdpayreq1",
+        "name": "payment_request",
+        "type": "relation",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "collectionId": "brzmemberpay01",
+          "cascadeDelete": false,
+          "minSelect": null,
+          "maxSelect": 1,
+          "displayFields": null
+        }
+      }
+    ],
+    "indexes": [
+      "CREATE UNIQUE INDEX `idx_redemption_payment_request` ON `redemptions` (`payment_request`) WHERE `payment_request` != ''"
+    ],
+    "listRule": "@request.auth.id != \"\"",
+    "viewRule": "@request.auth.id != \"\"",
+    "createRule": "@request.auth.id != \"\"",
+    "updateRule": "@request.auth.id != \"\"",
+    "deleteRule": "@request.auth.id != \"\"",
+    "options": {}
+  },
+  {
+    "id": "brzstaffshifts01",
+    "name": "staff_shifts",
+    "type": "base",
+    "system": false,
+    "schema": [
+      {
+        "system": false,
+        "id": "ssstaff01",
+        "name": "assigned_to",
+        "type": "relation",
+        "required": true,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "collectionId": "_pb_users_auth_",
+          "cascadeDelete": false,
+          "minSelect": null,
+          "maxSelect": 1,
+          "displayFields": null
+        }
+      },
+      {
+        "system": false,
+        "id": "ssbizdate",
+        "name": "business_date",
+        "type": "text",
+        "required": true,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "ssstart1",
+        "name": "start_time",
+        "type": "text",
+        "required": true,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "ssend001",
+        "name": "end_time",
+        "type": "text",
+        "required": true,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "sspositn",
+        "name": "position",
+        "type": "text",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "ssnotes01",
+        "name": "notes",
+        "type": "text",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "ssassign",
+        "name": "assigned_by",
+        "type": "relation",
+        "required": true,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "collectionId": "_pb_users_auth_",
+          "cascadeDelete": false,
+          "minSelect": null,
+          "maxSelect": 1,
+          "displayFields": null
+        }
+      }
+    ],
+    "indexes": [
+      "CREATE UNIQUE INDEX `idx_staff_shift_user_day` ON `staff_shifts` (`assigned_to`, `business_date`)",
+      "CREATE INDEX `idx_staff_shift_business_date` ON `staff_shifts` (`business_date`)"
+    ],
+    "listRule": "@request.auth.id != \"\"",
+    "viewRule": "@request.auth.id != \"\"",
+    "createRule": "@request.auth.verified = true",
+    "updateRule": "@request.auth.verified = true",
+    "deleteRule": "@request.auth.verified = true",
+    "options": {}
+  }
+]

@@ -12,6 +12,7 @@
     "schema:commerce": "node scripts/add-commerce-pocketbase-schema.js",
     "schema:checklist-assignments": "node scripts/add-checklist-assignment-schema.js",
     "schema:membership-payments": "node scripts/add-membership-payment-schema.js",
+    "schema:staff-schedule": "node scripts/add-staff-schedule-schema.js",
     "cleanup:commerce": "node scripts/cleanup-commerce-legacy.js",
     "preview": "nuxt generate && vite preview --outDir .output/public",
     "preview:prod": "NODE_ENV=production nuxt generate && vite preview --outDir .output/public --base /portfolio2025/",

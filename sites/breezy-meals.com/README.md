@@ -70,6 +70,23 @@ npm run preview:prod
 
 ## PocketBase Access Rules
 
+### Staff schedule
+
+The `/horarios` page reads weekly assignments from `staff_shifts`. All signed-in
+users can view the team schedule; PocketBase permits create, update, and delete
+only when `@request.auth.verified = true`.
+
+The import-ready schema generated from the latest export is
+`pb_schema.staff-schedule.json`. Back up PocketBase, then import that file from
+**Settings → Import collections**. PocketBase will preserve the existing
+collections and add `staff_shifts`.
+
+To regenerate it from a newer export:
+
+```bash
+npm run schema:staff-schedule -- input-schema.json pb_schema.staff-schedule.json
+```
+
 Export the current schema from PocketBase, then generate a hardened copy:
 
 ```bash

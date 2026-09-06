@@ -43,6 +43,7 @@ export default defineNuxtConfig({
   sitemap: {
     exclude: [
       "/inicio",
+      "/horarios",
       "/listas",
       "/checklists",
       "/socios",
@@ -126,6 +127,7 @@ export default defineNuxtConfig({
           "/_nuxt",
           "/blog/admin",
           "/inicio",
+          "/horarios",
           "/listas",
           "/checklists",
           "/socios",
@@ -204,6 +206,7 @@ export default defineNuxtConfig({
           ],
           staffLinks: [
             { to: "/inicio", label: "🕒" },
+            { to: "/horarios", label: "Horarios" },
             { to: "/listas", label: "Listas" },
             { to: "/socios", label: "Miembros" },
             { to: "/pagos", label: "Pagos" },
