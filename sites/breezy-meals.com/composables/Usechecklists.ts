@@ -23,22 +23,14 @@ import {
   prettyDate as prettyOf,
   WEEKDAY_SHORT,
   type ChecklistTemplate,
-  type ChecklistsData,
-  type ChecklistsRecord,
   type ChecklistRun,
   type ItemResult,
   type RunStatus,
   type RunsByDate,
 } from "~/utils/checklists";
-import type { RecordModel } from "pocketbase";
 
 /* ===== Config ===== */
 const STORAGE_KEY = "checklists";
-
-// A SINGLE record stores EVERYTHING in `data`:
-//   { version, lists:[...], runs: { [date]: { [checklistId]: run } } }
-const COLLECTION = "checklists";
-const FIELD = "data"; // ⚠️ JSON field name
 
 // Rapid ticks are batched before writing to the DB.
 const SAVE_DEBOUNCE_MS = 600;
@@ -50,14 +42,8 @@ const SAVE_DEBOUNCE_MS = 600;
  *  - Kept LIVE via record realtime; rehydrates on refresh.
  */
 function createChecklistsStore() {
-  const {
-    fetchCollection,
-    createItem,
-    updateItem,
-    subscribe,
-    unsubscribe,
-    user,
-  } = usePocketBaseCore();
+  const { subscribe, unsubscribe, user } = usePocketBaseCore();
+  const { loadChecklists, saveChecklistRun } = useNormalizedOperations();
 
   const me: string =
     (user as any)?.name || (user as any)?.email || (user as any)?.id || "";
@@ -65,7 +51,6 @@ function createChecklistsStore() {
   const { formatChecklist, formatChecklistReopen, waLink } = useWhatsappOrder();
 
   /* ===== State ===== */
-  const recordId = ref<string | null>(null);
   const version = ref(2);
   const templates = ref<ChecklistTemplate[]>([]);
   // runsByDate[date][checklistId] = run (kept in full so we never drop history).
@@ -200,48 +185,20 @@ function createChecklistsStore() {
   const resultFor = (id: string, itemId: string): ItemResult | undefined =>
     runFor(id)?.results?.[itemId];
 
-  /* ===== Assemble / apply the `data` object ===== */
-  function buildData(): ChecklistsData {
-    return {
-      version: version.value,
-      lists: templates.value,
-      runs: JSON.parse(JSON.stringify(runsByDate)),
-    };
-  }
-  function applyData(rec: ChecklistsRecord) {
-    recordId.value = rec.id;
-    const data = ((rec as any)[FIELD] as ChecklistsData) ?? {
-      version: 2,
-      lists: [],
-    };
-    version.value = data.version ?? 2;
-    templates.value = (data.lists ?? [])
-      .slice()
-      .sort((a, b) => (a.order || 0) - (b.order || 0));
+  function applyData(data: {
+    templates: ChecklistTemplate[];
+    runsByDate: RunsByDate;
+  }) {
+    templates.value = data.templates;
     Object.keys(runsByDate).forEach((k) => delete runsByDate[k]);
-    Object.assign(runsByDate, data.runs ?? {});
+    Object.assign(runsByDate, data.runsByDate);
   }
 
   /* ===== Load ===== */
   async function loadAll() {
     loading.value = true;
     try {
-      const res = await fetchCollection(
-        COLLECTION,
-        1,
-        1,
-        "",
-        "-created",
-        null,
-        null,
-        true,
-      );
-      const rec = res.items[0] as unknown as ChecklistsRecord | undefined;
-      if (rec) applyData(rec);
-      else {
-        recordId.value = null;
-        templates.value = [];
-      }
+      applyData(await loadChecklists());
     } catch {
       // Offline: keep the local cache.
     } finally {
@@ -249,9 +206,11 @@ function createChecklistsStore() {
     }
   }
 
-  /* ===== Save (optimistic + debounce; writes the WHOLE record) ===== */
+  /* ===== Save (optimistic + debounce; writes only changed runs) ===== */
   let saveTimer: ReturnType<typeof setTimeout> | undefined;
-  function scheduleSave() {
+  const dirtyRuns = new Set<string>();
+  function scheduleSave(checklistId: string) {
+    dirtyRuns.add(`${selectedDate.value}\u0000${checklistId}`);
     persistLocal();
     if (saveTimer) clearTimeout(saveTimer);
     saveTimer = setTimeout(flushSave, SAVE_DEBOUNCE_MS);
@@ -261,31 +220,40 @@ function createChecklistsStore() {
       clearTimeout(saveTimer);
       saveTimer = undefined;
     }
-    const data = buildData();
+    const pending = [...dirtyRuns];
+    dirtyRuns.clear();
     try {
-      if (recordId.value) {
-        await updateItem(COLLECTION, recordId.value, { [FIELD]: data });
-      } else {
-        const rec = await createItem(COLLECTION, { [FIELD]: data });
-        recordId.value = rec.id;
-      }
+      await Promise.all(
+        pending.map(async (key) => {
+          const [businessDate, checklistId] = key.split("\u0000");
+          const run = runsByDate[businessDate]?.[checklistId];
+          if (!run) return;
+          await saveChecklistRun(
+            businessDate,
+            checklistId,
+            JSON.parse(JSON.stringify(run)),
+          );
+        }),
+      );
     } catch (e) {
+      pending.forEach((key) => dirtyRuns.add(key));
       console.error("Could not save checklists", e);
     }
   }
 
   /* ===== Realtime + rehydrate ===== */
-  let unsub: (() => void) | null = null;
-  function onEvent(e: { action: string; record: RecordModel }) {
-    if (e.action === "delete") return;
+  const unsubs: (() => void)[] = [];
+  function onEvent() {
     if (saveTimer) return; // pending local save wins
-    applyData(e.record as unknown as ChecklistsRecord);
-    persistLocal();
+    void loadAll().then(persistLocal);
   }
   async function startLive() {
     if (!import.meta.client) return;
     try {
-      unsub = await subscribe(COLLECTION, onEvent, "*");
+      unsubs.push(
+        await subscribe("checklist_runs", onEvent, "*"),
+        await subscribe("checklist_results", onEvent, "*"),
+      );
       live.value = true;
     } catch {
       live.value = false;
@@ -293,12 +261,16 @@ function createChecklistsStore() {
   }
   async function stopLive() {
     try {
-      if (unsub) unsub();
-      else await unsubscribe(COLLECTION);
+      if (unsubs.length) unsubs.splice(0).forEach((unsub) => unsub());
+      else {
+        await Promise.all([
+          unsubscribe("checklist_runs"),
+          unsubscribe("checklist_results"),
+        ]);
+      }
     } catch {
       /* noop */
     }
-    unsub = null;
     live.value = false;
   }
   async function resync() {
@@ -320,7 +292,6 @@ function createChecklistsStore() {
     localStorage.setItem(
       STORAGE_KEY,
       JSON.stringify({
-        recordId: recordId.value,
         version: version.value,
         templates: templates.value,
         runsByDate,
@@ -332,7 +303,6 @@ function createChecklistsStore() {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (!raw) return;
       const s = JSON.parse(raw);
-      recordId.value = s.recordId ?? null;
       version.value = s.version ?? 2;
       templates.value = s.templates ?? [];
       Object.assign(runsByDate, s.runsByDate ?? {});
@@ -373,7 +343,7 @@ function createChecklistsStore() {
       ...run.results,
       [itemId]: { done, at: Date.now(), by: me },
     };
-    scheduleSave();
+    scheduleSave(checklistId);
   }
   function setValue(
     checklistId: string,
@@ -392,7 +362,7 @@ function createChecklistsStore() {
         ? { done: false, at: Date.now(), by: me }
         : { done: true, value: raw, at: Date.now(), by: me },
     };
-    scheduleSave();
+    scheduleSave(checklistId);
   }
 
   async function completeChecklist(id: string) {
@@ -405,6 +375,7 @@ function createChecklistsStore() {
     const dayT = t ? templateForDay(t, selectedWeekday.value) : null;
     const wa = openBlankTab();
 
+    scheduleSave(id);
     await flushSave(); // DB first
 
     if (dayT) sendToTab(wa, formatChecklist(buildChecklistMessage(dayT, run)));
@@ -422,6 +393,7 @@ function createChecklistsStore() {
     const t = templates.value.find((x) => x.id === id);
     const wa = openBlankTab();
 
+    scheduleSave(id);
     await flushSave();
 
     if (t) sendToTab(wa, formatChecklistReopen(t.title, run.by));

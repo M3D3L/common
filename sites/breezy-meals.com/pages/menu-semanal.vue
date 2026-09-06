@@ -226,6 +226,7 @@ interface WeekRowView {
 }
 
 const { fetchCollection } = usePocketBaseCore();
+const normalizedMenu = useNormalizedMenuOperations();
 
 const loading = ref(true);
 const record = ref<MenuRecordFull | null>(null);
@@ -360,7 +361,8 @@ async function load() {
       null,
       true,
     );
-    record.value = (res.items[0] as unknown as MenuRecordFull) ?? null;
+    const legacy = res.items[0] as unknown as MenuRecordFull | undefined;
+    record.value = legacy ? await normalizedMenu.loadMenu(legacy as any) : null;
   } catch {
     record.value = null;
   } finally {

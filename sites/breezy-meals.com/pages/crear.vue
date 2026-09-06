@@ -157,7 +157,7 @@ import { Separator } from "@common/components/ui/separator";
 import { Skeleton } from "@common/components/ui/skeleton";
 import { Plus, RotateCw, Save, Trash2 } from "lucide-vue-next";
 
-definePageMeta({ layout: "breezy" });
+definePageMeta({ layout: "breezy", staffOnly: true });
 
 type StoreItemForm = {
   name: string;

@@ -102,7 +102,7 @@
       >
         <Card
           v-for="recipe in visibleRecipes"
-          :key="recipe.id"
+          :key="recipe.recordId || recipe.id"
           class="group min-w-0 cursor-pointer overflow-hidden transition-shadow hover:shadow-md"
           tabindex="0"
           role="button"
@@ -606,6 +606,7 @@ interface Nutrition {
   protein?: string | null;
 }
 interface Recipe {
+  recordId?: string;
   id: string;
   title: string;
   url: string;
@@ -639,11 +640,13 @@ interface RecipeForm {
   protein: string;
 }
 
-const COLLECTION = "recipies";
-const { fetchCollection, createItem, updateItem } = usePocketBaseCore();
+const {
+  loadRecipes: loadNormalizedRecipes,
+  saveRecipe: persistNormalizedRecipe,
+  deleteRecipe: deleteNormalizedRecipe,
+} = useNormalizedOperations();
 const { run: runChatGPT, loading: aiLoading } = useChatGPT();
 const recipes = ref<Recipe[]>([]);
-const collectionRecordId = ref("");
 const loading = ref(true);
 const saving = ref(false);
 const loadError = ref("");
@@ -676,54 +679,17 @@ const emptyForm = (): RecipeForm => ({
 });
 const form = reactive<RecipeForm>(emptyForm());
 
-const parseRecipeData = (value: unknown): Recipe[] => {
-  const parsed = typeof value === "string" ? JSON.parse(value) : value;
-  if (!Array.isArray(parsed)) return [];
-  return parsed.filter((recipe): recipe is Recipe =>
-    Boolean(
-      recipe &&
-      typeof recipe === "object" &&
-      typeof recipe.id === "string" &&
-      typeof recipe.title === "string",
-    ),
-  );
-};
-
 const loadRecipes = async () => {
   loading.value = true;
   loadError.value = "";
   try {
-    const response = await fetchCollection(
-      COLLECTION,
-      1,
-      1,
-      "",
-      "-created",
-      null,
-      null,
-      true,
-    );
-    const record = response.items[0] as Record<string, unknown> | undefined;
-    collectionRecordId.value = String(record?.id ?? "");
-    recipes.value = parseRecipeData(record?.data);
+    recipes.value = await loadNormalizedRecipes();
   } catch (error) {
     loadError.value =
       error instanceof Error ? error.message : "Error desconocido.";
   } finally {
     loading.value = false;
   }
-};
-
-const persistRecipes = async (nextRecipes: Recipe[]) => {
-  if (collectionRecordId.value) {
-    await updateItem(COLLECTION, collectionRecordId.value, {
-      data: nextRecipes,
-    });
-  } else {
-    const record = await createItem(COLLECTION, { data: nextRecipes });
-    collectionRecordId.value = String(record.id);
-  }
-  recipes.value = nextRecipes;
 };
 
 const openCreateForm = () => {
@@ -734,7 +700,7 @@ const openCreateForm = () => {
 };
 
 const openEditForm = (recipe: Recipe) => {
-  editingRecipeId.value = recipe.id;
+  editingRecipeId.value = recipe.recordId || recipe.id;
   formError.value = "";
   Object.assign(form, emptyForm(), {
     id: recipe.id,
@@ -880,7 +846,7 @@ const recipeFromForm = (): Recipe => {
     protein: form.protein.trim() || null,
   };
   const existing = recipes.value.find(
-    (recipe) => recipe.id === editingRecipeId.value,
+    (recipe) => (recipe.recordId || recipe.id) === editingRecipeId.value,
   );
   return {
     ...existing,
@@ -908,7 +874,9 @@ const saveRecipe = async () => {
     return;
   }
   const duplicate = recipes.value.some(
-    (item) => item.id === recipe.id && item.id !== editingRecipeId.value,
+    (item) =>
+      item.id === recipe.id &&
+      (item.recordId || item.id) !== editingRecipeId.value,
   );
   if (duplicate) {
     formError.value = "Ya existe una receta con ese ID.";
@@ -917,13 +885,18 @@ const saveRecipe = async () => {
 
   saving.value = true;
   try {
-    const nextRecipes = editingRecipeId.value
+    const saved = await persistNormalizedRecipe({
+      ...recipe,
+      recordId: existingRecipeRecordId(),
+      ingredients: recipe.ingredients ?? [],
+      steps: recipe.steps ?? [],
+    });
+    recipes.value = editingRecipeId.value
       ? recipes.value.map((item) =>
-          item.id === editingRecipeId.value ? recipe : item,
+          (item.recordId || item.id) === editingRecipeId.value ? saved : item,
         )
-      : [...recipes.value, recipe];
-    await persistRecipes(nextRecipes);
-    selectedRecipe.value = recipe;
+      : [...recipes.value, saved];
+    selectedRecipe.value = saved;
     formOpen.value = false;
   } catch (error) {
     formError.value =
@@ -940,7 +913,12 @@ const deleteRecipe = async (recipe: Recipe) => {
     return;
   saving.value = true;
   try {
-    await persistRecipes(recipes.value.filter((item) => item.id !== recipe.id));
+    if (!recipe.recordId)
+      throw new Error("La receta no tiene un registro válido.");
+    await deleteNormalizedRecipe(recipe.recordId);
+    recipes.value = recipes.value.filter(
+      (item) => item.recordId !== recipe.recordId,
+    );
     detailsOpen.value = false;
     selectedRecipe.value = null;
   } catch (error) {
@@ -950,6 +928,11 @@ const deleteRecipe = async (recipe: Recipe) => {
     saving.value = false;
   }
 };
+
+const existingRecipeRecordId = () =>
+  recipes.value.find(
+    (recipe) => (recipe.recordId || recipe.id) === editingRecipeId.value,
+  )?.recordId ?? "";
 
 const recipeStatus = (recipe: Recipe): RecipeStatus => {
   if (!recipe.hasDetail) return "index";

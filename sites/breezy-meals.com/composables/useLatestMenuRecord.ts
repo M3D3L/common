@@ -1,5 +1,6 @@
 export function useLatestMenuRecord<T>(collection = "menu") {
   const { fetchCollection } = usePocketBaseCore();
+  const normalizedMenu = useNormalizedMenuOperations();
 
   const record = ref<T | null>(null);
   const pending = ref(true);
@@ -19,7 +20,16 @@ export function useLatestMenuRecord<T>(collection = "menu") {
         null,
         true,
       );
-      record.value = (res.items[0] as unknown as T) ?? null;
+      const legacy = (res.items[0] as unknown as T & { id: string }) ?? null;
+      if (!legacy || collection !== "menu") {
+        record.value = legacy;
+        return;
+      }
+      try {
+        record.value = (await normalizedMenu.loadMenu(legacy)) as T;
+      } catch {
+        record.value = legacy;
+      }
     } catch {
       loadError.value = true;
       record.value = null;

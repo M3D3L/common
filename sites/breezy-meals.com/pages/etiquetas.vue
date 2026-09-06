@@ -204,7 +204,7 @@ import {
 import { useNutritionalLabels } from "~/composables/useNutritionalLabels";
 import usePocketBaseCore from "@common/composables/usePocketBaseCore";
 
-definePageMeta({ layout: "none", alias: "/labels" });
+definePageMeta({ layout: "none", alias: "/labels", staffOnly: true });
 
 const { fetchCollection } = usePocketBaseCore();
 const { transformRecord } = useNutritionalLabels();

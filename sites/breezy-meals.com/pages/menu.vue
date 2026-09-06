@@ -247,6 +247,7 @@ const props = withDefaults(
 const { formatCustomerOrder, formatCombinedCustomerOrder } = useMenuLink();
 const { waLink, isAppleDevice, formatSoldOut } = useWhatsappOrder();
 const { createItem, fetchCollection, updateItem } = usePocketBaseCore();
+const normalizedMenu = useNormalizedMenuOperations();
 const { getMemberByCode } = useMembers();
 const pb = usePocketBase();
 const isLoggedIn = ref(false);
@@ -357,9 +358,12 @@ async function toggleOut(name: string) {
   }
 
   try {
-    await updateItem(props.fetchedCollection, record.value.id, {
+    const saved = await updateItem(props.fetchedCollection, record.value.id, {
       sold_out: [...next],
     });
+    if (props.fetchedCollection === "menu") {
+      await normalizedMenu.syncMenu(saved as any);
+    }
     record.value.sold_out = [...next];
   } catch {
     wa?.close();

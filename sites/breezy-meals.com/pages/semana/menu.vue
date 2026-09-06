@@ -355,6 +355,8 @@ const palette = [
 ];
 
 const { fetchCollection, updateItem, createItem } = usePocketBaseCore();
+const { loadRecipes: loadNormalizedRecipes } = useNormalizedOperations();
+const normalizedMenu = useNormalizedMenuOperations();
 const { run: runChatGPT, loading: generating } = useChatGPT();
 
 const loading = ref(true);
@@ -915,32 +917,21 @@ function toast(m: string) {
 async function load() {
   loading.value = true;
   try {
-    const [res, recipeResponse] = await Promise.all([
+    const [res, normalizedRecipes] = await Promise.all([
       fetchCollection("menu", 1, 1, "", "-created", null, null, true),
-      fetchCollection("recipies", 1, 1, "", "-created", null, null, true),
+      loadNormalizedRecipes(),
     ]);
-    const recipeRecord = recipeResponse.items[0] as
-      | { data?: unknown }
-      | undefined;
-    const rawRecipes =
-      typeof recipeRecord?.data === "string"
-        ? JSON.parse(recipeRecord.data)
-        : recipeRecord?.data;
-    recipeCandidates.value = (
-      Array.isArray(rawRecipes) ? rawRecipes : []
-    ).filter((recipe): recipe is RecipeCandidate =>
-      Boolean(
-        recipe &&
-        typeof recipe === "object" &&
-        typeof recipe.id === "string" &&
-        typeof recipe.title === "string" &&
-        recipe.hasDetail &&
-        Array.isArray(recipe.ingredients) &&
-        recipe.ingredients.length,
-      ),
+    recipeCandidates.value = normalizedRecipes.filter(
+      (recipe): recipe is typeof recipe & RecipeCandidate =>
+        Boolean(
+          recipe.hasDetail &&
+          Array.isArray(recipe.ingredients) &&
+          recipe.ingredients.length,
+        ),
     );
-    const rec = res.items[0] as any;
-    if (rec) {
+    const legacy = res.items[0] as any;
+    if (legacy) {
+      const rec = await normalizedMenu.loadMenu(legacy);
       menuRecordId.value = rec.id;
       // Carga cada categoría desde el catálogo; las que falten quedan vacías.
       const names = catalogToDayDishes(
@@ -977,7 +968,10 @@ async function save(): Promise<boolean> {
   });
   try {
     if (menuRecordId.value) {
-      await updateItem("menu", menuRecordId.value, { week_blocks: clean });
+      const saved = await updateItem("menu", menuRecordId.value, {
+        week_blocks: clean,
+      });
+      await normalizedMenu.syncMenu(saved as any);
     } else {
       const created = await createItem("menu", {
         dishes: dayDishesToCatalog(catalog),
@@ -989,6 +983,7 @@ async function save(): Promise<boolean> {
         overrides: {},
       });
       menuRecordId.value = (created as any).id;
+      await normalizedMenu.syncMenu(created as any);
     }
     toast("Bloques guardados ✅");
     return true;

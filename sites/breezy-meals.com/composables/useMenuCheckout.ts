@@ -7,6 +7,7 @@ import type {
   CustomerOrderArgs,
 } from "~/composables/useMenuLink";
 import type { PricingLine } from "~/utils/menuPricing";
+import { comandaCreatePayload } from "~/lib/comanda-record";
 
 interface Customer {
   name: string;
@@ -299,7 +300,10 @@ export function useMenuCheckout(params: {
     };
 
     try {
-      await createItem(comandasCollection, { [comandasField]: order });
+      await createItem(
+        comandasCollection,
+        comandaCreatePayload(order, comandasField),
+      );
     } catch (e) {
       console.error("No se pudo crear la comanda en cocina", e);
     }

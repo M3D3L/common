@@ -15,6 +15,7 @@ import {
   type WeekBlock,
 } from "~/utils/rotation";
 import type { OrderMode, Customer } from "~/composables/useWhatsappOrder";
+import { comandaCreatePayload } from "~/lib/comanda-record";
 
 /** Un día del preorden: su menú resuelto (por rotación) + el carrito. */
 export interface PreorderDay {
@@ -55,6 +56,7 @@ function dayLabel(iso: string): string {
 
 export function useWeeklyPreorder() {
   const { fetchCollection, createItem } = usePocketBaseCore();
+  const normalizedMenu = useNormalizedMenuOperations();
   const { formatOrder, waLink } = useWhatsappOrder();
 
   const loading = ref(true);
@@ -118,8 +120,9 @@ export function useWeeklyPreorder() {
         null,
         true,
       );
-      const rec = res.items[0] as unknown as MenuRecordFull | undefined;
-      if (!rec) return;
+      const legacy = res.items[0] as unknown as MenuRecordFull | undefined;
+      if (!legacy) return;
+      const rec = await normalizedMenu.loadMenu(legacy as any);
 
       soldOut.value = rec.sold_out ?? [];
       const cfg: RotationConfig = {
@@ -179,14 +182,14 @@ export function useWeeklyPreorder() {
         "comandas",
         1,
         1,
-        `biz_date = "${bizDate}"`,
-        "-number",
+        `fulfill_date = "${bizDate}"`,
+        "-order_number",
         null,
         null,
         true,
       );
       const top = res.items[0] as any;
-      return (top ? Number(top.number) || 0 : 0) + 1;
+      return (top ? Number(top.order_number ?? top.data?.number) || 0 : 0) + 1;
     } catch {
       return 1;
     }
@@ -228,14 +231,7 @@ export function useWeeklyPreorder() {
       };
 
       try {
-        await createItem("comandas", {
-          data: order,
-          status: "active",
-          number,
-          mode: order.mode,
-          fulfill_date: day.date,
-          biz_date: day.date,
-        });
+        await createItem("comandas", comandaCreatePayload(order));
         ok++;
       } catch {
         /* seguimos; se reporta al final */

@@ -41,6 +41,7 @@ import {
   redemptionReasonForOrder,
   shouldRedeemOnReady,
 } from "~/utils/comandasRedemption";
+import { comandaCreatePayload } from "~/lib/comanda-record";
 
 /* ===== Config ===== */
 const STORAGE_KEY = "comandas";
@@ -135,6 +136,8 @@ function createComandasStore() {
     subscribe,
     unsubscribe,
   } = usePocketBaseCore();
+  const normalizedMenu = useNormalizedMenuOperations();
+  const normalizedComandas = useNormalizedComandas();
 
   // Socios: composables de membresía (mismas que usa /socios).
   const members = useMembers();
@@ -643,16 +646,18 @@ function createComandasStore() {
         null,
         true,
       );
-      const rec = res.items[0] as unknown as MenuRecord | undefined;
-      if (rec) {
+      const legacy = res.items[0] as unknown as MenuRecord | undefined;
+      if (legacy) {
+        const rec = await normalizedMenu.loadMenu(legacy as any);
         applyRecord(rec);
         // Si el menú del día se tomó de la rotación, déjalo fijo en la BD.
         if (autoMenuApplied && AUTO_PERSIST_ACTIVE && menuRecordId.value) {
           try {
-            await updateItem("menu", menuRecordId.value, {
+            const saved = await updateItem("menu", menuRecordId.value, {
               active: cloneDishes(today),
               active_date: todayISO(),
             });
+            await normalizedMenu.syncMenu(saved as any);
           } catch {
             /* queda en memoria; se fijará al iniciar turno */
           }
@@ -681,8 +686,9 @@ function createComandasStore() {
         null,
         true,
       );
-      const rec = res.items[0] as unknown as MenuRecord | undefined;
-      if (rec) {
+      const legacy = res.items[0] as unknown as MenuRecord | undefined;
+      if (legacy) {
+        const rec = await normalizedMenu.loadMenu(legacy as any);
         if (!menuRecordId.value) menuRecordId.value = rec.id;
         soldOut.value = rec.sold_out ?? [];
       }
@@ -713,6 +719,13 @@ function createComandasStore() {
       // Conserva órdenes creadas sin red (aún sin recordId).
       const unsynced = orders.value.filter((o) => !o.recordId);
       orders.value = [...remote, ...unsynced];
+      await Promise.allSettled(
+        remote.map((order) =>
+          order.recordId
+            ? normalizedComandas.syncLines(order.recordId, order)
+            : Promise.resolve(),
+        ),
+      );
       persist();
     } catch (e: any) {
       // Solo se ignora si fue una cancelación intencional (sin red sí debe avisar).
@@ -766,6 +779,7 @@ function createComandasStore() {
     } else {
       const order = recordToOrder(rec);
       upsertOrder(order);
+      void normalizedComandas.syncLines(rec.id, order).catch(() => undefined);
       if (e.action === "create") {
         void playOrderSound();
         toast(`Nueva orden #${order.number}`);
@@ -941,9 +955,10 @@ function createComandasStore() {
 
     if (menuRecordId.value) {
       try {
-        await updateItem("menu", menuRecordId.value, {
+        const saved = await updateItem("menu", menuRecordId.value, {
           sold_out: soldOut.value,
         });
+        await normalizedMenu.syncMenu(saved as any);
       } catch {
         /* queda en cache local; se reintenta al siguiente cambio */
       }
@@ -1069,10 +1084,12 @@ function createComandasStore() {
     // 1) Primero la BD. El esquema de `comandas` solo tiene el campo `data`,
     //    ahí va el payload completo (incluye member_code para historial).
     try {
-      const rec = await createItem(COMANDAS_COLLECTION, {
-        [COMANDAS_FIELD]: order,
-      });
+      const rec = await createItem(
+        COMANDAS_COLLECTION,
+        comandaCreatePayload(order, COMANDAS_FIELD),
+      );
       order.recordId = rec.id;
+      await normalizedComandas.syncLines(rec.id, order);
     } catch {
       toast("No se guardó en el servidor; se envía igual");
     }

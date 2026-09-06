@@ -1,30 +1,7 @@
 import usePocketBase from "../../../composables/usePocketbase";
 export default defineNuxtRouteMiddleware((to) => {
-  // Only guard staff routes. Adjust this list to match your staff pages.
-  const staffPaths = [
-    "/inicio",
-    "/listas",
-    "/checklists",
-    "/socios",
-    "/redenciones",
-    "/comandas",
-    "/promociones",
-    "/promos-dashboard",
-    "/etiquetas",
-    "/labels",
-    "/platillos",
-    "/menu-items",
-    "/productos",
-    "/store-items",
-    "/recetas",
-    "/recipies",
-    "/semana/menu",
-    "/semana/calendario",
-  ];
-  const isStaff = staffPaths.some(
-    (p) => to.path === p || to.path.startsWith(p + "/"),
-  );
-  if (!isStaff) return;
+  const isStaffRoute = to.meta.layout === "staff" || to.meta.staffOnly === true;
+  if (!isStaffRoute) return;
 
   // authStore lives in localStorage — invisible to the server. Gate on client
   // only, or SSR bounces even logged-in staff.
@@ -32,6 +9,7 @@ export default defineNuxtRouteMiddleware((to) => {
 
   const pb = usePocketBase();
   if (!pb.authStore.isValid) {
+    pb.authStore.clear();
     return navigateTo(`/login?source=${encodeURIComponent(to.fullPath)}`);
   }
 });

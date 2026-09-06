@@ -209,6 +209,7 @@ interface MenuRecordForItems {
 }
 
 const { fetchCollection, updateItem, createItem } = usePocketBaseCore();
+const normalizedMenu = useNormalizedMenuOperations();
 
 const loading = ref(true);
 const saving = ref(false);
@@ -245,13 +246,14 @@ async function load() {
       null,
       true,
     );
-    const record = result.items[0] as unknown as MenuRecordForItems | undefined;
+    const legacy = result.items[0] as unknown as MenuRecordForItems | undefined;
 
-    if (!record) {
+    if (!legacy) {
       menuRecordId.value = null;
       catalog.value = {};
       return;
     }
+    const record = await normalizedMenu.loadMenu(legacy as any);
 
     menuRecordId.value = record.id;
     catalog.value = normalizeMenuCatalog(record[props.dishes] ?? {});
@@ -309,7 +311,14 @@ async function save() {
     const payload = { [props.dishes]: menuItems };
 
     if (menuRecordId.value) {
-      await updateItem(props.fetchedCollection, menuRecordId.value, payload);
+      const saved = await updateItem(
+        props.fetchedCollection,
+        menuRecordId.value,
+        payload,
+      );
+      if (props.fetchedCollection === "menu") {
+        await normalizedMenu.syncMenu(saved as any);
+      }
     } else {
       const created = await createItem("menu", {
         [props.dishes]: menuItems,
@@ -321,6 +330,7 @@ async function save() {
         overrides: {},
       });
       menuRecordId.value = created.id;
+      await normalizedMenu.syncMenu(created as any);
     }
 
     catalog.value = normalizeMenuCatalog(menuItems);

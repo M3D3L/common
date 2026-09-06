@@ -63,7 +63,47 @@ npm run preview:prod
 - `generate`: generate static output
 - `preview`: generate + preview static output
 - `preview:prod`: production-mode preview with explicit base path
+- `schema:harden`: protect staff collections in a PocketBase schema export
+- `schema:normalize`: add normalized migration collections without removing legacy fields
+- `schema:commerce`: add normalized menu collections and optional typed order fields
 - `postinstall`: `nuxt prepare`
+
+## PocketBase Access Rules
+
+Export the current schema from PocketBase, then generate a hardened copy:
+
+```bash
+npm run schema:harden -- pb_schema.json pb_schema.secure.json
+```
+
+Review and import `pb_schema.secure.json` through PocketBase after taking a
+database backup. The transformer keeps menu, store, and promo reads public and
+keeps guest order creation working. Staff data and content mutations require an
+authenticated account; guests cannot inspect or modify submitted orders.
+
+Generate the additive normalized schema after hardening:
+
+```bash
+npm run schema:normalize -- pb_schema.secure.json pb_schema.normalized.json
+```
+
+The normalized schema is now the application runtime source for checklists,
+clock entries, and recipes. The legacy JSON values were cleared only after the
+copy and UI cutover were verified; keep the downloaded source snapshot outside
+PocketBase for disaster recovery. See
+[docs/pocketbase-normalization-migration.md](docs/pocketbase-normalization-migration.md)
+for the migration record and cleanup gates.
+
+The second-stage commerce schema is generated separately:
+
+```bash
+npm run schema:commerce -- pb_schema.normalized.json pb_schema.commerce.json
+```
+
+It preserves the existing schema, adds normalized menu planning and order-line
+collections, and appends optional typed fields to `comandas`. The live additive
+copy is verified under source hash `d26cec88`; the authenticated backup and all
+legacy menu/order blobs remain retained for rollback.
 
 ## Environment Variables
 

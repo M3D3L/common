@@ -261,6 +261,7 @@ import usePocketBase from "@common/composables/usePocketbase";
 const WEEKS_AHEAD = 13; // ~3 meses
 
 const { fetchCollection, updateItem, createItem } = usePocketBaseCore();
+const normalizedMenu = useNormalizedMenuOperations();
 
 const loading = ref(true);
 const saving = ref(false);
@@ -368,8 +369,9 @@ async function load() {
       null,
       true,
     );
-    const rec = res.items[0] as any;
-    if (rec) {
+    const legacy = res.items[0] as any;
+    if (legacy) {
+      const rec = await normalizedMenu.loadMenu(legacy);
       menuRecordId.value = rec.id;
       blocks.value = (rec.week_blocks ?? []) as WeekBlock[];
       rotation.value = (rec.rotation ?? []) as string[];
@@ -396,11 +398,12 @@ async function save() {
   });
   try {
     if (menuRecordId.value) {
-      await updateItem("menu", menuRecordId.value, {
+      const saved = await updateItem("menu", menuRecordId.value, {
         rotation: rotation.value,
         rotation_anchor: anchor.value,
         overrides: cleanOverrides,
       });
+      await normalizedMenu.syncMenu(saved as any);
     } else {
       const created = await createItem("menu", {
         dishes: emptyMenuCatalog(),
@@ -412,6 +415,7 @@ async function save() {
         overrides: cleanOverrides,
       });
       menuRecordId.value = (created as any).id;
+      await normalizedMenu.syncMenu(created as any);
     }
     toast("Calendario guardado ✅");
   } catch {

@@ -207,8 +207,7 @@ import { mondayOf, addDays } from "~/utils/rotation";
 const { waLink } = useWhatsappOrder();
 
 /* ===== Config ===== */
-const COLLECTION = "clockins";
-const FIELD = "data";
+const COLLECTION = "clock_entries";
 
 /* ===== Tipos ===== */
 type PunchType = "in" | "out";
@@ -226,8 +225,8 @@ interface ClockData {
   punches: Punch[];
 }
 
-const { fetchCollection, createItem, updateItem, subscribe, unsubscribe } =
-  usePocketBaseCore();
+const { subscribe, unsubscribe } = usePocketBaseCore();
+const { loadPunches, createPunch } = useNormalizedOperations();
 const { openWhatsApp } = useWhatsappOrder();
 
 const props = defineProps({
@@ -244,7 +243,6 @@ const props = defineProps({
 
 /* ===== Estado ===== */
 const loading = ref(true);
-const recordId = ref<string | null>(null);
 const data = reactive<ClockData>({ punches: [] });
 
 const tab = ref<"reloj" | "resumen">("reloj");
@@ -512,69 +510,15 @@ function toast(msg: string, kind: "ok" | "error" = "ok") {
   toastTimer = setTimeout(() => (toastMsg.value = ""), 2500);
 }
 
-/* ===== Datos (single JSON object) ===== */
-function normalize(d: any): ClockData {
-  return { punches: Array.isArray(d?.punches) ? d.punches : [] };
-}
-function apply(d: ClockData) {
-  data.punches = d.punches;
-}
-
 async function load() {
   loading.value = true;
   try {
-    const res = await fetchCollection(
-      COLLECTION,
-      1,
-      1,
-      "",
-      "-created",
-      null,
-      null,
-      true,
-    );
-    const rec = res.items[0] as any;
-    if (rec) {
-      recordId.value = rec.id;
-      apply(normalize(rec[FIELD]));
-    }
+    data.punches = await loadPunches();
   } catch {
     /* offline */
   } finally {
     loading.value = false;
   }
-}
-
-// Relee lo más fresco, aplica la mutación encima y guarda (mitiga choques).
-async function mutate(fn: (d: ClockData) => ClockData) {
-  let base: ClockData = { punches: [...data.punches] };
-  try {
-    const res = await fetchCollection(
-      COLLECTION,
-      1,
-      1,
-      "",
-      "-created",
-      null,
-      null,
-      true,
-    );
-    const rec = res.items[0] as any;
-    if (rec) {
-      recordId.value = rec.id;
-      base = normalize(rec[FIELD]);
-    }
-  } catch {
-    /* usa estado local si no hay red */
-  }
-  const next = fn(base);
-  if (recordId.value) {
-    await updateItem(COLLECTION, recordId.value, { [FIELD]: next });
-  } else {
-    const created = await createItem(COLLECTION, { [FIELD]: next });
-    recordId.value = (created as any).id;
-  }
-  apply(next);
 }
 
 /* ===== Registrar turno (toggle) ===== */
@@ -594,7 +538,8 @@ async function toggle() {
     at: new Date().toISOString(),
   };
   try {
-    await mutate((d) => ({ ...d, punches: [...d.punches, punch] }));
+    await createPunch(punch);
+    await load();
     const time = timeOf(punch.at);
     const verb = direction === "in" ? "Entrada" : "Salida";
     const url = waLink(
@@ -615,10 +560,8 @@ async function toggle() {
 
 /* ===== Realtime (PC + teléfono en sync) ===== */
 let unsub: (() => void) | null = null;
-function onEvent(e: { action: string; record: any }) {
-  if (e.action === "delete") return;
-  recordId.value = e.record.id;
-  apply(normalize(e.record[FIELD]));
+function onEvent() {
+  void load();
 }
 
 onMounted(async () => {
