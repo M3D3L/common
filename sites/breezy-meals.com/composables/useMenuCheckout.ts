@@ -8,19 +8,16 @@ import type {
 } from "~/composables/useMenuLink";
 import type { PricingLine } from "~/utils/menuPricing";
 import { comandaCreatePayload } from "~/lib/comanda-record";
+import {
+  buildComandaDrafts,
+  promoRedeemsMembershipMeal,
+  type ComandaDraft,
+} from "~/utils/comandaDrafts";
 
 interface Customer {
   name: string;
   phone: string;
   address: string;
-}
-
-interface ComandaDraft {
-  label: string;
-  cart: Record<string, number>;
-  taquizaOrders: Record<TaquizaKind, number>;
-  taquizaByKind: Record<TaquizaKind, Record<string, number>>;
-  promo?: PlacedOrder["promo"];
 }
 
 /**
@@ -137,112 +134,6 @@ export function useMenuCheckout(params: {
     return pieces.join(" · ");
   }
 
-  function emptyTaquizaByKind() {
-    return { tacos: {}, quesadillas: {} } as Record<
-      TaquizaKind,
-      Record<string, number>
-    >;
-  }
-
-  function addQty(target: Record<string, number>, name: string, qty: number) {
-    target[name] = (target[name] ?? 0) + qty;
-  }
-
-  function buildComandaDrafts(): ComandaDraft[] {
-    const remainingCart = Object.fromEntries(
-      Object.entries(cart).filter(([, qty]) => qty > 0),
-    );
-    const remainingTaquizaOrders = taquizaOrders.value.map((order) => ({
-      ...order,
-      fills: { ...order.fills },
-    }));
-    const drafts: ComandaDraft[] = [];
-    const applicationByPromo = new Map<string, number>();
-
-    pricingLines.value
-      .filter((line) => line.kind === "promo")
-      .forEach((line) => {
-        line.promoApplications?.forEach((application) => {
-          const cartForMeal: Record<string, number> = {};
-          const taquizaForMeal = emptyTaquizaByKind();
-          const taquizaCounts = { tacos: 0, quesadillas: 0 };
-
-          application.items.forEach((item) => {
-            addQty(cartForMeal, item.name, item.qty);
-            remainingCart[item.name] = Math.max(
-              0,
-              (remainingCart[item.name] ?? 0) - item.qty,
-            );
-          });
-
-          application.orderUnits.forEach((unit) => {
-            const kind = unit.code.split(":").at(-1) as TaquizaKind;
-            if (kind !== "tacos" && kind !== "quesadillas") return;
-
-            for (let index = 0; index < unit.qty; index += 1) {
-              const orderIndex = remainingTaquizaOrders.findIndex(
-                (order) => order.kind === kind,
-              );
-              if (orderIndex < 0) break;
-              const [order] = remainingTaquizaOrders.splice(orderIndex, 1);
-              taquizaCounts[kind] += 1;
-              Object.entries(order.fills).forEach(([name, qty]) => {
-                addQty(cartForMeal, name, qty);
-                addQty(taquizaForMeal[kind], name, qty);
-                remainingCart[name] = Math.max(
-                  0,
-                  (remainingCart[name] ?? 0) - qty,
-                );
-              });
-            }
-          });
-
-          const applicationNumber =
-            (applicationByPromo.get(line.code) ?? 0) + 1;
-          applicationByPromo.set(line.code, applicationNumber);
-          drafts.push({
-            label: line.label,
-            cart: cartForMeal,
-            taquizaOrders: taquizaCounts,
-            taquizaByKind: taquizaForMeal,
-            promo: {
-              id: line.code,
-              label: line.label,
-              application: applicationNumber,
-              redemption: line.redemption,
-            },
-          });
-        });
-      });
-
-    const extrasCart = Object.fromEntries(
-      Object.entries(remainingCart).filter(([, qty]) => qty > 0),
-    );
-    if (Object.keys(extrasCart).length) {
-      const extrasTaquiza = emptyTaquizaByKind();
-      remainingTaquizaOrders.forEach((order) => {
-        Object.entries(order.fills).forEach(([name, qty]) => {
-          addQty(extrasTaquiza[order.kind], name, qty);
-        });
-      });
-      drafts.push({
-        label: drafts.length ? "Extras" : "Pedido",
-        cart: extrasCart,
-        taquizaOrders: {
-          tacos: remainingTaquizaOrders.filter(
-            (order) => order.kind === "tacos",
-          ).length,
-          quesadillas: remainingTaquizaOrders.filter(
-            (order) => order.kind === "quesadillas",
-          ).length,
-        },
-        taquizaByKind: extrasTaquiza,
-      });
-    }
-
-    return drafts;
-  }
-
   // Número consecutivo para el tablero de cocina: máximo existente + 1. Al no
   // haber columna de status, cualquier registro que quede en la colección es
   // una orden activa.
@@ -296,9 +187,7 @@ export function useMenuCheckout(params: {
       pricingTotal: includeOrderPricing
         ? pricingSubtotal.value + orderDeliveryFee
         : undefined,
-      redeemMemberMeal:
-        draft.promo?.redemption?.kind === "membership_meal" &&
-        draft.promo.redemption.credits > 0,
+      redeemMemberMeal: promoRedeemsMembershipMeal(draft.promo),
       promo: draft.promo,
     };
 
@@ -336,7 +225,11 @@ export function useMenuCheckout(params: {
     const finalNote = [buildNote(), memberTag].filter(Boolean).join(" · ");
     const orderDeliveryFee = appliedDeliveryFee.value;
     const pricingTotal = pricingSubtotal.value + orderDeliveryFee;
-    const drafts = buildComandaDrafts();
+    const drafts = buildComandaDrafts({
+      cart,
+      taquizaOrders: taquizaOrders.value,
+      pricingLines: pricingLines.value,
+    });
     const firstNumber = await nextComandaNumber();
     const numberedDrafts = drafts.map((draft, index) => ({
       ...draft,
