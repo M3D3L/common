@@ -166,6 +166,10 @@ function createComandasStore() {
   const filter = ref<FilterType>("all");
   const customer = reactive<Customer>({ name: "", phone: "", address: "" });
   const orders = ref<StoredOrder[]>([]); // SOLO órdenes activas
+  const ordersTab = ref<"active" | "history">("active");
+  const historyDate = ref(todayISO());
+  const historyOrders = ref<StoredOrder[]>([]);
+  const historyLoading = ref(false);
   const pick = reactive<Record<GroupKey, Set<string>>>(emptyPick());
   const menuGroups = ref<GroupConfig[]>([...groups]);
   const toastMsg = ref("");
@@ -550,8 +554,13 @@ function createComandasStore() {
 
   /* ===== Helpers de órdenes (en memoria) ===== */
   function recordToOrder(rec: RecordModel): StoredOrder {
+    const snapshot = ((rec as any)[COMANDAS_FIELD] ?? {}) as PlacedOrder;
     return {
-      ...(((rec as any)[COMANDAS_FIELD] ?? {}) as PlacedOrder),
+      ...snapshot,
+      status:
+        ((rec as any).status as PlacedOrder["status"]) ||
+        snapshot.status ||
+        "active",
       recordId: rec.id,
     };
   }
@@ -713,15 +722,15 @@ function createComandasStore() {
   }
 
   /* ===== PocketBase: órdenes ===== */
-  // Tablero: TODAS las órdenes en la colección son activas (se borran al
-  // completar/descartar), así que no hace falta filtrar por status.
+  // Las comandas terminadas se conservan para historial. El tablero solo
+  // carga activas; el status vacío mantiene compatibilidad con registros viejos.
   async function loadActiveOrders() {
     try {
       const res = await fetchCollection(
         COMANDAS_COLLECTION,
         1,
         300,
-        "",
+        '(status = "active" || status = "")',
         "created",
         null,
         null,
@@ -748,26 +757,49 @@ function createComandasStore() {
     }
   }
 
-  // Semilla del contador: número más alto entre las órdenes activas, para no
-  // reciclar números ya usados por órdenes que ya se completaron/borraron.
-  // El esquema solo tiene el campo `data`, así que se calcula en memoria.
+  async function loadOrderHistory(date = historyDate.value) {
+    historyLoading.value = true;
+    historyDate.value = date;
+    try {
+      const start = new Date(`${date}T00:00:00`);
+      const end = new Date(start);
+      end.setDate(end.getDate() + 1);
+      const filter = `placed_at >= "${start.toISOString()}" && placed_at < "${end.toISOString()}"`;
+      const res = await fetchCollection(
+        COMANDAS_COLLECTION,
+        1,
+        300,
+        filter,
+        "-placed_at",
+        null,
+        null,
+        true,
+        { requestKey: `comandas_history_${date}` },
+      );
+      historyOrders.value = res.items.map(recordToOrder);
+    } catch (e: any) {
+      if (!e?.isAbort) toast("No se pudo cargar el historial de comandas");
+    } finally {
+      historyLoading.value = false;
+    }
+  }
+
+  // Semilla del contador: número más alto entre todas las órdenes conservadas.
   async function seedCounter() {
     try {
       const res = await fetchCollection(
         COMANDAS_COLLECTION,
         1,
-        300,
+        1,
         "",
-        "-created",
+        "-order_number",
         null,
         null,
         true,
         { requestKey: "comandas_seed" },
       );
-      const n = res.items.reduce((max, rec) => {
-        const num = Number((rec as any)[COMANDAS_FIELD]?.number) || 0;
-        return Math.max(max, num);
-      }, 0);
+      const rec = res.items[0] as any;
+      const n = Number(rec?.order_number ?? rec?.[COMANDAS_FIELD]?.number) || 0;
       counter.value = Math.max(counter.value, n + 1);
     } catch {
       /* offline: se usa el contador local */
@@ -781,15 +813,17 @@ function createComandasStore() {
   /**
    * Evento realtime de una comanda.
    *
-   * REGLA: el registro solo existe mientras la orden está activa (completar/
-   * descartar la borra de la BD), así que un "create"/"update" siempre es
-   * upsert y un "delete" siempre remueve. Sin status que desincronizar entre
-   * pantallas.
+   * Las activas aparecen en el tablero; un cambio a ready/discarded las quita
+   * del tablero pero conserva el registro para el historial.
    */
   function onComandaEvent(e: { action: string; record: RecordModel }) {
     const rec = e.record;
 
-    if (e.action === "delete") {
+    if (
+      e.action === "delete" ||
+      (rec as any).status === "ready" ||
+      (rec as any).status === "discarded"
+    ) {
       removeByRecordId(rec.id);
     } else {
       const order = recordToOrder(rec);
@@ -1179,13 +1213,10 @@ function createComandasStore() {
       await redeemMemberCredit(o);
     }
 
-    // 1) Primero la BD: se borra el registro (misma cola para todos).
-    // Si esto falla (red/permiso), NO se quita localmente: de lo contrario
-    // el registro sigue existiendo en la BD y la orden reaparece en las
-    // demás pantallas (el cierre "funcionó" solo para quien lo intentó).
+    // 1) Primero la BD: conserva el registro y cambia su estado para historial.
     try {
       if (o.recordId) {
-        await deleteItem(COMANDAS_COLLECTION, o.recordId);
+        await updateItem(COMANDAS_COLLECTION, o.recordId, { status: "ready" });
       }
     } catch (e) {
       console.error("No se pudo cerrar la orden en el servidor", e);
@@ -1227,11 +1258,12 @@ function createComandasStore() {
   }
 
   async function discardOrder(o: StoredOrder) {
-    // Igual que en completeOrder: solo se quita localmente si la BD confirmó
-    // el borrado, para que no reaparezca en otras pantallas.
+    // Igual que en completeOrder: se conserva para historial con su estado.
     try {
       if (o.recordId) {
-        await deleteItem(COMANDAS_COLLECTION, o.recordId);
+        await updateItem(COMANDAS_COLLECTION, o.recordId, {
+          status: "discarded",
+        });
       }
     } catch (e) {
       console.error("No se pudo descartar la orden en el servidor", e);
@@ -1279,6 +1311,10 @@ function createComandasStore() {
     filter,
     customer,
     orders,
+    ordersTab,
+    historyDate,
+    historyOrders,
+    historyLoading,
     pick,
     toastMsg,
     menuLoading,
@@ -1325,6 +1361,7 @@ function createComandasStore() {
     completeOrder,
     sendDeliveryDetails,
     discardOrder,
+    loadOrderHistory,
     toggleOrderSound,
     refreshNow: resync,
   };

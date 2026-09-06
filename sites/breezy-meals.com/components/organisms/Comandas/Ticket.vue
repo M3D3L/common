@@ -20,6 +20,14 @@
         <template v-else-if="order.mode === 'domicilio'">A domicilio</template>
         <template v-else>{{ order.mode }}</template>
       </Badge>
+      <Badge
+        v-if="readonly"
+        variant="outline"
+        class="px-2 py-0.5 text-[10px] uppercase tracking-wider"
+        :class="statusClass"
+      >
+        {{ statusLabel }}
+      </Badge>
       <span class="ml-auto text-xs text-muted-foreground tabular-nums">
         {{ orderTime(order) }}
       </span>
@@ -197,7 +205,7 @@
     </div>
 
     <!-- Footer buttons -->
-    <div class="flex items-center gap-2 mt-4">
+    <div v-if="!readonly" class="flex items-center gap-2 mt-4">
       <Button size="sm" class="flex-1" @click="completeOrder(order)">
         <ClientOnly><Check :size="15" class="mr-1.5" /></ClientOnly>
         Marcar lista
@@ -242,7 +250,10 @@ import {
   type PlacedOrder,
 } from "~/utils/comandas";
 
-const props = defineProps<{ order: PlacedOrder }>();
+const props = withDefaults(
+  defineProps<{ order: PlacedOrder; readonly?: boolean }>(),
+  { readonly: false },
+);
 
 const { completeOrder, sendDeliveryDetails, discardOrder, catalog } =
   useComandas();
@@ -259,6 +270,22 @@ function money(value: number) {
 const ticketGroups = computed(() =>
   groupsFromData(catalog.value as Record<string, unknown>),
 );
+
+const statusLabel = computed(() => {
+  if (props.order.status === "ready") return "Lista";
+  if (props.order.status === "discarded") return "Descartada";
+  return "Activa";
+});
+
+const statusClass = computed(() => {
+  if (props.order.status === "ready") {
+    return "border-green-600/40 bg-green-600/10 text-green-700 dark:text-green-400";
+  }
+  if (props.order.status === "discarded") {
+    return "border-destructive/40 bg-destructive/10 text-destructive";
+  }
+  return "border-blue-600/40 bg-blue-600/10 text-blue-700 dark:text-blue-400";
+});
 
 // "HH:MM" (24h) -> "H:MM AM/PM", para que el staff lea la hora de salida.
 function fulfillTimeLabel(t: string) {

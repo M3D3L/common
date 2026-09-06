@@ -406,6 +406,7 @@ export function findMenuItemByName(
 export interface PlacedOrder {
   id: string;
   number: number;
+  status?: "active" | "ready" | "discarded";
   cart: Record<string, number>;
   mode: OrderMode;
   note: string;
