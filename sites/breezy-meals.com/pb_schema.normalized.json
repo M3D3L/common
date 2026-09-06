@@ -884,12 +884,7 @@
         "unique": false,
         "options": {
           "maxSelect": 1,
-          "values": [
-            "meal",
-            "snack",
-            "drink",
-            "sweet"
-          ]
+          "values": ["meal", "snack", "drink", "sweet"]
         }
       }
     ],
@@ -973,11 +968,7 @@
         "unique": false,
         "options": {
           "maxSelect": 1,
-          "values": [
-            "active",
-            "dormant",
-            "archived"
-          ]
+          "values": ["active", "dormant", "archived"]
         }
       },
       {
@@ -1143,12 +1134,7 @@
         "unique": false,
         "options": {
           "maxSelect": 1,
-          "values": [
-            "active",
-            "exhausted",
-            "expired",
-            "cancelled"
-          ]
+          "values": ["active", "exhausted", "expired", "cancelled"]
         }
       },
       {
@@ -1537,6 +1523,18 @@
         "options": {
           "maxSize": 2000000
         }
+      },
+      {
+        "system": false,
+        "id": "promoredeem01",
+        "name": "redemption",
+        "type": "json",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "maxSize": 2000000
+        }
       }
     ],
     "indexes": [],
@@ -1673,11 +1671,7 @@
         "unique": false,
         "options": {
           "maxSelect": 1,
-          "values": [
-            "property",
-            "rental",
-            "lot"
-          ]
+          "values": ["property", "rental", "lot"]
         }
       },
       {
@@ -1846,12 +1840,7 @@
         "unique": false,
         "options": {
           "maxSelect": 1,
-          "values": [
-            "per/night",
-            "per/month",
-            "usd",
-            "mxn"
-          ]
+          "values": ["per/night", "per/month", "usd", "mxn"]
         }
       },
       {
@@ -2057,11 +2046,7 @@
         "unique": false,
         "options": {
           "maxSelect": 1,
-          "values": [
-            "meal",
-            "adjustment",
-            "topup_note"
-          ]
+          "values": ["meal", "adjustment", "topup_note"]
         }
       },
       {
@@ -2155,11 +2140,7 @@
         "unique": false,
         "options": {
           "maxSelect": 1,
-          "values": [
-            "running",
-            "verified",
-            "failed"
-          ]
+          "values": ["running", "verified", "failed"]
         }
       },
       {
@@ -2547,11 +2528,7 @@
         "unique": false,
         "options": {
           "maxSelect": 1,
-          "values": [
-            "check",
-            "number",
-            "text"
-          ]
+          "values": ["check", "number", "text"]
         }
       },
       {
@@ -2827,10 +2804,7 @@
         "unique": false,
         "options": {
           "maxSelect": 1,
-          "values": [
-            "in_progress",
-            "done"
-          ]
+          "values": ["in_progress", "done"]
         }
       },
       {
@@ -3100,10 +3074,7 @@
         "unique": false,
         "options": {
           "maxSelect": 1,
-          "values": [
-            "in",
-            "out"
-          ]
+          "values": ["in", "out"]
         }
       },
       {

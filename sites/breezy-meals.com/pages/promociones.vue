@@ -1,5 +1,5 @@
 <template>
-  <section class="mx-auto w-full max-w-2xl px-4 py-8 sm:px-6 md:py-10">
+  <section class="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 md:py-10">
     <header class="mb-6 flex flex-wrap items-center justify-between gap-3">
       <div>
         <p
@@ -85,7 +85,6 @@
               <TableHead>Amount</TableHead>
               <TableHead>Priority</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead>Source</TableHead>
               <TableHead>Updated</TableHead>
               <TableHead class="text-right">Actions</TableHead>
             </TableRow>
@@ -94,7 +93,7 @@
           <TableBody>
             <TableRow v-if="loading">
               <TableCell
-                colspan="7"
+                colspan="6"
                 class="py-8 text-center text-muted-foreground"
               >
                 Loading promos...
@@ -103,7 +102,7 @@
 
             <TableRow v-else-if="!promos.length">
               <TableCell
-                colspan="7"
+                colspan="6"
                 class="py-8 text-center text-muted-foreground"
               >
                 No promos found.
@@ -126,15 +125,6 @@
               <TableCell>
                 <Badge :variant="promo.active ? 'default' : 'secondary'">
                   {{ promo.active ? "Active" : "Inactive" }}
-                </Badge>
-              </TableCell>
-              <TableCell>
-                <Badge variant="outline">
-                  {{
-                    promo.source === "menu-config"
-                      ? "menu config"
-                      : "pocketbase"
-                  }}
                 </Badge>
               </TableCell>
               <TableCell class="text-xs text-muted-foreground">{{
@@ -288,7 +278,37 @@
                 Inactive promos are kept for history but not applied.
               </p>
             </div>
-            <Switch v-model:checked="form.active" />
+            <div class="flex items-center gap-2">
+              <span
+                class="w-7 text-right text-xs font-medium text-muted-foreground"
+              >
+                {{ form.active ? "On" : "Off" }}
+              </span>
+              <Switch
+                v-model="form.active"
+                class="border-slate-400 data-[state=unchecked]:bg-slate-300"
+              />
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between rounded-lg border p-3">
+            <div>
+              <p class="font-medium">Membership redemption</p>
+              <p class="text-xs text-muted-foreground">
+                Deduct one meal credit when this complete promo is ready.
+              </p>
+            </div>
+            <div class="flex items-center gap-2">
+              <span
+                class="w-7 text-right text-xs font-medium text-muted-foreground"
+              >
+                {{ form.redeemsMembershipMeal ? "On" : "Off" }}
+              </span>
+              <Switch
+                v-model="form.redeemsMembershipMeal"
+                class="border-slate-400 data-[state=unchecked]:bg-slate-300"
+              />
+            </div>
           </div>
 
           <Separator />
@@ -527,6 +547,7 @@ type PromoViewModel = {
   amount: number;
   priority: number;
   active: boolean;
+  redeemsMembershipMeal: boolean;
   requirements: PromoRequirement[];
   source: "pocketbase" | "menu-config";
   menuPromoId: string;
@@ -540,6 +561,7 @@ type PromoForm = {
   amount: string;
   priority: string;
   active: boolean;
+  redeemsMembershipMeal: boolean;
   requirementsJson: string;
 };
 
@@ -565,6 +587,7 @@ const form = reactive<PromoForm>({
   amount: "120",
   priority: "100",
   active: true,
+  redeemsMembershipMeal: false,
   requirementsJson: '[{"targetType":"group","target":"guisado","qty":2}]',
 });
 
@@ -803,6 +826,10 @@ const normalizePromo = (record: RecordModel): PromoViewModel => {
   const amount = Number(raw.pricing?.amount ?? data.pricing?.amount ?? 0) || 0;
   const priority = Number(raw.priority ?? data.priority ?? 0) || 0;
   const active = Boolean(raw.active ?? data.active ?? true);
+  const configuredRedemption = menuPricingConfig.promos.find(
+    (promo) => promo.id === menuPromoId,
+  )?.redemption;
+  const redemption = raw.redemption ?? data.redemption ?? configuredRedemption;
 
   const requirements = (
     Array.isArray(raw.requirements)
@@ -821,6 +848,8 @@ const normalizePromo = (record: RecordModel): PromoViewModel => {
     amount,
     priority,
     active,
+    redeemsMembershipMeal:
+      redemption?.kind === "membership_meal" && Number(redemption?.credits) > 0,
     requirements,
     source: "pocketbase",
     menuPromoId,
@@ -837,6 +866,7 @@ const promoFromConfig = (promo: PricingPromo): PromoViewModel => {
     amount: Number(promo.pricing?.amount || 0),
     priority: Number(promo.priority || 0),
     active: promo.active !== false,
+    redeemsMembershipMeal: promo.redemption?.kind === "membership_meal",
     requirements: (promo.match?.requirements || []) as PromoRequirement[],
     source: "menu-config",
     menuPromoId: String(promo.id || "").trim(),
@@ -849,6 +879,7 @@ const promoFromConfig = (promo: PricingPromo): PromoViewModel => {
       pricing: promo.pricing,
       display: promo.display,
       match: promo.match,
+      redemption: promo.redemption,
     },
   };
 };
@@ -879,6 +910,9 @@ const buildCanonicalPayload = () => {
     match: { requirements },
     pricing: { amount },
     display: { summary },
+    redemption: form.redeemsMembershipMeal
+      ? { kind: "membership_meal" as const, credits: 1 }
+      : { kind: "none" as const, credits: 0 },
   };
 };
 
@@ -895,6 +929,7 @@ const buildPayloadCandidates = (sourceKeys?: string[]) => {
     match: canonical.match,
     pricing: canonical.pricing,
     display: canonical.display,
+    redemption: canonical.redemption,
   };
 
   // Fallback candidate respects only fields currently present on the edited
@@ -908,6 +943,7 @@ const buildPayloadCandidates = (sourceKeys?: string[]) => {
     "match",
     "pricing",
     "display",
+    "redemption",
   ].forEach((key) => {
     if (keys.has(key)) compat[key] = (strict as any)[key];
   });
@@ -921,6 +957,7 @@ const resetForm = () => {
   form.amount = "120";
   form.priority = "100";
   form.active = true;
+  form.redeemsMembershipMeal = false;
   form.requirementsJson = '[{"targetType":"group","target":"guisado","qty":2}]';
   advancedJsonOpen.value = false;
   syncRowsFromJson();
@@ -946,6 +983,7 @@ const openEdit = (promo: PromoViewModel) => {
   form.amount = String(promo.amount || 0);
   form.priority = String(promo.priority || 0);
   form.active = promo.active;
+  form.redeemsMembershipMeal = promo.redeemsMembershipMeal;
   form.requirementsJson = JSON.stringify(promo.requirements || [], null, 2);
   advancedJsonOpen.value = false;
   syncRowsFromJson();

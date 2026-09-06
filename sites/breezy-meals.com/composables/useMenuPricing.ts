@@ -64,6 +64,10 @@ function toRuntimePromo(record: Record<string, any>): PricingPromo | null {
   const display = (record.display ?? data?.display) as
     | { summary?: string }
     | undefined;
+  const configuredRedemption = menuPricingConfig.promos.find(
+    (promo) => promo.id === id,
+  )?.redemption;
+  const redemption = record.redemption ?? data?.redemption;
 
   const requirements = Array.isArray(match?.requirements)
     ? match.requirements.filter(
@@ -89,6 +93,12 @@ function toRuntimePromo(record: Record<string, any>): PricingPromo | null {
     match: { requirements },
     pricing: { amount: Number(pricing?.amount || 0) },
     display: { summary: String(display?.summary || "").trim() },
+    redemption:
+      redemption?.kind === "membership_meal" && Number(redemption.credits) > 0
+        ? { kind: "membership_meal", credits: Number(redemption.credits) }
+        : redemption?.kind === "none"
+          ? undefined
+          : configuredRedemption,
   };
 }
 
@@ -126,8 +136,6 @@ export function useMenuPricing(params: {
   taquizaOrderCount: ComputedRef<Record<TaquizaKind, number>>;
   taquizaTotalForName: (name: string) => number;
   itemCount: ComputedRef<number>;
-  staffMode: () => boolean;
-  useDailyMenu: () => boolean;
   showPromoStatus?: () => boolean;
   activePromoId?: () => string | null;
 }) {

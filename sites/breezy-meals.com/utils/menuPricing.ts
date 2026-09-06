@@ -25,6 +25,10 @@ export interface PricingPromo {
   priority?: number;
   stackable?: boolean;
   maxApplications?: number;
+  redemption?: {
+    kind: "membership_meal";
+    credits: number;
+  };
   display?: {
     summary?: string;
   };
@@ -55,6 +59,7 @@ export interface PricingLine {
   unitPrice: number;
   total: number;
   detail?: string;
+  redemption?: PricingPromo["redemption"];
   promoApplications?: PricingPromoApplication[];
 }
 
@@ -315,6 +320,7 @@ function applyPromoOnce(
       unitPrice: promo.pricing.amount,
       total: promo.pricing.amount,
       detail: summarizeLabels(pickedLabels),
+      redemption: promo.redemption,
       promoApplications: [
         {
           items: [...itemCounts.values()],

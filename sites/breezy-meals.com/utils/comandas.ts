@@ -431,6 +431,10 @@ export interface PlacedOrder {
     id: string;
     label: string;
     application: number;
+    redemption?: {
+      kind: "membership_meal";
+      credits: number;
+    };
   };
   memberRedeemed?: boolean;
 }

@@ -19,6 +19,7 @@ export const menuPricingConfig: PricingConfig = {
       display: {
         summary: "1 guiso + 2 guarniciones + 1 bebida = $120",
       },
+      redemption: { kind: "membership_meal", credits: 1 },
       match: {
         requirements: [
           { targetType: "group", target: "guisos", qty: 1 },
@@ -37,6 +38,7 @@ export const menuPricingConfig: PricingConfig = {
       display: {
         summary: "1 caldo + 2 guarniciones + 1 bebida = $120",
       },
+      redemption: { kind: "membership_meal", credits: 1 },
       match: {
         requirements: [
           { targetType: "group", target: "caldos", qty: 1 },
@@ -55,6 +57,7 @@ export const menuPricingConfig: PricingConfig = {
       display: {
         summary: "3 tacos = $120",
       },
+      redemption: { kind: "membership_meal", credits: 1 },
       match: {
         requirements: [
           { targetType: "order-unit", target: "taquiza:tacos", qty: 1 },
@@ -71,6 +74,7 @@ export const menuPricingConfig: PricingConfig = {
       display: {
         summary: "2 quesadillas = $120",
       },
+      redemption: { kind: "membership_meal", credits: 1 },
       match: {
         requirements: [
           {

@@ -209,6 +209,7 @@ export function useMenuCheckout(params: {
               id: line.code,
               label: line.label,
               application: applicationNumber,
+              redemption: line.redemption,
             },
           });
         });
@@ -295,7 +296,9 @@ export function useMenuCheckout(params: {
       pricingTotal: includeOrderPricing
         ? pricingSubtotal.value + orderDeliveryFee
         : undefined,
-      redeemMemberMeal: !!draft.promo,
+      redeemMemberMeal:
+        draft.promo?.redemption?.kind === "membership_meal" &&
+        draft.promo.redemption.credits > 0,
       promo: draft.promo,
     };
 

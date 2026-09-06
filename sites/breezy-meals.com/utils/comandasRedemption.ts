@@ -9,7 +9,7 @@ export interface IdentifiedComanda extends RedeemableComanda {
 }
 
 export function shouldRedeemOnReady(order: RedeemableComanda): boolean {
-  return Boolean(order.memberCode?.trim());
+  return Boolean(order.memberCode?.trim() && order.redeemMemberMeal);
 }
 
 export function redemptionReasonForOrder(order: IdentifiedComanda): string {

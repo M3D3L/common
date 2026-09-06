@@ -6,10 +6,14 @@ import {
   shouldRedeemOnReady,
 } from "../utils/comandasRedemption.ts";
 
-test("marking a member comanda ready redeems regardless of promo metadata", () => {
-  assert.equal(shouldRedeemOnReady({ memberCode: "GM4218" }), true);
+test("only an explicitly eligible member comanda redeems when ready", () => {
+  assert.equal(shouldRedeemOnReady({ memberCode: "GM4218" }), false);
   assert.equal(
     shouldRedeemOnReady({ memberCode: "GM4218", redeemMemberMeal: false }),
+    false,
+  );
+  assert.equal(
+    shouldRedeemOnReady({ memberCode: "GM4218", redeemMemberMeal: true }),
     true,
   );
 });
