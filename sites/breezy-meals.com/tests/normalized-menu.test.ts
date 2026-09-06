@@ -3,6 +3,8 @@ import test from "node:test";
 
 import {
   buildNormalizedMenuRecord,
+  legacyMenuCleanupPayload,
+  mergeChangedMenuFields,
   type NormalizedMenuRows,
 } from "../lib/normalized-menu.ts";
 
@@ -43,6 +45,7 @@ const rows: NormalizedMenuRows = {
       price: 125,
       source_record: "menu-1",
       sort_order: 2,
+      legacy_payload: { name: "Birria", price: 125, image: "birria.jpg" },
     },
     {
       id: "item-1",
@@ -64,7 +67,19 @@ const rows: NormalizedMenuRows = {
       sort_order: 1,
     },
   ],
-  days: [{ id: "day-1", block: "block-1", weekday: 1, sort_order: 1 }],
+  days: [
+    {
+      id: "day-1",
+      block: "block-1",
+      weekday: 1,
+      sort_order: 1,
+      legacy_payload: {
+        guisos: ["Birria"],
+        sides: ["Arroz"],
+        taquizas: [],
+      },
+    },
+  ],
   dayItems: [
     {
       id: "day-item-2",
@@ -116,7 +131,7 @@ test("reconstructs migrated menu domains while preserving legacy fields", () => 
 
   assert.equal(menu.label, "Preserved");
   assert.deepEqual(menu.dishes, {
-    guisos: [{ name: "Birria", price: 125 }],
+    guisos: [{ name: "Birria", price: 125, image: "birria.jpg" }],
     sides: [{ name: "Arroz", price: 0 }],
   });
   assert.deepEqual(menu.week_blocks, [
@@ -124,7 +139,9 @@ test("reconstructs migrated menu domains while preserving legacy fields", () => 
       id: "week-a",
       name: "Semana A",
       color: "red",
-      days: { "1": { guisos: ["Birria"], sides: ["Arroz"] } },
+      days: {
+        "1": { guisos: ["Birria"], sides: ["Arroz"], taquizas: [] },
+      },
     },
   ]);
   assert.deepEqual(menu.rotation, ["week-a"]);
@@ -162,4 +179,49 @@ test("uses normalized dated service state when present", () => {
   assert.deepEqual(menu.active, { guisos: ["Birria"] });
   assert.deepEqual(menu.sold_out, ["Birria"]);
   assert.equal(menu.active_date, "2026-09-06");
+});
+
+test("merges only explicitly changed legacy fields over normalized state", () => {
+  const normalized = {
+    id: "menu-1",
+    dishes: { guisos: ["Normalized"] },
+    sold_out: ["Old"],
+    week_blocks: [{ id: "week-a" }],
+  };
+  const persisted = {
+    id: "menu-1",
+    dishes: null,
+    sold_out: ["New"],
+    week_blocks: null,
+  };
+
+  assert.deepEqual(
+    mergeChangedMenuFields(normalized, persisted, ["sold_out"]),
+    {
+      ...normalized,
+      sold_out: ["New"],
+    },
+  );
+});
+
+test("retains undated service state while clearing normalized menu blobs", () => {
+  assert.deepEqual(legacyMenuCleanupPayload(false), {
+    dishes: null,
+    store: null,
+    week_blocks: null,
+    rotation: null,
+    rotation_anchor: "",
+    overrides: null,
+  });
+  assert.deepEqual(legacyMenuCleanupPayload(true), {
+    dishes: null,
+    store: null,
+    week_blocks: null,
+    rotation: null,
+    rotation_anchor: "",
+    overrides: null,
+    active: null,
+    active_date: "",
+    sold_out: null,
+  });
 });

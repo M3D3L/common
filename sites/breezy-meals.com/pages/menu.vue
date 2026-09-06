@@ -362,7 +362,7 @@ async function toggleOut(name: string) {
       sold_out: [...next],
     });
     if (props.fetchedCollection === "menu") {
-      await normalizedMenu.syncMenu(saved as any);
+      await normalizedMenu.syncMenu(saved as any, ["sold_out"]);
     }
     record.value.sold_out = [...next];
   } catch {

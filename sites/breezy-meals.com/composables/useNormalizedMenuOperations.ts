@@ -2,6 +2,10 @@ import type { RecordModel } from "pocketbase";
 import usePocketBase from "@common/composables/usePocketbase";
 import {
   buildNormalizedMenuRecord,
+  legacyMenuCleanupPayload,
+  mergeChangedMenuFields,
+  NORMALIZED_MENU_FIELDS,
+  type NormalizedMenuField,
   type NormalizedMenuRows,
 } from "~/lib/normalized-menu";
 import type { NormalizedRecord } from "~/lib/normalized-domain";
@@ -80,7 +84,12 @@ export function useNormalizedMenuOperations() {
     return buildNormalizedMenuRecord(legacy, rows);
   }
 
-  async function syncMenu(legacy: NormalizedRecord): Promise<void> {
+  async function syncMenu(
+    persisted: NormalizedRecord,
+    changedFields: NormalizedMenuField[] = NORMALIZED_MENU_FIELDS,
+  ): Promise<void> {
+    const normalized = await loadMenu(persisted);
+    const legacy = mergeChangedMenuFields(normalized, persisted, changedFields);
     const plan = createCommerceMigrationPlan({
       exportedAt: new Date().toISOString(),
       collections: { menu: [legacy], comandas: [] },
@@ -231,6 +240,15 @@ export function useNormalizedMenuOperations() {
         ),
       );
     }
+
+    const hasDatedService = plan.rows.some(
+      (row) => row.collection === "menu_service_days",
+    );
+    await pb
+      .collection("menu")
+      .update(legacy.id, legacyMenuCleanupPayload(hasDatedService), {
+        requestKey: null,
+      });
   }
 
   return { loadMenu, syncMenu };

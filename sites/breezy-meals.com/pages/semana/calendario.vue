@@ -403,7 +403,11 @@ async function save() {
         rotation_anchor: anchor.value,
         overrides: cleanOverrides,
       });
-      await normalizedMenu.syncMenu(saved as any);
+      await normalizedMenu.syncMenu(saved as any, [
+        "rotation",
+        "rotation_anchor",
+        "overrides",
+      ]);
     } else {
       const created = await createItem("menu", {
         dishes: emptyMenuCatalog(),

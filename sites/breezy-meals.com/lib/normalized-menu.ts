@@ -15,6 +15,53 @@ export interface NormalizedMenuRows {
   serviceItems: NormalizedRecord[];
 }
 
+export type NormalizedMenuField =
+  | "dishes"
+  | "store"
+  | "week_blocks"
+  | "rotation"
+  | "rotation_anchor"
+  | "overrides"
+  | "active"
+  | "active_date"
+  | "sold_out";
+
+export const NORMALIZED_MENU_FIELDS: NormalizedMenuField[] = [
+  "dishes",
+  "store",
+  "week_blocks",
+  "rotation",
+  "rotation_anchor",
+  "overrides",
+  "active",
+  "active_date",
+  "sold_out",
+];
+
+export function mergeChangedMenuFields<T extends NormalizedRecord>(
+  normalized: T,
+  persisted: T,
+  changedFields: NormalizedMenuField[],
+): T {
+  const merged = { ...normalized };
+  for (const field of changedFields) merged[field] = persisted[field];
+  return merged;
+}
+
+export function legacyMenuCleanupPayload(hasDatedService: boolean) {
+  return {
+    dishes: null,
+    store: null,
+    week_blocks: null,
+    rotation: null,
+    rotation_anchor: "",
+    overrides: null,
+    ...(hasDatedService
+      ? { active: null, active_date: "", sold_out: null }
+      : {}),
+  };
+}
+
 function relationId(value: unknown): string {
   if (typeof value === "string") return value;
   return Array.isArray(value) && typeof value[0] === "string" ? value[0] : "";
@@ -69,14 +116,19 @@ function buildCatalog(
   ).forEach((item) => {
     const category = categoryById.get(relationId(item.category));
     if (!category) return;
-    const value: MenuItem = {
-      name: text(item.name),
-      price: numeric(item.price),
-    };
-    if (text(item.image_url)) value.image = text(item.image_url);
-    if (item.combo && typeof item.combo === "object") {
-      value.combo = item.combo as MenuItem["combo"];
-    }
+    const value = item.legacy_payload
+      ? (item.legacy_payload as MenuItem)
+      : (() => {
+          const fallback: MenuItem = {
+            name: text(item.name),
+            price: numeric(item.price),
+          };
+          if (text(item.image_url)) fallback.image = text(item.image_url);
+          if (item.combo && typeof item.combo === "object") {
+            fallback.combo = item.combo as MenuItem["combo"];
+          }
+          return fallback;
+        })();
     (catalog[category] ??= []).push(value);
   });
 
@@ -102,6 +154,15 @@ function buildBlocks(
     sorted(
       rows.days.filter((day) => relationId(day.block) === block.id),
     ).forEach((day) => {
+      if (
+        day.legacy_payload &&
+        typeof day.legacy_payload === "object" &&
+        !Array.isArray(day.legacy_payload)
+      ) {
+        days[String(numeric(day.weekday)) as keyof WeekBlock["days"]] =
+          day.legacy_payload as WeekBlock["days"][keyof WeekBlock["days"]];
+        return;
+      }
       const menu: Record<string, string[]> = {};
       sorted(
         rows.dayItems.filter((item) => relationId(item.day) === day.id),

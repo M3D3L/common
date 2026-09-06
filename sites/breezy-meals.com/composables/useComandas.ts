@@ -657,7 +657,10 @@ function createComandasStore() {
               active: cloneDishes(today),
               active_date: todayISO(),
             });
-            await normalizedMenu.syncMenu(saved as any);
+            await normalizedMenu.syncMenu(saved as any, [
+              "active",
+              "active_date",
+            ]);
           } catch {
             /* queda en memoria; se fijará al iniciar turno */
           }
@@ -958,7 +961,7 @@ function createComandasStore() {
         const saved = await updateItem("menu", menuRecordId.value, {
           sold_out: soldOut.value,
         });
-        await normalizedMenu.syncMenu(saved as any);
+        await normalizedMenu.syncMenu(saved as any, ["sold_out"]);
       } catch {
         /* queda en cache local; se reintenta al siguiente cambio */
       }

@@ -317,7 +317,9 @@ async function save() {
         payload,
       );
       if (props.fetchedCollection === "menu") {
-        await normalizedMenu.syncMenu(saved as any);
+        await normalizedMenu.syncMenu(saved as any, [
+          props.dishes as "dishes" | "store",
+        ]);
       }
     } else {
       const created = await createItem("menu", {

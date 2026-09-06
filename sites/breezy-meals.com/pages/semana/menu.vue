@@ -971,7 +971,7 @@ async function save(): Promise<boolean> {
       const saved = await updateItem("menu", menuRecordId.value, {
         week_blocks: clean,
       });
-      await normalizedMenu.syncMenu(saved as any);
+      await normalizedMenu.syncMenu(saved as any, ["week_blocks"]);
     } else {
       const created = await createItem("menu", {
         dishes: dayDishesToCatalog(catalog),
