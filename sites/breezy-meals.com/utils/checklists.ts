@@ -159,7 +159,7 @@ export function dateToISO(d: Date): string {
   return `${y}-${m}-${dd}`;
 }
 /** Local calendar date (NOT UTC), so the day is correct in any timezone. */
-export function todayISO(): string {
+export function checklistTodayISO(): string {
   return dateToISO(new Date());
 }
 export function addDaysISO(iso: string, n: number): string {

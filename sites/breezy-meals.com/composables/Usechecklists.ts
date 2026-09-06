@@ -20,7 +20,7 @@ import {
   dayNumber,
   isClosedDay,
   addDaysISO,
-  todayISO,
+  checklistTodayISO,
   prettyDate as prettyOf,
   WEEKDAY_SHORT,
   type ChecklistTemplate,
@@ -85,7 +85,7 @@ function createChecklistsStore() {
   const staffUsers = ref<ChecklistStaffUser[]>([]);
   // runsByDate[date][checklistId] = run (kept in full so we never drop history).
   const runsByDate = reactive<RunsByDate>({});
-  const selectedDate = ref<string>(todayISO());
+  const selectedDate = ref<string>(checklistTodayISO());
 
   const loading = ref(true);
   const isRefreshing = ref(false);
@@ -161,7 +161,9 @@ function createChecklistsStore() {
   const selectedWeekday = computed(() => weekdayOf(selectedDate.value));
   const isSelectedClosed = computed(() => isClosedDay(selectedDate.value));
   const selectedPretty = computed(() => prettyOf(selectedDate.value));
-  const isTodaySelected = computed(() => selectedDate.value === todayISO());
+  const isTodaySelected = computed(
+    () => selectedDate.value === checklistTodayISO(),
+  );
 
   const weekStrip = computed(() =>
     weekDates(selectedDate.value).map((date) => {
@@ -171,7 +173,7 @@ function createChecklistsStore() {
         weekday: wd,
         short: WEEKDAY_SHORT[wd],
         num: dayNumber(date),
-        isToday: date === todayISO(),
+        isToday: date === checklistTodayISO(),
         isSelected: date === selectedDate.value,
         isClosed: wd === 0,
       };
@@ -403,7 +405,7 @@ function createChecklistsStore() {
     selectedDate.value = date;
   }
   function goToday() {
-    selectedDate.value = todayISO();
+    selectedDate.value = checklistTodayISO();
   }
   function prevWeek() {
     selectedDate.value = addDaysISO(selectedDate.value, -1);

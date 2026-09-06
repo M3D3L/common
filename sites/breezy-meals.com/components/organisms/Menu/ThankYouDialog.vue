@@ -41,6 +41,9 @@ import {
   DialogFooter,
 } from "@common/components/ui/dialog";
 
-defineProps<{ thankYouName: string; logoSrc: string }>();
+defineProps<{
+  thankYouName: string;
+  logoSrc: string;
+}>();
 const open = defineModel<boolean>("open", { required: true });
 </script>

@@ -245,7 +245,8 @@ const props = withDefaults(
 );
 
 const { formatCustomerOrder, formatCombinedCustomerOrder } = useMenuLink();
-const { waLink, isAppleDevice, formatSoldOut } = useWhatsappOrder();
+const { waLink, whatsappAppLink, isAppleDevice, formatSoldOut } =
+  useWhatsappOrder();
 const { createItem, fetchCollection, updateItem } = usePocketBaseCore();
 const normalizedMenu = useNormalizedMenuOperations();
 const { getMemberByCode } = useMembers();
@@ -662,8 +663,7 @@ const { sendingOrder, showThankYou, thankYouName, clearCart, sendOrder } =
     createItem,
     formatCustomerOrder,
     formatCombinedCustomerOrder,
-    waLink,
-    isAppleDevice,
+    whatsappAppLink,
     restaurantWhatsapp: RESTAURANT_WHATSAPP,
     comandasCollection: COMANDAS_COLLECTION,
     comandasField: COMANDAS_FIELD,

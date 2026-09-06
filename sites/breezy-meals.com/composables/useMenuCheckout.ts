@@ -55,8 +55,7 @@ export function useMenuCheckout(params: {
   ) => Promise<unknown>;
   formatCustomerOrder: (args: CustomerOrderArgs) => string;
   formatCombinedCustomerOrder: (args: CombinedCustomerOrderArgs) => string;
-  waLink: (text: string, phone?: string) => string;
-  isAppleDevice: () => boolean;
+  whatsappAppLink: (text: string, phone?: string) => string;
   restaurantWhatsapp: string;
   comandasCollection: string;
   comandasField: string;
@@ -89,8 +88,7 @@ export function useMenuCheckout(params: {
     createItem,
     formatCustomerOrder,
     formatCombinedCustomerOrder,
-    waLink,
-    isAppleDevice,
+    whatsappAppLink,
     restaurantWhatsapp,
     comandasCollection,
     comandasField,
@@ -206,15 +204,6 @@ export function useMenuCheckout(params: {
 
     sendingOrder.value = true;
 
-    // Abrir la pestaña DENTRO del gesto del click (síncrono): si se abre
-    // después de un `await`, el bloqueador de pop-ups la mata y el fallback
-    // termina navegando la propia página (se "cierra" el menú de golpe) y,
-    // según el navegador, deja dos intentos de apertura visibles.
-    const wa =
-      typeof window !== "undefined" && !isAppleDevice()
-        ? window.open("", "_blank")
-        : null;
-
     const a = active.value; // menú resuelto (rotación o `active` de hoy)
 
     // Si hay código de socio, se estampa en la nota Y se guarda como campo
@@ -277,20 +266,13 @@ export function useMenuCheckout(params: {
       await createComanda(draft.number, finalNote, draft, code, index === 0);
     }
 
-    const url = waLink(text, restaurantWhatsapp);
-    if (typeof window !== "undefined") {
-      if (isAppleDevice()) {
-        window.location.href = url;
-      } else if (wa) {
-        wa.location.href = url;
-      } else {
-        window.open(url, "_blank", "noopener");
-      }
-    }
-
     thankYouName.value = customer.name.trim();
     resetOrderForm();
     showThankYou.value = true;
+
+    if (typeof window !== "undefined") {
+      window.location.href = whatsappAppLink(text, restaurantWhatsapp);
+    }
 
     // Evita doble-tap y mensajes duplicados en móviles.
     window.setTimeout(() => {

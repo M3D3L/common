@@ -1,4 +1,5 @@
 import { groupsFromData, type DayDishes } from "~/utils/comandas";
+import { whatsappAppLink } from "~/utils/whatsapp";
 
 export type Cart = Record<string, number>;
 export type OrderMode = "llevar" | "aqui" | "domicilio";
@@ -411,6 +412,7 @@ export function useWhatsappOrder() {
     formatChecklistReopen,
     formatChecklistItem,
     waLink,
+    whatsappAppLink,
     isAppleDevice,
     openWhatsApp,
   };
