@@ -115,9 +115,8 @@ export default function useMembershipPaymentRequests() {
 
     const member = selectedMember;
     const memberId = member?.id ?? randomId();
-    const memberCode = member
-      ? undefined
-      : await members.generateCode(request.name);
+    const memberCode =
+      member?.member_code ?? (await members.generateCode(request.name));
     const membership = member
       ? await memberships.getActiveMembership(member.id)
       : null;
@@ -131,7 +130,7 @@ export default function useMembershipPaymentRequests() {
       memberId,
       membershipId: randomId(),
       redemptionId: randomId(),
-      memberCode,
+      memberCode: member ? undefined : memberCode,
       now: new Date().toISOString(),
     });
 
@@ -171,6 +170,12 @@ export default function useMembershipPaymentRequests() {
     ]) {
       core.invalidateCollectionCache(collection);
     }
+
+    return {
+      memberCode,
+      remaining:
+        (membership ? memberships.remaining(membership) : 0) + offer.credits,
+    };
   };
 
   const reject = async (

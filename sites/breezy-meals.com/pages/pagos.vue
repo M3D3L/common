@@ -329,6 +329,7 @@ definePageMeta({ layout: "breezy", staffOnly: true });
 
 const api = useMembershipPaymentRequests();
 const membersApi = useMembers();
+const { openWhatsApp } = useWhatsappOrder();
 const { isUserVerified, subscribe, unsubscribe } = usePocketBaseCore();
 const offer = api.offer;
 const requests = ref<MembershipPaymentRequest[]>([]);
@@ -534,8 +535,21 @@ async function approveRequest() {
   busyId.value = request.id;
   errorMessage.value = "";
   try {
-    await api.approve(request, selectedMember.value);
+    const approval = await api.approve(request, selectedMember.value);
     await loadData();
+    const mealLabel = approval.remaining === 1 ? "comida" : "comidas";
+    openWhatsApp(
+      [
+        `Hola ${request.name.trim()} 👋`,
+        "",
+        "Tu pago fue aprobado y tu membresía Breezy ya está activa.",
+        `🍽️ Tienes *${approval.remaining} ${mealLabel}* disponibles.`,
+        `🎫 Tu código de socio es: *${approval.memberCode}*`,
+        "",
+        "Usa este código al hacer tu pedido. ¡Gracias por ser parte de Breezy! 🌊",
+      ].join("\n"),
+      request.phone,
+    );
   } catch (error: any) {
     errorMessage.value = error?.message ?? "No se pudo aprobar el pago";
   } finally {
