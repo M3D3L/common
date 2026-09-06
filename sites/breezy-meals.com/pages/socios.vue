@@ -1,5 +1,5 @@
 <template>
-  <section class="lg:max-w-3xl px-4 pt-8 pb-28 mx-auto">
+  <section class="mx-auto max-w-2xl px-4 pb-28 pt-8 sm:px-6">
     <!-- Encabezado -->
     <div class="flex items-baseline justify-between mb-2">
       <div class="flex items-baseline gap-3">

@@ -1,5 +1,5 @@
 <template>
-  <section class="mx-auto max-w-5xl px-4 pb-28 pt-8">
+  <section class="mx-auto max-w-2xl px-4 pb-28 pt-8 sm:px-6">
     <div class="mb-6 flex flex-wrap items-start justify-between gap-4">
       <div>
         <h1 class="text-2xl font-bold tracking-tight">Platillos del menu</h1>

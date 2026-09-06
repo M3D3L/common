@@ -1,5 +1,5 @@
 <template>
-  <section class="lg:max-w-3xl px-4 pt-16 pb-28 mx-auto">
+  <section class="mx-auto max-w-2xl px-4 pb-28 pt-16 sm:px-6">
     <div class="mb-8">
       <h2 class="text-2xl font-bold tracking-tight">Preorden semanal</h2>
       <p class="text-sm text-muted-foreground">
@@ -183,7 +183,7 @@
       class="fixed inset-x-0 bottom-0 border-t bg-background/95 backdrop-blur border-border z-40"
     >
       <div
-        class="flex items-center justify-between px-4 py-3 mx-auto max-w-3xl"
+        class="mx-auto flex max-w-2xl items-center justify-between px-4 py-3 sm:px-6"
       >
         <div class="text-sm">
           <span class="font-bold tabular-nums text-base">{{ totalUnits }}</span>

@@ -1,6 +1,6 @@
 <template>
   <div
-    class="container relative w-full p-6 font-body min-h-screen grid content-start text-foreground md:py-10"
+    class="relative mx-auto grid min-h-screen w-full max-w-2xl content-start px-4 py-6 font-body text-foreground sm:px-6 md:py-10"
   >
     <header class="flex items-center gap-3 mb-8">
       <div>
@@ -15,14 +15,6 @@
           Checklists
         </h1>
       </div>
-
-      <span
-        v-if="live"
-        class="ml-auto flex items-center gap-1.5 text-xs font-semibold text-muted-foreground"
-      >
-        <span class="h-2 w-2 rounded-full bg-green-500" />
-        En vivo
-      </span>
     </header>
 
     <ChecklistsIndex />
@@ -43,7 +35,7 @@
 import ChecklistsIndex from "~/components/organisms/checklists/Index.vue";
 import { provideChecklists } from "~/composables/Usechecklists";
 
-const { toastMsg, live } = provideChecklists();
+const { toastMsg } = provideChecklists();
 
 definePageMeta({ layout: "staff", alias: "/checklists" });
 </script>

@@ -1,5 +1,5 @@
 <template>
-  <section class="max-w-3xl">
+  <section class="w-full">
     <!-- Date picker + week strip -->
     <div v-if="isManager" class="mb-4 space-y-3">
       <div class="flex flex-wrap items-center gap-2">

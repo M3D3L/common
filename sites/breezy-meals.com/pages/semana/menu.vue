@@ -1,5 +1,5 @@
 <template>
-  <section class="lg:max-w-3xl px-4 pt-8 pb-28 mx-auto">
+  <section class="mx-auto max-w-2xl px-4 pb-28 pt-8 sm:px-6">
     <!-- Sub-nav admin -->
     <div class="flex gap-1 mb-4">
       <Button as-child size="sm" variant="secondary">
@@ -265,7 +265,7 @@
       v-if="!loading && !catalogEmpty"
       class="fixed inset-x-0 bottom-0 border-t bg-background/95 backdrop-blur border-border"
     >
-      <div class="flex items-center gap-3 px-4 py-3 mx-auto max-w-3xl">
+      <div class="mx-auto flex max-w-2xl items-center gap-3 px-4 py-3 sm:px-6">
         <span class="text-sm text-muted-foreground">
           {{ blocks.length }} bloque(s)
         </span>

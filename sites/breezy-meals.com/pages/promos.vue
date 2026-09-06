@@ -1,5 +1,5 @@
 <template>
-  <main class="mx-auto max-w-3xl space-y-6 px-5 pb-16 pt-6 sm:px-6 lg:py-8">
+  <main class="mx-auto max-w-2xl space-y-6 px-5 pb-16 pt-6 sm:px-6 lg:py-8">
     <section class="overflow-hidden rounded-3xl border bg-card shadow-sm">
       <div class="relative p-6 sm:p-8">
         <div

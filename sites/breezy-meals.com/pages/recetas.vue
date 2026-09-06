@@ -1,5 +1,5 @@
 <template>
-  <main class="mx-auto max-w-7xl px-4 pb-20 pt-8">
+  <main class="mx-auto max-w-2xl px-4 pb-20 pt-8 sm:px-6">
     <header class="mb-7 flex flex-wrap items-end justify-between gap-4">
       <div>
         <p class="text-xs font-bold uppercase tracking-widest text-primary">
