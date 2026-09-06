@@ -28,7 +28,6 @@ const route = useRoute();
 
 const links = [
   { to: "/", label: "Turno" },
-  { to: "/semana", label: "Preórdenes" },
   { to: "/semana/menu", label: "Menú semanal" },
 ];
 
