@@ -314,7 +314,6 @@ const {
   record,
   selectedDate,
   dishesField: () => props.dishesField,
-  staffMode: () => staffMode.value,
   useDailyMenu: () => props.useDailyMenu,
 });
 

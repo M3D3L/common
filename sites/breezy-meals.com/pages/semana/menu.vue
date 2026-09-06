@@ -21,6 +21,19 @@
     </div>
 
     <div
+      v-else-if="loadFailed"
+      class="py-16 text-center border border-dashed rounded-xl border-border"
+    >
+      <p class="font-semibold">No se pudieron cargar los bloques.</p>
+      <p class="mt-1 text-sm text-muted-foreground">
+        Revisa la conexión con PocketBase e inténtalo de nuevo.
+      </p>
+      <Button class="mt-4" size="sm" variant="outline" @click="load">
+        Reintentar
+      </Button>
+    </div>
+
+    <div
       v-else-if="catalogEmpty"
       class="py-16 text-center border border-dashed rounded-xl border-border"
     >
@@ -360,6 +373,7 @@ const normalizedMenu = useNormalizedMenuOperations();
 const { run: runChatGPT, loading: generating } = useChatGPT();
 
 const loading = ref(true);
+const loadFailed = ref(false);
 const saving = ref(false);
 const toastMsg = ref("");
 const menuRecordId = ref<string | null>(null);
@@ -916,6 +930,7 @@ function toast(m: string) {
 
 async function load() {
   loading.value = true;
+  loadFailed.value = false;
   try {
     const [res, normalizedRecipes] = await Promise.all([
       fetchCollection("menu", 1, 1, "", "-created", null, null, true),
@@ -946,8 +961,9 @@ async function load() {
       blocks.value = (rec.week_blocks ?? []) as WeekBlock[];
       selectedId.value = blocks.value[0]?.id ?? "";
     }
-  } catch {
-    /* offline */
+  } catch (error) {
+    loadFailed.value = true;
+    console.error("Could not load weekly menu blocks", error);
   } finally {
     loading.value = false;
   }

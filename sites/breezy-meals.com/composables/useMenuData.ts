@@ -44,10 +44,9 @@ export function useMenuData(params: {
   record: Ref<MenuRecordFull | null | undefined>;
   selectedDate: Ref<string>;
   dishesField: () => "dishes" | "store";
-  staffMode: () => boolean;
   useDailyMenu: () => boolean;
 }) {
-  const { record, selectedDate, dishesField, staffMode, useDailyMenu } = params;
+  const { record, selectedDate, dishesField, useDailyMenu } = params;
 
   /**
    * Today's menu: same criteria as the comandas (kitchen board) app.
@@ -60,11 +59,6 @@ export function useMenuData(params: {
     if (!rec) return EMPTY_DISHES;
 
     const selectedDishes = rec[dishesField()];
-    if (staffMode()) {
-      return normalizeDishNames(
-        rec.active as Partial<Record<GroupKey, unknown>>,
-      );
-    }
     if (!useDailyMenu() || dishesField() !== "dishes") {
       return normalizeDishNames(
         selectedDishes as Partial<Record<GroupKey, unknown>>,
