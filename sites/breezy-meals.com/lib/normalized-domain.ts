@@ -161,9 +161,14 @@ export function buildChecklistViews(
         .map(
           (section): ChecklistSection => ({
             key: text(section.legacy_key),
+            recordId: section.id,
             label: text(section.label),
             items: itemRecords
-              .filter((item) => relationId(item.section) === section.id)
+              .filter(
+                (item) =>
+                  relationId(item.section) === section.id &&
+                  item.active !== false,
+              )
               .sort(
                 (left, right) =>
                   (number(left.sort_order) ?? 0) -
@@ -172,6 +177,7 @@ export function buildChecklistViews(
               .map(
                 (item): ChecklistItem => ({
                   id: text(item.legacy_id),
+                  recordId: item.id,
                   label: text(item.label),
                   kind:
                     item.kind === "number" || item.kind === "text"

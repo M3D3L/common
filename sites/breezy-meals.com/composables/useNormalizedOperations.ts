@@ -10,13 +10,50 @@ import {
   type RecipeView,
 } from "~/lib/normalized-domain";
 import { stableFingerprint } from "~/lib/legacy-normalization";
-import type { ChecklistRun } from "~/utils/checklists";
+import type { ChecklistRun, ItemKind } from "~/utils/checklists";
+
+export interface ChecklistAssignment {
+  id: string;
+  itemRecordId: string;
+  businessDate: string;
+  assignedTo: string;
+  assignedBy: string;
+  notes?: string;
+  sortOrder?: number;
+}
+
+export interface ChecklistStaffUser {
+  id: string;
+  name: string;
+  email: string;
+  verified: boolean;
+}
+
+export interface ChecklistTaskInput {
+  label: string;
+  kind: ItemKind;
+  required: boolean;
+}
 
 let sourceSequence = 0;
 const nextSourceIndex = () => Date.now() * 1000 + (sourceSequence++ % 1000);
 
 const recordData = (record: RecordModel) =>
   record as unknown as NormalizedRecord;
+
+const relationId = (value: unknown) =>
+  Array.isArray(value) ? String(value[0] ?? "") : String(value ?? "");
+
+const assignmentData = (record: NormalizedRecord): ChecklistAssignment => ({
+  id: record.id,
+  itemRecordId: relationId(record.item),
+  businessDate: String(record.business_date ?? ""),
+  assignedTo: relationId(record.assigned_to),
+  assignedBy: relationId(record.assigned_by),
+  notes: typeof record.notes === "string" ? record.notes : undefined,
+  sortOrder:
+    typeof record.sort_order === "number" ? record.sort_order : undefined,
+});
 
 export default function useNormalizedOperations() {
   const pb = usePocketBase();
@@ -188,18 +225,118 @@ export default function useNormalizedOperations() {
     return buildPunchViews([recordData(record)])[0];
   }
 
-  async function loadChecklists() {
-    const [templates, sections, items, runs, results] = await Promise.all([
-      fetchAll("checklist_templates", "sort_order"),
-      fetchAll("checklist_sections", "sort_order"),
-      fetchAll("checklist_items", "sort_order"),
-      fetchAll("checklist_runs", "business_date"),
-      fetchAll("checklist_results", "created"),
-    ]);
+  async function loadChecklists(includeStaff = false) {
+    const [templates, sections, items, runs, results, assignments, users] =
+      await Promise.all([
+        fetchAll("checklist_templates", "sort_order"),
+        fetchAll("checklist_sections", "sort_order"),
+        fetchAll("checklist_items", "sort_order"),
+        fetchAll("checklist_runs", "business_date"),
+        fetchAll("checklist_results", "created"),
+        fetchAll("checklist_assignments", "business_date"),
+        includeStaff ? fetchAll("users", "name") : Promise.resolve([]),
+      ]);
     return {
       ...buildChecklistViews(templates, sections, items, runs, results),
+      assignments: assignments.map(assignmentData),
+      staffUsers: users.map(
+        (record): ChecklistStaffUser => ({
+          id: record.id,
+          name: String(
+            record.name || record.username || record.email || "Empleado",
+          ),
+          email: String(record.email ?? ""),
+          verified: record.verified === true,
+        }),
+      ),
       records: { templates, sections, items, runs, results },
     };
+  }
+
+  async function saveChecklistAssignment(input: {
+    itemRecordId: string;
+    businessDate: string;
+    assignedTo: string;
+    assignedBy: string;
+    sortOrder?: number;
+  }): Promise<ChecklistAssignment> {
+    const existing = await findFirst(
+      "checklist_assignments",
+      pb.filter("item = {:item} && business_date = {:businessDate}", {
+        item: input.itemRecordId,
+        businessDate: input.businessDate,
+      }),
+    );
+    const payload = {
+      item: input.itemRecordId,
+      business_date: input.businessDate,
+      assigned_to: input.assignedTo,
+      assigned_by: input.assignedBy,
+      sort_order: input.sortOrder ?? null,
+    };
+    const record = existing
+      ? await pb
+          .collection("checklist_assignments")
+          .update(existing.id, payload, { requestKey: null })
+      : await pb
+          .collection("checklist_assignments")
+          .create(payload, { requestKey: null });
+    return assignmentData(recordData(record));
+  }
+
+  async function deleteChecklistAssignment(recordId: string): Promise<void> {
+    await pb
+      .collection("checklist_assignments")
+      .delete(recordId, { requestKey: null });
+  }
+
+  async function createChecklistTask(
+    sectionRecordId: string,
+    input: ChecklistTaskInput,
+    sortOrder: number,
+  ): Promise<void> {
+    const legacyId = `task-${Date.now().toString(36)}-${sourceSequence++}`;
+    const legacyPayload = {
+      id: legacyId,
+      label: input.label,
+      kind: input.kind,
+      required: input.required,
+    };
+    await pb.collection("checklist_items").create(
+      {
+        section: sectionRecordId,
+        legacy_id: legacyId,
+        label: input.label,
+        kind: input.kind,
+        required: input.required,
+        active: true,
+        sort_order: sortOrder,
+        source_index: nextSourceIndex(),
+        legacy_payload: legacyPayload,
+      },
+      { requestKey: null },
+    );
+  }
+
+  async function updateChecklistTask(
+    itemRecordId: string,
+    input: ChecklistTaskInput,
+  ): Promise<void> {
+    await pb.collection("checklist_items").update(
+      itemRecordId,
+      {
+        label: input.label,
+        kind: input.kind,
+        required: input.required,
+      },
+      { requestKey: null },
+    );
+  }
+
+  async function archiveChecklistTask(itemRecordId: string): Promise<void> {
+    await pb
+      .collection("checklist_items")
+      .update(itemRecordId, { active: false }, { requestKey: null });
   }
 
   async function saveChecklistRun(
@@ -317,6 +454,11 @@ export default function useNormalizedOperations() {
     loadPunches,
     createPunch,
     loadChecklists,
+    saveChecklistAssignment,
+    deleteChecklistAssignment,
+    createChecklistTask,
+    updateChecklistTask,
+    archiveChecklistTask,
     saveChecklistRun,
   };
 }

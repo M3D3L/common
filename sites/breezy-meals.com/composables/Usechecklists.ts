@@ -13,6 +13,7 @@ import {
   isItemDone,
   isItemInRange,
   templateForDay,
+  filterTemplatesByItemIds,
   listOnDay,
   weekdayOf,
   weekDates,
@@ -23,14 +24,23 @@ import {
   prettyDate as prettyOf,
   WEEKDAY_SHORT,
   type ChecklistTemplate,
+  type ChecklistSection,
+  type ChecklistItem,
   type ChecklistRun,
   type ItemResult,
   type RunStatus,
   type RunsByDate,
 } from "~/utils/checklists";
+import usePocketBase from "@common/composables/usePocketbase";
+import type {
+  ChecklistAssignment,
+  ChecklistStaffUser,
+  ChecklistTaskInput,
+} from "~/composables/useNormalizedOperations";
 
 /* ===== Config ===== */
 const STORAGE_KEY = "checklists";
+const RECURRING_ASSIGNMENT_DATE = "*";
 
 // Rapid ticks are batched before writing to the DB.
 const SAVE_DEBOUNCE_MS = 600;
@@ -43,19 +53,38 @@ const SAVE_DEBOUNCE_MS = 600;
  */
 function createChecklistsStore() {
   const { subscribe, unsubscribe, user } = usePocketBaseCore();
-  const { loadChecklists, saveChecklistRun } = useNormalizedOperations();
+  const {
+    loadChecklists,
+    saveChecklistAssignment,
+    deleteChecklistAssignment,
+    createChecklistTask,
+    updateChecklistTask,
+    archiveChecklistTask,
+    saveChecklistRun,
+  } = useNormalizedOperations();
+  const pb = usePocketBase();
+  const currentUserId = ref("");
+  const currentUserName = ref("");
+  const isManager = ref(false);
 
-  const me: string =
-    (user as any)?.name || (user as any)?.email || (user as any)?.id || "";
+  function syncAuth() {
+    const model = pb.authStore.model ?? (user as any);
+    currentUserId.value = model?.id ?? "";
+    currentUserName.value =
+      model?.name || model?.username || model?.email || model?.id || "";
+    isManager.value = model?.verified === true;
+  }
+  syncAuth();
 
   const { formatChecklist, formatChecklistReopen, waLink } = useWhatsappOrder();
 
   /* ===== State ===== */
   const version = ref(2);
   const templates = ref<ChecklistTemplate[]>([]);
+  const assignments = ref<ChecklistAssignment[]>([]);
+  const staffUsers = ref<ChecklistStaffUser[]>([]);
   // runsByDate[date][checklistId] = run (kept in full so we never drop history).
   const runsByDate = reactive<RunsByDate>({});
-  // The date currently being viewed/edited (defaults to today).
   const selectedDate = ref<string>(todayISO());
 
   const loading = ref(true);
@@ -117,7 +146,7 @@ function createChecklistsStore() {
       checklistId,
       bizDate: selectedDate.value,
       startedAt: Date.now(),
-      by: me,
+      by: currentUserName.value,
       status: "in_progress",
       results: {},
     };
@@ -154,12 +183,54 @@ function createChecklistsStore() {
   );
   const templatesEmpty = computed(() => templates.value.length === 0);
 
-  // Templates that have tasks for the selected day, filtered down to that day.
-  const dayLists = computed(() =>
+  const selectedAssignments = computed(() => {
+    const effectiveByItem = new Map<string, ChecklistAssignment>();
+    assignments.value
+      .filter(
+        (assignment) => assignment.businessDate === RECURRING_ASSIGNMENT_DATE,
+      )
+      .forEach((assignment) =>
+        effectiveByItem.set(assignment.itemRecordId, assignment),
+      );
+    assignments.value
+      .filter((assignment) => assignment.businessDate === selectedDate.value)
+      .forEach((assignment) =>
+        effectiveByItem.set(assignment.itemRecordId, assignment),
+      );
+    return [...effectiveByItem.values()];
+  });
+  const assignmentFor = (itemRecordId?: string) =>
+    itemRecordId
+      ? selectedAssignments.value.find(
+          (assignment) => assignment.itemRecordId === itemRecordId,
+        )
+      : undefined;
+
+  const scheduledDayLists = computed(() =>
     activeTemplates.value
       .filter((t) => listOnDay(t, selectedWeekday.value))
       .map((t) => templateForDay(t, selectedWeekday.value)),
   );
+  // PocketBase already limits assignment reads; this local filter keeps the
+  // rendered task tree aligned with the signed-in employee.
+  const dayLists = computed(() => {
+    if (isManager.value) return scheduledDayLists.value;
+    const assignedItemIds = new Set(
+      selectedAssignments.value
+        .filter((assignment) => assignment.assignedTo === currentUserId.value)
+        .map((assignment) => assignment.itemRecordId),
+    );
+    return filterTemplatesByItemIds(scheduledDayLists.value, assignedItemIds);
+  });
+
+  const assignableUsers = computed(() =>
+    staffUsers.value.filter(
+      (staffUser) => staffUser.id !== currentUserId.value,
+    ),
+  );
+  const staffName = (userId: string) =>
+    staffUsers.value.find((staffUser) => staffUser.id === userId)?.name ||
+    "Empleado";
 
   const dayTotal = computed(() => dayLists.value.length);
   const completedCount = computed(
@@ -168,9 +239,9 @@ function createChecklistsStore() {
 
   /* ===== Stateful evaluators (all against the selected date) ===== */
   const progressFor = (id: string) => {
-    const t = templates.value.find((x) => x.id === id);
-    return t
-      ? progress(templateForDay(t, selectedWeekday.value), runFor(id))
+    const template = dayLists.value.find((item) => item.id === id);
+    return template
+      ? progress(template, runFor(id))
       : {
           done: 0,
           total: 0,
@@ -188,8 +259,12 @@ function createChecklistsStore() {
   function applyData(data: {
     templates: ChecklistTemplate[];
     runsByDate: RunsByDate;
+    assignments: ChecklistAssignment[];
+    staffUsers: ChecklistStaffUser[];
   }) {
     templates.value = data.templates;
+    assignments.value = data.assignments;
+    staffUsers.value = data.staffUsers;
     Object.keys(runsByDate).forEach((k) => delete runsByDate[k]);
     Object.assign(runsByDate, data.runsByDate);
   }
@@ -198,7 +273,7 @@ function createChecklistsStore() {
   async function loadAll() {
     loading.value = true;
     try {
-      applyData(await loadChecklists());
+      applyData(await loadChecklists(isManager.value));
     } catch {
       // Offline: keep the local cache.
     } finally {
@@ -253,6 +328,7 @@ function createChecklistsStore() {
       unsubs.push(
         await subscribe("checklist_runs", onEvent, "*"),
         await subscribe("checklist_results", onEvent, "*"),
+        await subscribe("checklist_assignments", onEvent, "*"),
       );
       live.value = true;
     } catch {
@@ -266,6 +342,7 @@ function createChecklistsStore() {
         await Promise.all([
           unsubscribe("checklist_runs"),
           unsubscribe("checklist_results"),
+          unsubscribe("checklist_assignments"),
         ]);
       }
     } catch {
@@ -329,10 +406,10 @@ function createChecklistsStore() {
     selectedDate.value = todayISO();
   }
   function prevWeek() {
-    selectedDate.value = addDaysISO(selectedDate.value, -7);
+    selectedDate.value = addDaysISO(selectedDate.value, -1);
   }
   function nextWeek() {
-    selectedDate.value = addDaysISO(selectedDate.value, 7);
+    selectedDate.value = addDaysISO(selectedDate.value, 1);
   }
 
   /* ===== Item actions (write to the selected date's run) ===== */
@@ -341,7 +418,7 @@ function createChecklistsStore() {
     const done = !run.results[itemId]?.done;
     run.results = {
       ...run.results,
-      [itemId]: { done, at: Date.now(), by: me },
+      [itemId]: { done, at: Date.now(), by: currentUserName.value },
     };
     scheduleSave(checklistId);
   }
@@ -359,8 +436,13 @@ function createChecklistsStore() {
     run.results = {
       ...run.results,
       [itemId]: empty
-        ? { done: false, at: Date.now(), by: me }
-        : { done: true, value: raw, at: Date.now(), by: me },
+        ? { done: false, at: Date.now(), by: currentUserName.value }
+        : {
+            done: true,
+            value: raw,
+            at: Date.now(),
+            by: currentUserName.value,
+          },
     };
     scheduleSave(checklistId);
   }
@@ -369,7 +451,7 @@ function createChecklistsStore() {
     const run = ensureRun(id);
     run.completedAt = Date.now();
     run.status = "done";
-    run.by = run.by || me;
+    run.by = run.by || currentUserName.value;
 
     const t = templates.value.find((x) => x.id === id);
     const dayT = t ? templateForDay(t, selectedWeekday.value) : null;
@@ -402,7 +484,99 @@ function createChecklistsStore() {
     toast("Checklist reabierta");
   }
 
+  async function setItemAssignee(item: ChecklistItem, assignedTo: string) {
+    if (!isManager.value || !item.recordId) return;
+    const effectiveAssignment = assignmentFor(item.recordId);
+    const datedAssignment = assignments.value.find(
+      (assignment) =>
+        assignment.itemRecordId === item.recordId &&
+        assignment.businessDate === selectedDate.value,
+    );
+    try {
+      if (!assignedTo) {
+        if (effectiveAssignment) {
+          await deleteChecklistAssignment(effectiveAssignment.id);
+          assignments.value = assignments.value.filter(
+            (entry) => entry.id !== effectiveAssignment.id,
+          );
+        }
+        toast("Tarea sin asignar");
+        return;
+      }
+      const saved = await saveChecklistAssignment({
+        itemRecordId: item.recordId,
+        businessDate: selectedDate.value,
+        assignedTo,
+        assignedBy: currentUserId.value,
+      });
+      assignments.value = datedAssignment
+        ? assignments.value.map((entry) =>
+            entry.id === datedAssignment.id ? saved : entry,
+          )
+        : [...assignments.value, saved];
+      toast(`Asignada a ${staffName(assignedTo)}`);
+    } catch (error) {
+      console.error("Could not assign checklist item", error);
+      toast("No se pudo asignar la tarea");
+    }
+  }
+
+  async function createTask(
+    section: ChecklistSection,
+    input: ChecklistTaskInput,
+  ) {
+    if (!isManager.value || !section.recordId) return false;
+    try {
+      await createChecklistTask(
+        section.recordId,
+        input,
+        section.items.length + 1,
+      );
+      await loadAll();
+      toast("Tarea creada");
+      return true;
+    } catch (error) {
+      console.error("Could not create checklist task", error);
+      toast("No se pudo crear la tarea");
+      return false;
+    }
+  }
+
+  async function updateTask(item: ChecklistItem, input: ChecklistTaskInput) {
+    if (!isManager.value || !item.recordId) return false;
+    try {
+      await updateChecklistTask(item.recordId, input);
+      await loadAll();
+      toast("Tarea actualizada");
+      return true;
+    } catch (error) {
+      console.error("Could not update checklist task", error);
+      toast("No se pudo actualizar la tarea");
+      return false;
+    }
+  }
+
+  async function archiveTask(item: ChecklistItem) {
+    if (!isManager.value || !item.recordId) return false;
+    try {
+      await archiveChecklistTask(item.recordId);
+      await loadAll();
+      toast("Tarea archivada");
+      return true;
+    } catch (error) {
+      console.error("Could not archive checklist task", error);
+      toast("No se pudo archivar la tarea");
+      return false;
+    }
+  }
+
+  let stopAuthListener: (() => void) | undefined;
   onMounted(async () => {
+    syncAuth();
+    stopAuthListener = pb.authStore.onChange(() => {
+      syncAuth();
+      void loadAll();
+    });
     loadLocal();
     await loadAll();
     await startLive();
@@ -412,6 +586,7 @@ function createChecklistsStore() {
     if (import.meta.client) {
       document.removeEventListener("visibilitychange", onVisibility);
     }
+    stopAuthListener?.();
     if (saveTimer) flushSave();
     stopLive();
   });
@@ -419,6 +594,10 @@ function createChecklistsStore() {
   return {
     // state
     templates,
+    assignments,
+    assignableUsers,
+    currentUserId,
+    isManager,
     selectedDate,
     loading,
     isRefreshing,
@@ -440,6 +619,8 @@ function createChecklistsStore() {
     statusFor,
     resultFor,
     runFor,
+    assignmentFor,
+    staffName,
     // navigation
     selectDay,
     goToday,
@@ -450,6 +631,10 @@ function createChecklistsStore() {
     setValue,
     completeChecklist,
     reopenChecklist,
+    setItemAssignee,
+    createTask,
+    updateTask,
+    archiveTask,
     refreshNow: resync,
   };
 }

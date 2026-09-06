@@ -21,6 +21,7 @@ export const WEEKDAY_SHORT = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"]
 
 export interface ChecklistItem {
   id: string; // STABLE: doesn't change when you edit the label (report key).
+  recordId?: string; // Normalized PocketBase record used by assignments.
   label: string;
   kind?: ItemKind; // default "check"
   required?: boolean;
@@ -34,6 +35,7 @@ export interface ChecklistItem {
 
 export interface ChecklistSection {
   key: string; // "cocina", "comedor"
+  recordId?: string;
   label: string; // "Cocina"
   items: ChecklistItem[];
 }
@@ -122,6 +124,26 @@ export function listOnDay(t: ChecklistTemplate, weekday: number): boolean {
   return t.sections.some((s) =>
     s.items.some((it) => itemOnDay(t, it, weekday)),
   );
+}
+
+/** Keep only tasks explicitly assigned to the current employee. */
+export function filterTemplatesByItemIds(
+  templates: ChecklistTemplate[],
+  itemRecordIds: Set<string>,
+): ChecklistTemplate[] {
+  return templates
+    .map((template) => ({
+      ...template,
+      sections: template.sections
+        .map((section) => ({
+          ...section,
+          items: section.items.filter(
+            (item) => item.recordId && itemRecordIds.has(item.recordId),
+          ),
+        }))
+        .filter((section) => section.items.length > 0),
+    }))
+    .filter((template) => template.sections.length > 0);
 }
 
 /* ===== Dates (local, date-only — no timezone drift) ===== */

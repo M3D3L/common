@@ -44,64 +44,74 @@
         </p>
       </div>
 
-      <!-- Navigation sheet used at every viewport size -->
-      <Sheet v-model:open="open">
-        <SheetTrigger as-child>
-          <Button
-            variant="ghost"
-            size="icon"
-            class="ml-auto shrink-0 transition-transform duration-200 active:scale-95"
-          >
-            <Menu
-              class="w-5 h-5 transition-transform duration-300"
-              :class="{ 'rotate-90': open }"
-            />
-            <span class="sr-only">Abrir menú</span>
-          </Button>
-        </SheetTrigger>
-        <SheetContent
-          side="right"
-          class="w-72 overflow-y-auto overscroll-contain sm:w-80 transition-transform duration-300"
+      <div class="ml-auto flex min-w-0 items-center gap-2">
+        <p
+          v-if="showAuth && isLoggedIn"
+          class="max-w-28 truncate text-xs font-semibold text-muted-foreground sm:max-w-48 sm:text-sm"
+          :title="`Hola, ${currentUserName}`"
         >
-          <SheetHeader class="text-left border-b pb-4 mb-4">
-            <SheetTitle class="font-heading text-xl">{{
-              headerCopy.menuTitle
-            }}</SheetTitle>
-          </SheetHeader>
-          <nav class="flex flex-col gap-2">
-            <Button
-              v-for="l in links"
-              :key="l.to"
-              as-child
-              class="justify-start transition-all duration-200 h-11 text-base font-medium"
-              :variant="isActive(l.to) ? 'secondary' : 'ghost'"
-              @click="open = false"
-            >
-              <NuxtLink :to="l.to">{{ l.label }}</NuxtLink>
-            </Button>
+          Hola, <span class="text-foreground">{{ currentUserName }}</span>
+        </p>
 
+        <!-- Navigation sheet used at every viewport size -->
+        <Sheet v-model:open="open">
+          <SheetTrigger as-child>
             <Button
-              v-if="showMenuBroadcast && isLoggedIn"
-              variant="outline"
-              class="justify-start h-11 mt-2 text-base font-medium"
-              @click="handleSendMenu"
+              variant="ghost"
+              size="icon"
+              class="shrink-0 transition-transform duration-200 active:scale-95"
             >
-              <Send class="w-4 h-4 mr-2" />
-              Enviar menú del día
+              <Menu
+                class="w-5 h-5 transition-transform duration-300"
+                :class="{ 'rotate-90': open }"
+              />
+              <span class="sr-only">Abrir menú</span>
             </Button>
+          </SheetTrigger>
+          <SheetContent
+            side="right"
+            class="w-72 overflow-y-auto overscroll-contain sm:w-80 transition-transform duration-300"
+          >
+            <SheetHeader class="text-left border-b pb-4 mb-4">
+              <SheetTitle class="font-heading text-xl">{{
+                headerCopy.menuTitle
+              }}</SheetTitle>
+            </SheetHeader>
+            <nav class="flex flex-col gap-2">
+              <Button
+                v-for="l in links"
+                :key="l.to"
+                as-child
+                class="justify-start transition-all duration-200 h-11 text-base font-medium"
+                :variant="isActive(l.to) ? 'secondary' : 'ghost'"
+                @click="open = false"
+              >
+                <NuxtLink :to="l.to">{{ l.label }}</NuxtLink>
+              </Button>
 
-            <Button
-              v-if="showAuth && isLoggedIn"
-              variant="outline"
-              class="justify-start h-11 mt-2 text-base font-medium"
-              @click="handleSignOut"
-            >
-              <LogOut class="w-4 h-4 mr-2" />
-              Cerrar sesión
-            </Button>
-          </nav>
-        </SheetContent>
-      </Sheet>
+              <Button
+                v-if="showMenuBroadcast && isLoggedIn"
+                variant="outline"
+                class="justify-start h-11 mt-2 text-base font-medium"
+                @click="handleSendMenu"
+              >
+                <Send class="w-4 h-4 mr-2" />
+                Enviar menú del día
+              </Button>
+
+              <Button
+                v-if="showAuth && isLoggedIn"
+                variant="outline"
+                class="justify-start h-11 mt-2 text-base font-medium"
+                @click="handleSignOut"
+              >
+                <LogOut class="w-4 h-4 mr-2" />
+                Cerrar sesión
+              </Button>
+            </nav>
+          </SheetContent>
+        </Sheet>
+      </div>
     </CardContent>
   </Card>
 </template>
@@ -161,9 +171,14 @@ const pb = usePocketBase();
 // Local login flag. authStore is client-only (localStorage), so start false to
 // match SSR and set the real value after mount to avoid a hydration mismatch.
 const isLoggedIn = ref(false);
+const currentUserName = ref("");
 
 const syncAuth = () => {
   isLoggedIn.value = pb.authStore.isValid;
+  const model = pb.authStore.model;
+  currentUserName.value = isLoggedIn.value
+    ? model?.name || model?.username || model?.email || "Usuario"
+    : "";
 };
 
 let stopAuthListener: (() => void) | undefined;

@@ -76,6 +76,14 @@ test("reconstructs checklist relations and values", () => {
         label: "Temperatura",
         kind: "number",
       },
+      {
+        id: "archived-item",
+        section: "section",
+        legacy_id: "old-task",
+        label: "Tarea archivada",
+        kind: "check",
+        active: false,
+      },
     ],
     [
       {
@@ -99,6 +107,8 @@ test("reconstructs checklist relations and values", () => {
     ],
   );
 
+  assert.equal(result.templates[0].sections[0].recordId, "section");
+  assert.equal(result.templates[0].sections[0].items.length, 1);
   assert.equal(result.templates[0].sections[0].items[0].id, "temp");
   assert.equal(result.runsByDate["2026-09-05"].open.results.temp.value, 4);
 });
