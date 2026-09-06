@@ -228,8 +228,8 @@ export default defineNuxtConfig({
         currency: "MXN",
         bank: {
           bankName: "Banco de ejemplo",
-          accountHolder: "Breezy Meals",
-          clabe: "000 000 000000000 0",
+          accountHolder: "Brenda Iñiguez",
+          clabe: "4189143134736498",
           reference: "Tu nombre completo",
         },
       },
