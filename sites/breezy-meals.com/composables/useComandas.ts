@@ -221,18 +221,23 @@ function createComandasStore() {
 
     const start = audioContext!.currentTime;
     const frequencies = confirmation ? [660, 880] : [880, 880, 1175];
-    frequencies.forEach((frequency, index) => {
-      const toneStart = start + index * 0.18;
-      const oscillator = audioContext!.createOscillator();
-      const gain = audioContext!.createGain();
-      oscillator.type = "sine";
-      oscillator.frequency.value = frequency;
-      gain.gain.setValueAtTime(0.0001, toneStart);
-      gain.gain.exponentialRampToValueAtTime(0.22, toneStart + 0.015);
-      gain.gain.exponentialRampToValueAtTime(0.0001, toneStart + 0.13);
-      oscillator.connect(gain).connect(audioContext!.destination);
-      oscillator.start(toneStart);
-      oscillator.stop(toneStart + 0.14);
+    const repeatCount = confirmation ? 1 : 3;
+    const repeatInterval = 0.9;
+    Array.from({ length: repeatCount }).forEach((_, repeatIndex) => {
+      frequencies.forEach((frequency, toneIndex) => {
+        const toneStart =
+          start + repeatIndex * repeatInterval + toneIndex * 0.18;
+        const oscillator = audioContext!.createOscillator();
+        const gain = audioContext!.createGain();
+        oscillator.type = "sine";
+        oscillator.frequency.value = frequency;
+        gain.gain.setValueAtTime(0.0001, toneStart);
+        gain.gain.exponentialRampToValueAtTime(0.22, toneStart + 0.015);
+        gain.gain.exponentialRampToValueAtTime(0.0001, toneStart + 0.13);
+        oscillator.connect(gain).connect(audioContext!.destination);
+        oscillator.start(toneStart);
+        oscillator.stop(toneStart + 0.14);
+      });
     });
   }
 
