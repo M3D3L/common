@@ -14,14 +14,46 @@
           Verifica el pago antes de emitir {{ offer.credits }} créditos.
         </p>
       </div>
-      <Button variant="outline" :disabled="loading" @click="loadData">
-        <RefreshCw
-          :size="16"
-          class="mr-2"
-          :class="loading ? 'animate-spin' : ''"
-        />
-        Actualizar
-      </Button>
+      <div class="flex flex-wrap items-center gap-2">
+        <span
+          class="flex items-center gap-1.5 text-xs font-semibold"
+          :class="live ? 'text-emerald-700' : 'text-muted-foreground'"
+        >
+          <span
+            class="size-2 rounded-full"
+            :class="live ? 'bg-emerald-600' : 'bg-muted-foreground'"
+          />
+          {{ live ? "En vivo" : "Sin conexión" }}
+        </span>
+        <Button
+          variant="outline"
+          size="sm"
+          :aria-pressed="soundEnabled"
+          :title="
+            soundEnabled
+              ? 'Desactivar sonido de nuevas recargas'
+              : 'Activar sonido de nuevas recargas'
+          "
+          @click="toggleTopUpSound"
+        >
+          <BellRing v-if="soundEnabled" :size="16" class="mr-2" />
+          <BellOff v-else :size="16" class="mr-2" />
+          {{ soundEnabled && soundReady ? "Alertas activas" : "Alertas" }}
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          :disabled="loading"
+          @click="loadData"
+        >
+          <RefreshCw
+            :size="16"
+            class="mr-2"
+            :class="loading ? 'animate-spin' : ''"
+          />
+          Actualizar
+        </Button>
+      </div>
     </header>
 
     <Alert v-if="errorMessage" variant="destructive" class="mb-5">
@@ -221,6 +253,16 @@
         </DialogFooter>
       </DialogContent>
     </Dialog>
+
+    <Transition name="payment-toast">
+      <div
+        v-if="notificationMessage"
+        role="status"
+        class="fixed bottom-6 left-1/2 z-50 w-[calc(100%-2rem)] max-w-md -translate-x-1/2 rounded-md bg-foreground px-5 py-3 text-center text-sm font-bold text-background shadow-lg"
+      >
+        {{ notificationMessage }}
+      </div>
+    </Transition>
   </main>
 </template>
 
@@ -269,6 +311,8 @@ import { Skeleton } from "@common/components/ui/skeleton";
 import { Textarea } from "@common/components/ui/textarea";
 import {
   BadgeCheck,
+  BellOff,
+  BellRing,
   CircleAlert,
   Image,
   RefreshCw,
@@ -285,7 +329,7 @@ definePageMeta({ layout: "breezy", staffOnly: true });
 
 const api = useMembershipPaymentRequests();
 const membersApi = useMembers();
-const { isUserVerified } = usePocketBaseCore();
+const { isUserVerified, subscribe, unsubscribe } = usePocketBaseCore();
 const offer = api.offer;
 const requests = ref<MembershipPaymentRequest[]>([]);
 const members = ref<Member[]>([]);
@@ -299,6 +343,16 @@ const rejectOpen = ref(false);
 const selectedRequest = ref<MembershipPaymentRequest>();
 const reviewNote = ref("");
 const isMegaStaff = ref(false);
+const live = ref(false);
+const soundEnabled = ref(false);
+const soundReady = ref(false);
+const unreadRequestCount = ref(0);
+const notificationMessage = ref("");
+const SOUND_STORAGE_KEY = "membership-payments:sound-enabled";
+const ORDER_SOUND_STORAGE_KEY = "comandas:sound-enabled";
+let audioContext: AudioContext | null = null;
+let stopLive: (() => void) | null = null;
+let notificationTimer: ReturnType<typeof setTimeout> | undefined;
 
 const filteredRequests = computed(() =>
   requests.value.filter((request) => request.status === statusFilter.value),
@@ -328,6 +382,69 @@ const approvalMemberLabel = computed(
     `un socio nuevo para ${selectedRequest.value?.name ?? ""}`,
 );
 
+useHead({
+  title: computed(() =>
+    unreadRequestCount.value
+      ? `(${unreadRequestCount.value}) Nueva recarga | Breezy Meals`
+      : "Pagos de membresía | Breezy Meals",
+  ),
+});
+
+async function prepareTopUpSound() {
+  audioContext ??= new AudioContext();
+  if (audioContext.state === "suspended") await audioContext.resume();
+  soundReady.value = audioContext.state === "running";
+  return soundReady.value;
+}
+
+async function playTopUpSound(confirmation = false) {
+  if (!soundEnabled.value || !(await prepareTopUpSound())) return;
+  const start = audioContext!.currentTime;
+  const frequencies = confirmation ? [440, 660] : [523, 784, 1047, 784];
+  const repeatCount = confirmation ? 1 : 2;
+  for (let repeatIndex = 0; repeatIndex < repeatCount; repeatIndex += 1) {
+    frequencies.forEach((frequency, toneIndex) => {
+      const toneStart = start + repeatIndex * 1.05 + toneIndex * 0.16;
+      const oscillator = audioContext!.createOscillator();
+      const gain = audioContext!.createGain();
+      oscillator.type = "triangle";
+      oscillator.frequency.value = frequency;
+      gain.gain.setValueAtTime(0.0001, toneStart);
+      gain.gain.exponentialRampToValueAtTime(0.2, toneStart + 0.015);
+      gain.gain.exponentialRampToValueAtTime(0.0001, toneStart + 0.14);
+      oscillator.connect(gain).connect(audioContext!.destination);
+      oscillator.start(toneStart);
+      oscillator.stop(toneStart + 0.15);
+    });
+  }
+}
+
+async function toggleTopUpSound() {
+  soundEnabled.value = !soundEnabled.value;
+  localStorage.setItem(SOUND_STORAGE_KEY, String(soundEnabled.value));
+  if (soundEnabled.value) {
+    await playTopUpSound(true);
+    showNotification("Sonido de nuevas recargas activado");
+  } else {
+    soundReady.value = false;
+    await audioContext?.close();
+    audioContext = null;
+    showNotification("Sonido de nuevas recargas desactivado");
+  }
+}
+
+function unlockTopUpSound() {
+  if (soundEnabled.value && !soundReady.value) void prepareTopUpSound();
+}
+
+function showNotification(message: string) {
+  notificationMessage.value = message;
+  clearTimeout(notificationTimer);
+  notificationTimer = setTimeout(() => {
+    notificationMessage.value = "";
+  }, 4000);
+}
+
 function initialMember(request: MembershipPaymentRequest) {
   const code = request.existing_member_code?.trim().toUpperCase();
   return members.value.find(
@@ -354,6 +471,54 @@ async function loadData() {
     errorMessage.value = error?.message ?? "No se pudieron cargar los pagos";
   } finally {
     loading.value = false;
+  }
+}
+
+function onPaymentRequestEvent(event: {
+  action: string;
+  record: Record<string, any>;
+}) {
+  const incoming = event.record as MembershipPaymentRequest;
+  const index = requests.value.findIndex(
+    (request) => request.id === incoming.id,
+  );
+
+  if (event.action === "delete") {
+    if (index >= 0) requests.value.splice(index, 1);
+    delete memberSelections[incoming.id];
+    return;
+  }
+
+  if (index >= 0) {
+    requests.value[index] = { ...requests.value[index], ...incoming };
+  } else {
+    requests.value.unshift(incoming);
+    memberSelections[incoming.id] = initialMember(incoming)?.id ?? "__new__";
+  }
+
+  if (event.action === "create" && incoming.status === "submitted") {
+    statusFilter.value = "submitted";
+    if (document.hidden) unreadRequestCount.value += 1;
+    showNotification(`Nueva recarga: ${incoming.name}`);
+    void playTopUpSound();
+  }
+}
+
+function onVisibilityChange() {
+  if (!document.hidden) unreadRequestCount.value = 0;
+}
+
+async function startLiveUpdates() {
+  try {
+    stopLive = await subscribe(
+      "membership_payment_requests",
+      onPaymentRequestEvent,
+      "*",
+    );
+    live.value = true;
+  } catch (error) {
+    console.error("Could not subscribe to membership payments:", error);
+    live.value = false;
   }
 }
 
@@ -456,8 +621,46 @@ function formatDate(value: string) {
   }).format(new Date(value));
 }
 
-onMounted(() => {
+onMounted(async () => {
   isMegaStaff.value = isUserVerified();
-  loadData();
+  const savedPreference = localStorage.getItem(SOUND_STORAGE_KEY);
+  soundEnabled.value =
+    savedPreference === null
+      ? localStorage.getItem(ORDER_SOUND_STORAGE_KEY) === "true"
+      : savedPreference === "true";
+  document.addEventListener("pointerdown", unlockTopUpSound, { once: true });
+  document.addEventListener("keydown", unlockTopUpSound, { once: true });
+  document.addEventListener("visibilitychange", onVisibilityChange);
+  await loadData();
+  await startLiveUpdates();
+});
+
+onBeforeUnmount(async () => {
+  clearTimeout(notificationTimer);
+  document.removeEventListener("pointerdown", unlockTopUpSound);
+  document.removeEventListener("keydown", unlockTopUpSound);
+  document.removeEventListener("visibilitychange", onVisibilityChange);
+  await audioContext?.close();
+  try {
+    if (stopLive) stopLive();
+    else await unsubscribe("membership_payment_requests");
+  } catch {
+    /* noop */
+  }
 });
 </script>
+
+<style scoped>
+.payment-toast-enter-active,
+.payment-toast-leave-active {
+  transition:
+    opacity 0.18s ease,
+    transform 0.18s ease;
+}
+
+.payment-toast-enter-from,
+.payment-toast-leave-to {
+  opacity: 0;
+  transform: translate(-50%, 0.5rem);
+}
+</style>
