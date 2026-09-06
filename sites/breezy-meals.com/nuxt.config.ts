@@ -67,6 +67,15 @@ export default defineNuxtConfig({
     transpile: ["vueuc", "html-to-image"],
   },
   vite: {
+    server: {
+      proxy: {
+        "/pocketbase": {
+          target: "http://api.breezy-meals.com",
+          changeOrigin: true,
+          rewrite: (requestPath) => requestPath.replace(/^\/pocketbase/, ""),
+        },
+      },
+    },
     build: {
       rollupOptions: {
         // This ensures the library is available in your client-side bundles
@@ -124,7 +133,7 @@ export default defineNuxtConfig({
         process.env.BREEZY_MEALS_POCKETBASE_URL ||
         (process.env.NODE_ENV === "production"
           ? "https://api.breezy-meals.com/"
-          : "http://api.breezy-meals.com/"),
+          : "/pocketbase/"),
       whatsappNumber: process.env.WHATSAPP_NUMBER || "6444444444",
       environment: process.env.NODE_ENV || "development",
       siteName: "Breezy Meals",

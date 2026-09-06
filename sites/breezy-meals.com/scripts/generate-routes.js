@@ -8,7 +8,9 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // --- CONFIGURATION ---
-const PB_URL = "https://api.sancarlosinsider.com/";
+const PB_URL =
+  process.env.BREEZY_MEALS_POCKETBASE_URL ||
+  "https://api.breezy-meals.com/";
 const COLLECTION = "relocateBlog";
 const OUTPUT_FILE = path.resolve(__dirname, "../routes/blogRoutes.js");
 
