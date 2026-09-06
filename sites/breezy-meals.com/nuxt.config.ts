@@ -121,7 +121,10 @@ export default defineNuxtConfig({
   runtimeConfig: {
     public: {
       pocketbaseUrl:
-        process.env.POCKETBASE_URL || "https://api.sancarlosinsider.com/",
+        process.env.POCKETBASE_URL ||
+        (process.env.NODE_ENV === "production"
+          ? "https://api.breezy-meals.com/"
+          : "http://api.breezy-meals.com/"),
       whatsappNumber: process.env.WHATSAPP_NUMBER || "6444444444",
       environment: process.env.NODE_ENV || "development",
       siteName: "Breezy Meals",
