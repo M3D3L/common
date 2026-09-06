@@ -203,6 +203,16 @@
         Marcar lista
       </Button>
       <Button
+        v-if="order.mode === 'domicilio'"
+        variant="outline"
+        size="sm"
+        class="flex-1"
+        @click="sendDeliveryDetails(order)"
+      >
+        <ClientOnly><MessageCircle :size="15" class="mr-1.5" /></ClientOnly>
+        Enviar entrega
+      </Button>
+      <Button
         variant="outline"
         size="icon"
         title="Descartar sin avisar"
@@ -219,7 +229,7 @@
 import { Card } from "@common/components/ui/card";
 import { Button } from "@common/components/ui/button";
 import { Badge } from "@common/components/ui/badge";
-import { Check, Trash2 } from "lucide-vue-next";
+import { Check, MessageCircle, Trash2 } from "lucide-vue-next";
 import {
   groups,
   groupsFromData,
@@ -234,7 +244,8 @@ import {
 
 const props = defineProps<{ order: PlacedOrder }>();
 
-const { completeOrder, discardOrder, catalog } = useComandas();
+const { completeOrder, sendDeliveryDetails, discardOrder, catalog } =
+  useComandas();
 const { fetchCollection } = usePocketBaseCore();
 
 function money(value: number) {

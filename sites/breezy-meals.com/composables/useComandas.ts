@@ -126,8 +126,15 @@ type MenuRecordFull = MenuRecord & {
  *  `groups`. Las llaves fijas guisos/sides/bebidas ya no viven aquí.
  */
 function createComandasStore() {
-  const { formatOrder, formatSoldOut, formatReady, formatMenu, waLink } =
-    useWhatsappOrder();
+  const {
+    formatOrder,
+    formatSoldOut,
+    formatReady,
+    formatDelivery,
+    formatMenu,
+    waLink,
+    openWhatsApp,
+  } = useWhatsappOrder();
   const {
     fetchCollection,
     createItem,
@@ -1207,6 +1214,18 @@ function createComandasStore() {
     toast(`Orden #${o.number} lista`);
   }
 
+  function sendDeliveryDetails(o: StoredOrder) {
+    if (o.mode !== "domicilio") return;
+
+    const text = formatDelivery({
+      orderNumber: o.number,
+      customer: o.customer,
+      fulfillDate: o.fulfillDate,
+      fulfillTime: o.fulfillTime,
+    });
+    openWhatsApp(text);
+  }
+
   async function discardOrder(o: StoredOrder) {
     // Igual que en completeOrder: solo se quita localmente si la BD confirmó
     // el borrado, para que no reaparezca en otras pantallas.
@@ -1304,6 +1323,7 @@ function createComandasStore() {
     clearCart,
     send,
     completeOrder,
+    sendDeliveryDetails,
     discardOrder,
     toggleOrderSound,
     refreshNow: resync,

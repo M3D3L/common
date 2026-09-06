@@ -29,6 +29,13 @@ export interface FormatMenuArgs {
   date?: string;
 }
 
+export interface FormatDeliveryArgs {
+  orderNumber: number;
+  customer?: Customer;
+  fulfillDate?: string;
+  fulfillTime?: string;
+}
+
 /* ===== Checklists ===== */
 export interface ChecklistLine {
   label: string;
@@ -275,6 +282,28 @@ export function useWhatsappOrder() {
     return msg;
   }
 
+  function formatDelivery({
+    orderNumber,
+    customer,
+    fulfillDate,
+    fulfillTime,
+  }: FormatDeliveryArgs): string {
+    const lines = [`🚀 *ENTREGA DE ORDEN #${orderNumber}*`];
+
+    if (fulfillDate) lines.push(`📅 *Fecha:* ${fulfillDate}`);
+    if (fulfillTime) lines.push(`🕒 *Hora:* ${fulfillTime}`);
+
+    const name = customer?.name?.trim();
+    const phone = customer?.phone?.trim();
+    const address = customer?.address?.trim();
+
+    if (name) lines.push(`👤 *Cliente:* ${name}`);
+    if (phone) lines.push(`📱 *WhatsApp:* ${phone}`);
+    if (address) lines.push(`🏠 *Dirección:* ${address}`);
+
+    return lines.join("\n");
+  }
+
   // === FORMATO DE CHECKLIST (reporte de turno al completar) ===
   function formatChecklist({
     title,
@@ -377,6 +406,7 @@ export function useWhatsappOrder() {
     formatMenu,
     formatSoldOut,
     formatReady,
+    formatDelivery,
     formatChecklist,
     formatChecklistReopen,
     formatChecklistItem,
