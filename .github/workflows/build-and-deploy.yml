@@ -152,6 +152,16 @@ jobs:
         if: steps.check.outputs.should_build == 'true' && matrix.site == 'vivirensancarlos'
         run: npx nuxi prepare sites/relocatetosancarlos.com
 
+      - name: Validate Breezy Meals configuration
+        if: steps.check.outputs.should_build == 'true' && matrix.site == 'breezymeals'
+        env:
+          BREEZY_MEALS_POCKETBASE_URL: ${{ secrets.BREEZY_MEALS_POCKETBASE_URL }}
+        run: |
+          if [ -z "$BREEZY_MEALS_POCKETBASE_URL" ]; then
+            echo "BREEZY_MEALS_POCKETBASE_URL must be configured in the common repository's Actions secrets."
+            exit 1
+          fi
+
       - name: Build ${{ matrix.domain }}
         if: steps.check.outputs.should_build == 'true'
         run: |
@@ -159,7 +169,7 @@ jobs:
           npm run generate
         working-directory: ${{ matrix.path }}
         env:
-          POCKETBASE_URL: ${{ env.POCKETBASE_URL }}
+          BREEZY_MEALS_POCKETBASE_URL: ${{ matrix.site == 'breezymeals' && secrets.BREEZY_MEALS_POCKETBASE_URL || '' }}
           WHATSAPP_NUMBER: ${{ env.WHATSAPP_NUMBER }}
 
       - name: Deploy ${{ matrix.domain }}

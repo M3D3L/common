@@ -121,7 +121,7 @@ export default defineNuxtConfig({
   runtimeConfig: {
     public: {
       pocketbaseUrl:
-        process.env.POCKETBASE_URL ||
+        process.env.BREEZY_MEALS_POCKETBASE_URL ||
         (process.env.NODE_ENV === "production"
           ? "https://api.breezy-meals.com/"
           : "http://api.breezy-meals.com/"),
