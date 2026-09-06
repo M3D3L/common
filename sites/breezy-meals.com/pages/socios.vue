@@ -560,6 +560,7 @@ import useMembers from "~/composables/useMembers";
 import useMemberships from "~/composables/useMemberships";
 import useRedemptions from "~/composables/useRedemptions";
 import { useLabelExport } from "~/composables/useLabelExport";
+import { useWhatsappOrder } from "~/composables/useWhatsappOrder";
 import type { Member, Redemption } from "~/types/membership";
 
 // --- composables (todas autenticadas; sin hooks ni lecturas públicas) ---
@@ -568,6 +569,7 @@ const members = useMembers();
 const memberships = useMemberships();
 const redemptions = useRedemptions();
 const { openWhatsApp } = useWhatsappOrder();
+const { subscribe, unsubscribe } = usePocketBaseCore();
 
 // spine reactivo del check-in
 const { member, membership, candidates, status, loading, working, remaining } =
@@ -1039,5 +1041,29 @@ definePageMeta({
   layout: "staff",
 });
 
-onMounted(loadMembers);
+let stopMembershipLive: (() => void) | null = null;
+
+onMounted(async () => {
+  await loadMembers();
+  try {
+    stopMembershipLive = await subscribe(
+      "memberships",
+      (event: { record: { member?: string } }) => {
+        if (event.record.member === member.value?.id) void refresh();
+      },
+      "*",
+    );
+  } catch (error) {
+    console.error("Could not subscribe to membership changes:", error);
+  }
+});
+
+onBeforeUnmount(async () => {
+  try {
+    if (stopMembershipLive) stopMembershipLive();
+    else await unsubscribe("memberships");
+  } catch {
+    /* noop */
+  }
+});
 </script>

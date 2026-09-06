@@ -31,8 +31,13 @@ import {
   type WeekBlock,
   type WeekOverride,
 } from "~/utils/rotation";
-import type { OrderMode, Customer } from "~/composables/useWhatsappOrder";
+import {
+  useWhatsappOrder,
+  type OrderMode,
+  type Customer,
+} from "~/composables/useWhatsappOrder";
 import type { RecordModel } from "pocketbase";
+import { shouldRedeemOnReady } from "~/utils/comandasRedemption";
 
 /* ===== Config ===== */
 const STORAGE_KEY = "comandas";
@@ -1090,11 +1095,11 @@ function createComandasStore() {
     toast(msg);
   }
 
-  // Verifica el saldo al marcar una comida promocional lista. Las comandas de
-  // extras y los pedidos normales nunca consumen créditos de membresía.
+  // Verifica el saldo al marcar la orden lista y descuenta una comida cuando
+  // está disponible. La falta de crédito avisa que se cobrará en efectivo.
   async function redeemMemberCredit(o: StoredOrder) {
     const code = o.memberCode;
-    if (!code || !o.redeemMemberMeal) return;
+    if (!code) return;
     try {
       const member = await members.getMemberByCode(code);
       if (!member) {
@@ -1111,7 +1116,6 @@ function createComandasStore() {
 
       const { remaining } = await redemptions.redeem(ms, {
         staffId: user?.id,
-        reason: `Comanda #${o.number}${o.promo?.label ? ` · ${o.promo.label}` : ""}`,
       });
       toast(`Socio ${member.name}: comida registrada (${remaining} restantes)`);
     } catch (e) {
@@ -1135,7 +1139,7 @@ function createComandasStore() {
       }
     }
 
-    if (o.memberCode && o.redeemMemberMeal) {
+    if (shouldRedeemOnReady(o)) {
       await redeemMemberCredit(o);
     }
 
