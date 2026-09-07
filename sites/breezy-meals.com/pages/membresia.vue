@@ -100,15 +100,6 @@
                   required
                 />
               </div>
-              <div class="space-y-1.5">
-                <Label for="membership-code">Código de socio</Label>
-                <Input
-                  id="membership-code"
-                  v-model="form.existingMemberCode"
-                  class="uppercase"
-                  placeholder="Opcional"
-                />
-              </div>
               <div class="space-y-1.5 sm:col-span-2">
                 <Label for="membership-address">Dirección</Label>
                 <Input

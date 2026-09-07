@@ -203,8 +203,6 @@ const props = defineProps<{
 defineEmits<{ close: [] }>();
 
 const activeMealIndex = ref(0);
-const draftSelections = reactive<Record<string, Record<string, number>>>({});
-const activeDraft = computed(() => (draftSelections[props.promo.id] ??= {}));
 const activeApplication = computed(
   () => props.promo.applications[activeMealIndex.value],
 );
@@ -220,7 +218,7 @@ function applicationRequirementQty(requirement: BuildableRequirement) {
   const application = activeApplication.value;
   if (!application) {
     return itemsForRequirement(requirement).reduce(
-      (sum, item) => sum + (activeDraft.value[item.name] ?? 0),
+      (sum, item) => sum + unappliedItemQty(item.name),
       0,
     );
   }
@@ -343,33 +341,7 @@ function setRequirementQty(
   const groupKey = requirementGroupKey(requirement);
   if (!groupKey) return;
 
-  if (activeApplication.value) {
-    props.setQty(groupKey, name, delta);
-    return;
-  }
-
-  const draft = { ...activeDraft.value };
-  const next = Math.max(0, (draft[name] ?? 0) + delta);
-  if (next > 0) draft[name] = next;
-  else delete draft[name];
-  draftSelections[props.promo.id] = draft;
-
-  const mealComplete = requirements.value.every((entry) => {
-    const selected = itemsForRequirement(entry).reduce(
-      (sum, item) => sum + (activeDraft.value[item.name] ?? 0),
-      0,
-    );
-    return selected >= entry.required;
-  });
-  if (!mealComplete) return;
-
-  Object.entries(activeDraft.value).forEach(([itemName, qty]) => {
-    const itemGroup = props.menuGroups.find((group) =>
-      props.groupItems(group.key).some((item) => item.name === itemName),
-    )?.key;
-    if (itemGroup) props.setQty(itemGroup, itemName, qty);
-  });
-  draftSelections[props.promo.id] = {};
+  props.setQty(groupKey, name, delta);
 }
 
 function selectedNames(requirement: BuildableRequirement) {
@@ -386,6 +358,19 @@ function itemQty(name: string) {
       .reduce((sum, item) => sum + item.qty, 0);
   }
 
-  return activeDraft.value[name] ?? 0;
+  return unappliedItemQty(name);
+}
+
+function unappliedItemQty(name: string) {
+  const appliedQty = props.promo.applications.reduce(
+    (sum, application) =>
+      sum +
+      application.items
+        .filter((item) => item.name === name)
+        .reduce((itemSum, item) => itemSum + item.qty, 0),
+    0,
+  );
+
+  return Math.max(0, (props.cart[name] ?? 0) - appliedQty);
 }
 </script>
