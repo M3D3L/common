@@ -325,7 +325,7 @@ import type {
   MembershipPaymentStatus,
 } from "~/types/membership";
 
-definePageMeta({ layout: "breezy", staffOnly: true });
+definePageMeta({ layout: "staff", staffOnly: true });
 
 const api = useMembershipPaymentRequests();
 const membersApi = useMembers();

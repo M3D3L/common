@@ -2,6 +2,8 @@ import { readFile, writeFile } from "node:fs/promises";
 import { pathToFileURL } from "node:url";
 
 const AUTHENTICATED = '@request.auth.id != ""';
+const VERIFIED_OR_SELF_CLOCK =
+  "@request.auth.verified = true || @request.body.staff_user = @request.auth.id";
 const USERS = "_pb_users_auth_";
 
 const collectionIds = {
@@ -246,26 +248,29 @@ export function normalizedCollections() {
         "CREATE UNIQUE INDEX `idx_checklist_result_item` ON `checklist_results` (`run`, `legacy_item_id`)",
       ],
     ),
-    staffCollection(
-      collectionIds.clockEntries,
-      "clock_entries",
-      [
-        relation("ceuser01", "staff_user", USERS),
-        text("celegacy", "legacy_user_id"),
-        text("cename01", "staff_name"),
-        select("cedirect", "direction", ["in", "out"]),
-        date("ceoccur1", "occurred_at"),
-        text("ceatraw1", "legacy_occurred_at"),
-        text("cesource", "source_record", { required: true }),
-        number("ceindex1", "source_index", { required: true, integer: true }),
-        text("cehash01", "source_hash", { required: true }),
-        json("cepaylod", "legacy_payload", { required: true }),
-      ],
-      [
-        "CREATE UNIQUE INDEX `idx_clock_entry_source` ON `clock_entries` (`source_record`, `source_index`)",
-        "CREATE INDEX `idx_clock_entry_user_time` ON `clock_entries` (`legacy_user_id`, `occurred_at`)",
-      ],
-    ),
+    {
+      ...staffCollection(
+        collectionIds.clockEntries,
+        "clock_entries",
+        [
+          relation("ceuser01", "staff_user", USERS),
+          text("celegacy", "legacy_user_id"),
+          text("cename01", "staff_name"),
+          select("cedirect", "direction", ["in", "out"]),
+          date("ceoccur1", "occurred_at"),
+          text("ceatraw1", "legacy_occurred_at"),
+          text("cesource", "source_record", { required: true }),
+          number("ceindex1", "source_index", { required: true, integer: true }),
+          text("cehash01", "source_hash", { required: true }),
+          json("cepaylod", "legacy_payload", { required: true }),
+        ],
+        [
+          "CREATE UNIQUE INDEX `idx_clock_entry_source` ON `clock_entries` (`source_record`, `source_index`)",
+          "CREATE INDEX `idx_clock_entry_user_time` ON `clock_entries` (`legacy_user_id`, `occurred_at`)",
+        ],
+      ),
+      createRule: VERIFIED_OR_SELF_CLOCK,
+    },
     staffCollection(
       collectionIds.recipes,
       "recipes",

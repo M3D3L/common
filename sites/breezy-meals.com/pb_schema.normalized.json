@@ -3165,7 +3165,7 @@
     ],
     "listRule": "@request.auth.id != \"\"",
     "viewRule": "@request.auth.id != \"\"",
-    "createRule": "@request.auth.id != \"\"",
+    "createRule": "@request.auth.verified = true || @request.body.staff_user = @request.auth.id",
     "updateRule": "@request.auth.id != \"\"",
     "deleteRule": "@request.auth.id != \"\"",
     "options": {}

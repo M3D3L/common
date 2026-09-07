@@ -37,7 +37,18 @@ test("all normalized collections require authentication", () => {
   for (const collection of normalizedCollections()) {
     assert.equal(collection.listRule, auth, `${collection.name}.listRule`);
     assert.equal(collection.viewRule, auth, `${collection.name}.viewRule`);
-    assert.equal(collection.createRule, auth, `${collection.name}.createRule`);
+    if (collection.name === "clock_entries") {
+      assert.equal(
+        collection.createRule,
+        "@request.auth.verified = true || @request.body.staff_user = @request.auth.id",
+      );
+    } else {
+      assert.equal(
+        collection.createRule,
+        auth,
+        `${collection.name}.createRule`,
+      );
+    }
     assert.equal(collection.updateRule, auth, `${collection.name}.updateRule`);
     assert.equal(collection.deleteRule, auth, `${collection.name}.deleteRule`);
   }

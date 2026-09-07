@@ -34,21 +34,41 @@
 
     <!-- ===== RELOJ (toggle) ===== -->
     <div v-if="tab === 'reloj'">
-      <template v-if="me.id">
+      <template v-if="selectedPerson.id">
+        <div v-if="isAdmin" class="mb-4 space-y-1.5">
+          <label for="clock-person" class="text-sm font-semibold">
+            Empleado
+          </label>
+          <select
+            id="clock-person"
+            v-model="selectedUserId"
+            class="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+          >
+            <option v-for="person in staff" :key="person.id" :value="person.id">
+              {{ person.name }}
+            </option>
+          </select>
+        </div>
+
         <!-- Estado -->
         <div class="p-5 mb-4 text-center border rounded-xl border-border">
-          <p class="text-sm text-muted-foreground truncate">{{ me.name }}</p>
-          <p
-            class="mt-1 text-2xl font-bold"
-            :class="amInside ? 'text-green-600' : 'text-muted-foreground'"
-          >
-            {{ amInside ? "Dentro" : "Fuera" }}
+          <p class="text-sm text-muted-foreground truncate">
+            {{ selectedPerson.name }}
           </p>
           <p
-            v-if="amInside"
+            class="mt-1 text-2xl font-bold"
+            :class="
+              selectedIsInside ? 'text-green-600' : 'text-muted-foreground'
+            "
+          >
+            {{ selectedIsInside ? "Dentro" : "Fuera" }}
+          </p>
+          <p
+            v-if="selectedIsInside"
             class="mt-1 text-xs text-muted-foreground tabular-nums"
           >
-            Desde {{ myClockInTime }} · {{ fmtDur(myElapsedMinutes) }}
+            Desde {{ selectedClockInTime }} ·
+            {{ fmtDur(selectedElapsedMinutes) }}
           </p>
         </div>
 
@@ -56,15 +76,15 @@
         <Button
           size="lg"
           class="w-full h-16 text-lg"
-          :variant="amInside ? 'outline' : 'default'"
+          :variant="selectedIsInside ? 'outline' : 'default'"
           :disabled="busy"
           @click="toggle"
         >
           <ClientOnly>
-            <LogOut v-if="amInside" :size="20" class="mr-2" />
+            <LogOut v-if="selectedIsInside" :size="20" class="mr-2" />
             <LogIn v-else :size="20" class="mr-2" />
           </ClientOnly>
-          {{ amInside ? "Registrar salida" : "Registrar entrada" }}
+          {{ selectedIsInside ? "Registrar salida" : "Registrar entrada" }}
         </Button>
 
         <!-- Stats rápidas -->
@@ -72,13 +92,13 @@
           <div class="p-3 text-center border rounded-lg border-border">
             <p class="text-xs text-muted-foreground">Hoy</p>
             <p class="text-lg font-bold tabular-nums">
-              {{ fmtDur(workedMinutes(me.id, todayStr, todayStr)) }}
+              {{ fmtDur(workedMinutes(selectedPerson.id, todayStr, todayStr)) }}
             </p>
           </div>
           <div class="p-3 text-center border rounded-lg border-border">
             <p class="text-xs text-muted-foreground">Esta semana</p>
             <p class="text-lg font-bold tabular-nums">
-              {{ fmtDur(workedMinutes(me.id, weekStart, weekEnd)) }}
+              {{ fmtDur(workedMinutes(selectedPerson.id, weekStart, weekEnd)) }}
             </p>
           </div>
         </div>
@@ -253,6 +273,7 @@ interface Shift {
 
 const { subscribe, unsubscribe } = usePocketBaseCore();
 const { loadPunches, createPunch } = useNormalizedOperations();
+const { listStaff } = useStaffSchedule();
 const { openWhatsApp } = useWhatsappOrder();
 
 const props = defineProps({
@@ -280,7 +301,12 @@ const tabs = [
 watch(
   () => props.isAdmin,
   (isAdmin) => {
-    if (isAdmin) tab.value = "resumen";
+    if (isAdmin) {
+      tab.value = "resumen";
+      void load();
+    } else {
+      staff.value = me.value.id ? [me.value] : [];
+    }
   },
 );
 
@@ -294,6 +320,22 @@ let ticker: ReturnType<typeof setInterval> | undefined;
 
 // Usuario actual (desde la cuenta con sesión iniciada).
 const me = computed<Person>(() => props.currentUser ?? { id: "", name: "" });
+const staff = ref<Person[]>([]);
+const selectedUserId = ref("");
+const selectedPerson = computed<Person>(() => {
+  if (!props.isAdmin) return me.value;
+  return (
+    staff.value.find((person) => person.id === selectedUserId.value) ?? me.value
+  );
+});
+
+watch(
+  () => [props.isAdmin, me.value.id] as const,
+  ([isAdmin, userId]) => {
+    if (!isAdmin || !selectedUserId.value) selectedUserId.value = userId;
+  },
+  { immediate: true },
+);
 
 /* ===== Reloj / fechas ===== */
 const clock = computed(() =>
@@ -374,14 +416,14 @@ const insideCount = computed(
   () => punchers.value.filter((m) => isIn(m.id)).length,
 );
 
-/* ===== Estado del usuario actual ===== */
-const amInside = computed(() => isIn(me.value.id));
-const myClockInTime = computed(() => {
-  const p = lastPunch(me.value.id);
+/* ===== Estado del usuario seleccionado ===== */
+const selectedIsInside = computed(() => isIn(selectedPerson.value.id));
+const selectedClockInTime = computed(() => {
+  const p = lastPunch(selectedPerson.value.id);
   return p && p.type === "in" ? timeOf(p.at) : "";
 });
-const myElapsedMinutes = computed(() => {
-  const p = lastPunch(me.value.id);
+const selectedElapsedMinutes = computed(() => {
+  const p = lastPunch(selectedPerson.value.id);
   if (!p || p.type !== "in") return 0;
   return Math.max(0, (now.value.getTime() - new Date(p.at).getTime()) / 60000);
 });
@@ -569,7 +611,17 @@ function toast(msg: string, kind: "ok" | "error" = "ok") {
 async function load() {
   loading.value = true;
   try {
-    data.punches = await loadPunches();
+    const [punches, staffRecords] = await Promise.all([
+      loadPunches(),
+      props.isAdmin ? listStaff() : Promise.resolve([]),
+    ]);
+    data.punches = punches;
+    staff.value = props.isAdmin
+      ? staffRecords.map((person) => ({
+          id: person.id,
+          name: person.name || person.username || "Empleado",
+        }))
+      : [me.value];
   } catch {
     /* offline */
   } finally {
@@ -579,8 +631,8 @@ async function load() {
 
 /* ===== Registrar turno (toggle) ===== */
 async function toggle() {
-  if (busy.value || !me.value.id) return;
-  const direction: PunchType = amInside.value ? "out" : "in";
+  if (busy.value || !selectedPerson.value.id) return;
+  const direction: PunchType = selectedIsInside.value ? "out" : "in";
 
   // Abre la pestaña YA, dentro del gesto del clic (así iOS y los bloqueadores
   // la permiten). La redirigimos cuando termine el guardado.
@@ -588,8 +640,8 @@ async function toggle() {
 
   busy.value = true;
   const punch: Punch = {
-    user: me.value.id,
-    name: me.value.name,
+    user: selectedPerson.value.id,
+    name: selectedPerson.value.name,
     type: direction,
     at: new Date().toISOString(),
   };
@@ -599,7 +651,7 @@ async function toggle() {
     const time = timeOf(punch.at);
     const verb = direction === "in" ? "Entrada" : "Salida";
     const url = waLink(
-      `🕐 *Registro de turno*\n👤 ${me.value.name}\n${
+      `🕐 *Registro de turno*\n👤 ${selectedPerson.value.name}\n${
         direction === "in" ? "🟢" : "🔴"
       } *${verb}* · ${time}\n📅 ${dateLabel.value}`,
     );
