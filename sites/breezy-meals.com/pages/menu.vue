@@ -345,7 +345,7 @@ function changeMenuDate(days: number) {
   const date = new Date(`${selectedDate.value}T12:00:00`);
   date.setDate(date.getDate() + days);
   selectedDate.value = date.toISOString().slice(0, 10);
-  activePromoId.value = null;
+  activePromoId.value = promoIdFromQuery(route.query.promo);
   clearCart();
 }
 
@@ -584,7 +584,18 @@ const appliedDeliveryFee = computed(() =>
       : 60
     : 0,
 );
-const activePromoId = ref<string | null>(null);
+function promoIdFromQuery(value: unknown): string | null {
+  return typeof value === "string" && value.trim() ? value.trim() : null;
+}
+
+const activePromoId = ref<string | null>(promoIdFromQuery(route.query.promo));
+
+watch(
+  () => route.query.promo,
+  (promoId) => {
+    activePromoId.value = promoIdFromQuery(promoId);
+  },
+);
 
 // Pricing, promo progress cards, and runtime-promo loading for this order.
 // See composables/useMenuPricing.ts.

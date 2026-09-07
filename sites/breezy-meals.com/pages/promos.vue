@@ -37,6 +37,19 @@
         v-for="promo in promos"
         :key="promo.id"
         class="overflow-hidden border-border/70 shadow-sm"
+        :class="
+          promo.active !== false &&
+          'cursor-pointer transition-all hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2'
+        "
+        :role="promo.active !== false ? 'link' : undefined"
+        :tabindex="promo.active !== false ? 0 : undefined"
+        :aria-label="
+          promo.active !== false
+            ? `Elegir ${promo.label} en el menú`
+            : undefined
+        "
+        @click="openPromo(promo)"
+        @keydown.enter.space.prevent="openPromo(promo)"
       >
         <CardContent class="space-y-4 p-5 sm:p-6">
           <div class="flex items-start justify-between gap-4">
@@ -225,6 +238,11 @@ function money(value: number) {
     currency: "MXN",
     maximumFractionDigits: 0,
   }).format(value || 0);
+}
+
+function openPromo(promo: PricingPromo) {
+  if (promo.active === false) return;
+  return navigateTo({ path: "/menu", query: { promo: promo.id } });
 }
 
 function requirementLabel(requirement: PricingPromoRequirement) {

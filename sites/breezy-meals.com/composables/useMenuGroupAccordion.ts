@@ -1,5 +1,5 @@
 import { computed, nextTick, ref, watch, type ComputedRef } from "vue";
-import type { GroupKey } from "~/utils/comandas";
+import type { GroupConfig, GroupKey } from "~/utils/comandas";
 
 /**
  * Accordion/chip navigation for the menu groups: open/close state, cart
@@ -7,7 +7,7 @@ import type { GroupKey } from "~/utils/comandas";
  * `<OrganismsMenuCategoryChips>` / `<OrganismsMenuGroupSection>` wiring.
  */
 export function useMenuGroupAccordion(params: {
-  menuGroups: ComputedRef<{ key: GroupKey; label: string }[]>;
+  menuGroups: ComputedRef<GroupConfig[]>;
   groupItems: (key: GroupKey) => { name: string }[];
   cart: Record<string, number>;
   dishesField: () => "dishes" | "store";

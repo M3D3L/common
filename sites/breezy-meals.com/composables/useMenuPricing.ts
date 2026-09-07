@@ -136,6 +136,8 @@ export function useMenuPricing(params: {
   taquizaOrderCount: ComputedRef<Record<TaquizaKind, number>>;
   taquizaTotalForName: (name: string) => number;
   itemCount: ComputedRef<number>;
+  staffMode: () => boolean;
+  useDailyMenu: () => boolean;
   showPromoStatus?: () => boolean;
   activePromoId?: () => string | null;
 }) {
