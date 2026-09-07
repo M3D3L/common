@@ -192,10 +192,10 @@
           money(order.pricingSubtotal ?? 0)
         }}</span>
       </div>
-      <div v-if="order.deliveryFee" class="flex justify-between">
+      <div class="flex justify-between">
         <span class="text-muted-foreground">Envío</span>
         <span class="font-semibold tabular-nums">{{
-          money(order.deliveryFee)
+          money(order.deliveryFee ?? 0)
         }}</span>
       </div>
       <div class="flex justify-between border-t border-border pt-1 font-bold">

@@ -164,9 +164,8 @@ export function useMenuCheckout(params: {
     finalNote: string,
     draft: ComandaDraft,
     memberCodeValue: string,
-    includeOrderPricing: boolean,
+    orderDeliveryFee: number,
   ) {
-    const orderDeliveryFee = appliedDeliveryFee.value;
     const order: PlacedOrder = {
       id: `${number}-${Date.now()}`,
       number,
@@ -180,11 +179,9 @@ export function useMenuCheckout(params: {
       taquizaByKind: draft.taquizaByKind,
       createdAt: Date.now(),
       memberCode: memberCodeValue || undefined,
-      pricingSubtotal: includeOrderPricing ? pricingSubtotal.value : undefined,
-      deliveryFee: includeOrderPricing ? orderDeliveryFee : undefined,
-      pricingTotal: includeOrderPricing
-        ? pricingSubtotal.value + orderDeliveryFee
-        : undefined,
+      pricingSubtotal: draft.pricingSubtotal,
+      deliveryFee: orderDeliveryFee,
+      pricingTotal: draft.pricingSubtotal + orderDeliveryFee,
       redeemMemberMeal: promoRedeemsMembershipMeal(draft.promo),
       promo: draft.promo,
     };
@@ -218,6 +215,7 @@ export function useMenuCheckout(params: {
       cart,
       taquizaOrders: taquizaOrders.value,
       pricingLines: pricingLines.value,
+      splitPromoApplications: Boolean(code),
     });
     const firstNumber = await nextComandaNumber();
     const numberedDrafts = drafts.map((draft, index) => ({
@@ -262,8 +260,16 @@ export function useMenuCheckout(params: {
           deliveryFee: orderDeliveryFee,
           pricingTotal,
         });
+    const extrasIndex = numberedDrafts.findIndex((draft) => !draft.promo);
+    const deliveryDraftIndex = extrasIndex >= 0 ? extrasIndex : 0;
     for (const [index, draft] of numberedDrafts.entries()) {
-      await createComanda(draft.number, finalNote, draft, code, index === 0);
+      await createComanda(
+        draft.number,
+        finalNote,
+        draft,
+        code,
+        index === deliveryDraftIndex ? orderDeliveryFee : 0,
+      );
     }
 
     thankYouName.value = customer.name.trim();

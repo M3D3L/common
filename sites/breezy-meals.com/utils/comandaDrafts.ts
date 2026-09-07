@@ -13,6 +13,7 @@ export interface ComandaDraft {
   cart: Record<string, number>;
   taquizaOrders: Record<TaquizaKind, number>;
   taquizaByKind: Record<TaquizaKind, Record<string, number>>;
+  pricingSubtotal: number;
   promo?: PlacedOrder["promo"];
 }
 
@@ -31,7 +32,42 @@ export function buildComandaDrafts(args: {
   cart: Record<string, number>;
   taquizaOrders: TaquizaDraftOrder[];
   pricingLines: PricingLine[];
+  splitPromoApplications: boolean;
 }): ComandaDraft[] {
+  if (!args.splitPromoApplications) {
+    const cart = Object.fromEntries(
+      Object.entries(args.cart).filter(([, qty]) => qty > 0),
+    );
+    const taquizaByKind = emptyTaquizaByKind();
+    args.taquizaOrders.forEach((order) => {
+      Object.entries(order.fills).forEach(([name, qty]) => {
+        addQty(taquizaByKind[order.kind], name, qty);
+      });
+    });
+
+    return Object.keys(cart).length
+      ? [
+          {
+            label: "Pedido",
+            cart,
+            taquizaOrders: {
+              tacos: args.taquizaOrders.filter(
+                (order) => order.kind === "tacos",
+              ).length,
+              quesadillas: args.taquizaOrders.filter(
+                (order) => order.kind === "quesadillas",
+              ).length,
+            },
+            taquizaByKind,
+            pricingSubtotal: args.pricingLines.reduce(
+              (sum, line) => sum + line.total,
+              0,
+            ),
+          },
+        ]
+      : [];
+  }
+
   const remainingCart = Object.fromEntries(
     Object.entries(args.cart).filter(([, qty]) => qty > 0),
   );
@@ -87,6 +123,7 @@ export function buildComandaDrafts(args: {
           cart: cartForMeal,
           taquizaOrders: taquizaCounts,
           taquizaByKind: taquizaForMeal,
+          pricingSubtotal: line.unitPrice,
           promo: {
             id: line.code,
             label: line.label,
@@ -118,6 +155,9 @@ export function buildComandaDrafts(args: {
         ).length,
       },
       taquizaByKind: extrasTaquiza,
+      pricingSubtotal: args.pricingLines
+        .filter((line) => line.kind !== "promo")
+        .reduce((sum, line) => sum + line.total, 0),
     });
   }
 

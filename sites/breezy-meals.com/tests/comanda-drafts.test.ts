@@ -20,6 +20,7 @@ test("two eligible promo applications create two redeemable comandas", () => {
   const drafts = buildComandaDrafts({
     cart: { Caldo: 2, Arroz: 4, Agua: 2 },
     taquizaOrders: [],
+    splitPromoApplications: true,
     pricingLines: [
       {
         kind: "promo",
@@ -39,6 +40,10 @@ test("two eligible promo applications create two redeemable comandas", () => {
     drafts.map((draft) => draft.promo?.application),
     [1, 2],
   );
+  assert.deepEqual(
+    drafts.map((draft) => draft.pricingSubtotal),
+    [120, 120],
+  );
   assert.ok(drafts.every((draft) => promoRedeemsMembershipMeal(draft.promo)));
 });
 
@@ -46,6 +51,7 @@ test("pricing-only promos create comandas without redemption eligibility", () =>
   const [draft] = buildComandaDrafts({
     cart: { Dulce: 1, Agua: 1 },
     taquizaOrders: [],
+    splitPromoApplications: true,
     pricingLines: [
       {
         kind: "promo",
@@ -71,20 +77,29 @@ test("pricing-only promos create comandas without redemption eligibility", () =>
   assert.equal(promoRedeemsMembershipMeal(draft.promo), false);
 });
 
-test("leftover and incomplete items create a separate non-redeeming comanda", () => {
+test("member promos and a la carte items create separate comandas", () => {
   const drafts = buildComandaDrafts({
-    cart: { Caldo: 1, Arroz: 2, Agua: 1, Dulce: 1 },
+    cart: { Caldo: 2, Arroz: 5, Agua: 2, Dulce: 1 },
     taquizaOrders: [],
+    splitPromoApplications: true,
     pricingLines: [
       {
         kind: "promo",
         code: "caldo-combo",
         label: "Combo caldo",
-        qty: 1,
+        qty: 2,
         unitPrice: 120,
-        total: 120,
+        total: 240,
         redemption: { kind: "membership_meal", credits: 1 },
-        promoApplications: [application],
+        promoApplications: [application, application],
+      },
+      {
+        kind: "item",
+        code: "Arroz",
+        label: "Arroz",
+        qty: 1,
+        unitPrice: 20,
+        total: 20,
       },
       {
         kind: "item",
@@ -97,10 +112,58 @@ test("leftover and incomplete items create a separate non-redeeming comanda", ()
     ],
   });
 
-  assert.equal(drafts.length, 2);
-  assert.equal(drafts[1].label, "Extras");
-  assert.deepEqual(drafts[1].cart, { Dulce: 1 });
-  assert.equal(promoRedeemsMembershipMeal(drafts[1].promo), false);
+  assert.equal(drafts.length, 3);
+  assert.ok(
+    drafts
+      .slice(0, 2)
+      .every((draft) => promoRedeemsMembershipMeal(draft.promo)),
+  );
+  assert.equal(drafts[2].label, "Extras");
+  assert.deepEqual(drafts[2].cart, { Arroz: 1, Dulce: 1 });
+  assert.deepEqual(
+    drafts.map((draft) => draft.pricingSubtotal),
+    [120, 120, 60],
+  );
+  assert.equal(promoRedeemsMembershipMeal(drafts[2].promo), false);
+});
+
+test("guest promos and a la carte items stay in one comanda", () => {
+  const drafts = buildComandaDrafts({
+    cart: { Caldo: 2, Arroz: 5, Agua: 2, Dulce: 1 },
+    taquizaOrders: [],
+    splitPromoApplications: false,
+    pricingLines: [
+      {
+        kind: "promo",
+        code: "caldo-combo",
+        label: "Combo caldo",
+        qty: 2,
+        unitPrice: 120,
+        total: 240,
+        redemption: { kind: "membership_meal", credits: 1 },
+        promoApplications: [application, application],
+      },
+      {
+        kind: "item",
+        code: "Dulce",
+        label: "Dulce",
+        qty: 1,
+        unitPrice: 40,
+        total: 40,
+      },
+    ],
+  });
+
+  assert.equal(drafts.length, 1);
+  assert.equal(drafts[0].label, "Pedido");
+  assert.deepEqual(drafts[0].cart, {
+    Caldo: 2,
+    Arroz: 5,
+    Agua: 2,
+    Dulce: 1,
+  });
+  assert.equal(drafts[0].pricingSubtotal, 280);
+  assert.equal(drafts[0].promo, undefined);
 });
 
 test("an eligible promo still requires a member code at completion", () => {
