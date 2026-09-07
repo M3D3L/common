@@ -16,14 +16,14 @@
     <OrganismsBreezyHeader :logo-src="logoSrc" :links="links" />
 
     <main
-      class="relative z-10 mx-auto grid min-h-[calc(100svh-81px)] max-w-5xl content-center px-5 py-12 sm:px-8 sm:py-16"
+      class="relative z-10 isolate mx-auto grid min-h-[calc(100svh-81px)] max-w-5xl content-center overflow-hidden px-5 py-12 sm:px-8 sm:py-16"
     >
-      <section class="max-w-2xl" aria-labelledby="error-title">
-        <img
-          :src="logoSrc"
-          :alt="brandName"
-          class="mx-auto mb-6 h-24 w-24 rounded-full border-2 border-primary/20 bg-white object-cover shadow-sm sm:h-28 sm:w-28"
-        />
+      <div
+        aria-hidden="true"
+        class="pointer-events-none absolute inset-8 -z-10 bg-contain bg-center bg-no-repeat opacity-[0.08] sm:inset-12"
+        :style="{ backgroundImage: `url(${logoSrc})` }"
+      />
+      <section class="relative max-w-2xl" aria-labelledby="error-title">
         <Badge
           variant="outline"
           class="mb-4 gap-1.5 border-primary/30 bg-background/70 px-3 py-1 text-primary"
