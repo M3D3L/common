@@ -22,6 +22,7 @@
         :variant="isGroupOpen(group.key) ? 'default' : 'outline'"
         @click="$emit('focus-group', group.key)"
       >
+        <span aria-hidden="true">{{ group.emoji }}</span>
         {{ group.label }}
         <span v-if="groupCartCount(group.key)" class="ml-1 tabular-nums"
           >· {{ groupCartCount(group.key) }}</span
@@ -33,10 +34,10 @@
 
 <script lang="ts" setup>
 import { Button } from "@common/components/ui/button";
-import type { GroupKey } from "~/utils/comandas";
+import type { GroupConfig, GroupKey } from "~/utils/comandas";
 
 defineProps<{
-  groups: { key: GroupKey; label: string }[];
+  groups: GroupConfig[];
   allOpen: boolean;
   isGroupOpen: (key: GroupKey) => boolean;
   groupCartCount: (key: GroupKey) => number;

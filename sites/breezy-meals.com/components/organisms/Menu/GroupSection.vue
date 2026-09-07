@@ -6,6 +6,7 @@
     @click="$emit('toggle')"
   >
     <h2 class="text-xl font-bold uppercase tracking-widest text-primary">
+      <span aria-hidden="true">{{ group.emoji }}</span>
       {{ group.label }}
       <span class="ml-1 font-semibold tabular-nums text-foreground/50">{{
         items.length
@@ -96,13 +97,13 @@
 import { Button } from "@common/components/ui/button";
 import { Separator } from "@common/components/ui/separator";
 import { ChevronDown, Plus } from "lucide-vue-next";
-import type { GroupKey, MenuItem } from "~/utils/comandas";
+import type { GroupConfig, GroupKey, MenuItem } from "~/utils/comandas";
 import type { TaquizaKind, TaquizaOrder } from "~/composables/useTaquizaOrders";
 
 type ActiveMenuItem = MenuItem & { group: GroupKey };
 
 defineProps<{
-  group: { key: GroupKey; label: string };
+  group: GroupConfig;
   isOpen: boolean;
   items: ActiveMenuItem[];
   cartCount: number;

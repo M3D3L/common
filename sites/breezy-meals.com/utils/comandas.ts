@@ -49,7 +49,22 @@ function inferKindFromKey(key: string): GroupConfig["kind"] {
   return "main";
 }
 
-function inferEmojiFromKind(kind: GroupConfig["kind"]): string {
+const GROUP_EMOJIS: Record<string, string> = {
+  desayunos: "🍳",
+  breakfast: "🍳",
+  ensaladas: "🥗",
+  salads: "🥗",
+  sweets: "🧁",
+  postres: "🧁",
+  desserts: "🧁",
+};
+
+function inferEmojiFromKey(key: string, kind: GroupConfig["kind"]): string {
+  const normalized = key.toLowerCase();
+  const matchedKey = Object.keys(GROUP_EMOJIS).find((candidate) =>
+    normalized.includes(candidate),
+  );
+  if (matchedKey) return GROUP_EMOJIS[matchedKey];
   if (kind === "drink") return "🥤";
   if (kind === "side") return "🥗";
   return "🍽️";
@@ -161,7 +176,7 @@ export function groupsFromKeys(keys: string[] = []): GroupConfig[] {
         label: titleFromKey(key),
         heading: titleFromKey(key).toUpperCase(),
         kind,
-        emoji: inferEmojiFromKind(kind),
+        emoji: inferEmojiFromKey(key, kind),
       } as GroupConfig;
     });
   return [...base, ...extras];
