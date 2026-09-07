@@ -30,7 +30,7 @@
 
       <div class="flex flex-col justify-center min-w-0">
         <p
-          class="mb-0.5 text-xs font-bold uppercase tracking-widest text-primary transition-colors duration-200"
+          class="mb-0.5 hidden text-xs font-bold uppercase tracking-widest text-primary transition-colors duration-200 lg:block"
         >
           {{ headerCopy.eyebrow }}
         </p>
