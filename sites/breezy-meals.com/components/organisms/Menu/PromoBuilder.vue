@@ -140,7 +140,35 @@
         </AccordionTrigger>
 
         <AccordionContent class="pb-4 pl-10">
-          <div class="space-y-2">
+          <div v-if="requirement.targetType === 'order-unit'" class="space-y-3">
+            <Button
+              v-if="!activeApplication"
+              type="button"
+              variant="outline"
+              class="w-full border-primary/20"
+              :disabled="!canAddRequirement(requirement)"
+              @click="addOrderForRequirement(requirement)"
+            >
+              <Plus class="mr-2 h-4 w-4" />
+              Agregar {{ requirement.labelEs }}
+            </Button>
+
+            <OrganismsMenuTaquizaOrderCard
+              v-for="(order, index) in ordersForRequirement(requirement)"
+              :key="order.id"
+              :order="order"
+              :idx="index"
+              :items="taquizaItems"
+              :taquiza-cap="taquizaCap"
+              :order-fill-total="orderFillTotal"
+              :can-add-to-order="canAddToOrder"
+              :set-order-fill="setOrderFill"
+              :is-out="isOut"
+              @remove="removeTaquizaOrder(order.id)"
+            />
+          </div>
+
+          <div v-else class="space-y-2">
             <p
               v-if="!itemsForRequirement(requirement).length"
               class="rounded-md border border-dashed border-border bg-muted/40 px-3 py-3 text-xs text-muted-foreground"
@@ -182,18 +210,25 @@ import type {
   PromoProgressCard,
   PromoProgressRequirement,
 } from "~/composables/useMenuPricing";
+import type { TaquizaKind, TaquizaOrder } from "~/composables/useTaquizaOrders";
 import type { GroupKey, MenuItem } from "~/utils/comandas";
 
 type ActiveMenuItem = MenuItem & { group: GroupKey };
-type BuildableRequirement = PromoProgressRequirement & {
-  targetType: "group" | "item";
-};
+type BuildableRequirement = PromoProgressRequirement;
 
 const props = defineProps<{
   promo: PromoProgressCard;
   cart: Record<string, number>;
   menuGroups: { key: GroupKey }[];
   groupItems: (key: GroupKey) => ActiveMenuItem[];
+  taquizaGroup?: { key: GroupKey };
+  taquizaCap: Record<TaquizaKind, number>;
+  taquizaOrders: TaquizaOrder[];
+  orderFillTotal: (order: TaquizaOrder) => number;
+  canAddToOrder: (order: TaquizaOrder) => boolean;
+  setOrderFill: (order: TaquizaOrder, name: string, delta: number) => void;
+  addTaquizaOrder: (kind: TaquizaKind) => void;
+  removeTaquizaOrder: (id: string) => void;
   isOut: (name: string) => boolean;
   canAddGroupItems: (key: GroupKey) => boolean;
   money: (value: number) => string;
@@ -216,6 +251,20 @@ const activeMealLabel = computed(() =>
 
 function applicationRequirementQty(requirement: BuildableRequirement) {
   const application = activeApplication.value;
+  if (requirement.targetType === "order-unit") {
+    if (application) {
+      return application.orderUnits
+        .filter((unit) => unit.code === requirement.target)
+        .reduce((sum, unit) => sum + unit.qty, 0);
+    }
+
+    const kind = requirementTaquizaKind(requirement);
+    if (!kind) return 0;
+    return ordersForRequirement(requirement).filter(
+      (order) => props.orderFillTotal(order) === props.taquizaCap[order.kind],
+    ).length;
+  }
+
   if (!application) {
     return itemsForRequirement(requirement).reduce(
       (sum, item) => sum + unappliedItemQty(item.name),
@@ -233,23 +282,18 @@ function applicationRequirementQty(requirement: BuildableRequirement) {
 }
 
 const requirements = computed(() =>
-  props.promo.requirements
-    .filter(
-      (requirement): requirement is BuildableRequirement =>
-        requirement.targetType === "group" || requirement.targetType === "item",
-    )
-    .map((requirement) => {
-      const current = Math.min(
-        requirement.required,
-        applicationRequirementQty(requirement),
-      );
-      return {
-        ...requirement,
-        current,
-        missing: requirement.required - current,
-        met: current >= requirement.required,
-      };
-    }),
+  props.promo.requirements.map((requirement) => {
+    const current = Math.min(
+      requirement.required,
+      applicationRequirementQty(requirement),
+    );
+    return {
+      ...requirement,
+      current,
+      missing: requirement.required - current,
+      met: current >= requirement.required,
+    };
+  }),
 );
 
 const completedCount = computed(
@@ -295,7 +339,10 @@ watch(
     const openRequirement = requirements.value.find(
       (requirement) => requirement.id === openRequirementId.value,
     );
-    if (!openRequirement || openRequirement.met) {
+    if (
+      !openRequirement ||
+      (openRequirement.met && openRequirement.targetType !== "order-unit")
+    ) {
       openRequirementId.value = requirements.value.find(
         (requirement) => !requirement.met,
       )?.id;
@@ -305,6 +352,7 @@ watch(
 );
 
 function requirementGroupKey(requirement: BuildableRequirement) {
+  if (requirement.targetType === "order-unit") return undefined;
   if (requirement.targetType === "group") return requirement.target;
 
   return props.menuGroups.find((group) =>
@@ -325,6 +373,14 @@ function itemsForRequirement(requirement: BuildableRequirement) {
 }
 
 function canAddRequirement(requirement: BuildableRequirement) {
+  if (requirement.targetType === "order-unit") {
+    return (
+      !activeApplication.value &&
+      ordersForRequirement(requirement).length < requirement.required &&
+      !!requirementTaquizaKind(requirement)
+    );
+  }
+
   const groupKey = requirementGroupKey(requirement);
   return (
     requirement.current < requirement.required &&
@@ -345,6 +401,14 @@ function setRequirementQty(
 }
 
 function selectedNames(requirement: BuildableRequirement) {
+  if (requirement.targetType === "order-unit") {
+    return ordersForRequirement(requirement).flatMap((order) =>
+      Object.entries(order.fills)
+        .filter(([, qty]) => qty > 0)
+        .map(([name, qty]) => (qty > 1 ? `${qty} x ${name}` : name)),
+    );
+  }
+
   return itemsForRequirement(requirement)
     .filter((item) => itemQty(item.name) > 0)
     .map((item) => item.name);
@@ -372,5 +436,55 @@ function unappliedItemQty(name: string) {
   );
 
   return Math.max(0, (props.cart[name] ?? 0) - appliedQty);
+}
+
+const taquizaItems = computed(() =>
+  props.taquizaGroup ? props.groupItems(props.taquizaGroup.key) : [],
+);
+
+function requirementTaquizaKind(
+  requirement: BuildableRequirement,
+): TaquizaKind | undefined {
+  if (
+    requirement.target !== "taquiza:tacos" &&
+    requirement.target !== "taquiza:quesadillas"
+  ) {
+    return undefined;
+  }
+  return requirement.target.split(":").at(-1) as TaquizaKind;
+}
+
+function appliedOrderUnitQty(code: string, applicationLimit?: number) {
+  const applications =
+    applicationLimit === undefined
+      ? props.promo.applications
+      : props.promo.applications.slice(0, applicationLimit);
+  return applications.reduce(
+    (sum, application) =>
+      sum +
+      application.orderUnits
+        .filter((unit) => unit.code === code)
+        .reduce((unitSum, unit) => unitSum + unit.qty, 0),
+    0,
+  );
+}
+
+function ordersForRequirement(requirement: BuildableRequirement) {
+  const kind = requirementTaquizaKind(requirement);
+  if (!kind) return [];
+
+  const orders = props.taquizaOrders.filter((order) => order.kind === kind);
+  const offset = activeApplication.value
+    ? appliedOrderUnitQty(requirement.target, activeMealIndex.value)
+    : appliedOrderUnitQty(requirement.target);
+  const count = activeApplication.value
+    ? applicationRequirementQty(requirement)
+    : requirement.required;
+  return orders.slice(offset, offset + count);
+}
+
+function addOrderForRequirement(requirement: BuildableRequirement) {
+  const kind = requirementTaquizaKind(requirement);
+  if (kind && canAddRequirement(requirement)) props.addTaquizaOrder(kind);
 }
 </script>

@@ -108,6 +108,26 @@ export function useTaquizaOrders(
       .length,
   }));
 
+  const completedTaquizaOrderCount = computed<Record<TaquizaKind, number>>(
+    () => ({
+      tacos: taquizaOrders.value.filter(
+        (order) =>
+          order.kind === "tacos" && orderFillTotal(order) === TAQUIZA_CAP.tacos,
+      ).length,
+      quesadillas: taquizaOrders.value.filter(
+        (order) =>
+          order.kind === "quesadillas" &&
+          orderFillTotal(order) === TAQUIZA_CAP.quesadillas,
+      ).length,
+    }),
+  );
+
+  const hasIncompleteTaquizaOrder = computed(() =>
+    taquizaOrders.value.some(
+      (order) => orderFillTotal(order) !== TAQUIZA_CAP[order.kind],
+    ),
+  );
+
   const taquizaSelectedByKind = computed<Record<TaquizaKind, number>>(() => {
     const sum = (k: TaquizaKind) =>
       Object.values(taquizaByKind.value[k]).reduce((s, q) => s + q, 0);
@@ -140,6 +160,8 @@ export function useTaquizaOrders(
     setOrderFill,
     taquizaByKind,
     taquizaOrderCount,
+    completedTaquizaOrderCount,
+    hasIncompleteTaquizaOrder,
     taquizaSelectedByKind,
     hasTaquizaOrder,
     taquizaTotalForName,

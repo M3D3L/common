@@ -136,6 +136,14 @@
             :cart="cart"
             :menu-groups="menuGroups"
             :group-items="groupItems"
+            :taquiza-group="taquizaGroup"
+            :taquiza-cap="TAQUIZA_CAP"
+            :taquiza-orders="taquizaOrders"
+            :order-fill-total="orderFillTotal"
+            :can-add-to-order="canAddToOrder"
+            :set-order-fill="setOrderFill"
+            :add-taquiza-order="addTaquizaOrder"
+            :remove-taquiza-order="removeTaquizaOrder"
             :is-out="isOut"
             :can-add-group-items="canAddItem"
             :money="money"
@@ -513,6 +521,8 @@ const {
   setOrderFill,
   taquizaByKind,
   taquizaOrderCount,
+  completedTaquizaOrderCount,
+  hasIncompleteTaquizaOrder,
   taquizaSelectedByKind,
   hasTaquizaOrder,
   taquizaTotalForName,
@@ -614,6 +624,7 @@ const {
   isOut,
   taquizaGroup,
   taquizaOrderCount,
+  completedTaquizaOrderCount,
   taquizaTotalForName,
   itemCount,
   staffMode: () => staffMode.value,
@@ -654,17 +665,23 @@ const nameRequired = computed(() => mode.value === "domicilio");
 const needsName = computed(() => nameRequired.value && !customer.name.trim());
 
 const canSend = computed(
-  () => itemCount.value > 0 && !needsName.value && !needsAddress.value,
+  () =>
+    itemCount.value > 0 &&
+    !hasIncompleteTaquizaOrder.value &&
+    !needsName.value &&
+    !needsAddress.value,
 );
 
 const canTrySend = canSend;
 
 const hint = computed(() =>
-  needsName.value
-    ? "Please enter your name to proceed / Ingresa tu nombre para continuar."
-    : needsAddress.value
-      ? "Address is required for delivery / Se requiere dirección para el envío."
-      : "",
+  hasIncompleteTaquizaOrder.value
+    ? "Completa todas las piezas de cada orden de tacos o quesadillas."
+    : needsName.value
+      ? "Please enter your name to proceed / Ingresa tu nombre para continuar."
+      : needsAddress.value
+        ? "Address is required for delivery / Se requiere dirección para el envío."
+        : "",
 );
 
 function isGroupLocked(k: GroupKey) {

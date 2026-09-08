@@ -56,7 +56,9 @@ function toRuntimePromo(record: Record<string, any>): PricingPromo | null {
   const active = Boolean(record.active ?? data?.active ?? true);
 
   const match = (record.match ?? data?.match) as
-    | { requirements?: PricingPromoRequirement[] }
+    | {
+        requirements?: PricingPromoRequirement | PricingPromoRequirement[];
+      }
     | undefined;
   const pricing = (record.pricing ?? data?.pricing) as
     | { amount?: number }
@@ -64,22 +66,22 @@ function toRuntimePromo(record: Record<string, any>): PricingPromo | null {
   const display = (record.display ?? data?.display) as
     | { summary?: string }
     | undefined;
-  const configuredRedemption = menuPricingConfig.promos.find(
-    (promo) => promo.id === id,
-  )?.redemption;
   const redemption = record.redemption ?? data?.redemption;
 
-  const requirements = Array.isArray(match?.requirements)
-    ? match.requirements.filter(
-        (req) =>
-          !!req &&
-          (req.targetType === "group" ||
-            req.targetType === "item" ||
-            req.targetType === "order-unit") &&
-          typeof req.target === "string" &&
-          Number(req.qty) > 0,
-      )
-    : [];
+  const rawRequirements = Array.isArray(match?.requirements)
+    ? match.requirements
+    : match?.requirements
+      ? [match.requirements]
+      : [];
+  const requirements = rawRequirements.filter(
+    (req) =>
+      !!req &&
+      (req.targetType === "group" ||
+        req.targetType === "item" ||
+        req.targetType === "order-unit") &&
+      typeof req.target === "string" &&
+      Number(req.qty) > 0,
+  );
 
   if (!id || !label || !requirements.length || !Number(pricing?.amount)) {
     return null;
@@ -96,9 +98,7 @@ function toRuntimePromo(record: Record<string, any>): PricingPromo | null {
     redemption:
       redemption?.kind === "membership_meal" && Number(redemption.credits) > 0
         ? { kind: "membership_meal", credits: Number(redemption.credits) }
-        : redemption?.kind === "none"
-          ? undefined
-          : configuredRedemption,
+        : undefined,
   };
 }
 
@@ -134,6 +134,7 @@ export function useMenuPricing(params: {
   isOut: (name: string) => boolean;
   taquizaGroup: MenuGroupDef | undefined;
   taquizaOrderCount: ComputedRef<Record<TaquizaKind, number>>;
+  completedTaquizaOrderCount: ComputedRef<Record<TaquizaKind, number>>;
   taquizaTotalForName: (name: string) => number;
   itemCount: ComputedRef<number>;
   staffMode: () => boolean;
@@ -149,6 +150,7 @@ export function useMenuPricing(params: {
     isOut,
     taquizaGroup,
     taquizaOrderCount,
+    completedTaquizaOrderCount,
     taquizaTotalForName,
     itemCount,
     staffMode,
@@ -188,10 +190,7 @@ export function useMenuPricing(params: {
   }
 
   const effectivePricingConfig = computed<PricingConfig>(() => {
-    const promos =
-      runtimePromos.value.length > 0
-        ? runtimePromos.value
-        : menuPricingConfig.promos;
+    const promos = runtimePromos.value;
     const preferredId = activePromoId?.();
     const orderedPromos = preferredId
       ? [...promos].sort(
@@ -310,9 +309,9 @@ export function useMenuPricing(params: {
 
     if (requirement.targetType === "order-unit") {
       if (requirement.target === "taquiza:tacos")
-        return taquizaOrderCount.value.tacos;
+        return completedTaquizaOrderCount.value.tacos;
       if (requirement.target === "taquiza:quesadillas") {
-        return taquizaOrderCount.value.quesadillas;
+        return completedTaquizaOrderCount.value.quesadillas;
       }
       return 0;
     }
@@ -360,6 +359,7 @@ export function useMenuPricing(params: {
   const promoProgressCards = computed<PromoProgressCard[]>(() =>
     effectivePricingConfig.value.promos
       .filter((promo) => promo.active !== false)
+      .filter(promoIsAvailableToday)
       .map((promo) => {
         const requirements: PromoProgressRequirement[] =
           promo.match.requirements.map((requirement) => {
@@ -445,6 +445,10 @@ export function useMenuPricing(params: {
         label: menuPricingConfig.orderUnits?.[unit.code]?.label ?? unit.code,
         unitPrice:
           effectivePricingConfig.value.orderUnits?.[unit.code]?.unitPrice ?? 0,
+        promoEligibleQty:
+          completedTaquizaOrderCount.value[
+            unit.code.endsWith(":tacos") ? "tacos" : "quesadillas"
+          ],
       }));
 
     return priceMenuOrder({

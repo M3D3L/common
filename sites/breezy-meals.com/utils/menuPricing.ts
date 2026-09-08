@@ -10,6 +10,7 @@ export interface PricingOrderUnitInput {
   label: string;
   qty: number;
   unitPrice: number;
+  promoEligibleQty?: number;
 }
 
 export interface PricingPromoRequirement {
@@ -90,6 +91,7 @@ interface AvailableUnit {
   group?: string;
   itemName?: string;
   unitPrice: number;
+  promoEligible: boolean;
   consumed: boolean;
 }
 
@@ -124,6 +126,7 @@ function toAvailableUnits(
         group: item.group,
         itemName: item.name,
         unitPrice: item.unitPrice,
+        promoEligible: true,
         consumed: false,
       });
     }
@@ -138,6 +141,7 @@ function toAvailableUnits(
         code: unit.code,
         label: unit.label,
         unitPrice: unit.unitPrice,
+        promoEligible: index < (unit.promoEligibleQty ?? unit.qty),
         consumed: false,
       });
     }
@@ -160,7 +164,11 @@ function matchesRequirement(
     return unit.kind === "item" && unit.itemName === requirement.target;
   }
 
-  return unit.kind === "order-unit" && unit.code === requirement.target;
+  return (
+    unit.kind === "order-unit" &&
+    unit.promoEligible &&
+    unit.code === requirement.target
+  );
 }
 
 function pickUnits(
@@ -336,6 +344,13 @@ interface SolveResult {
   lines: PricingLine[];
 }
 
+function promoApplicationCount(lines: PricingLine[]) {
+  return lines.reduce(
+    (sum, line) => sum + (line.promoApplications?.length ?? 0),
+    0,
+  );
+}
+
 function resolveBestPricing(
   units: AvailableUnit[],
   promos: PricingPromo[],
@@ -362,7 +377,12 @@ function resolveBestPricing(
       lines: mergePricingLines([applied.line, ...next.lines]),
     };
 
-    if (candidate.total < best.total) {
+    if (
+      candidate.total < best.total ||
+      (candidate.total === best.total &&
+        promoApplicationCount(candidate.lines) >
+          promoApplicationCount(best.lines))
+    ) {
       best = candidate;
     }
   }

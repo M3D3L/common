@@ -1,6 +1,6 @@
 <template>
   <section
-    v-if="buildablePromoCards.length"
+    v-if="promoCards.length"
     class="js-reveal-item border-t border-primary/15 py-5"
   >
     <div class="mb-4 flex items-end justify-between gap-4">
@@ -31,7 +31,7 @@
 
     <div class="grid gap-3 sm:grid-cols-2">
       <Button
-        v-for="promo in buildablePromoCards"
+        v-for="promo in promoCards"
         :key="promo.id"
         type="button"
         variant="outline"
@@ -78,15 +78,4 @@ const props = defineProps<{
 }>();
 
 defineEmits<{ "select-promo": [promoId: string] }>();
-
-function canGuidePromo(promo: PromoProgressCard) {
-  return promo.requirements.every(
-    (requirement) =>
-      requirement.targetType === "group" || requirement.targetType === "item",
-  );
-}
-
-const buildablePromoCards = computed(() =>
-  props.promoCards.filter(canGuidePromo),
-);
 </script>

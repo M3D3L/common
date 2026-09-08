@@ -46,6 +46,50 @@ test("promo lines only carry explicitly configured redemption eligibility", () =
   });
 });
 
+test("incomplete order units are priced but do not activate promos", () => {
+  const config: PricingConfig = {
+    promos: [
+      {
+        id: "taquiza-tacos",
+        label: "Promo 3 tacos",
+        redemption: { kind: "membership_meal", credits: 1 },
+        match: {
+          requirements: [
+            {
+              targetType: "order-unit",
+              target: "taquiza:tacos",
+              qty: 1,
+            },
+          ],
+        },
+        pricing: { amount: 120 },
+      },
+    ],
+  };
+  const orderUnit = {
+    code: "taquiza:tacos",
+    label: "Orden de tacos",
+    qty: 1,
+    unitPrice: 120,
+  };
+
+  const incomplete = priceMenuOrder({
+    items: [],
+    orderUnits: [{ ...orderUnit, promoEligibleQty: 0 }],
+    config,
+  });
+  assert.equal(incomplete.lines[0]?.kind, "order-unit");
+  assert.equal(incomplete.total, 120);
+
+  const complete = priceMenuOrder({
+    items: [],
+    orderUnits: [{ ...orderUnit, promoEligibleQty: 1 }],
+    config,
+  });
+  assert.equal(complete.lines[0]?.kind, "promo");
+  assert.equal(complete.lines[0]?.code, "taquiza-tacos");
+});
+
 test("charges items outside completed promos at their a la carte prices", () => {
   const combo: PricingConfig["promos"][number] = {
     id: "meal-combo",

@@ -47,6 +47,47 @@ test("two eligible promo applications create two redeemable comandas", () => {
   assert.ok(drafts.every((draft) => promoRedeemsMembershipMeal(draft.promo)));
 });
 
+test("taco and drink promo creates one redeemable comanda", () => {
+  const [draft] = buildComandaDrafts({
+    cart: { "Chicharrón en Salsa Verde": 3, Refresco: 1 },
+    taquizaOrders: [
+      { kind: "tacos", fills: { "Chicharrón en Salsa Verde": 3 } },
+    ],
+    splitPromoApplications: true,
+    pricingLines: [
+      {
+        kind: "promo",
+        code: "promo-3-tacos-bebida",
+        label: "Promo 3 tacos + bebida",
+        qty: 1,
+        unitPrice: 135,
+        total: 135,
+        redemption: { kind: "membership_meal", credits: 1 },
+        promoApplications: [
+          {
+            items: [{ name: "Refresco", group: "bebidas", qty: 1 }],
+            orderUnits: [
+              {
+                code: "taquiza:tacos",
+                label: "Orden de tacos",
+                qty: 1,
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  });
+
+  assert.deepEqual(draft.cart, {
+    "Chicharrón en Salsa Verde": 3,
+    Refresco: 1,
+  });
+  assert.deepEqual(draft.taquizaOrders, { tacos: 1, quesadillas: 0 });
+  assert.equal(draft.pricingSubtotal, 135);
+  assert.equal(promoRedeemsMembershipMeal(draft.promo), true);
+});
+
 test("pricing-only promos create comandas without redemption eligibility", () => {
   const [draft] = buildComandaDrafts({
     cart: { Dulce: 1, Agua: 1 },

@@ -826,19 +826,15 @@ const normalizePromo = (record: RecordModel): PromoViewModel => {
   const amount = Number(raw.pricing?.amount ?? data.pricing?.amount ?? 0) || 0;
   const priority = Number(raw.priority ?? data.priority ?? 0) || 0;
   const active = Boolean(raw.active ?? data.active ?? true);
-  const configuredRedemption = menuPricingConfig.promos.find(
-    (promo) => promo.id === menuPromoId,
-  )?.redemption;
-  const redemption = raw.redemption ?? data.redemption ?? configuredRedemption;
-
+  const redemption = raw.redemption ?? data.redemption;
+  const rawRequirements =
+    raw.requirements ?? raw.match?.requirements ?? data.match?.requirements;
   const requirements = (
-    Array.isArray(raw.requirements)
-      ? raw.requirements
-      : Array.isArray(raw.match?.requirements)
-        ? raw.match.requirements
-        : Array.isArray(data.match?.requirements)
-          ? data.match.requirements
-          : []
+    Array.isArray(rawRequirements)
+      ? rawRequirements
+      : rawRequirements && typeof rawRequirements === "object"
+        ? [rawRequirements]
+        : []
   ) as PromoRequirement[];
 
   return {
