@@ -155,19 +155,25 @@
         <template v-else>
           <section
             v-if="promosVisible && promoCardsWithAppliedState.length"
-            class="js-reveal-item flex items-center justify-between gap-4 rounded-lg border border-border/70 bg-card/70 p-4 shadow-sm"
+            role="switch"
+            tabindex="0"
+            :aria-checked="showFullMenu"
+            aria-label="Ver menú completo"
+            class="js-reveal-item flex cursor-pointer items-center justify-between gap-4 rounded-lg border border-border/70 bg-card/70 p-4 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+            @click="showFullMenu = !showFullMenu"
+            @keydown.enter.space.prevent="showFullMenu = !showFullMenu"
           >
-            <label for="show-full-menu" class="min-w-0 cursor-pointer">
+            <div class="min-w-0">
               <span class="block font-bold">Ver menú completo</span>
               <span class="mt-0.5 block text-xs text-muted-foreground">
                 Explora todos los platillos y pide a la carta.
               </span>
-            </label>
+            </div>
             <Switch
-              id="show-full-menu"
-              v-model="showFullMenu"
-              aria-label="Ver menú completo"
-              class="shrink-0 border-border data-[state=unchecked]:bg-muted"
+              :model-value="showFullMenu"
+              tabindex="-1"
+              aria-hidden="true"
+              class="pointer-events-none shrink-0 border-border data-[state=unchecked]:bg-muted"
             />
           </section>
 
