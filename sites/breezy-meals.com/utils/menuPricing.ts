@@ -399,14 +399,6 @@ export function priceMenuOrder({
   preferredPromoId,
 }: PriceOrderArgs) {
   const units = toAvailableUnits(items, orderUnits);
-  const promoApplications = new Map<
-    string,
-    {
-      promo: PricingPromo;
-      qty: number;
-      labels: string[];
-    }
-  >();
 
   const promos = [...config.promos]
     .filter((promo) => promo.active !== false)
