@@ -42,7 +42,7 @@ import {
   redemptionReasonForOrder,
   shouldRedeemOnReady,
 } from "~/utils/comandasRedemption";
-import { comandaCreatePayload } from "~/lib/comanda-record";
+import { comandaCreatePayload, pocketBaseDateTime } from "~/lib/comanda-record";
 
 /* ===== Config ===== */
 const STORAGE_KEY = "comandas";
@@ -766,7 +766,7 @@ function createComandasStore() {
       const start = new Date(`${date}T00:00:00`);
       const end = new Date(start);
       end.setDate(end.getDate() + 1);
-      const filter = `placed_at >= "${start.toISOString()}" && placed_at < "${end.toISOString()}"`;
+      const filter = `placed_at >= "${pocketBaseDateTime(start)}" && placed_at < "${pocketBaseDateTime(end)}"`;
       const res = await fetchCollection(
         COMANDAS_COLLECTION,
         1,

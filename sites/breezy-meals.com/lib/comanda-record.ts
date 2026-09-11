@@ -18,6 +18,10 @@ function compact(data: Record<string, unknown>): Record<string, unknown> {
   );
 }
 
+export function pocketBaseDateTime(value: Date): string {
+  return value.toISOString().replace("T", " ");
+}
+
 export function typedComandaFields(
   order: PlacedOrder,
 ): Record<string, unknown> {

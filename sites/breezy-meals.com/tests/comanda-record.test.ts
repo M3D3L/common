@@ -4,6 +4,7 @@ import test from "node:test";
 import {
   comandaCreatePayload,
   planComandaLines,
+  pocketBaseDateTime,
   typedComandaFields,
 } from "../lib/comanda-record.ts";
 
@@ -49,6 +50,13 @@ test("omits absent optional values without changing the order", () => {
   assert.equal(payload.snapshot, minimal);
   assert.equal("customer_name" in payload, false);
   assert.equal("total" in payload, false);
+});
+
+test("formats date filters for PocketBase", () => {
+  assert.equal(
+    pocketBaseDateTime(new Date("2026-09-10T07:00:00.000Z")),
+    "2026-09-10 07:00:00.000Z",
+  );
 });
 
 test("plans order-line replacements before deleting surplus rows", () => {
