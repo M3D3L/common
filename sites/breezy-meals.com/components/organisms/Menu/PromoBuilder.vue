@@ -50,18 +50,16 @@
         </button>
         <button
           type="button"
-          role="tab"
           class="inline-flex h-10 shrink-0 items-center gap-2 rounded-md border px-3 text-sm font-bold transition-colors"
           :class="
             activeMealIndex === promo.applications.length
               ? 'border-primary bg-primary text-primary-foreground'
               : 'border-border bg-background text-foreground hover:border-primary/50'
           "
-          :aria-selected="activeMealIndex === promo.applications.length"
-          @click="activeMealIndex = promo.applications.length"
+          @click="startAnotherMeal"
         >
           <Plus class="h-4 w-4" />
-          Agregar otra
+          Agregar otra comida
         </button>
       </div>
     </div>
@@ -316,15 +314,30 @@ const progressPercent = computed(() =>
 
 const openRequirementId = ref<string>();
 
+function startAnotherMeal() {
+  activeMealIndex.value = props.promo.applications.length;
+  openRequirementId.value = requirements.value[0]?.id;
+}
+
 watch(
   () => props.promo.applications.length,
   (next, previous) => {
     if (next > previous && activeMealIndex.value === previous) {
-      activeMealIndex.value = next;
-      openRequirementId.value = requirements.value[0]?.id;
-    } else if (activeMealIndex.value > next) {
-      activeMealIndex.value = next;
+      activeMealIndex.value = next - 1;
+      openRequirementId.value = undefined;
+    } else if (activeMealIndex.value >= next && next < previous) {
+      activeMealIndex.value = Math.max(0, next - 1);
     }
+  },
+);
+
+watch(
+  () => props.promo.id,
+  () => {
+    activeMealIndex.value = 0;
+    openRequirementId.value = requirements.value.find(
+      (requirement) => !requirement.met,
+    )?.id;
   },
 );
 

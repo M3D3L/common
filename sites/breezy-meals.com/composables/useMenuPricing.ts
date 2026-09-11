@@ -455,6 +455,7 @@ export function useMenuPricing(params: {
       items: standardItems,
       orderUnits: taquizaUnits,
       config: effectivePricingConfig.value,
+      preferredPromoId: activePromoId?.(),
     });
   });
 
@@ -466,25 +467,36 @@ export function useMenuPricing(params: {
         .filter((line) => line.kind === "promo" && line.code === promo.id)
         .flatMap((line) => line.promoApplications ?? []);
       const appliedQty = applications.length;
+      const requirements = promo.requirements.map((requirement) => {
+        const current = Math.min(
+          requirement.required,
+          Math.max(0, requirement.selected - appliedQty * requirement.required),
+        );
+        return {
+          ...requirement,
+          current,
+          missing: requirement.required - current,
+          met: current >= requirement.required,
+        };
+      });
+      const missingRequirements = requirements.filter(
+        (requirement) => requirement.missing > 0,
+      );
       return {
         ...promo,
         appliedQty,
         applications,
-        requirements: promo.requirements.map((requirement) => {
-          const current = Math.min(
-            requirement.required,
-            Math.max(
-              0,
-              requirement.selected - appliedQty * requirement.required,
-            ),
-          );
-          return {
-            ...requirement,
-            current,
-            missing: requirement.required - current,
-            met: current >= requirement.required,
-          };
-        }),
+        requirements,
+        missingTextEs: joinWithConjunction(
+          missingRequirements.map(
+            (requirement) => `${requirement.missing} ${requirement.labelEs}`,
+          ),
+        ),
+        missingTextEn: joinWithConjunctionEn(
+          missingRequirements.map(
+            (requirement) => `${requirement.missing} ${requirement.labelEn}`,
+          ),
+        ),
       };
     }),
   );

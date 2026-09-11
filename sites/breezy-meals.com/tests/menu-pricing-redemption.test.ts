@@ -126,3 +126,40 @@ test("charges items outside completed promos at their a la carte prices", () => 
     20,
   );
 });
+
+test("an explicitly selected promo applies even when a la carte is cheaper", () => {
+  const saladPromo: PricingConfig["promos"][number] = {
+    id: "ensalada-bebida",
+    label: "Ensalada + bebida",
+    match: {
+      requirements: [
+        { targetType: "group", target: "ensaladas", qty: 1 },
+        { targetType: "group", target: "bebidas", qty: 1 },
+      ],
+    },
+    pricing: { amount: 120 },
+  };
+  const items = [
+    { name: "Ensalada", group: "ensaladas", qty: 1, unitPrice: 80 },
+    { name: "Agua", group: "bebidas", qty: 1, unitPrice: 20 },
+  ];
+
+  const automatic = priceMenuOrder({
+    items,
+    config: { promos: [saladPromo] },
+  });
+  assert.equal(automatic.total, 100);
+  assert.equal(
+    automatic.lines.some((line) => line.kind === "promo"),
+    false,
+  );
+
+  const selected = priceMenuOrder({
+    items,
+    config: { promos: [saladPromo] },
+    preferredPromoId: saladPromo.id,
+  });
+  assert.equal(selected.total, 120);
+  assert.equal(selected.lines[0]?.kind, "promo");
+  assert.equal(selected.lines[0]?.code, saladPromo.id);
+});

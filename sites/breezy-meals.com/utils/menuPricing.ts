@@ -81,6 +81,7 @@ interface PriceOrderArgs {
   items: PricingItemInput[];
   orderUnits?: PricingOrderUnitInput[];
   config: PricingConfig;
+  preferredPromoId?: string | null;
 }
 
 interface AvailableUnit {
@@ -395,6 +396,7 @@ export function priceMenuOrder({
   items,
   orderUnits = [],
   config,
+  preferredPromoId,
 }: PriceOrderArgs) {
   const units = toAvailableUnits(items, orderUnits);
   const promoApplications = new Map<
@@ -416,15 +418,23 @@ export function priceMenuOrder({
     });
 
   const memo = new Map<string, SolveResult>();
-  const solved = resolveBestPricing(
-    units,
-    promos,
-    units.map(() => false),
-    memo,
-  );
+  let consumed = units.map(() => false);
+  const preferredLines: PricingLine[] = [];
+  const preferredPromo = promos.find((promo) => promo.id === preferredPromoId);
 
-  const total = solved.total;
-  const lines = solved.lines;
+  if (preferredPromo) {
+    let application = applyPromoOnce(units, consumed, preferredPromo);
+    while (application) {
+      preferredLines.push(application.line);
+      consumed = application.consumed;
+      application = applyPromoOnce(units, consumed, preferredPromo);
+    }
+  }
+
+  const solved = resolveBestPricing(units, promos, consumed, memo);
+
+  const lines = mergePricingLines([...preferredLines, ...solved.lines]);
+  const total = lines.reduce((sum, line) => sum + line.total, 0);
 
   return {
     lines,
