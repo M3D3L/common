@@ -52,14 +52,6 @@
       </CardContent>
     </Card>
 
-    <Alert class="mb-5 border-amber-500/40 bg-amber-500/10 text-amber-900">
-      <AlertTitle>Schema note</AlertTitle>
-      <AlertDescription>
-        This dashboard expects a PocketBase collection named "promos". If your
-        schema uses different field names, update the mapper in this page.
-      </AlertDescription>
-    </Alert>
-
     <Alert v-if="errorMessage" class="mb-5" variant="destructive">
       <AlertTitle>Request failed</AlertTitle>
       <AlertDescription>{{ errorMessage }}</AlertDescription>
@@ -427,7 +419,7 @@
                   v-model="form.requirementsJson"
                   rows="8"
                   class="font-mono text-xs"
-                  placeholder='[{"targetType":"group","target":"guisado","qty":2}]'
+                  placeholder='[{"targetType":"group","target":"guisos","qty":2}]'
                 />
                 <div class="flex justify-end">
                   <Button size="sm" variant="outline" @click="syncRowsFromJson">
@@ -588,7 +580,7 @@ const form = reactive<PromoForm>({
   priority: "100",
   active: true,
   redeemsMembershipMeal: false,
-  requirementsJson: '[{"targetType":"group","target":"guisado","qty":2}]',
+  requirementsJson: '[{"targetType":"group","target":"guisos","qty":2}]',
 });
 
 const requirementRows = ref<RequirementRow[]>([]);
@@ -954,7 +946,7 @@ const resetForm = () => {
   form.priority = "100";
   form.active = true;
   form.redeemsMembershipMeal = false;
-  form.requirementsJson = '[{"targetType":"group","target":"guisado","qty":2}]';
+  form.requirementsJson = '[{"targetType":"group","target":"guisos","qty":2}]';
   advancedJsonOpen.value = false;
   syncRowsFromJson();
 };
