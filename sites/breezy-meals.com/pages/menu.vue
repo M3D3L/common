@@ -153,53 +153,73 @@
         </div>
 
         <template v-else>
-          <!-- ===== Category chips: filter at a glance =====
+          <section
+            v-if="promosVisible && promoCardsWithAppliedState.length"
+            class="js-reveal-item flex items-center justify-between gap-4 rounded-lg border border-border/70 bg-card/70 p-4 shadow-sm"
+          >
+            <label for="show-full-menu" class="min-w-0 cursor-pointer">
+              <span class="block font-bold">Ver menú completo</span>
+              <span class="mt-0.5 block text-xs text-muted-foreground">
+                Explora todos los platillos y pide a la carta.
+              </span>
+            </label>
+            <Switch
+              id="show-full-menu"
+              v-model="showFullMenu"
+              aria-label="Ver menú completo"
+              class="shrink-0 border-border data-[state=unchecked]:bg-muted"
+            />
+          </section>
+
+          <template v-if="fullMenuVisible">
+            <!-- ===== Category chips: filter at a glance =====
                Each chip opens its section and scrolls to it. "All" expands or
                collapses everything. The badge keeps the cart count even while
                the section is closed, so the user never loses track of their order. -->
-          <OrganismsMenuCategoryChips
-            :groups="visibleMenuGroups"
-            :all-open="allGroupsOpen"
-            :is-group-open="isGroupOpen"
-            :group-cart-count="groupCartCount"
-            @toggle-all="toggleAllGroups"
-            @focus-group="focusGroup"
-          />
-
-          <section
-            v-for="group in menuGroups"
-            v-show="showGroupSection(group.key)"
-            :key="group.key"
-            :ref="(el) => setSectionRef(group.key, el)"
-            class="js-reveal-section scroll-mt-20 rounded-2xl border border-border/70 bg-card/70 p-3 shadow-sm backdrop-blur"
-          >
-            <OrganismsMenuGroupSection
-              :group="group"
-              :is-open="isGroupOpen(group.key)"
-              :items="groupItems(group.key)"
-              :cart-count="groupCartCount(group.key)"
-              :is-taquiza="!!(taquizaGroup && group.key === taquizaGroup.key)"
-              :taquiza-kinds="taquizaKinds"
-              :taquiza-cap="TAQUIZA_CAP"
-              :taquiza-orders="taquizaOrders"
-              :order-fill-total="orderFillTotal"
-              :can-add-to-order="canAddToOrder"
-              :set-order-fill="setOrderFill"
-              :add-taquiza-order="addTaquizaOrder"
-              :remove-taquiza-order="removeTaquizaOrder"
-              :cart="cart"
-              :is-out="isOut"
-              :can-add-group-items="canAddItem(group.key)"
-              :is-locked="isGroupLocked(group.key)"
-              :lock-reason="lockReason(group.key)"
-              :staff-mode="staffMode"
-              :is-logged-in="isLoggedIn"
-              :money="money"
-              :set-qty="(name, delta) => setQty(group.key, name, delta)"
-              :toggle-out="toggleOut"
-              @toggle="toggleGroup(group.key)"
+            <OrganismsMenuCategoryChips
+              :groups="visibleMenuGroups"
+              :all-open="allGroupsOpen"
+              :is-group-open="isGroupOpen"
+              :group-cart-count="groupCartCount"
+              @toggle-all="toggleAllGroups"
+              @focus-group="focusGroup"
             />
-          </section>
+
+            <section
+              v-for="group in menuGroups"
+              v-show="showGroupSection(group.key)"
+              :key="group.key"
+              :ref="(el) => setSectionRef(group.key, el)"
+              class="js-reveal-section scroll-mt-20 rounded-2xl border border-border/70 bg-card/70 p-3 shadow-sm backdrop-blur"
+            >
+              <OrganismsMenuGroupSection
+                :group="group"
+                :is-open="isGroupOpen(group.key)"
+                :items="groupItems(group.key)"
+                :cart-count="groupCartCount(group.key)"
+                :is-taquiza="!!(taquizaGroup && group.key === taquizaGroup.key)"
+                :taquiza-kinds="taquizaKinds"
+                :taquiza-cap="TAQUIZA_CAP"
+                :taquiza-orders="taquizaOrders"
+                :order-fill-total="orderFillTotal"
+                :can-add-to-order="canAddToOrder"
+                :set-order-fill="setOrderFill"
+                :add-taquiza-order="addTaquizaOrder"
+                :remove-taquiza-order="removeTaquizaOrder"
+                :cart="cart"
+                :is-out="isOut"
+                :can-add-group-items="canAddItem(group.key)"
+                :is-locked="isGroupLocked(group.key)"
+                :lock-reason="lockReason(group.key)"
+                :staff-mode="staffMode"
+                :is-logged-in="isLoggedIn"
+                :money="money"
+                :set-qty="(name, delta) => setQty(group.key, name, delta)"
+                :toggle-out="toggleOut"
+                @toggle="toggleGroup(group.key)"
+              />
+            </section>
+          </template>
         </template>
 
         <OrganismsMenuOrderSummary
@@ -263,6 +283,7 @@
 
 <script lang="ts" setup>
 import { Card } from "@common/components/ui/card";
+import { Switch } from "@common/components/ui/switch";
 import { todayISO, type GroupKey } from "~/utils/comandas";
 import { MODE_LABEL, type OrderMode } from "~/composables/useWhatsappOrder";
 import { useTaquizaOrders } from "~/composables/useTaquizaOrders";
@@ -305,6 +326,10 @@ const isLoggedIn = ref(pb.authStore.isValid);
 const staffMode = computed(() => props.staffMode || isLoggedIn.value);
 const promosVisible = computed(
   () => props.showPromos || (!staffMode.value && props.useDailyMenu),
+);
+const showFullMenu = ref(false);
+const fullMenuVisible = computed(
+  () => !promosVisible.value || staffMode.value || showFullMenu.value,
 );
 const route = useRoute();
 const runtimeConfig = useRuntimeConfig();
@@ -492,6 +517,7 @@ watch(
     selectedDate.value,
     visibleMenuGroups.value.length,
     openGroups.value.size,
+    fullMenuVisible.value,
   ],
   async () => {
     await nextTick();
