@@ -5,6 +5,7 @@
 
 import type { OrderMode, Customer } from "~/composables/useWhatsappOrder";
 import { getCategoryEmoji } from "~/utils/categoryEmoji";
+import { copyMenuItemStorageMetadata } from "../lib/menu-item-storage.ts";
 
 /**
  * Fuente ÚNICA de categorías. Agregar una nueva (p. ej. "taquizas") aquí la
@@ -293,7 +294,7 @@ function normalizeMenuItem(group: GroupKey, entry: unknown): MenuItem | null {
     normalized.combo = { ...combo };
   }
 
-  return normalized;
+  return copyMenuItemStorageMetadata(entry as MenuItem, normalized);
 }
 
 export function normalizeDishNames(raw?: Partial<Record<string, unknown>>) {
@@ -332,12 +333,15 @@ export function normalizeMenuCatalog(
         (!existing.combo && !!item.combo);
 
       if (preferIncoming) {
-        unique.set(item.name, {
-          ...existing,
-          ...item,
-          image: item.image || existing.image,
-          combo: item.combo || existing.combo,
-        });
+        unique.set(
+          item.name,
+          copyMenuItemStorageMetadata(item, {
+            ...existing,
+            ...item,
+            image: item.image || existing.image,
+            combo: item.combo || existing.combo,
+          }),
+        );
       }
     });
     out[g.key] = [...unique.values()];

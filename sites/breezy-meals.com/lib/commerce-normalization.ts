@@ -3,6 +3,7 @@ import {
   type LegacyRecord,
   type MigrationRow,
 } from "./legacy-normalization.ts";
+import { getMenuItemStorageMetadata } from "./menu-item-storage.ts";
 
 export interface CommerceSnapshot {
   exportedAt: string;
@@ -209,6 +210,7 @@ export function createCommerceMigrationPlan(
         for (const rawItem of asArray(rawItems)) {
           sourceIndex += 1;
           const item = asObject(rawItem);
+          const storage = getMenuItemStorageMetadata(rawItem);
           const name = itemName(rawItem);
           const ref = `menu-item:${source.id}:${surface}:${sourceIndex}`;
           if (!name) {
@@ -228,7 +230,7 @@ export function createCommerceMigrationPlan(
               image_url: stringValue(item.image),
               combo: item.combo,
               source_record: source.id,
-              source_index: sourceIndex,
+              source_index: storage?.sourceIndex ?? sourceIndex,
               legacy_payload: rawItem,
             }),
           });
@@ -333,7 +335,14 @@ export function createCommerceMigrationPlan(
         menu: source.id,
         rotation_anchor: stringValue(source.rotation_anchor),
         source_record: source.id,
-        legacy_payload: source,
+        legacy_payload: compact({
+          rotation: source.rotation,
+          rotation_anchor: source.rotation_anchor,
+          overrides: source.overrides,
+          active: source.active,
+          active_date: source.active_date,
+          sold_out: source.sold_out,
+        }),
       },
     });
 

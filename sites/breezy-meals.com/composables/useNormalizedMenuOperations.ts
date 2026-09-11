@@ -31,6 +31,48 @@ const sameFields = (record: NormalizedRecord, data: Record<string, unknown>) =>
 const identityKey = (fields: string[], data: Record<string, unknown>) =>
   fields.map((field) => `${field}:${stableStringify(data[field])}`).join("|");
 
+const menuCollectionNames = [
+  "menu_categories",
+  "menu_items",
+  "menu_week_blocks",
+  "menu_week_days",
+  "menu_day_items",
+  "menu_schedules",
+  "menu_rotation_slots",
+  "menu_week_overrides",
+  "menu_service_days",
+  "menu_service_items",
+] as const;
+
+type MenuCollectionName = (typeof menuCollectionNames)[number];
+type MenuCollections = Record<MenuCollectionName, NormalizedRecord[]>;
+
+const menuCollectionSorts: Record<MenuCollectionName, string> = {
+  menu_categories: "sort_order",
+  menu_items: "source_index",
+  menu_week_blocks: "sort_order",
+  menu_week_days: "weekday",
+  menu_day_items: "sort_order",
+  menu_schedules: "created",
+  menu_rotation_slots: "sort_order",
+  menu_week_overrides: "week_monday",
+  menu_service_days: "business_date",
+  menu_service_items: "sort_order",
+};
+
+const menuRows = (collections: MenuCollections): NormalizedMenuRows => ({
+  categories: collections.menu_categories,
+  items: collections.menu_items,
+  blocks: collections.menu_week_blocks,
+  days: collections.menu_week_days,
+  dayItems: collections.menu_day_items,
+  schedules: collections.menu_schedules,
+  rotationSlots: collections.menu_rotation_slots,
+  overrides: collections.menu_week_overrides,
+  serviceDays: collections.menu_service_days,
+  serviceItems: collections.menu_service_items,
+});
+
 export function useNormalizedMenuOperations() {
   const pb = usePocketBase();
 
@@ -45,76 +87,32 @@ export function useNormalizedMenuOperations() {
     return records.map(recordData);
   }
 
+  async function fetchMenuCollections(): Promise<MenuCollections> {
+    const entries = await Promise.all(
+      menuCollectionNames.map(
+        async (name) =>
+          [name, await fetchAll(name, menuCollectionSorts[name])] as const,
+      ),
+    );
+    return Object.fromEntries(entries) as MenuCollections;
+  }
+
   async function loadMenu<T extends NormalizedRecord>(legacy: T): Promise<T> {
-    const [
-      categories,
-      items,
-      blocks,
-      days,
-      dayItems,
-      schedules,
-      rotationSlots,
-      overrides,
-      serviceDays,
-      serviceItems,
-    ] = await Promise.all([
-      fetchAll("menu_categories", "sort_order"),
-      fetchAll("menu_items", "source_index"),
-      fetchAll("menu_week_blocks", "sort_order"),
-      fetchAll("menu_week_days", "weekday"),
-      fetchAll("menu_day_items", "sort_order"),
-      fetchAll("menu_schedules"),
-      fetchAll("menu_rotation_slots", "sort_order"),
-      fetchAll("menu_week_overrides", "week_monday"),
-      fetchAll("menu_service_days", "business_date"),
-      fetchAll("menu_service_items", "sort_order"),
-    ]);
-    const rows: NormalizedMenuRows = {
-      categories,
-      items,
-      blocks,
-      days,
-      dayItems,
-      schedules,
-      rotationSlots,
-      overrides,
-      serviceDays,
-      serviceItems,
-    };
-    return buildNormalizedMenuRecord(legacy, rows);
+    const collections = await fetchMenuCollections();
+    return buildNormalizedMenuRecord(legacy, menuRows(collections));
   }
 
   async function syncMenu(
     persisted: NormalizedRecord,
     changedFields: NormalizedMenuField[] = NORMALIZED_MENU_FIELDS,
   ): Promise<void> {
-    const normalized = await loadMenu(persisted);
+    const existing = await fetchMenuCollections();
+    const normalized = buildNormalizedMenuRecord(persisted, menuRows(existing));
     const legacy = mergeChangedMenuFields(normalized, persisted, changedFields);
     const plan = createCommerceMigrationPlan({
       exportedAt: new Date().toISOString(),
       collections: { menu: [legacy], comandas: [] },
     });
-    const collectionNames = [
-      "menu_categories",
-      "menu_items",
-      "menu_week_blocks",
-      "menu_week_days",
-      "menu_day_items",
-      "menu_schedules",
-      "menu_rotation_slots",
-      "menu_week_overrides",
-      "menu_service_days",
-      "menu_service_items",
-    ] as const;
-    const existingEntries = await Promise.all(
-      collectionNames.map(
-        async (name) => [name, await fetchAll(name)] as const,
-      ),
-    );
-    const existing = Object.fromEntries(existingEntries) as Record<
-      (typeof collectionNames)[number],
-      NormalizedRecord[]
-    >;
     const ownedBlocks = new Set(
       existing.menu_week_blocks
         .filter((row) => row.source_record === legacy.id)
@@ -176,13 +174,13 @@ export function useNormalizedMenuOperations() {
       ),
     };
     const keptIds = Object.fromEntries(
-      collectionNames.map((name) => [name, new Set<string>()]),
-    ) as Record<(typeof collectionNames)[number], Set<string>>;
+      menuCollectionNames.map((name) => [name, new Set<string>()]),
+    ) as Record<MenuCollectionName, Set<string>>;
     const identityMaps = new Map<string, Map<string, NormalizedRecord>>();
     const refToId = new Map<string, string>();
 
     for (const row of plan.rows) {
-      const collection = row.collection as (typeof collectionNames)[number];
+      const collection = row.collection as MenuCollectionName;
       const data = { ...row.data };
       for (const [field, ref] of Object.entries(row.relationRefs ?? {})) {
         const id = refToId.get(ref);

@@ -62,7 +62,7 @@
         >
           <div
             v-for="(item, index) in catalog[group.key]"
-            :key="`${group.key}-${item.name}-${index}`"
+            :key="`${group.key}-${index}`"
             class="min-w-0 rounded-lg border border-border bg-card p-4"
           >
             <div class="flex items-start gap-3">
@@ -184,6 +184,11 @@ import {
   type MenuCatalog,
   type MenuItem,
 } from "~/utils/comandas";
+import {
+  copyMenuItemStorageMetadata,
+  getMenuItemStorageMetadata,
+  setMenuItemStorageMetadata,
+} from "~/lib/menu-item-storage";
 
 const props = withDefaults(
   defineProps<{
@@ -266,7 +271,18 @@ async function load() {
 
 function addItem(groupKey: string) {
   const items = catalog.value[groupKey] ?? [];
-  items.push({ name: "", price: 0 });
+  const sourceIndexes = items
+    .map((item) => getMenuItemStorageMetadata(item)?.sourceIndex)
+    .filter((index): index is number => index !== undefined);
+  const firstSourceIndex = sourceIndexes.length
+    ? Math.min(...sourceIndexes)
+    : 1;
+  items.unshift(
+    setMenuItemStorageMetadata(
+      { name: "", price: 0 },
+      { sourceIndex: firstSourceIndex - 1 },
+    ),
+  );
   catalog.value[groupKey] = items;
 }
 
@@ -288,12 +304,14 @@ function cleanCatalog(source: MenuCatalog): MenuCatalog {
   Object.entries(source).forEach(([groupKey, items]) => {
     const seen = new Set<string>();
     cleaned[groupKey] = items
-      .map((item) => ({
-        ...item,
-        name: item.name.trim(),
-        price: Number(item.price) || 0,
-        image: item.image?.trim() || undefined,
-      }))
+      .map((item) =>
+        copyMenuItemStorageMetadata(item, {
+          ...item,
+          name: item.name.trim(),
+          price: Number(item.price) || 0,
+          image: item.image?.trim() || undefined,
+        }),
+      )
       .filter((item) => {
         if (!item.name || seen.has(item.name)) return false;
         seen.add(item.name);
@@ -317,9 +335,10 @@ async function save() {
         payload,
       );
       if (props.fetchedCollection === "menu") {
-        await normalizedMenu.syncMenu(saved as any, [
-          props.dishes as "dishes" | "store",
-        ]);
+        await normalizedMenu.syncMenu(
+          { ...saved, [props.dishes]: menuItems } as any,
+          [props.dishes as "dishes" | "store"],
+        );
       }
     } else {
       const created = await createItem("menu", {
@@ -332,7 +351,10 @@ async function save() {
         overrides: {},
       });
       menuRecordId.value = created.id;
-      await normalizedMenu.syncMenu(created as any);
+      await normalizedMenu.syncMenu({
+        ...created,
+        [props.dishes]: menuItems,
+      } as any);
     }
 
     catalog.value = normalizeMenuCatalog(menuItems);

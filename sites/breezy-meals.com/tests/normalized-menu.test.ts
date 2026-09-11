@@ -7,6 +7,7 @@ import {
   mergeChangedMenuFields,
   type NormalizedMenuRows,
 } from "../lib/normalized-menu.ts";
+import { getMenuItemStorageMetadata } from "../lib/menu-item-storage.ts";
 
 const legacy = {
   id: "menu-1",
@@ -44,6 +45,7 @@ const rows: NormalizedMenuRows = {
       name: "Birria",
       price: 125,
       source_record: "menu-1",
+      source_index: 4,
       sort_order: 2,
       legacy_payload: { name: "Birria", price: 125, image: "birria.jpg" },
     },
@@ -149,6 +151,23 @@ test("reconstructs migrated menu domains while preserving legacy fields", () => 
     "2026-09-14": { block: "week-a" },
     "2026-09-21": { closed: true },
   });
+});
+
+test("preserves normalized item identity through catalog normalization", () => {
+  const menu = buildNormalizedMenuRecord(legacy, rows);
+  const catalog = menu.dishes as Record<
+    string,
+    Array<{ name: string; price: number }>
+  >;
+
+  assert.deepEqual(getMenuItemStorageMetadata(catalog.guisos[0]), {
+    recordId: "item-2",
+    sourceIndex: 4,
+  });
+  assert.equal(
+    JSON.stringify(catalog.guisos[0]).includes("sourceIndex"),
+    false,
+  );
 });
 
 test("keeps legacy active state until normalized service rows exist", () => {

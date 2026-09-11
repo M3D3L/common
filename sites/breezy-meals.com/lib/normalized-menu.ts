@@ -1,5 +1,6 @@
 import type { NormalizedRecord } from "./normalized-domain.ts";
 import type { MenuCatalog, MenuItem } from "~/utils/comandas";
+import { setMenuItemStorageMetadata } from "./menu-item-storage.ts";
 import type { WeekBlock, WeekOverride } from "~/utils/rotation";
 
 export interface NormalizedMenuRows {
@@ -116,19 +117,21 @@ function buildCatalog(
   ).forEach((item) => {
     const category = categoryById.get(relationId(item.category));
     if (!category) return;
-    const value = item.legacy_payload
-      ? (item.legacy_payload as MenuItem)
-      : (() => {
-          const fallback: MenuItem = {
-            name: text(item.name),
-            price: numeric(item.price),
-          };
-          if (text(item.image_url)) fallback.image = text(item.image_url);
-          if (item.combo && typeof item.combo === "object") {
-            fallback.combo = item.combo as MenuItem["combo"];
-          }
-          return fallback;
-        })();
+    const payload = item.legacy_payload;
+    const value: MenuItem =
+      payload && typeof payload === "object" && !Array.isArray(payload)
+        ? { ...(payload as MenuItem) }
+        : { name: text(item.name), price: numeric(item.price) };
+    if (!value.image && text(item.image_url)) {
+      value.image = text(item.image_url);
+    }
+    if (!value.combo && item.combo && typeof item.combo === "object") {
+      value.combo = item.combo as MenuItem["combo"];
+    }
+    setMenuItemStorageMetadata(value, {
+      recordId: item.id,
+      sourceIndex: numeric(item.source_index),
+    });
     (catalog[category] ??= []).push(value);
   });
 

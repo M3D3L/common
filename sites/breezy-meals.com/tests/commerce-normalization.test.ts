@@ -5,6 +5,7 @@ import {
   createCommerceMigrationPlan,
   type CommerceSnapshot,
 } from "../lib/commerce-normalization.ts";
+import { setMenuItemStorageMetadata } from "../lib/menu-item-storage.ts";
 
 const menuRecord = {
   id: "menu-record-1",
@@ -108,13 +109,20 @@ test("builds relational menu rows and typed comanda copies", () => {
   });
 });
 
-test("preserves exact mutable source payloads and uses one-based ordering", () => {
+test("preserves domain payloads and uses one-based ordering", () => {
   const plan = createCommerceMigrationPlan(snapshot());
   const schedule = plan.rows.find((row) => row.collection === "menu_schedules");
   const block = plan.rows.find((row) => row.collection === "menu_week_blocks");
   const lines = plan.rows.filter((row) => row.collection === "comanda_lines");
 
-  assert.deepEqual(schedule?.data.legacy_payload, menuRecord);
+  assert.deepEqual(schedule?.data.legacy_payload, {
+    rotation: menuRecord.rotation,
+    rotation_anchor: menuRecord.rotation_anchor,
+    overrides: menuRecord.overrides,
+    active: menuRecord.active,
+    active_date: menuRecord.active_date,
+    sold_out: menuRecord.sold_out,
+  });
   assert.deepEqual(block?.data.legacy_payload, menuRecord.week_blocks[0]);
   assert.deepEqual(
     lines.map((row) => row.data.sort_order),
@@ -124,6 +132,33 @@ test("preserves exact mutable source payloads and uses one-based ordering", () =
     name: "Birria",
     quantity: 2,
   });
+});
+
+test("preserves normalized item ordering metadata", () => {
+  const newDish = setMenuItemStorageMetadata(
+    { name: "Birria 2", price: 125 },
+    { sourceIndex: 0 },
+  );
+  const existingDish = setMenuItemStorageMetadata(
+    { name: "Birria", price: 125 },
+    { recordId: "item-1", sourceIndex: 1 },
+  );
+  const plan = createCommerceMigrationPlan(
+    snapshot([
+      {
+        ...menuRecord,
+        dishes: { guisos: [newDish, existingDish] },
+      },
+    ]),
+  );
+  const items = plan.rows.filter(
+    (row) => row.collection === "menu_items" && row.data.surface === "dishes",
+  );
+
+  assert.deepEqual(
+    items.map((row) => row.data.source_index),
+    [0, 1],
+  );
 });
 
 test("keeps unresolved names and reports them instead of guessing", () => {
