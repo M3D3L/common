@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "imports": {
-    "#internal/nuxt/paths": "./node_modules/@nuxt/nitro-server/dist/runtime/utils/paths.js",
+    "#internal/nuxt/paths": "./internal/nuxt/paths.mjs",
     "#internal/nitro": "./.nuxt/dev/index.mjs"
   },
   "scripts": {
