@@ -65,7 +65,42 @@
         />
 
         <section
-          v-if="!staffMode"
+          v-if="!staffMode && props.promoConfig?.variant === 'catering'"
+          class="js-reveal-item overflow-hidden rounded-lg border border-emerald-700/25 bg-emerald-50 text-emerald-950 shadow-sm"
+          aria-labelledby="catering-promo-title"
+        >
+          <div class="grid gap-5 p-5 sm:grid-cols-[1fr_auto] sm:items-center">
+            <div>
+              <p
+                class="flex items-center gap-2 text-xs font-bold uppercase text-emerald-800"
+              >
+                <BadgeCheck :size="17" aria-hidden="true" />
+                {{ props.promoConfig.eyebrow }}
+              </p>
+              <h2
+                id="catering-promo-title"
+                class="mt-2 font-heading text-xl font-extrabold"
+              >
+                {{ props.promoConfig.title }}
+              </h2>
+              <p class="mt-1 text-sm text-emerald-900/80">
+                {{ props.promoConfig.description }}
+              </p>
+            </div>
+            <a
+              :href="cateringPromoUrl"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-emerald-800 px-4 text-sm font-bold text-white transition-colors hover:bg-emerald-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 focus-visible:ring-offset-2"
+            >
+              {{ props.promoConfig.ctaLabel }}
+              <ArrowRight :size="17" aria-hidden="true" />
+            </a>
+          </div>
+        </section>
+
+        <section
+          v-else-if="!staffMode"
           class="js-reveal-item overflow-hidden rounded-lg border border-emerald-700/25 bg-emerald-50 text-emerald-950 shadow-sm"
           aria-labelledby="membership-promo-title"
         >
@@ -94,18 +129,9 @@
               to="/membresia"
               class="inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-emerald-800 px-4 text-sm font-bold text-white transition-colors hover:bg-emerald-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 focus-visible:ring-offset-2"
             >
-              Ver membresía
+              Adquirir Membresía
               <ArrowRight :size="17" aria-hidden="true" />
             </NuxtLink>
-          </div>
-          <div
-            class="flex items-center gap-2 border-t border-amber-300/70 bg-amber-100 px-5 py-3 text-sm text-amber-950"
-          >
-            <Clock3 :size="18" class="shrink-0" aria-hidden="true" />
-            <p>
-              <strong>Última semana a ${{ membershipOffer.price }}.</strong>
-              Después, el paquete sube a ${{ MEMBERSHIP_NEXT_PRICE }}.
-            </p>
           </div>
         </section>
 
@@ -159,21 +185,31 @@
             tabindex="0"
             :aria-checked="showFullMenu"
             aria-label="Ver menú completo"
-            class="js-reveal-item flex cursor-pointer items-center justify-between gap-4 rounded-lg border border-border/70 bg-card/70 p-4 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+            class="js-reveal-item group flex cursor-pointer items-center justify-between gap-4 rounded-lg border border-emerald-950/20 bg-emerald-800 p-4 text-white shadow-md transition-colors hover:bg-emerald-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 focus-visible:ring-offset-2"
             @click="showFullMenu = !showFullMenu"
             @keydown.enter.space.prevent="showFullMenu = !showFullMenu"
           >
-            <div class="min-w-0">
-              <span class="block font-bold">Ver menú completo</span>
-              <span class="mt-0.5 block text-xs text-muted-foreground">
-                Explora todos los platillos y pide a la carta.
+            <div class="flex min-w-0 items-center gap-3">
+              <span
+                class="flex size-10 shrink-0 items-center justify-center rounded-md bg-white/15 transition-colors group-hover:bg-white/20"
+                aria-hidden="true"
+              >
+                <Utensils :size="20" />
               </span>
+              <div class="min-w-0">
+                <span class="block text-base font-extrabold">
+                  Ver menú completo
+                </span>
+                <span class="mt-0.5 block text-xs text-emerald-50/85">
+                  Explora todos los platillos y pide a la carta.
+                </span>
+              </div>
             </div>
             <Switch
               :model-value="showFullMenu"
               tabindex="-1"
               aria-hidden="true"
-              class="pointer-events-none shrink-0 border-border data-[state=unchecked]:bg-muted"
+              class="pointer-events-none shrink-0 border-white/50 data-[state=checked]:bg-white data-[state=unchecked]:bg-emerald-950/40 [&>span]:data-[state=checked]:bg-emerald-800"
             />
           </section>
 
@@ -299,7 +335,16 @@ import { useMenuCheckout } from "~/composables/useMenuCheckout";
 import { useMenuData, type MenuRecordFull } from "~/composables/useMenuData";
 import { useMenuGroupAccordion } from "~/composables/useMenuGroupAccordion";
 import usePocketBase from "@common/composables/usePocketbase";
-import { ArrowRight, BadgeCheck, Clock3 } from "lucide-vue-next";
+import { ArrowRight, BadgeCheck, Utensils } from "lucide-vue-next";
+
+interface MenuPromoConfig {
+  variant: "catering";
+  eyebrow: string;
+  title: string;
+  description: string;
+  ctaLabel: string;
+  whatsappMessage: string;
+}
 
 definePageMeta({ layout: "breezy", alias: "/orders" });
 
@@ -311,6 +356,7 @@ const props = withDefaults(
     staffMode?: boolean;
     showMemberCode?: boolean;
     showPromos?: boolean;
+    promoConfig?: MenuPromoConfig;
   }>(),
   {
     fetchedCollection: "menu",
@@ -343,7 +389,6 @@ const membershipOffer = runtimeConfig.public.membershipOffer as {
   credits: number;
   price: number;
 };
-const MEMBERSHIP_NEXT_PRICE = 520;
 const businessConfig = (runtimeConfig.public?.business ?? {}) as {
   whatsappNumber?: string;
   logoUrl?: string;
@@ -351,6 +396,9 @@ const businessConfig = (runtimeConfig.public?.business ?? {}) as {
 
 const RESTAURANT_WHATSAPP = String(
   businessConfig.whatsappNumber || runtimeConfig.public.whatsappNumber || "",
+);
+const cateringPromoUrl = computed(() =>
+  waLink(props.promoConfig?.whatsappMessage || "", RESTAURANT_WHATSAPP),
 );
 // Same logo as the header (layouts/breezy.vue), for branding in the modal.
 const LOGO_SRC = businessConfig.logoUrl || "";

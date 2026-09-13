@@ -24,7 +24,7 @@ const request = {
 const offer = {
   code: "meal-pack-5",
   credits: 5,
-  price: 450,
+  price: 520,
   currency: "MXN",
 };
 
@@ -51,7 +51,7 @@ test("plans atomic onboarding and snapshots the configured offer", () => {
   );
   assert.equal(operations[1].data.credits_total, 5);
   assert.equal(operations[2].data.payment_request, "request-1");
-  assert.equal(operations[3].data.approved_amount, 450);
+  assert.equal(operations[3].data.approved_amount, 520);
   assert.equal(operations[3].data.approved_credits, 5);
 });
 
