@@ -122,6 +122,11 @@ collections, and appends optional typed fields to `comandas`. The live additive
 copy is verified under source hash `d26cec88`; the authenticated backup and all
 legacy menu/order blobs remain retained for rollback.
 
+Copy `pb_hooks/protect_menu_catering.pb.js` into the PocketBase instance's
+`pb_hooks` directory. It preserves the last non-null `menu.catering` value when
+an outdated or unrelated update attempts to clear the field; valid array updates
+from the catering editor remain allowed.
+
 ## Environment Variables
 
 These are read by `nuxt.config.ts` runtime config:
