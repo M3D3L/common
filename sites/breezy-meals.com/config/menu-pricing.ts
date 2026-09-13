@@ -51,23 +51,6 @@ export const menuPricingConfig: PricingConfig = {
       },
     },
     {
-      id: "taquiza-tacos-120",
-      label: "Promo 3 tacos",
-      priority: 30,
-      display: {
-        summary: "3 tacos = $120",
-      },
-      redemption: { kind: "membership_meal", credits: 1 },
-      match: {
-        requirements: [
-          { targetType: "order-unit", target: "taquiza:tacos", qty: 1 },
-        ],
-      },
-      pricing: {
-        amount: 120,
-      },
-    },
-    {
       id: "taquiza-quesadillas-120",
       label: "Promo 2 quesadillas",
       priority: 30,
