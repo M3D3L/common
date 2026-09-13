@@ -464,7 +464,7 @@ function requirementTaquizaKind(
   ) {
     return undefined;
   }
-  return requirement.target.split(":").at(-1) as TaquizaKind;
+  return requirement.target.split(":")[1] as TaquizaKind;
 }
 
 function appliedOrderUnitQty(code: string, applicationLimit?: number) {

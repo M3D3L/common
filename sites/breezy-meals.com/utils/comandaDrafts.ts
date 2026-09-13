@@ -95,7 +95,7 @@ export function buildComandaDrafts(args: {
         });
 
         application.orderUnits.forEach((unit) => {
-          const kind = unit.code.split(":").at(-1) as TaquizaKind;
+          const kind = unit.code.split(":")[1] as TaquizaKind;
           if (kind !== "tacos" && kind !== "quesadillas") return;
 
           for (let index = 0; index < unit.qty; index += 1) {

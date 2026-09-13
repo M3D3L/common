@@ -580,10 +580,22 @@ async function rejectRequest() {
 }
 
 async function openReceipt(request: MembershipPaymentRequest) {
+  const receiptTab = window.open(
+    "about:blank",
+    "_blank",
+    "noopener,noreferrer",
+  );
+
   try {
     const url = await api.getReceiptUrl(request);
-    if (url) window.open(url, "_blank", "noopener,noreferrer");
+    if (url) {
+      if (receiptTab && !receiptTab.closed) receiptTab.location.href = url;
+      else window.open(url, "_blank", "noopener,noreferrer");
+    } else {
+      receiptTab?.close();
+    }
   } catch (error: any) {
+    receiptTab?.close();
     errorMessage.value = error?.message ?? "No se pudo abrir el comprobante";
   }
 }

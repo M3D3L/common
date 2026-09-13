@@ -246,7 +246,7 @@ export function useMenuLink() {
     const numbers = sections.map((section) => section.orderNumber);
     const numberLabel =
       numbers.length > 1
-        ? ` #${numbers[0]}-${numbers.at(-1)}`
+        ? ` #${numbers[0]}-${numbers[numbers.length - 1]}`
         : ` #${numbers[0]}`;
     const lines = [`🧾 Nuevo pedido${numberLabel}`];
 
