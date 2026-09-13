@@ -55,7 +55,6 @@ export function legacyMenuCleanupPayload(hasDatedService: boolean) {
   return {
     dishes: null,
     store: null,
-    catering: null,
     week_blocks: null,
     rotation: null,
     rotation_anchor: "",

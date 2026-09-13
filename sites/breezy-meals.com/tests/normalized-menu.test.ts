@@ -240,7 +240,6 @@ test("retains undated service state while clearing normalized menu blobs", () =>
   assert.deepEqual(legacyMenuCleanupPayload(false), {
     dishes: null,
     store: null,
-    catering: null,
     week_blocks: null,
     rotation: null,
     rotation_anchor: "",
@@ -249,7 +248,6 @@ test("retains undated service state while clearing normalized menu blobs", () =>
   assert.deepEqual(legacyMenuCleanupPayload(true), {
     dishes: null,
     store: null,
-    catering: null,
     week_blocks: null,
     rotation: null,
     rotation_anchor: "",
