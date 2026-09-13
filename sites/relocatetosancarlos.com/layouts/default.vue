@@ -14,7 +14,7 @@
     </main>
 
     <SectionsBlogColumn
-      class="pb-16"
+      :class="isMenuPage ? 'pb-8' : 'pb-16'"
       :h1="isBlogPage"
       :showPagination="isBlogPage"
       type="relocateBlog"
@@ -103,4 +103,6 @@ const isBlogPage = computed(() => {
   const path = route.path.replace(/^\/|\/$/g, "").toLowerCase();
   return path === "blog";
 });
+
+const isMenuPage = computed(() => route.path.startsWith("/menu"));
 </script>

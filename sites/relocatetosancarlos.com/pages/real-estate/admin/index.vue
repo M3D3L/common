@@ -262,7 +262,37 @@ watch(disableAi, (newVal) => {
 });
 
 /* ---------------- Helpers ---------------- */
-const getInitialFormData = () => ({
+type PropertyFormData = {
+  id: string | null;
+  title: string;
+  slug: string;
+  sub_title: string;
+  description: string;
+  content: string;
+  keywords: string;
+  sub_title_Sp: string;
+  description_Sp: string;
+  content_Sp: string;
+  keywords_Sp: string;
+  amenities_Sp: any[];
+  type: string;
+  price: number;
+  pricingType: string;
+  bedrooms: number;
+  bathrooms: number;
+  area: number;
+  lotSize: number;
+  address: string;
+  lat: string;
+  long: string;
+  amenities: any[];
+  cover_image: string;
+  gallery: any[];
+  author: string | { id?: string; username?: string } | null;
+  [key: string]: any;
+};
+
+const getInitialFormData = (): PropertyFormData => ({
   id: null,
   title: "",
   slug: "",
@@ -291,7 +321,7 @@ const getInitialFormData = () => ({
   author: user.value?.id || null,
 });
 
-const formData = ref(getInitialFormData());
+const formData = ref<PropertyFormData>(getInitialFormData());
 
 const filteredProperties = computed(() => {
   const items = properties.value?.items || [];
@@ -421,6 +451,9 @@ const saveProperty = async () => {
 
     let savedRecord;
     if (isEditing.value) {
+      if (!formData.value.id) {
+        throw new Error("A property ID is required to update this listing.");
+      }
       savedRecord = await updateItem("properties", formData.value.id, payload);
     } else {
       savedRecord = await createItem("properties", payload);
