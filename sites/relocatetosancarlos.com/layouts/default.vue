@@ -4,7 +4,7 @@
       <span class="text-gray-600">[Advertisement]</span>
     </div> -->
     <TheNavbar
-      :links="siteMap"
+      :links="navLinks"
       slogan="Real Estate"
       :siteName="contactInfo?.siteName"
     />
@@ -21,7 +21,7 @@
       v-bind="blogSection"
       :title="blogSection.title"
       :perPage="isBlogPage ? 10 : 5"
-      :newsLetterModule
+      :newsLetterModule="newsLetterModule"
     />
     <SectionsContact
       :contactInfo
@@ -47,7 +47,12 @@
         message="Hello, I would like to schedule a call!"
       /> -->
     </a>
-    <OrganismsBaseFooter :links="siteMap" :footerConfig :contactInfo :socials />
+    <OrganismsBaseFooter
+      :links="navLinks"
+      :footerConfig
+      :contactInfo
+      :socials
+    />
 
     <!-- <DebugBar /> -->
   </div>
@@ -55,6 +60,7 @@
 
 <script setup lang="ts">
 import DebugBar from "@common/components/DebugBar.vue";
+import useAuth from "@common/composables/useAuth";
 
 import {
   contactInfo,
@@ -67,6 +73,30 @@ import {
 } from "~/assets/configs/layout";
 
 const route = useRoute();
+const { user, isAuthenticated } = useAuth();
+
+const isVerifiedAgent = computed(
+  () => isAuthenticated.value && user.value?.verified === true,
+);
+
+const navLinks = computed(() => {
+  const links = [...siteMap];
+
+  if (isVerifiedAgent.value) {
+    const adminHref = route.path.startsWith("/bienes-raices")
+      ? "/bienes-raices/admin/"
+      : "/real-estate/admin/";
+
+    if (!links.some((link) => link.href === adminHref)) {
+      links.push({
+        label: "Admin Dashboard",
+        href: adminHref,
+      });
+    }
+  }
+
+  return links;
+});
 
 const isBlogPage = computed(() => {
   // Remove leading and trailing slashes, then lowercase

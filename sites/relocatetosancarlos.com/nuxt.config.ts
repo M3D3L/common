@@ -32,6 +32,10 @@ export default defineNuxtConfig({
 
   devtools: { enabled: true },
 
+  experimental: {
+    appManifest: true,
+  },
+
   extends: ["../../nuxt.config.ts"],
 
   css: ["@/assets/css/tailwind.css"],
@@ -143,7 +147,7 @@ export default defineNuxtConfig({
     public: {
       pocketbaseUrl:
         process.env.POCKETBASE_URL || "https://api.sancarlosinsider.com/",
-      // whatsappNumber: process.env.WHATSAPP_NUMBER || "6444444444",
+      whatsappNumber: process.env.WHATSAPP_NUMBER || "+526444572193",
       siteName: "RelocateToSanCarlos.com",
       siteUrl: "https://www.relocatetosancarlos.com",
       twitterSite: "@relocatetosc",

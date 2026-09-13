@@ -286,6 +286,7 @@
           :item-count="itemCount"
           :name-required="nameRequired"
           :needs-address="needsAddress"
+          :needs-phone="needsPhone"
           :show-member-code="props.showMemberCode"
           :staff-mode="staffMode"
           :can-edit-delivery-fee="isLoggedIn"
@@ -738,17 +739,21 @@ const needsAddress = computed(
   () => mode.value === "domicilio" && !customer.address.trim(),
 );
 
-// Name is optional for takeout/dine-in; delivery always requires it
-// to identify the customer receiving the order.
-const nameRequired = computed(() => mode.value === "domicilio");
+const nameRequired = computed(
+  () => !staffMode.value || mode.value === "domicilio",
+);
 
 const needsName = computed(() => nameRequired.value && !customer.name.trim());
+const needsPhone = computed(
+  () => mode.value === "domicilio" && !customer.phone.trim(),
+);
 
 const canSend = computed(
   () =>
     itemCount.value > 0 &&
     !hasIncompleteTaquizaOrder.value &&
     !needsName.value &&
+    !needsPhone.value &&
     !needsAddress.value,
 );
 
@@ -759,9 +764,11 @@ const hint = computed(() =>
     ? "Completa todas las piezas de cada orden de tacos o quesadillas."
     : needsName.value
       ? "Please enter your name to proceed / Ingresa tu nombre para continuar."
-      : needsAddress.value
-        ? "Address is required for delivery / Se requiere dirección para el envío."
-        : "",
+      : needsPhone.value
+        ? "Phone is required for delivery / Se requiere teléfono para el envío."
+        : needsAddress.value
+          ? "Address is required for delivery / Se requiere dirección para el envío."
+          : "",
 );
 
 function isGroupLocked(k: GroupKey) {

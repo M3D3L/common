@@ -69,19 +69,23 @@
         </p>
       </div>
 
-      <div class="flex flex-row items-center gap-2 my-auto">
-        <div
-          v-if="property?.price"
-          class="text-3xl font-bold md:text-4xl text-primary"
-        >
-          ${{ property.price.toLocaleString() }}
+      <div class="flex flex-col items-start gap-4 my-auto md:items-end">
+        <div class="flex flex-row items-center gap-2">
+          <div
+            v-if="property?.price"
+            class="text-3xl font-bold md:text-4xl text-primary"
+          >
+            ${{ property.price.toLocaleString() }}
+          </div>
+          <div
+            v-if="property?.pricingType"
+            class="text-sm font-medium text-muted-foreground uppercase"
+          >
+            {{ property.pricingType }}
+          </div>
         </div>
-        <div
-          v-if="property?.pricingType"
-          class="text-sm font-medium text-muted-foreground uppercase"
-        >
-          {{ property.pricingType }}
-        </div>
+
+        <PropertyViewingRequestDialog :property="property" :is-sp="isSp" />
       </div>
     </div>
 
@@ -94,7 +98,15 @@
           :src="property?.video"
           title="YouTube video player"
           frameborder="0"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          allow="
+            accelerometer;
+            autoplay;
+            clipboard-write;
+            encrypted-media;
+            gyroscope;
+            picture-in-picture;
+            web-share;
+          "
           referrerpolicy="strict-origin-when-cross-origin"
           allowfullscreen
           class="absolute inset-0 object-cover w-full h-full"
@@ -263,6 +275,7 @@ import { Card } from "@common/components/ui/card";
 import ShareTools from "@common/components/sections/ShareTools.vue";
 import TooltipProvider from "@common/components/ui/tooltip/TooltipProvider.vue";
 import { createSeoObject } from "@common/composables/useSeo";
+import PropertyViewingRequestDialog from "@/components/molecules/PropertyViewingRequestDialog.vue";
 import {
   realEstateHeroSection as heroSection,
   sellPropertyPage as sellData,
@@ -303,11 +316,11 @@ const { data: pageData } = await useAsyncData(
       "author",
       null,
       false,
-      { requestKey: null } // Prevents Safari from cancelling the hydration request
+      { requestKey: null }, // Prevents Safari from cancelling the hydration request
     );
     return res?.items?.[0] || null;
   },
-  { watch: [route] }
+  { watch: [route] },
 );
 
 const property = computed(() => pageData.value || {});

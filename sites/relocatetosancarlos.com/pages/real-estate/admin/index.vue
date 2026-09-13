@@ -198,7 +198,6 @@ import {
 import useAuth from "@common/composables/useAuth";
 import { useChatGPT } from "@common/composables/useChatGPT";
 import usePocketBaseCore from "@common/composables/usePocketBaseCore";
-import usePocketBase from "@common/composables/usePocketbase";
 
 /* UI Components */
 import { Button } from "@common/components/ui/button";
@@ -491,9 +490,8 @@ const deleteProperty = async () => {
 definePageMeta({
   layout: "admin",
   middleware: defineNuxtRouteMiddleware(() => {
-    const pb = usePocketBase();
-    if (!pb.authStore.isValid || pb.authStore.model?.verified !== true)
-      return navigateTo("/");
+    const { isUserVerified } = usePocketBaseCore();
+    if (!isUserVerified()) return navigateTo("/");
   }),
 });
 </script>

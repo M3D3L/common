@@ -52,13 +52,27 @@
 
       <template v-if="staffMode || mode === 'domicilio'">
         <div class="space-y-1.5">
-          <Label for="c-phone">WhatsApp / Phone</Label>
+          <Label for="c-phone" class="flex items-center gap-1">
+            WhatsApp / Phone
+            <span v-if="mode === 'domicilio'" class="text-destructive">*</span>
+            <span v-else class="text-muted-foreground">(opcional)</span>
+          </Label>
           <Input
             id="c-phone"
             v-model="customer.phone"
             type="tel"
             placeholder="10 dígitos"
+            :class="{
+              'border-destructive focus-visible:ring-destructive':
+                itemCount > 0 && needsPhone,
+            }"
           />
+          <p
+            v-if="itemCount > 0 && needsPhone"
+            class="text-[11px] text-destructive"
+          >
+            Required for delivery / Requerido para coordinar la entrega.
+          </p>
         </div>
 
         <div class="space-y-1.5">
@@ -214,6 +228,7 @@ defineProps<{
   itemCount: number;
   nameRequired: boolean;
   needsAddress: boolean;
+  needsPhone: boolean;
   showMemberCode: boolean;
   staffMode: boolean;
   canEditDeliveryFee: boolean;

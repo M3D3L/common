@@ -2,6 +2,10 @@
   "name": "relocatetosancarlos.com",
   "private": true,
   "type": "module",
+  "imports": {
+    "#internal/nuxt/paths": "./node_modules/@nuxt/nitro-server/dist/runtime/utils/paths.js",
+    "#internal/nitro": "./.nuxt/dev/index.mjs"
+  },
   "scripts": {
     "build": "nuxt build",
     "dev": "nuxt dev",
