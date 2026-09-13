@@ -19,6 +19,7 @@ export interface NormalizedMenuRows {
 export type NormalizedMenuField =
   | "dishes"
   | "store"
+  | "catering"
   | "week_blocks"
   | "rotation"
   | "rotation_anchor"
@@ -30,6 +31,7 @@ export type NormalizedMenuField =
 export const NORMALIZED_MENU_FIELDS: NormalizedMenuField[] = [
   "dishes",
   "store",
+  "catering",
   "week_blocks",
   "rotation",
   "rotation_anchor",
@@ -53,6 +55,7 @@ export function legacyMenuCleanupPayload(hasDatedService: boolean) {
   return {
     dishes: null,
     store: null,
+    catering: null,
     week_blocks: null,
     rotation: null,
     rotation_anchor: "",
@@ -92,7 +95,7 @@ function hasOwn(value: unknown, key: string): boolean {
 
 function buildCatalog(
   sourceRecord: string,
-  surface: "dishes" | "store",
+  surface: "dishes" | "store" | "catering",
   categories: NormalizedRecord[],
   items: NormalizedRecord[],
 ): MenuCatalog | null {
@@ -239,6 +242,12 @@ export function buildNormalizedMenuRecord<T extends NormalizedRecord>(
     rows.categories,
     rows.items,
   );
+  const catering = buildCatalog(
+    sourceRecord,
+    "catering",
+    rows.categories,
+    rows.items,
+  );
   const blocks = buildBlocks(sourceRecord, rows);
   const schedule = rows.schedules.find(
     (item) =>
@@ -282,6 +291,7 @@ export function buildNormalizedMenuRecord<T extends NormalizedRecord>(
     ...legacy,
     ...(dishes ? { dishes } : {}),
     ...(store ? { store } : {}),
+    ...(catering ? { catering } : {}),
     ...(blocks ? { week_blocks: blocks } : {}),
     ...(schedule ? { rotation_anchor: text(schedule.rotation_anchor) } : {}),
     ...(rotation ? { rotation } : {}),

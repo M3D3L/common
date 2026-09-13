@@ -203,6 +203,7 @@ export default defineNuxtConfig({
             { to: "/promos", label: "Promos" },
             { to: "/membresia", label: "Membresía" },
             { to: "/tienda", label: "Tienda" },
+            { to: "/catering", label: "Catering" },
             { to: "/inicio", label: "Empleados" },
           ],
           staffLinks: [

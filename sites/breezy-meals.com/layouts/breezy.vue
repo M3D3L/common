@@ -33,6 +33,17 @@
             Tienda
           </NuxtLink>
           <NuxtLink
+            to="/catering"
+            class="flex-1 rounded-md px-3 py-2 text-center text-sm font-semibold transition-colors"
+            :class="
+              isCateringPage
+                ? 'bg-primary text-primary-foreground'
+                : 'text-muted-foreground hover:bg-muted'
+            "
+          >
+            Catering
+          </NuxtLink>
+          <NuxtLink
             v-if="isStaff"
             to="/comandas"
             class="flex-1 rounded-md px-3 py-2 text-center text-sm font-semibold text-muted-foreground transition-colors hover:bg-muted"
@@ -64,6 +75,7 @@ const fallbackLinks: NavLink[] = [
   { to: "/menu-semanal", label: "Calendario" },
   { to: "/promos", label: "Promos" },
   { to: "/tienda", label: "Tienda" },
+  { to: "/catering", label: "Catering" },
 ];
 
 const links: NavLink[] = (business.nav?.publicLinks ?? [])
@@ -88,8 +100,9 @@ const canonicalPath = computed(() =>
 
 const isMenuPage = computed(() => canonicalPath.value === "/menu");
 const isStorePage = computed(() => canonicalPath.value === "/tienda");
+const isCateringPage = computed(() => canonicalPath.value === "/catering");
 const showMenuStoreSwitcher = computed(
-  () => isMenuPage.value || isStorePage.value,
+  () => isMenuPage.value || isStorePage.value || isCateringPage.value,
 );
 </script>
 

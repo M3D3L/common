@@ -306,7 +306,7 @@ definePageMeta({ layout: "breezy", alias: "/orders" });
 const props = withDefaults(
   defineProps<{
     fetchedCollection?: string;
-    dishesField?: "dishes" | "store";
+    dishesField?: "dishes" | "store" | "catering";
     useDailyMenu?: boolean;
     staffMode?: boolean;
     showMemberCode?: boolean;

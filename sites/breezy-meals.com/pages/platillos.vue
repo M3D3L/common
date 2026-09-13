@@ -193,7 +193,7 @@ import {
 const props = withDefaults(
   defineProps<{
     fetchedCollection?: string;
-    dishes?: "dishes" | "store";
+    dishes?: "dishes" | "store" | "catering";
   }>(),
   {
     fetchedCollection: "menu",
@@ -205,6 +205,7 @@ interface MenuRecordForItems {
   id: string;
   dishes?: Record<string, unknown>;
   store?: Record<string, unknown>;
+  catering?: Record<string, unknown>;
   active?: Record<string, unknown>;
   sold_out?: string[];
   week_blocks?: unknown[];
@@ -337,7 +338,7 @@ async function save() {
       if (props.fetchedCollection === "menu") {
         await normalizedMenu.syncMenu(
           { ...saved, [props.dishes]: menuItems } as any,
-          [props.dishes as "dishes" | "store"],
+          [props.dishes as "dishes" | "store" | "catering"],
         );
       }
     } else {

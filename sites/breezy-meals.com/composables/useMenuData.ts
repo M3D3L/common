@@ -23,6 +23,7 @@ import {
 // The `menu` record with the rotation fields.
 export type MenuRecordFull = MenuRecord & {
   store?: MenuCatalog | DayDishes;
+  catering?: MenuCatalog | DayDishes;
   week_blocks?: WeekBlock[];
   rotation?: string[];
   rotation_anchor?: string;
@@ -35,6 +36,21 @@ export type ActiveMenuItem = MenuItem & { group: GroupKey };
 
 const EMPTY_DISHES: DayDishes = emptyDayDishes();
 
+function asSurfaceCatalog(
+  value: unknown,
+  surface: string,
+): Partial<Record<GroupKey, unknown>> {
+  if (Array.isArray(value)) {
+    return { [surface]: value } as Partial<Record<GroupKey, unknown>>;
+  }
+
+  if (value && typeof value === "object") {
+    return value as Partial<Record<GroupKey, unknown>>;
+  }
+
+  return {};
+}
+
 /**
  * Resolves the day's menu (staff override / today's active shift / weekly
  * rotation) into groups and priced items. See useTaquizaOrders.ts and
@@ -43,7 +59,7 @@ const EMPTY_DISHES: DayDishes = emptyDayDishes();
 export function useMenuData(params: {
   record: Ref<MenuRecordFull | null | undefined>;
   selectedDate: Ref<string>;
-  dishesField: () => "dishes" | "store";
+  dishesField: () => "dishes" | "store" | "catering";
   useDailyMenu: () => boolean;
 }) {
   const { record, selectedDate, dishesField, useDailyMenu } = params;
@@ -58,11 +74,9 @@ export function useMenuData(params: {
     const rec = record.value;
     if (!rec) return EMPTY_DISHES;
 
-    const selectedDishes = rec[dishesField()];
+    const selectedDishes = asSurfaceCatalog(rec[dishesField()], dishesField());
     if (!useDailyMenu() || dishesField() !== "dishes") {
-      return normalizeDishNames(
-        selectedDishes as Partial<Record<GroupKey, unknown>>,
-      );
+      return normalizeDishNames(selectedDishes);
     }
 
     const a = normalizeDishNames(
@@ -87,11 +101,8 @@ export function useMenuData(params: {
       : EMPTY_DISHES;
   });
 
-  const menuSourceCatalog = computed<Partial<Record<GroupKey, unknown>>>(
-    () =>
-      (record.value?.[dishesField()] ?? {}) as Partial<
-        Record<GroupKey, unknown>
-      >,
+  const menuSourceCatalog = computed<Partial<Record<GroupKey, unknown>>>(() =>
+    asSurfaceCatalog(record.value?.[dishesField()], dishesField()),
   );
 
   const menuGroups = computed(() => {

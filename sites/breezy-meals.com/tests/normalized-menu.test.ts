@@ -13,6 +13,7 @@ const legacy = {
   id: "menu-1",
   label: "Preserved",
   dishes: { old: ["Legacy"] },
+  catering: { old: ["Legacy catering"] },
   active: { guisos: ["Legacy active"] },
   sold_out: ["Legacy sold out"],
   week_blocks: [],
@@ -27,7 +28,7 @@ const rows: NormalizedMenuRows = {
       key: "guisos",
       source_record: "menu-1",
       sort_order: 1,
-      legacy_payload: { dishes: [] },
+      legacy_payload: { dishes: [], catering: [] },
     },
     {
       id: "cat-s",
@@ -57,6 +58,15 @@ const rows: NormalizedMenuRows = {
       price: 0,
       source_record: "menu-1",
       sort_order: 1,
+    },
+    {
+      id: "item-3",
+      category: "cat-g",
+      surface: "catering",
+      name: "Birria para catering",
+      price: 180,
+      source_record: "menu-1",
+      sort_order: 3,
     },
   ],
   blocks: [
@@ -135,6 +145,9 @@ test("reconstructs migrated menu domains while preserving legacy fields", () => 
   assert.deepEqual(menu.dishes, {
     guisos: [{ name: "Birria", price: 125, image: "birria.jpg" }],
     sides: [{ name: "Arroz", price: 0 }],
+  });
+  assert.deepEqual(menu.catering, {
+    guisos: [{ name: "Birria para catering", price: 180 }],
   });
   assert.deepEqual(menu.week_blocks, [
     {
@@ -227,6 +240,7 @@ test("retains undated service state while clearing normalized menu blobs", () =>
   assert.deepEqual(legacyMenuCleanupPayload(false), {
     dishes: null,
     store: null,
+    catering: null,
     week_blocks: null,
     rotation: null,
     rotation_anchor: "",
@@ -235,6 +249,7 @@ test("retains undated service state while clearing normalized menu blobs", () =>
   assert.deepEqual(legacyMenuCleanupPayload(true), {
     dishes: null,
     store: null,
+    catering: null,
     week_blocks: null,
     rotation: null,
     rotation_anchor: "",

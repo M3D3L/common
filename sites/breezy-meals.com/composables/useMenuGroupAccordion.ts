@@ -10,7 +10,7 @@ export function useMenuGroupAccordion(params: {
   menuGroups: ComputedRef<GroupConfig[]>;
   groupItems: (key: GroupKey) => { name: string }[];
   cart: Record<string, number>;
-  dishesField: () => "dishes" | "store";
+  dishesField: () => "dishes" | "store" | "catering";
 }) {
   const { menuGroups, groupItems, cart, dishesField } = params;
 
