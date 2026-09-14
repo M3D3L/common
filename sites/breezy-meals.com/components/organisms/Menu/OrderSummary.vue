@@ -5,7 +5,10 @@
     >
       Totales / Pricing totals
     </h2>
-    <Card class="rounded-2xl border-border/70 bg-card/85 p-4 shadow-sm">
+    <Card
+      class="rounded-2xl border-border/70 bg-card/85 p-4 shadow-sm"
+      :class="!showBottomBorder && 'border-b-0 rounded-b-none'"
+    >
       <div class="space-y-3">
         <div
           v-for="line in lines"
@@ -66,5 +69,6 @@ defineProps<{
   totalQty: number;
   total: number;
   deliveryFee?: number;
+  showBottomBorder?: boolean;
 }>();
 </script>

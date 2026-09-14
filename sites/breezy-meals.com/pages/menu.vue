@@ -180,7 +180,9 @@
 
         <template v-else>
           <section
-            v-if="promosVisible && promoCardsWithAppliedState.length"
+            v-if="
+              !isCatering && promosVisible && promoCardsWithAppliedState.length
+            "
             role="switch"
             tabindex="0"
             :aria-checked="showFullMenu"
@@ -219,6 +221,7 @@
                collapses everything. The badge keeps the cart count even while
                the section is closed, so the user never loses track of their order. -->
             <OrganismsMenuCategoryChips
+              v-if="!isCatering"
               :groups="visibleMenuGroups"
               :all-open="allGroupsOpen"
               :is-group-open="isGroupOpen"
@@ -377,12 +380,20 @@ const { getMemberByCode } = useMembers();
 const pb = usePocketBase();
 const isLoggedIn = ref(pb.authStore.isValid);
 const staffMode = computed(() => props.staffMode || isLoggedIn.value);
+const isCatering = computed(() => props.promoConfig?.variant === "catering");
 const promosVisible = computed(
-  () => props.showPromos || (!staffMode.value && props.useDailyMenu),
+  () =>
+    props.showPromos ||
+    props.promoConfig?.variant === "catering" ||
+    (!staffMode.value && props.useDailyMenu),
 );
 const showFullMenu = ref(false);
 const fullMenuVisible = computed(
-  () => !promosVisible.value || staffMode.value || showFullMenu.value,
+  () =>
+    isCatering.value ||
+    !promosVisible.value ||
+    staffMode.value ||
+    showFullMenu.value,
 );
 const route = useRoute();
 const runtimeConfig = useRuntimeConfig();

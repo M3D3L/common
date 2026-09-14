@@ -1,11 +1,13 @@
 <template>
-  <section class="js-reveal-item border-y border-primary/20 py-5">
+  <section
+    class="js-reveal-item border-t border-primary/20 py-5"
+    :class="showBottomBorder && 'border-b'"
+  >
     <div class="mb-4 flex items-start justify-between gap-4">
       <div class="min-w-0">
-        <Badge class="mb-2 bg-primary/10 text-primary hover:bg-primary/10">
-          Arma tu promoción
-        </Badge>
-        <h2 class="text-xl font-bold text-primary">{{ promo.label }}</h2>
+        <h2 class="break-words text-xl font-bold text-primary">
+          {{ promo.label }}
+        </h2>
         <p class="mt-1 text-xs text-muted-foreground">{{ promo.summary }}</p>
       </div>
       <div class="shrink-0 text-right">
@@ -231,6 +233,7 @@ const props = defineProps<{
   canAddGroupItems: (key: GroupKey) => boolean;
   money: (value: number) => string;
   setQty: (key: GroupKey, name: string, delta: number) => void;
+  showBottomBorder?: boolean;
 }>();
 
 defineEmits<{ close: [] }>();
@@ -274,7 +277,10 @@ function applicationRequirementQty(requirement: BuildableRequirement) {
     const matches =
       requirement.targetType === "group"
         ? item.group === requirement.target
-        : item.name === requirement.target;
+        : (requirement.targets?.length
+            ? requirement.targets
+            : [requirement.target]
+          ).includes(item.name);
     return sum + (matches ? item.qty : 0);
   }, 0);
 }
@@ -368,21 +374,26 @@ function requirementGroupKey(requirement: BuildableRequirement) {
   if (requirement.targetType === "order-unit") return undefined;
   if (requirement.targetType === "group") return requirement.target;
 
+  const targets = requirement.targets?.length
+    ? requirement.targets
+    : [requirement.target];
   return props.menuGroups.find((group) =>
-    props
-      .groupItems(group.key)
-      .some((item) => item.name === requirement.target),
+    props.groupItems(group.key).some((item) => targets.includes(item.name)),
   )?.key;
 }
 
 function itemsForRequirement(requirement: BuildableRequirement) {
-  const groupKey = requirementGroupKey(requirement);
-  if (!groupKey) return [];
+  if (requirement.targetType === "item") {
+    const targets = requirement.targets?.length
+      ? requirement.targets
+      : [requirement.target];
+    return props.menuGroups.flatMap((group) =>
+      props.groupItems(group.key).filter((item) => targets.includes(item.name)),
+    );
+  }
 
-  const items = props.groupItems(groupKey);
-  return requirement.targetType === "item"
-    ? items.filter((item) => item.name === requirement.target)
-    : items;
+  const groupKey = requirementGroupKey(requirement);
+  return groupKey ? props.groupItems(groupKey) : [];
 }
 
 function canAddRequirement(requirement: BuildableRequirement) {
@@ -407,7 +418,9 @@ function setRequirementQty(
   name: string,
   delta: number,
 ) {
-  const groupKey = requirementGroupKey(requirement);
+  const groupKey = props.menuGroups.find((group) =>
+    props.groupItems(group.key).some((item) => item.name === name),
+  )?.key;
   if (!groupKey) return;
 
   props.setQty(groupKey, name, delta);

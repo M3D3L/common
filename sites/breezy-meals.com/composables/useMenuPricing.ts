@@ -24,6 +24,7 @@ export interface PromoProgressRequirement {
   id: string;
   targetType: PricingPromoRequirement["targetType"];
   target: string;
+  targets?: string[];
   label: string;
   labelEs: string;
   labelEn: string;
@@ -79,7 +80,11 @@ function toRuntimePromo(record: Record<string, any>): PricingPromo | null {
       (req.targetType === "group" ||
         req.targetType === "item" ||
         req.targetType === "order-unit") &&
-      typeof req.target === "string" &&
+      (typeof req.target === "string" ||
+        (req.targetType === "item" &&
+          Array.isArray(req.targets) &&
+          req.targets.every((target) => typeof target === "string") &&
+          req.targets.length > 0)) &&
       Number(req.qty) > 0,
   );
 
@@ -92,7 +97,12 @@ function toRuntimePromo(record: Record<string, any>): PricingPromo | null {
     label,
     active,
     priority,
-    match: { requirements },
+    match: {
+      requirements: requirements.map((requirement) => ({
+        ...requirement,
+        target: requirement.target || requirement.targets?.[0] || "",
+      })),
+    },
     pricing: { amount: Number(pricing?.amount || 0) },
     display: { summary: String(display?.summary || "").trim() },
     redemption:
@@ -228,7 +238,9 @@ export function useMenuPricing(params: {
       );
     }
 
-    return requirement.target;
+    return requirement.targets?.length
+      ? requirement.targets.join(" o ")
+      : requirement.target;
   }
 
   function promoRequirementNoun(
@@ -316,9 +328,13 @@ export function useMenuPricing(params: {
       return 0;
     }
 
-    return Math.max(
+    const targets = requirement.targets?.length
+      ? requirement.targets
+      : [requirement.target];
+    return targets.reduce(
+      (sum, target) =>
+        sum + Math.max(0, (cart[target] ?? 0) - taquizaTotalForName(target)),
       0,
-      (cart[requirement.target] ?? 0) - taquizaTotalForName(requirement.target),
     );
   }
 
@@ -336,11 +352,12 @@ export function useMenuPricing(params: {
       }
 
       if (requirement.targetType === "item") {
+        const targets = requirement.targets?.length
+          ? requirement.targets
+          : [requirement.target];
         const found = menuGroups.value
           .flatMap((group) => groupItems(group.key))
-          .find(
-            (item) => item.name === requirement.target && !isOut(item.name),
-          );
+          .find((item) => targets.includes(item.name) && !isOut(item.name));
         return !!found;
       }
 
@@ -370,6 +387,7 @@ export function useMenuPricing(params: {
               id: `${promo.id}-${requirement.targetType}-${requirement.target}`,
               targetType: requirement.targetType,
               target: requirement.target,
+              targets: requirement.targets,
               label: promoRequirementLabel(requirement),
               labelEs: promoRequirementNoun(requirement, required, "es"),
               labelEn: promoRequirementNoun(requirement, required, "en"),

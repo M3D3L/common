@@ -163,3 +163,58 @@ test("an explicitly selected promo applies even when a la carte is cheaper", () 
   assert.equal(selected.lines[0]?.kind, "promo");
   assert.equal(selected.lines[0]?.code, saladPromo.id);
 });
+
+test("a promo requirement can accept one item from multiple named choices", () => {
+  const cateringBundle: PricingConfig["promos"][number] = {
+    id: "catering-main-choice",
+    label: "Catering combo",
+    match: {
+      requirements: [
+        {
+          targetType: "item",
+          target: "Sushi en rosca",
+          targets: [
+            "Sushi en rosca",
+            "Lasaña de Calabaza",
+            "Soufflé de tamal de elote",
+          ],
+          qty: 1,
+        },
+        {
+          targetType: "item",
+          target: "Charola Antojitos (4-6 personas)",
+          qty: 1,
+        },
+        {
+          targetType: "item",
+          target: "Jarra de Agua Fresca (3 Litros)",
+          qty: 1,
+        },
+      ],
+    },
+    pricing: { amount: 1530 },
+  };
+
+  const pricing = priceMenuOrder({
+    items: [
+      { name: "Lasaña de Calabaza", group: "catering", qty: 1, unitPrice: 950 },
+      {
+        name: "Charola Antojitos (4-6 personas)",
+        group: "catering",
+        qty: 1,
+        unitPrice: 550,
+      },
+      {
+        name: "Jarra de Agua Fresca (3 Litros)",
+        group: "catering",
+        qty: 1,
+        unitPrice: 130,
+      },
+    ],
+    config: { promos: [cateringBundle] },
+  });
+
+  assert.equal(pricing.total, 1530);
+  assert.equal(pricing.lines[0]?.kind, "promo");
+  assert.match(pricing.lines[0]?.detail ?? "", /Lasaña de Calabaza/);
+});

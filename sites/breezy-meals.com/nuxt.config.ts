@@ -229,7 +229,7 @@ export default defineNuxtConfig({
         code: "meal-pack-5",
         label: "Paquete de 5 comidas",
         credits: 5,
-        price: 520,
+        price: 549,
         currency: "MXN",
         bank: {
           bankName: "Banorte",

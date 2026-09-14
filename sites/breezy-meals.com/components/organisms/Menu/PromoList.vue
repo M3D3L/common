@@ -51,7 +51,9 @@
           <BadgePercent class="h-4 w-4" />
         </span>
         <span class="min-w-0 flex-1">
-          <span class="block font-bold leading-snug text-foreground">
+          <span
+            class="block break-words font-bold leading-snug text-foreground"
+          >
             {{ promo.label }}
           </span>
           <span class="mt-1 block text-lg font-bold tabular-nums text-primary">

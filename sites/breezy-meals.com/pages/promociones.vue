@@ -529,6 +529,7 @@ const { fetchCollection, createItem, updateItem, deleteItem } =
 type PromoRequirement = {
   targetType: "group" | "item" | "order-unit";
   target: string;
+  targets?: string[];
   qty: number;
 };
 
@@ -560,6 +561,7 @@ type PromoForm = {
 type RequirementRow = {
   targetType: PromoRequirement["targetType"];
   target: string;
+  targets?: string[];
   qty: number;
 };
 
@@ -723,19 +725,28 @@ const parseRequirements = (rawText: string): PromoRequirement[] => {
   return parsed.map((entry, index) => {
     const targetType = String(entry?.targetType || "");
     const target = String(entry?.target || "");
+    const targets = Array.isArray(entry?.targets)
+      ? entry.targets.filter((value) => typeof value === "string" && value)
+      : undefined;
     const qty = Number(entry?.qty || 0);
     const validType =
       targetType === "group" ||
       targetType === "item" ||
       targetType === "order-unit";
 
-    if (!validType || !target || !Number.isFinite(qty) || qty <= 0) {
+    if (
+      !validType ||
+      (!target && !(targetType === "item" && targets?.length)) ||
+      !Number.isFinite(qty) ||
+      qty <= 0
+    ) {
       throw new Error(`Invalid requirement at index ${index}.`);
     }
 
     return {
       targetType,
-      target,
+      target: target || targets?.[0] || "",
+      ...(targets?.length ? { targets } : {}),
       qty,
     } as PromoRequirement;
   });
@@ -780,6 +791,7 @@ const syncRowsFromJson = () => {
       ? parsed.map((req) => ({
           targetType: req.targetType,
           target: req.target,
+          targets: req.targets,
           qty: req.qty,
         }))
       : [createBlankRequirement()];
@@ -793,6 +805,7 @@ const syncJsonFromRows = () => {
     .map((row) => ({
       targetType: row.targetType,
       target: String(row.target || "").trim(),
+      ...(row.targets?.length ? { targets: row.targets } : {}),
       qty: Math.max(1, Number(row.qty || 1)),
     }))
     .filter((row) => row.target);

@@ -16,6 +16,7 @@ export interface PricingOrderUnitInput {
 export interface PricingPromoRequirement {
   targetType: "group" | "item" | "order-unit";
   target: string;
+  targets?: string[];
   qty: number;
 }
 
@@ -162,7 +163,10 @@ function matchesRequirement(
   }
 
   if (requirement.targetType === "item") {
-    return unit.kind === "item" && unit.itemName === requirement.target;
+    const targets = requirement.targets?.length
+      ? requirement.targets
+      : [requirement.target];
+    return unit.kind === "item" && targets.includes(unit.itemName ?? "");
   }
 
   return (
