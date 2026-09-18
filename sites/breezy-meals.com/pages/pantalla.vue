@@ -23,9 +23,9 @@
       <WifiOff class="h-12 w-12 text-primary" />
       <h2>El menú volverá en un momento</h2>
       <p>No pudimos actualizar la pantalla. Reintentaremos automáticamente.</p>
-      <button type="button" class="retry-button" @click="load">
+      <Button type="button" class="retry-button" @click="load">
         Reintentar
-      </button>
+      </Button>
     </main>
 
     <main v-else class="display-content">
@@ -34,7 +34,9 @@
           <div class="title-brand">
             <img :src="logoSrc" :alt="brandName" />
             <div class="min-w-0">
-              <p class="display-eyebrow">San Carlos, Sonora</p>
+              <Badge variant="secondary" class="display-eyebrow">
+                San Carlos, Sonora
+              </Badge>
               <h1 class="display-brand">{{ brandName }}</h1>
             </div>
           </div>
@@ -65,9 +67,13 @@
                 :class="{ 'sold-out-item': isOut(item.name) }"
               >
                 <span class="item-name">{{ item.name }}</span>
-                <span v-if="isOut(item.name)" class="sold-out-badge">
+                <Badge
+                  v-if="isOut(item.name)"
+                  variant="destructive"
+                  class="sold-out-badge"
+                >
                   Agotado
-                </span>
+                </Badge>
                 <span class="item-rule" aria-hidden="true" />
                 <span v-if="item.price > 0" class="item-price">
                   {{ money(item.price) }}
@@ -82,12 +88,13 @@
       <aside class="spotlight">
         <div class="spotlight-heading">
           <span>Recomendación</span>
-          <span class="live-dot">Hoy</span>
+          <Badge variant="secondary" class="live-dot">Hoy</Badge>
         </div>
         <Transition name="feature" mode="out-in">
-          <article
+          <Card
             v-if="featuredItem"
             :key="featuredItem.key"
+            styles=""
             class="feature-slide"
           >
             <img
@@ -102,43 +109,54 @@
               :style="watermarkStyle"
             />
             <div class="feature-shade" />
-            <div class="feature-copy">
+            <CardHeader class="feature-copy">
               <p class="feature-kicker">{{ featuredItem.category }}</p>
-              <h2>{{ featuredItem.name }}</h2>
-              <p v-if="featuredItem.price > 0" class="feature-price">
+              <CardTitle class="feature-title">
+                {{ featuredItem.name }}
+              </CardTitle>
+              <CardDescription
+                v-if="featuredItem.price > 0"
+                class="feature-price"
+              >
                 {{ money(featuredItem.price) }}
-              </p>
-            </div>
+              </CardDescription>
+            </CardHeader>
             <div class="feature-progress" aria-hidden="true">
               <span :key="featuredItem.key" />
             </div>
-          </article>
+          </Card>
         </Transition>
 
-        <section class="catering-list">
-          <div class="flex items-end justify-between gap-3">
+        <Card styles="" class="catering-list">
+          <CardHeader class="flex-row items-end justify-between gap-3 p-0">
             <div>
               <p class="section-kicker">Para tu evento</p>
-              <h2>Catering</h2>
+              <CardTitle class="catering-title">Catering</CardTitle>
             </div>
-            <span>Por encargo</span>
-          </div>
-          <ul>
-            <li
-              v-for="item in cateringItems"
-              :key="item.name"
-              :class="{ 'sold-out-item': isOut(item.name) }"
-            >
-              <span>
-                {{ item.name }}
-                <em v-if="isOut(item.name)" class="sold-out-label">
-                  Agotado
-                </em>
-              </span>
-              <strong>{{ money(item.price) }}</strong>
-            </li>
-          </ul>
-        </section>
+            <Badge variant="outline" class="order-badge">Por encargo</Badge>
+          </CardHeader>
+          <CardContent class="p-0">
+            <ul>
+              <li
+                v-for="item in cateringItems"
+                :key="item.name"
+                :class="{ 'sold-out-item': isOut(item.name) }"
+              >
+                <span>
+                  {{ item.name }}
+                  <Badge
+                    v-if="isOut(item.name)"
+                    variant="destructive"
+                    class="sold-out-label"
+                  >
+                    Agotado
+                  </Badge>
+                </span>
+                <strong>{{ money(item.price) }}</strong>
+              </li>
+            </ul>
+          </CardContent>
+        </Card>
       </aside>
     </main>
 
@@ -166,6 +184,15 @@
 
 <script setup lang="ts">
 import { LoaderCircle, MessageCircle, WifiOff } from "lucide-vue-next";
+import { Badge } from "@common/components/ui/badge";
+import { Button } from "@common/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@common/components/ui/card";
 import { todayISO, type GroupKey, type MenuItem } from "~/utils/comandas";
 import { useMenuData, type MenuRecordFull } from "~/composables/useMenuData";
 
@@ -286,9 +313,9 @@ const money = (value: number) =>
     maximumFractionDigits: 0,
   }).format(value);
 
-let clockTimer: ReturnType<typeof setInterval> | undefined;
-let featureTimer: ReturnType<typeof setInterval> | undefined;
-let refreshTimer: ReturnType<typeof setInterval> | undefined;
+let clockTimer: number | undefined;
+let featureTimer: number | undefined;
+let refreshTimer: number | undefined;
 
 onMounted(() => {
   void load();
@@ -415,7 +442,7 @@ onBeforeUnmount(() => {
   text-transform: uppercase;
 }
 .section-heading h2,
-.catering-list h2 {
+.catering-title {
   font-family: "Alfa Slab One", serif;
   font-size: 2.75rem;
   line-height: 1.05;
@@ -578,7 +605,7 @@ onBeforeUnmount(() => {
   color: hsl(151 75% 66%);
   font-size: 0.78rem;
 }
-.feature-copy h2 {
+.feature-title {
   margin-top: 0.35rem;
   max-width: 13ch;
   font-size: 2.35rem;
@@ -611,7 +638,7 @@ onBeforeUnmount(() => {
   background: var(--display-paper);
   color: var(--display-ink);
 }
-.catering-list > div > span {
+.order-badge {
   font-size: 0.85rem;
   color: hsl(218 12% 35%);
 }
