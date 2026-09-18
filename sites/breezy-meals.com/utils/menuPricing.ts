@@ -78,11 +78,32 @@ export interface PricingPromoApplication {
   }>;
 }
 
+export function summarizePromoAllocations(lines: PricingLine[]) {
+  const items: Record<string, number> = {};
+  const groups: Record<string, number> = {};
+  const orderUnits: Record<string, number> = {};
+
+  lines.forEach((line) => {
+    line.promoApplications?.forEach((application) => {
+      application.items.forEach((item) => {
+        items[item.name] = (items[item.name] ?? 0) + item.qty;
+        groups[item.group] = (groups[item.group] ?? 0) + item.qty;
+      });
+      application.orderUnits.forEach((unit) => {
+        orderUnits[unit.code] = (orderUnits[unit.code] ?? 0) + unit.qty;
+      });
+    });
+  });
+
+  return { items, groups, orderUnits };
+}
+
 interface PriceOrderArgs {
   items: PricingItemInput[];
   orderUnits?: PricingOrderUnitInput[];
   config: PricingConfig;
   preferredPromoId?: string | null;
+  preferredPromoIds?: string[];
 }
 
 interface AvailableUnit {
@@ -401,6 +422,7 @@ export function priceMenuOrder({
   orderUnits = [],
   config,
   preferredPromoId,
+  preferredPromoIds = [],
 }: PriceOrderArgs) {
   const units = toAvailableUnits(items, orderUnits);
 
@@ -416,14 +438,22 @@ export function priceMenuOrder({
   const memo = new Map<string, SolveResult>();
   let consumed = units.map(() => false);
   const preferredLines: PricingLine[] = [];
-  const preferredPromo = promos.find((promo) => promo.id === preferredPromoId);
+  const orderedPreferredIds = Array.from(
+    new Set([
+      ...preferredPromoIds,
+      ...(preferredPromoId ? [preferredPromoId] : []),
+    ]),
+  );
 
-  if (preferredPromo) {
-    let application = applyPromoOnce(units, consumed, preferredPromo);
-    while (application) {
-      preferredLines.push(application.line);
-      consumed = application.consumed;
-      application = applyPromoOnce(units, consumed, preferredPromo);
+  for (const preferredId of orderedPreferredIds) {
+    const preferredPromo = promos.find((promo) => promo.id === preferredId);
+    if (preferredPromo) {
+      let application = applyPromoOnce(units, consumed, preferredPromo);
+      while (application) {
+        preferredLines.push(application.line);
+        consumed = application.consumed;
+        application = applyPromoOnce(units, consumed, preferredPromo);
+      }
     }
   }
 

@@ -104,7 +104,12 @@
             <TableRow v-for="promo in promos" :key="promo.id">
               <TableCell>
                 <div class="space-y-1">
-                  <p class="font-semibold leading-tight">{{ promo.label }}</p>
+                  <p
+                    class="line-clamp-2 font-semibold leading-tight"
+                    :title="promo.label"
+                  >
+                    {{ promo.label }}
+                  </p>
                   <p class="line-clamp-1 text-xs text-muted-foreground">
                     {{ promo.summary || "No summary" }}
                   </p>

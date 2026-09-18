@@ -60,7 +60,10 @@
                 Promoción
               </p>
               <div class="mt-1 flex flex-wrap items-center gap-2">
-                <h2 class="text-lg font-semibold leading-tight sm:text-xl">
+                <h2
+                  class="line-clamp-2 text-lg font-semibold leading-tight sm:text-xl"
+                  :title="promo.label"
+                >
                   {{ promo.label }}
                 </h2>
                 <Badge

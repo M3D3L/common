@@ -2,6 +2,7 @@
   <div
     class="relative min-h-screen overflow-x-clip bg-gradient-to-b from-background via-background to-muted/20 text-foreground font-body"
   >
+    <!-- Gradiant Block -->
     <div class="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
       <div
         class="absolute -top-20 left-1/2 h-64 w-64 -translate-x-1/2 rounded-full bg-primary/15 blur-3xl"
@@ -160,6 +161,8 @@
           <OrganismsMenuPromoBuilder
             :promo="activePromo"
             :cart="cart"
+            :allocated-item-qty="promoAllocations.items"
+            :allocated-order-unit-qty="promoAllocations.orderUnits"
             :menu-groups="menuGroups"
             :group-items="groupItems"
             :taquiza-group="taquizaGroup"
@@ -178,93 +181,95 @@
           />
         </div>
 
-        <template v-else>
-          <section
-            v-if="
-              !isCatering && promosVisible && promoCardsWithAppliedState.length
-            "
-            role="switch"
-            tabindex="0"
-            :aria-checked="showFullMenu"
-            aria-label="Ver menú completo"
-            class="js-reveal-item group flex cursor-pointer items-center justify-between gap-4 rounded-lg border border-emerald-950/20 bg-emerald-800 p-4 text-white shadow-md transition-colors hover:bg-emerald-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 focus-visible:ring-offset-2"
-            @click="showFullMenu = !showFullMenu"
-            @keydown.enter.space.prevent="showFullMenu = !showFullMenu"
-          >
-            <div class="flex min-w-0 items-center gap-3">
-              <span
-                class="flex size-10 shrink-0 items-center justify-center rounded-md bg-white/15 transition-colors group-hover:bg-white/20"
-                aria-hidden="true"
-              >
-                <Utensils :size="20" />
-              </span>
-              <div class="min-w-0">
-                <span class="block text-base font-extrabold">
-                  Ver menú completo
-                </span>
-                <span class="mt-0.5 block text-xs text-emerald-50/85">
-                  Explora todos los platillos y pide a la carta.
-                </span>
-              </div>
-            </div>
-            <Switch
-              :model-value="showFullMenu"
-              tabindex="-1"
+        <section
+          v-if="
+            !isCatering && promosVisible && promoCardsWithAppliedState.length
+          "
+          role="switch"
+          tabindex="0"
+          :aria-checked="showFullMenu"
+          aria-label="Ver menú completo"
+          class="js-reveal-item group flex cursor-pointer items-center justify-between gap-4 rounded-lg border border-emerald-950/20 bg-emerald-800 p-4 text-white shadow-md transition-colors hover:bg-emerald-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 focus-visible:ring-offset-2"
+          @click="showFullMenu = !showFullMenu"
+          @keydown.enter.space.prevent="showFullMenu = !showFullMenu"
+        >
+          <div class="flex min-w-0 items-center gap-3">
+            <span
+              class="flex size-10 shrink-0 items-center justify-center rounded-md bg-white/15 transition-colors group-hover:bg-white/20"
               aria-hidden="true"
-              class="pointer-events-none shrink-0 border-white/50 data-[state=checked]:bg-white data-[state=unchecked]:bg-emerald-950/40 [&>span]:data-[state=checked]:bg-emerald-800"
-            />
-          </section>
+            >
+              <Utensils :size="20" />
+            </span>
+            <div class="min-w-0">
+              <span class="block text-base font-extrabold">
+                Ver menú completo
+              </span>
+              <span class="mt-0.5 block text-xs text-emerald-50/85">
+                {{
+                  activePromo
+                    ? "Agrega postres, bebidas u otros extras a tu promoción."
+                    : "Explora todos los platillos y pide a la carta."
+                }}
+              </span>
+            </div>
+          </div>
+          <Switch
+            :model-value="showFullMenu"
+            tabindex="-1"
+            aria-hidden="true"
+            class="pointer-events-none shrink-0 border-white/50 data-[state=checked]:bg-white data-[state=unchecked]:bg-emerald-950/40 [&>span]:data-[state=checked]:bg-emerald-800"
+          />
+        </section>
 
-          <template v-if="fullMenuVisible">
-            <!-- ===== Category chips: filter at a glance =====
+        <template v-if="fullMenuVisible">
+          <!-- ===== Category chips: filter at a glance =====
                Each chip opens its section and scrolls to it. "All" expands or
                collapses everything. The badge keeps the cart count even while
                the section is closed, so the user never loses track of their order. -->
-            <OrganismsMenuCategoryChips
-              v-if="!isCatering"
-              :groups="visibleMenuGroups"
-              :all-open="allGroupsOpen"
-              :is-group-open="isGroupOpen"
-              :group-cart-count="groupCartCount"
-              @toggle-all="toggleAllGroups"
-              @focus-group="focusGroup"
-            />
+          <OrganismsMenuCategoryChips
+            v-if="!isCatering"
+            :groups="visibleMenuGroups"
+            :all-open="allGroupsOpen"
+            :is-group-open="isGroupOpen"
+            :group-cart-count="groupCartCount"
+            @toggle-all="toggleAllGroups"
+            @focus-group="focusGroup"
+          />
 
-            <section
-              v-for="group in menuGroups"
-              v-show="showGroupSection(group.key)"
-              :key="group.key"
-              :ref="(el) => setSectionRef(group.key, el)"
-              class="js-reveal-section scroll-mt-20 rounded-2xl border border-border/70 bg-card/70 p-3 shadow-sm backdrop-blur"
-            >
-              <OrganismsMenuGroupSection
-                :group="group"
-                :is-open="isGroupOpen(group.key)"
-                :items="groupItems(group.key)"
-                :cart-count="groupCartCount(group.key)"
-                :is-taquiza="!!(taquizaGroup && group.key === taquizaGroup.key)"
-                :taquiza-kinds="taquizaKinds"
-                :taquiza-cap="TAQUIZA_CAP"
-                :taquiza-orders="taquizaOrders"
-                :order-fill-total="orderFillTotal"
-                :can-add-to-order="canAddToOrder"
-                :set-order-fill="setOrderFill"
-                :add-taquiza-order="addTaquizaOrder"
-                :remove-taquiza-order="removeTaquizaOrder"
-                :cart="cart"
-                :is-out="isOut"
-                :can-add-group-items="canAddItem(group.key)"
-                :is-locked="isGroupLocked(group.key)"
-                :lock-reason="lockReason(group.key)"
-                :staff-mode="staffMode"
-                :is-logged-in="isLoggedIn"
-                :money="money"
-                :set-qty="(name, delta) => setQty(group.key, name, delta)"
-                :toggle-out="toggleOut"
-                @toggle="toggleGroup(group.key)"
-              />
-            </section>
-          </template>
+          <section
+            v-for="group in menuGroups"
+            v-show="showGroupSection(group.key)"
+            :key="group.key"
+            :ref="(el) => setSectionRef(group.key, el)"
+            class="js-reveal-section scroll-mt-20 rounded-2xl border border-border/70 bg-card/70 p-3 shadow-sm backdrop-blur"
+          >
+            <OrganismsMenuGroupSection
+              :group="group"
+              :is-open="isGroupOpen(group.key)"
+              :items="groupItems(group.key)"
+              :cart-count="groupCartCount(group.key)"
+              :is-taquiza="!!(taquizaGroup && group.key === taquizaGroup.key)"
+              :taquiza-kinds="taquizaKinds"
+              :taquiza-cap="TAQUIZA_CAP"
+              :taquiza-orders="taquizaOrders"
+              :order-fill-total="orderFillTotal"
+              :can-add-to-order="canAddToOrder"
+              :set-order-fill="setOrderFill"
+              :add-taquiza-order="addTaquizaOrder"
+              :remove-taquiza-order="removeTaquizaOrder"
+              :cart="cart"
+              :is-out="isOut"
+              :can-add-group-items="canAddItem(group.key)"
+              :is-locked="isGroupLocked(group.key)"
+              :lock-reason="lockReason(group.key)"
+              :staff-mode="staffMode"
+              :is-logged-in="isLoggedIn"
+              :money="money"
+              :set-qty="(name, delta) => setQty(group.key, name, delta)"
+              :toggle-out="toggleOut"
+              @toggle="toggleGroup(group.key)"
+            />
+          </section>
         </template>
 
         <OrganismsMenuOrderSummary
@@ -690,12 +695,16 @@ function promoIdFromQuery(value: unknown): string | null {
   return typeof value === "string" && value.trim() ? value.trim() : null;
 }
 
-const activePromoId = ref<string | null>(promoIdFromQuery(route.query.promo));
+const initialPromoId = promoIdFromQuery(route.query.promo);
+const activePromoId = ref<string | null>(initialPromoId);
+const preferredPromoIds = ref<string[]>(initialPromoId ? [initialPromoId] : []);
 
 watch(
   () => route.query.promo,
   (promoId) => {
-    activePromoId.value = promoIdFromQuery(promoId);
+    const nextPromoId = promoIdFromQuery(promoId);
+    activePromoId.value = nextPromoId;
+    preferredPromoIds.value = nextPromoId ? [nextPromoId] : [];
   },
 );
 
@@ -706,6 +715,7 @@ const {
   loadRuntimePromos,
   pricingSummary,
   orderSummaryLines,
+  promoAllocations,
   promoCardsWithAppliedState,
   promoStatusBanner,
 } = useMenuPricing({
@@ -723,6 +733,7 @@ const {
   useDailyMenu: () => props.useDailyMenu,
   showPromoStatus: () => promosVisible.value,
   activePromoId: () => activePromoId.value,
+  preferredPromoIds: () => preferredPromoIds.value,
 });
 
 const orderTotal = computed(
@@ -737,10 +748,22 @@ const activePromo = computed(() =>
 const promoBuilderEl = ref<HTMLElement | null>(null);
 
 async function selectPromo(promoId: string) {
+  const appliedPromoIds = orderSummaryLines.value
+    .filter((line) => line.kind === "promo")
+    .map((line) => line.code);
+  preferredPromoIds.value = Array.from(
+    new Set([...preferredPromoIds.value, ...appliedPromoIds, promoId]),
+  );
   activePromoId.value = promoId;
   await nextTick();
   promoBuilderEl.value?.scrollIntoView({ behavior: "smooth", block: "start" });
 }
+
+watch(itemCount, (count) => {
+  if (count === 0) {
+    preferredPromoIds.value = activePromoId.value ? [activePromoId.value] : [];
+  }
+});
 
 const totalQty = computed(() =>
   cartItems.value.reduce((sum, it) => sum + it.qty, 0),

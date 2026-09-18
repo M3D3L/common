@@ -4,6 +4,7 @@
     <OrganismsBreezyHeader
       :logoSrc
       :links
+      :secondary-links="clientLinks"
       show-auth
       show-menu-broadcast
       @send-menu="sendTodayMenu"
@@ -18,7 +19,7 @@ type NavLink = { to: string; label: string };
 const runtimeConfig = useRuntimeConfig();
 const business = (runtimeConfig.public?.business ?? {}) as unknown as {
   logoUrl?: string;
-  nav?: { staffLinks?: NavLink[] };
+  nav?: { staffLinks?: NavLink[]; publicLinks?: Array<Partial<NavLink>> };
 };
 
 const logoSrc = business.logoUrl || "";
@@ -32,7 +33,6 @@ const links: NavLink[] = business.nav?.staffLinks?.length
       { to: "/listas", label: "Listas" },
       { to: "/socios", label: "Miembros" },
       { to: "/redenciones", label: "Redenciones" },
-      { to: "/menu", label: "Menú" },
       { to: "/comandas", label: "Comandas" },
       { to: "/promociones", label: "Promociones" },
       { to: "/platillos", label: "Platillos" },
@@ -42,6 +42,21 @@ const links: NavLink[] = business.nav?.staffLinks?.length
       { to: "/semana/calendario", label: "Calendario" },
       { to: "/etiquetas", label: "Etiquetas" },
     ];
+
+const fallbackClientLinks: NavLink[] = [
+  { to: "/menu", label: "Menú" },
+  { to: "/menu-semanal", label: "Calendario" },
+  { to: "/promos", label: "Promos" },
+  { to: "/membresia", label: "Membresía" },
+  { to: "/tienda", label: "Tienda" },
+  { to: "/catering", label: "Catering" },
+];
+
+const clientLinks: NavLink[] = (business.nav?.publicLinks ?? [])
+  .filter((link): link is NavLink => !!link?.to && !!link?.label)
+  .map((link) => ({ to: link.to, label: link.label }));
+
+if (!clientLinks.length) clientLinks.push(...fallbackClientLinks);
 </script>
 
 <style></style>

@@ -14,14 +14,6 @@
         <p class="text-xl font-bold tabular-nums text-primary">
           {{ money(promo.price) }}
         </p>
-        <Button
-          variant="ghost"
-          size="sm"
-          class="mt-1 px-2"
-          @click="$emit('close')"
-        >
-          Ver menú completo
-        </Button>
       </div>
     </div>
 
@@ -219,6 +211,8 @@ type BuildableRequirement = PromoProgressRequirement;
 const props = defineProps<{
   promo: PromoProgressCard;
   cart: Record<string, number>;
+  allocatedItemQty: Record<string, number>;
+  allocatedOrderUnitQty: Record<string, number>;
   menuGroups: { key: GroupKey }[];
   groupItems: (key: GroupKey) => ActiveMenuItem[];
   taquizaGroup?: { key: GroupKey };
@@ -250,7 +244,7 @@ const activeMealLabel = computed(() =>
       : "Tu comida",
 );
 
-function applicationRequirementQty(requirement: BuildableRequirement) {
+function applicationRequirementQty(requirement: BuildableRequirement): number {
   const application = activeApplication.value;
   if (requirement.targetType === "order-unit") {
     if (application) {
@@ -452,16 +446,10 @@ function itemQty(name: string) {
 }
 
 function unappliedItemQty(name: string) {
-  const appliedQty = props.promo.applications.reduce(
-    (sum, application) =>
-      sum +
-      application.items
-        .filter((item) => item.name === name)
-        .reduce((itemSum, item) => itemSum + item.qty, 0),
+  return Math.max(
     0,
+    (props.cart[name] ?? 0) - (props.allocatedItemQty[name] ?? 0),
   );
-
-  return Math.max(0, (props.cart[name] ?? 0) - appliedQty);
 }
 
 const taquizaItems = computed(() =>
@@ -495,15 +483,17 @@ function appliedOrderUnitQty(code: string, applicationLimit?: number) {
   );
 }
 
-function ordersForRequirement(requirement: BuildableRequirement) {
+function ordersForRequirement(
+  requirement: BuildableRequirement,
+): TaquizaOrder[] {
   const kind = requirementTaquizaKind(requirement);
   if (!kind) return [];
 
   const orders = props.taquizaOrders.filter((order) => order.kind === kind);
   const offset = activeApplication.value
     ? appliedOrderUnitQty(requirement.target, activeMealIndex.value)
-    : appliedOrderUnitQty(requirement.target);
-  const count = activeApplication.value
+    : (props.allocatedOrderUnitQty[requirement.target] ?? 0);
+  const count: number = activeApplication.value
     ? applicationRequirementQty(requirement)
     : requirement.required;
   return orders.slice(offset, offset + count);

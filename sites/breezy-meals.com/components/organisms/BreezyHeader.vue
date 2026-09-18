@@ -89,6 +89,29 @@
                 <NuxtLink :to="l.to">{{ l.label }}</NuxtLink>
               </Button>
 
+              <div
+                v-if="secondaryLinks.length"
+                class="mt-3 border-t border-border pt-4"
+              >
+                <p
+                  class="mb-2 px-3 text-[11px] font-bold uppercase tracking-widest text-muted-foreground"
+                >
+                  {{ secondaryTitle }}
+                </p>
+                <div class="flex flex-col gap-1">
+                  <Button
+                    v-for="l in secondaryLinks"
+                    :key="l.to"
+                    as-child
+                    class="h-10 justify-start text-sm font-medium transition-colors"
+                    :variant="isActive(l.to) ? 'secondary' : 'ghost'"
+                    @click="open = false"
+                  >
+                    <NuxtLink :to="l.to">{{ l.label }}</NuxtLink>
+                  </Button>
+                </div>
+              </div>
+
               <Button
                 v-if="showMenuBroadcast && isLoggedIn"
                 variant="outline"
@@ -138,11 +161,15 @@ withDefaults(
   defineProps<{
     logoSrc: string;
     links?: NavLink[];
+    secondaryLinks?: NavLink[];
+    secondaryTitle?: string;
     showAuth?: boolean;
     showMenuBroadcast?: boolean;
   }>(),
   {
     links: () => [],
+    secondaryLinks: () => [],
+    secondaryTitle: "Vista del cliente",
     showAuth: false,
     showMenuBroadcast: false,
   },

@@ -1,7 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { priceMenuOrder, type PricingConfig } from "../utils/menuPricing.ts";
+import {
+  priceMenuOrder,
+  summarizePromoAllocations,
+  type PricingConfig,
+} from "../utils/menuPricing.ts";
 
 const item = {
   name: "Dulce",
@@ -162,6 +166,136 @@ test("an explicitly selected promo applies even when a la carte is cheaper", () 
   assert.equal(selected.total, 120);
   assert.equal(selected.lines[0]?.kind, "promo");
   assert.equal(selected.lines[0]?.code, saladPromo.id);
+});
+
+test("different promotions cannot share one beverage", () => {
+  const promos: PricingConfig["promos"] = [
+    {
+      id: "meal",
+      label: "Comida + bebida",
+      match: {
+        requirements: [
+          { targetType: "group", target: "guisos", qty: 1 },
+          { targetType: "group", target: "bebidas", qty: 1 },
+        ],
+      },
+      pricing: { amount: 100 },
+    },
+    {
+      id: "sweet",
+      label: "Postre + bebida",
+      match: {
+        requirements: [
+          { targetType: "group", target: "sweets", qty: 1 },
+          { targetType: "group", target: "bebidas", qty: 1 },
+        ],
+      },
+      pricing: { amount: 60 },
+    },
+  ];
+  const baseItems = [
+    { name: "Guiso", group: "guisos", qty: 1, unitPrice: 90 },
+    { name: "Dulce", group: "sweets", qty: 1, unitPrice: 40 },
+  ];
+
+  const oneDrink = priceMenuOrder({
+    items: [
+      ...baseItems,
+      { name: "Agua", group: "bebidas", qty: 1, unitPrice: 20 },
+    ],
+    config: { promos },
+    preferredPromoId: "meal",
+  });
+  assert.equal(
+    oneDrink.lines.reduce(
+      (sum, line) => sum + (line.promoApplications?.length ?? 0),
+      0,
+    ),
+    1,
+  );
+
+  const twoDrinks = priceMenuOrder({
+    items: [
+      ...baseItems,
+      { name: "Agua", group: "bebidas", qty: 2, unitPrice: 20 },
+    ],
+    config: { promos },
+    preferredPromoId: "meal",
+  });
+  const allocations = summarizePromoAllocations(twoDrinks.lines);
+  assert.equal(allocations.items.Agua, 2);
+  assert.equal(allocations.groups.bebidas, 2);
+  assert.equal(
+    twoDrinks.lines.reduce(
+      (sum, line) => sum + (line.promoApplications?.length ?? 0),
+      0,
+    ),
+    2,
+  );
+});
+
+test("a newly selected promo cannot steal items from completed promos", () => {
+  const promos: PricingConfig["promos"] = [
+    {
+      id: "guiso-completo",
+      label: "Combo Guiso Comida Completa",
+      match: {
+        requirements: [
+          { targetType: "group", target: "guisos", qty: 1 },
+          { targetType: "group", target: "sides", qty: 2 },
+          { targetType: "group", target: "bebidas", qty: 1 },
+        ],
+      },
+      pricing: { amount: 139 },
+    },
+    {
+      id: "burger-combo",
+      label: "Burger combo",
+      match: {
+        requirements: [
+          { targetType: "group", target: "burgers", qty: 1 },
+          { targetType: "group", target: "bebidas", qty: 1 },
+        ],
+      },
+      pricing: { amount: 149 },
+    },
+  ];
+  const items = [
+    { name: "Guiso", group: "guisos", qty: 2, unitPrice: 90 },
+    { name: "Arroz", group: "sides", qty: 4, unitPrice: 20 },
+    { name: "Agua", group: "bebidas", qty: 2, unitPrice: 20 },
+    { name: "Burger", group: "burgers", qty: 1, unitPrice: 120 },
+  ];
+
+  const withoutNewDrink = priceMenuOrder({
+    items,
+    config: { promos },
+    preferredPromoIds: ["guiso-completo", "burger-combo"],
+  });
+  assert.equal(
+    withoutNewDrink.lines.find((line) => line.code === "guiso-completo")?.qty,
+    2,
+  );
+  assert.equal(
+    withoutNewDrink.lines.some((line) => line.code === "burger-combo"),
+    false,
+  );
+
+  const withNewDrink = priceMenuOrder({
+    items: items.map((item) =>
+      item.name === "Agua" ? { ...item, qty: 3 } : item,
+    ),
+    config: { promos },
+    preferredPromoIds: ["guiso-completo", "burger-combo"],
+  });
+  assert.equal(
+    withNewDrink.lines.find((line) => line.code === "guiso-completo")?.qty,
+    2,
+  );
+  assert.equal(
+    withNewDrink.lines.find((line) => line.code === "burger-combo")?.qty,
+    1,
+  );
 });
 
 test("a promo requirement can accept one item from multiple named choices", () => {

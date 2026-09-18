@@ -52,7 +52,8 @@
         </span>
         <span class="min-w-0 flex-1">
           <span
-            class="block break-words font-bold leading-snug text-foreground"
+            class="line-clamp-2 whitespace-normal [overflow-wrap:anywhere] font-bold leading-snug text-foreground"
+            :title="promo.label"
           >
             {{ promo.label }}
           </span>

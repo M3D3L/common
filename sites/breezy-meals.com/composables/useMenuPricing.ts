@@ -3,6 +3,7 @@ import { groupByKey, type GroupKey } from "~/utils/comandas";
 import { menuPricingConfig } from "~/config/menu-pricing";
 import {
   priceMenuOrder,
+  summarizePromoAllocations,
   type PricingConfig,
   type PricingPromo,
   type PricingPromoApplication,
@@ -151,6 +152,7 @@ export function useMenuPricing(params: {
   useDailyMenu: () => boolean;
   showPromoStatus?: () => boolean;
   activePromoId?: () => string | null;
+  preferredPromoIds?: () => string[];
 }) {
   const {
     fetchCollection,
@@ -167,6 +169,7 @@ export function useMenuPricing(params: {
     useDailyMenu,
     showPromoStatus,
     activePromoId,
+    preferredPromoIds,
   } = params;
 
   function money(value: number) {
@@ -474,10 +477,31 @@ export function useMenuPricing(params: {
       orderUnits: taquizaUnits,
       config: effectivePricingConfig.value,
       preferredPromoId: activePromoId?.(),
+      preferredPromoIds: preferredPromoIds?.(),
     });
   });
 
   const orderSummaryLines = computed(() => pricingSummary.value.lines);
+  const promoAllocations = computed(() =>
+    summarizePromoAllocations(orderSummaryLines.value),
+  );
+
+  function allocatedRequirementQty(requirement: PromoProgressRequirement) {
+    if (requirement.targetType === "group") {
+      return promoAllocations.value.groups[requirement.target] ?? 0;
+    }
+    if (requirement.targetType === "order-unit") {
+      return promoAllocations.value.orderUnits[requirement.target] ?? 0;
+    }
+
+    const targets = requirement.targets?.length
+      ? requirement.targets
+      : [requirement.target];
+    return targets.reduce(
+      (sum, target) => sum + (promoAllocations.value.items[target] ?? 0),
+      0,
+    );
+  }
 
   const promoCardsWithAppliedState = computed(() =>
     promoProgressCards.value.map((promo) => {
@@ -488,7 +512,10 @@ export function useMenuPricing(params: {
       const requirements = promo.requirements.map((requirement) => {
         const current = Math.min(
           requirement.required,
-          Math.max(0, requirement.selected - appliedQty * requirement.required),
+          Math.max(
+            0,
+            requirement.selected - allocatedRequirementQty(requirement),
+          ),
         );
         return {
           ...requirement,
@@ -561,6 +588,7 @@ export function useMenuPricing(params: {
     effectivePricingConfig,
     pricingSummary,
     orderSummaryLines,
+    promoAllocations,
     promoProgressCards,
     promoCardsWithAppliedState,
     promoStatusBanner,
