@@ -624,3 +624,12 @@ export function getGroupLines(
     })
     .filter((line): line is { name: string; qty: number } => !!line);
 }
+
+export function getUngroupedOrderLines(o: PlacedOrder, catalog: DayDishes) {
+  const catalogNames = new Set(Object.values(catalog).flat());
+  return Object.entries(o.cart ?? {})
+    .filter(
+      ([name, quantity]) => Number(quantity) > 0 && !catalogNames.has(name),
+    )
+    .map(([name, quantity]) => ({ name, qty: Number(quantity) }));
+}

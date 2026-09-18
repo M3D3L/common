@@ -104,6 +104,7 @@ type StoredOrder = PlacedOrder & {
 
 // Registro `menu` extendido con la rotación semanal y el sello del día.
 type MenuRecordFull = MenuRecord & {
+  catering?: unknown[];
   week_blocks?: WeekBlock[];
   rotation?: string[];
   rotation_anchor?: string;
@@ -593,7 +594,20 @@ function createComandasStore() {
     const storeCatalog = normalizeMenuCatalog(
       r.store as Partial<Record<GroupKey, unknown>>,
     );
-    const combinedCatalog = { ...dishCatalog };
+    const cateringCatalog = normalizeMenuCatalog({
+      catering: rec.catering,
+    });
+    const nonCateringNames = new Set(
+      [...Object.values(dishCatalog), ...Object.values(storeCatalog)]
+        .flat()
+        .map((item) => item.name),
+    );
+    const combinedCatalog = {
+      ...dishCatalog,
+      catering: cateringCatalog.catering.filter(
+        (item) => !nonCateringNames.has(item.name),
+      ),
+    };
     Object.entries(storeCatalog).forEach(([key, items]) => {
       const existing = new Map(
         (combinedCatalog[key] ?? []).map((item) => [item.name, item]),
@@ -607,6 +621,7 @@ function createComandasStore() {
     syncMenuGroupsFromData({
       ...(r.dishes as Record<string, unknown>),
       ...(r.store as Record<string, unknown>),
+      catering: rec.catering,
       ...(r.active as Record<string, unknown>),
     });
     soldOut.value = r.sold_out ?? [];

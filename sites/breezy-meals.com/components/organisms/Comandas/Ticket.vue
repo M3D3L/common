@@ -106,6 +106,26 @@
           </div>
         </div>
       </div>
+
+      <div v-if="ungroupedLines.length">
+        <p
+          class="mb-0.5 text-[10px] font-extrabold uppercase tracking-widest text-muted-foreground/80"
+        >
+          Artículos
+        </p>
+        <div
+          v-for="line in ungroupedLines"
+          :key="line.name"
+          class="flex items-baseline gap-2 text-sm"
+        >
+          <span class="shrink-0 font-bold tabular-nums text-primary"
+            >{{ line.qty }}×</span
+          >
+          <span class="font-semibold text-card-foreground">{{
+            line.name
+          }}</span>
+        </div>
+      </div>
     </div>
 
     <!-- Delivery Date: Using neutral gray/slate for clarity -->
@@ -354,6 +374,7 @@ import {
   modeBadgeClass,
   hasGroupItems,
   getGroupLines,
+  getUngroupedOrderLines,
   type PlacedOrder,
 } from "~/utils/comandas";
 import { requiresPaymentOnReady } from "~/utils/comandasRedemption";
@@ -397,6 +418,9 @@ function money(value: number) {
 
 const ticketGroups = computed(() =>
   groupsFromData(catalog.value as Record<string, unknown>),
+);
+const ungroupedLines = computed(() =>
+  getUngroupedOrderLines(props.order, catalog.value),
 );
 
 const statusLabel = computed(() => {
