@@ -6,9 +6,10 @@ export function useLatestMenuRecord<T>(collection = "menu") {
   const pending = ref(true);
   const loadError = ref(false);
 
-  async function load() {
-    pending.value = true;
-    loadError.value = false;
+  async function load(options: { silent?: boolean } = {}) {
+    const silent = options.silent === true && record.value !== null;
+    if (!silent) pending.value = true;
+    if (!silent) loadError.value = false;
     try {
       const res = await fetchCollection(
         collection,
@@ -31,10 +32,12 @@ export function useLatestMenuRecord<T>(collection = "menu") {
         record.value = legacy;
       }
     } catch {
-      loadError.value = true;
-      record.value = null;
+      if (!silent) {
+        loadError.value = true;
+        record.value = null;
+      }
     } finally {
-      pending.value = false;
+      if (!silent) pending.value = false;
     }
   }
 
