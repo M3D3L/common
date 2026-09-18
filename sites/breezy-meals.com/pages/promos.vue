@@ -137,6 +137,7 @@ function toRuntimePromo(record: Record<string, any>): PricingPromo | null {
     record?.data && typeof record.data === "object" ? record.data : undefined;
   const id = String(record.promoId || data?.id || record.id || "").trim();
   const label = String(record.label || data?.label || "").trim();
+  const emoji = String(record.emoji || data?.emoji || "").trim();
   const priority = Number(record.priority ?? data?.priority ?? 0) || 0;
   const active = Boolean(record.active ?? data?.active ?? true);
   const match = (record.match ?? data?.match) as
@@ -174,6 +175,7 @@ function toRuntimePromo(record: Record<string, any>): PricingPromo | null {
   return {
     id,
     label,
+    emoji: emoji || undefined,
     active,
     priority,
     match: { requirements },

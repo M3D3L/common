@@ -108,7 +108,9 @@
                     class="line-clamp-2 font-semibold leading-tight"
                     :title="promo.label"
                   >
-                    {{ promo.label }}
+                    <span v-if="promo.emoji" aria-hidden="true"
+                      >{{ promo.emoji }}&nbsp;</span
+                    >{{ promo.label }}
                   </p>
                   <p class="line-clamp-1 text-xs text-muted-foreground">
                     {{ promo.summary || "No summary" }}
@@ -226,13 +228,24 @@
         </DialogHeader>
 
         <div class="grid gap-4 py-2">
-          <div class="grid gap-1.5">
-            <Label for="promo-label">Label</Label>
-            <Input
-              id="promo-label"
-              v-model="form.label"
-              placeholder="2 guisados + agua"
-            />
+          <div class="grid gap-4 sm:grid-cols-[minmax(0,1fr)_8rem]">
+            <div class="grid gap-1.5">
+              <Label for="promo-label">Label</Label>
+              <Input
+                id="promo-label"
+                v-model="form.label"
+                placeholder="2 guisados + agua"
+              />
+            </div>
+            <div class="grid gap-1.5">
+              <Label for="promo-emoji">Emoji</Label>
+              <Input
+                id="promo-emoji"
+                v-model="form.emoji"
+                maxlength="16"
+                placeholder="🍲"
+              />
+            </div>
           </div>
 
           <div class="grid gap-1.5">
@@ -541,6 +554,7 @@ type PromoRequirement = {
 type PromoViewModel = {
   id: string;
   label: string;
+  emoji: string;
   summary: string;
   amount: number;
   priority: number;
@@ -555,6 +569,7 @@ type PromoViewModel = {
 
 type PromoForm = {
   label: string;
+  emoji: string;
   summary: string;
   amount: string;
   priority: string;
@@ -582,6 +597,7 @@ const successMessage = ref("");
 
 const form = reactive<PromoForm>({
   label: "",
+  emoji: "",
   summary: "",
   amount: "120",
   priority: "100",
@@ -731,7 +747,10 @@ const parseRequirements = (rawText: string): PromoRequirement[] => {
     const targetType = String(entry?.targetType || "");
     const target = String(entry?.target || "");
     const targets = Array.isArray(entry?.targets)
-      ? entry.targets.filter((value) => typeof value === "string" && value)
+      ? entry.targets.filter(
+          (value: unknown): value is string =>
+            typeof value === "string" && Boolean(value),
+        )
       : undefined;
     const qty = Number(entry?.qty || 0);
     const validType =
@@ -826,6 +845,7 @@ const normalizePromo = (record: RecordModel): PromoViewModel => {
   const label =
     String(raw.label || raw.name || data.label || "").trim() ||
     `Promo ${String(raw.id || "")}`;
+  const emoji = String(raw.emoji || data.emoji || "").trim();
   const summary = String(
     raw.display?.summary ||
       raw.summary ||
@@ -850,6 +870,7 @@ const normalizePromo = (record: RecordModel): PromoViewModel => {
   return {
     id: String(raw.id),
     label,
+    emoji,
     summary,
     amount,
     priority,
@@ -868,6 +889,7 @@ const promoFromConfig = (promo: PricingPromo): PromoViewModel => {
   return {
     id: `config:${promo.id}`,
     label: promo.label,
+    emoji: promo.emoji || "",
     summary: String(promo.display?.summary || "").trim(),
     amount: Number(promo.pricing?.amount || 0),
     priority: Number(promo.priority || 0),
@@ -880,6 +902,7 @@ const promoFromConfig = (promo: PricingPromo): PromoViewModel => {
     raw: {
       id: promo.id,
       label: promo.label,
+      emoji: promo.emoji,
       active: promo.active !== false,
       priority: promo.priority,
       pricing: promo.pricing,
@@ -911,6 +934,7 @@ const buildCanonicalPayload = () => {
   return {
     promoId,
     label: form.label.trim(),
+    emoji: form.emoji.trim(),
     priority,
     active: form.active,
     match: { requirements },
@@ -930,6 +954,7 @@ const buildPayloadCandidates = (sourceKeys?: string[]) => {
   const strict = {
     promoId: canonical.promoId,
     label: canonical.label,
+    emoji: canonical.emoji,
     priority: canonical.priority,
     active: canonical.active,
     match: canonical.match,
@@ -944,6 +969,7 @@ const buildPayloadCandidates = (sourceKeys?: string[]) => {
   [
     "promoId",
     "label",
+    "emoji",
     "priority",
     "active",
     "match",
@@ -959,6 +985,7 @@ const buildPayloadCandidates = (sourceKeys?: string[]) => {
 
 const resetForm = () => {
   form.label = "";
+  form.emoji = "";
   form.summary = "";
   form.amount = "120";
   form.priority = "100";
@@ -985,6 +1012,7 @@ const openEdit = (promo: PromoViewModel) => {
   successMessage.value = "";
 
   form.label = promo.label;
+  form.emoji = promo.emoji;
   form.summary = promo.summary;
   form.amount = String(promo.amount || 0);
   form.priority = String(promo.priority || 0);

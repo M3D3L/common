@@ -48,7 +48,14 @@
         <span
           class="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-primary/10 text-primary"
         >
-          <BadgePercent class="h-4 w-4" />
+          <span
+            v-if="promo.emoji"
+            class="text-xl leading-none"
+            aria-hidden="true"
+          >
+            {{ promo.emoji }}
+          </span>
+          <BadgePercent v-else class="h-4 w-4" />
         </span>
         <span class="min-w-0 flex-1">
           <span

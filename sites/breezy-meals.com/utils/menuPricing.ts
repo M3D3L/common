@@ -23,6 +23,7 @@ export interface PricingPromoRequirement {
 export interface PricingPromo {
   id: string;
   label: string;
+  emoji?: string;
   active?: boolean;
   priority?: number;
   stackable?: boolean;
