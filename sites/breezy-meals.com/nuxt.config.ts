@@ -184,8 +184,8 @@ export default defineNuxtConfig({
           greeting:
             process.env.BUSINESS_MENU_BROADCAST_GREETING ||
             "¡Hola! ¡Buen día! ☀️🌊\nAquí Breezy 🦭 compartiéndote el *Menú del Día* de *Breezy Market* 🌵🌮",
-          priceOne: process.env.BUSINESS_MENU_BROADCAST_PRICE_ONE || "$120 MXN",
-          priceTwo: process.env.BUSINESS_MENU_BROADCAST_PRICE_TWO || "$120 MXN",
+          priceOne: process.env.BUSINESS_MENU_BROADCAST_PRICE_ONE || "$139 MXN",
+          priceTwo: process.env.BUSINESS_MENU_BROADCAST_PRICE_TWO || "$139 MXN",
           cta:
             process.env.BUSINESS_MENU_BROADCAST_CTA ||
             "🛒 *¡HAZ TU PEDIDO AQUÍ!*",

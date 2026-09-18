@@ -81,8 +81,8 @@ export function useWhatsappOrder() {
       business.menuBroadcast?.greeting ||
       `¡Hola! ¡Buen día! ☀️🌊\nAquí Breezy 🦭 compartiéndote el *Menú del Día* de *${business.businessName || "Breezy Market"}* 🌵🌮`,
     price: {
-      one: business.menuBroadcast?.priceOne || "$120 MXN",
-      two: business.menuBroadcast?.priceTwo || "$120 MXN",
+      one: business.menuBroadcast?.priceOne || "$139 MXN",
+      two: business.menuBroadcast?.priceTwo || "$139 MXN",
     },
     cta: business.menuBroadcast?.cta || "🛒 *¡HAZ TU PEDIDO AQUÍ!*",
     orderUrl: business.menuUrl || "https://breezy-meals.com/menu",
