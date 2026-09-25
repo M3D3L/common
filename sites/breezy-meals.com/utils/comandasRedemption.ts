@@ -10,6 +10,13 @@ export interface IdentifiedComanda extends RedeemableComanda {
 
 export type ReadyAction = "redeem" | "payment-required" | "complete-paid";
 
+export function lowBalanceNotice(remaining?: number): string {
+  if (remaining === undefined || remaining < 0 || remaining > 3) return "";
+
+  const meals = remaining === 1 ? "comida" : "comidas";
+  return `⚠️ Te quedan ${remaining} ${meals} en tu membresía. Escríbenos para renovar.`;
+}
+
 export function shouldRedeemOnReady(order: RedeemableComanda): boolean {
   return Boolean(order.memberCode?.trim() && order.redeemMemberMeal);
 }

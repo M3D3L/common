@@ -2,11 +2,28 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  lowBalanceNotice,
   readyAction,
   requiresPaymentOnReady,
   redemptionReasonForOrder,
   shouldRedeemOnReady,
 } from "../utils/comandasRedemption.ts";
+
+test("warns members when three or fewer meals remain", () => {
+  assert.equal(lowBalanceNotice(4), "");
+  assert.equal(
+    lowBalanceNotice(3),
+    "⚠️ Te quedan 3 comidas en tu membresía. Escríbenos para renovar.",
+  );
+  assert.equal(
+    lowBalanceNotice(1),
+    "⚠️ Te quedan 1 comida en tu membresía. Escríbenos para renovar.",
+  );
+  assert.equal(
+    lowBalanceNotice(0),
+    "⚠️ Te quedan 0 comidas en tu membresía. Escríbenos para renovar.",
+  );
+});
 
 test("only an explicitly eligible member comanda redeems when ready", () => {
   assert.equal(shouldRedeemOnReady({ memberCode: "GM4218" }), false);

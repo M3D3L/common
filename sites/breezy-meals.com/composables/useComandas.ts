@@ -38,6 +38,7 @@ import {
 } from "~/composables/useWhatsappOrder";
 import type { RecordModel } from "pocketbase";
 import {
+  lowBalanceNotice,
   readyAction,
   redemptionReasonForOrder,
   shouldRedeemOnReady,
@@ -1262,31 +1263,30 @@ function createComandasStore() {
 
   // Verifica el saldo al marcar la orden lista y descuenta una comida cuando
   // está disponible. La falta de crédito avisa que se cobrará en efectivo.
-  async function redeemMemberCredit(o: StoredOrder): Promise<boolean> {
+  async function redeemMemberCredit(o: StoredOrder): Promise<number | null> {
     const code = o.memberCode;
-    if (!code) return false;
+    if (!code) return null;
     try {
       const member = await members.getMemberByCode(code);
       if (!member) {
         toast(`Código ${code}: socio no encontrado — cobra normal`);
-        return false;
+        return null;
       }
       const ms = await memberships.getActiveMembership(member.id);
       if (!ms || !memberships.isUsable(ms)) {
         toast(`${member.name} no tiene créditos — confirma el cobro`);
-        return false;
+        return null;
       }
 
       const { remaining } = await redemptions.redeem(ms, {
         staffId: user?.id,
         reason: redemptionReasonForOrder(o),
       });
-      toast(`Socio ${member.name}: comida registrada (${remaining} restantes)`);
-      return true;
+      return remaining;
     } catch (e) {
       console.error("socio redeem failed:", e);
       toast("No se pudo redimir; confirma el cobro antes de marcar lista");
-      return false;
+      return null;
     }
   }
 
@@ -1302,6 +1302,7 @@ function createComandasStore() {
     const wa = openBlankTab();
     let memberPhone = "";
     let memberName = "";
+    let remainingMeals: number | undefined;
 
     if (o.memberCode) {
       try {
@@ -1314,11 +1315,12 @@ function createComandasStore() {
     }
 
     if (action === "redeem") {
-      const redeemed = await redeemMemberCredit(o);
-      if (!redeemed && !options.paymentConfirmed) {
+      const remaining = await redeemMemberCredit(o);
+      if (remaining === null && !options.paymentConfirmed) {
         wa?.close();
         return "payment-required";
       }
+      remainingMeals = remaining ?? undefined;
     }
 
     // 1) Primero la BD: conserva el registro y cambia su estado para historial.
@@ -1343,6 +1345,7 @@ function createComandasStore() {
         o.customer,
         memberName,
         o.fulfillDate,
+        remainingMeals,
       );
       const url = waLink(text, memberPhone);
       if (wa) wa.location.href = url;
@@ -1350,7 +1353,12 @@ function createComandasStore() {
     } else {
       wa?.close();
     }
-    toast(`Orden #${o.number} lista`);
+    const balanceNotice = lowBalanceNotice(remainingMeals);
+    toast(
+      balanceNotice
+        ? `Orden #${o.number} lista · ${balanceNotice}`
+        : `Orden #${o.number} lista`,
+    );
     return "completed";
   }
 

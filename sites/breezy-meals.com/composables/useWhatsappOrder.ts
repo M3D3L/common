@@ -1,4 +1,5 @@
 import { groupsFromData, type DayDishes } from "~/utils/comandas";
+import { lowBalanceNotice } from "~/utils/comandasRedemption";
 import { whatsappAppLink } from "~/utils/whatsapp";
 
 export type Cart = Record<string, number>;
@@ -68,9 +69,9 @@ export function useWhatsappOrder() {
     menuBroadcast?: {
       greeting?: string;
       priceOne?: string;
-      priceTwo?: string;
       cta?: string;
       cutoff?: string;
+      businessHours?: string;
       footer?: string;
     };
   };
@@ -82,13 +83,15 @@ export function useWhatsappOrder() {
       `¡Hola! ¡Buen día! ☀️🌊\nAquí Breezy 🦭 compartiéndote el *Menú del Día* de *${business.businessName || "Breezy Market"}* 🌵🌮`,
     price: {
       one: business.menuBroadcast?.priceOne || "$139 MXN",
-      two: business.menuBroadcast?.priceTwo || "$139 MXN",
     },
     cta: business.menuBroadcast?.cta || "🛒 *¡HAZ TU PEDIDO AQUÍ!*",
     orderUrl: business.menuUrl || "https://breezy-meals.com/menu",
     cutoff:
       business.menuBroadcast?.cutoff ||
-      "⏰ _Ordena antes de las 4:00 PM para recibir tu comida calientita._",
+      "⏰ Ordena antes de las 5:00 PM para recibir tu comida calientito",
+    businessHours:
+      business.menuBroadcast?.businessHours ||
+      "🕘 Business hours: 9:00 AM - 7:00 PM",
     footer:
       business.menuBroadcast?.footer ||
       "🌊 ¡Buen provecho desde San Carlos! 🦭",
@@ -228,15 +231,13 @@ export function useWhatsappOrder() {
       "🍽️ 1 guiso + 2 guarniciones + bebida",
       `*${menuBroadcast.price.one}*`,
       "",
-      "🍽️🍽️ 2 guisos + 2 guarniciones + bebida",
-      `*${menuBroadcast.price.two}*`,
-      "",
       "━━━━━━━━━━━━━━━━━━━━",
       "",
       menuBroadcast.cta,
       menuBroadcast.orderUrl,
       "",
       menuBroadcast.cutoff,
+      menuBroadcast.businessHours,
       "",
       menuBroadcast.footer,
     );
@@ -257,12 +258,16 @@ export function useWhatsappOrder() {
     customer?: Customer,
     recipientName?: string,
     fulfillDate?: string,
+    remainingMeals?: number,
   ): string {
     const name = recipientName?.trim();
     const checkEmoji = "\u2705";
     const sealEmoji = "\u{1F9AD}";
     let msg = `${name ? `¡Hola, ${name}!\n` : ""}${checkEmoji} *¡Tu pedido está listo!* ${sealEmoji} (${MODE_LABEL[mode]})`;
     if (fulfillDate) msg += `\n📅 *Fecha:* ${fulfillDate}`;
+
+    const balanceNotice = lowBalanceNotice(remainingMeals);
+    if (balanceNotice) msg += `\n\n${balanceNotice}`;
 
     if (mode === "domicilio" && customer) {
       msg += `\n\n🚀 *DATOS PARA EL REPARTIDOR:*`;

@@ -187,13 +187,15 @@ export default defineNuxtConfig({
             process.env.BUSINESS_MENU_BROADCAST_GREETING ||
             "¡Hola! ¡Buen día! ☀️🌊\nAquí Breezy 🦭 compartiéndote el *Menú del Día* de *Breezy Market* 🌵🌮",
           priceOne: process.env.BUSINESS_MENU_BROADCAST_PRICE_ONE || "$139 MXN",
-          priceTwo: process.env.BUSINESS_MENU_BROADCAST_PRICE_TWO || "$139 MXN",
           cta:
             process.env.BUSINESS_MENU_BROADCAST_CTA ||
             "🛒 *¡HAZ TU PEDIDO AQUÍ!*",
           cutoff:
             process.env.BUSINESS_MENU_BROADCAST_CUTOFF ||
-            "⏰ _Ordena antes de las 4:00 PM para recibir tu comida calientita._",
+            "⏰ Ordena antes de las 5:00 PM para recibir tu comida calientito",
+          businessHours:
+            process.env.BUSINESS_MENU_BROADCAST_HOURS ||
+            "🕘 Business hours: 9:00 AM - 7:00 PM",
           footer:
             process.env.BUSINESS_MENU_BROADCAST_FOOTER ||
             "🌊 ¡Buen provecho desde San Carlos! 🦭",
