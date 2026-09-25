@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  readyAction,
   requiresPaymentOnReady,
   redemptionReasonForOrder,
   shouldRedeemOnReady,
@@ -34,6 +35,14 @@ test("non-redeemable comandas require payment before ready", () => {
     requiresPaymentOnReady({ memberCode: "GM4218", redeemMemberMeal: true }),
     false,
   );
+});
+
+test("an eligible comanda retries redemption after a re-up despite stale payment confirmation", () => {
+  const order = { memberCode: "GM4218", redeemMemberMeal: true };
+
+  assert.equal(readyAction(order), "redeem");
+  assert.equal(readyAction(order, true), "redeem");
+  assert.equal(readyAction({}, true), "complete-paid");
 });
 
 test("a completed comanda records its order and promotion context", () => {

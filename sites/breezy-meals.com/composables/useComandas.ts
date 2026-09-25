@@ -38,7 +38,7 @@ import {
 } from "~/composables/useWhatsappOrder";
 import type { RecordModel } from "pocketbase";
 import {
-  requiresPaymentOnReady,
+  readyAction,
   redemptionReasonForOrder,
   shouldRedeemOnReady,
 } from "~/utils/comandasRedemption";
@@ -106,6 +106,8 @@ type StoredOrder = PlacedOrder & {
   recordId?: string;
 };
 
+type RedemptionAvailability = "checking" | "available" | "payment";
+
 // Registro `menu` extendido con la rotación semanal y el sello del día.
 type MenuRecordFull = MenuRecord & {
   catering?: unknown[];
@@ -172,6 +174,10 @@ function createComandasStore() {
   const filter = ref<FilterType>("all");
   const customer = reactive<Customer>({ name: "", phone: "", address: "" });
   const orders = ref<StoredOrder[]>([]); // SOLO órdenes activas
+  const redemptionAvailability = reactive<
+    Record<string, RedemptionAvailability>
+  >({});
+  const redemptionRefreshVersion = new Map<string, number>();
   const ordersTab = ref<"active" | "history">("active");
   const historyDate = ref(todayISO());
   const historyOrders = ref<StoredOrder[]>([]);
@@ -584,7 +590,57 @@ function createComandasStore() {
 
   function removeByRecordId(recordId: string) {
     if (!recordId) return;
+    const order = orders.value.find((item) => item.recordId === recordId);
+    if (order) delete redemptionAvailability[order.recordId || order.id];
     orders.value = orders.value.filter((x) => x.recordId !== recordId);
+  }
+
+  const redemptionKey = (order: StoredOrder) => order.recordId || order.id;
+
+  function redemptionStatusFor(order: StoredOrder): RedemptionAvailability {
+    if (!shouldRedeemOnReady(order)) return "payment";
+    return redemptionAvailability[redemptionKey(order)] ?? "checking";
+  }
+
+  async function refreshRedemptionStatus(
+    order: StoredOrder,
+  ): Promise<RedemptionAvailability> {
+    const key = redemptionKey(order);
+    const version = (redemptionRefreshVersion.get(key) ?? 0) + 1;
+    redemptionRefreshVersion.set(key, version);
+    if (!shouldRedeemOnReady(order)) {
+      redemptionAvailability[key] = "payment";
+      return "payment";
+    }
+
+    if (!redemptionAvailability[key]) {
+      redemptionAvailability[key] = "checking";
+    }
+    try {
+      const member = await members.getMemberByCode(order.memberCode!);
+      const membership = member
+        ? await memberships.getActiveMembership(member.id)
+        : null;
+      const status =
+        membership && memberships.isUsable(membership)
+          ? "available"
+          : "payment";
+      if (redemptionRefreshVersion.get(key) === version) {
+        redemptionAvailability[key] = status;
+      }
+      return status;
+    } catch {
+      if (redemptionRefreshVersion.get(key) === version) {
+        redemptionAvailability[key] = "payment";
+      }
+      return "payment";
+    }
+  }
+
+  async function refreshRedemptionStatuses() {
+    await Promise.allSettled(
+      orders.value.map((order) => refreshRedemptionStatus(order)),
+    );
   }
 
   /* ===== PocketBase: menú ===== */
@@ -764,6 +820,7 @@ function createComandasStore() {
       // Conserva órdenes creadas sin red (aún sin recordId).
       const unsynced = orders.value.filter((o) => !o.recordId);
       orders.value = [...remote, ...unsynced];
+      void refreshRedemptionStatuses();
       await Promise.allSettled(
         remote.map((order) =>
           order.recordId
@@ -830,6 +887,7 @@ function createComandasStore() {
   /* ===== Realtime (sustituye al polling) ===== */
   let unsubOrders: (() => void) | null = null;
   let unsubMenu: (() => void) | null = null;
+  let unsubMemberships: (() => void) | null = null;
 
   /**
    * Evento realtime de una comanda.
@@ -849,6 +907,7 @@ function createComandasStore() {
     } else {
       const order = recordToOrder(rec);
       upsertOrder(order);
+      void refreshRedemptionStatus(order);
       void normalizedComandas.syncLines(rec.id, order).catch(() => undefined);
       if (e.action === "create") {
         if (document.hidden) unreadOrderCount.value += 1;
@@ -872,6 +931,11 @@ function createComandasStore() {
     try {
       unsubOrders = await subscribe(COMANDAS_COLLECTION, onComandaEvent, "*");
       unsubMenu = await subscribe("menu", onMenuEvent, "*");
+      unsubMemberships = await subscribe(
+        "memberships",
+        () => void refreshRedemptionStatuses(),
+        "*",
+      );
       live.value = true;
     } catch {
       live.value = false;
@@ -891,8 +955,15 @@ function createComandasStore() {
     } catch {
       /* noop */
     }
+    try {
+      if (unsubMemberships) unsubMemberships();
+      else await unsubscribe("memberships");
+    } catch {
+      /* noop */
+    }
     unsubOrders = null;
     unsubMenu = null;
+    unsubMemberships = null;
     live.value = false;
   }
 
@@ -1223,7 +1294,8 @@ function createComandasStore() {
     o: StoredOrder,
     options: { paymentConfirmed?: boolean } = {},
   ): Promise<"completed" | "payment-required" | "failed"> {
-    if (requiresPaymentOnReady(o) && !options.paymentConfirmed) {
+    const action = readyAction(o, options.paymentConfirmed);
+    if (action === "payment-required") {
       return "payment-required";
     }
 
@@ -1241,9 +1313,9 @@ function createComandasStore() {
       }
     }
 
-    if (shouldRedeemOnReady(o) && !options.paymentConfirmed) {
+    if (action === "redeem") {
       const redeemed = await redeemMemberCredit(o);
-      if (!redeemed) {
+      if (!redeemed && !options.paymentConfirmed) {
         wa?.close();
         return "payment-required";
       }
@@ -1379,6 +1451,7 @@ function createComandasStore() {
     filter,
     customer,
     orders,
+    redemptionAvailability,
     ordersTab,
     historyDate,
     historyOrders,
@@ -1420,6 +1493,7 @@ function createComandasStore() {
     setTaquizaFillQty,
     setTaquizaOrderQty,
     isTaquizaItem,
+    redemptionStatusFor,
     // acciones
     sendTodayMenu,
     onTile,
@@ -1429,6 +1503,7 @@ function createComandasStore() {
     send,
     updateOrder,
     completeOrder,
+    refreshRedemptionStatus,
     sendDeliveryDetails,
     discardOrder,
     loadOrderHistory,

@@ -228,14 +228,21 @@
       v-if="!readonly"
       class="mt-3 flex items-start gap-2 rounded-lg border p-3"
       :class="
-        requiresPayment
-          ? 'border-amber-600 bg-amber-100 text-amber-950'
-          : 'border-emerald-600 bg-emerald-100 text-emerald-950'
+        redemptionChecking
+          ? 'border-border bg-muted text-foreground'
+          : requiresPayment
+            ? 'border-amber-600 bg-amber-100 text-amber-950'
+            : 'border-emerald-600 bg-emerald-100 text-emerald-950'
       "
     >
       <ClientOnly>
+        <LoaderCircle
+          v-if="redemptionChecking"
+          :size="18"
+          class="mt-0.5 shrink-0 animate-spin"
+        />
         <AlertTriangle
-          v-if="requiresPayment"
+          v-else-if="requiresPayment"
           :size="18"
           class="mt-0.5 shrink-0"
         />
@@ -244,12 +251,27 @@
       <div class="min-w-0">
         <p
           class="text-sm font-bold"
-          :class="requiresPayment ? 'text-amber-950' : 'text-emerald-950'"
+          :class="
+            redemptionChecking
+              ? 'text-foreground'
+              : requiresPayment
+                ? 'text-amber-950'
+                : 'text-emerald-950'
+          "
         >
-          {{ requiresPayment ? "Cobro requerido" : "Redención disponible" }}
+          {{
+            redemptionChecking
+              ? "Verificando membresía"
+              : requiresPayment
+                ? "Cobro requerido"
+                : "Redención disponible"
+          }}
         </p>
         <p class="mt-0.5 text-xs leading-relaxed">
-          <template v-if="requiresPayment">
+          <template v-if="redemptionChecking">
+            Consultando el saldo actual del socio.
+          </template>
+          <template v-else-if="requiresPayment">
             Esta comanda no se redimirá. Confirma el pago
             <template v-if="order.pricingTotal !== undefined">
               de {{ money(order.pricingTotal) }}</template
@@ -268,15 +290,26 @@
       <OrganismsComandasEditor :order="order" :menu="today" />
       <AlertDialog v-model:open="readyDialogOpen">
         <AlertDialogTrigger as-child>
-          <Button size="sm" class="flex-1">
+          <Button size="sm" class="flex-1" :disabled="redemptionChecking">
             <ClientOnly>
-              <CreditCard v-if="requiresPayment" :size="15" class="mr-1.5" />
+              <LoaderCircle
+                v-if="redemptionChecking"
+                :size="15"
+                class="mr-1.5 animate-spin"
+              />
+              <CreditCard
+                v-else-if="requiresPayment"
+                :size="15"
+                class="mr-1.5"
+              />
               <Check v-else :size="15" class="mr-1.5" />
             </ClientOnly>
             {{
-              requiresPayment
-                ? "Cobrar y marcar lista"
-                : "Redimir y marcar lista"
+              redemptionChecking
+                ? "Verificando membresía"
+                : requiresPayment
+                  ? "Cobrar y marcar lista"
+                  : "Redimir y marcar lista"
             }}
           </Button>
         </AlertDialogTrigger>
@@ -352,6 +385,7 @@ import {
   BadgeCheck,
   Check,
   CreditCard,
+  LoaderCircle,
   MessageCircle,
   Trash2,
 } from "lucide-vue-next";
@@ -378,22 +412,33 @@ import {
   getUngroupedOrderLines,
   type PlacedOrder,
 } from "~/utils/comandas";
-import { requiresPaymentOnReady } from "~/utils/comandasRedemption";
 
 const props = withDefaults(
   defineProps<{ order: PlacedOrder; readonly?: boolean }>(),
   { readonly: false },
 );
 
-const { completeOrder, sendDeliveryDetails, discardOrder, catalog, today } =
-  useComandas();
+const {
+  completeOrder,
+  sendDeliveryDetails,
+  discardOrder,
+  catalog,
+  today,
+  redemptionStatusFor,
+  refreshRedemptionStatus,
+} = useComandas();
 const { fetchCollection } = usePocketBaseCore();
 const readyDialogOpen = ref(false);
-const redemptionFailed = ref(false);
 const completing = ref(false);
-const requiresPayment = computed(
-  () => redemptionFailed.value || requiresPaymentOnReady(props.order),
+const redemptionStatus = computed(() => redemptionStatusFor(props.order));
+const redemptionChecking = computed(
+  () => redemptionStatus.value === "checking",
 );
+const requiresPayment = computed(() => redemptionStatus.value === "payment");
+
+watch(readyDialogOpen, (open) => {
+  if (open) void refreshRedemptionStatus(props.order);
+});
 
 async function confirmReady() {
   completing.value = true;
@@ -403,7 +448,7 @@ async function confirmReady() {
   completing.value = false;
 
   if (result === "payment-required") {
-    redemptionFailed.value = true;
+    await refreshRedemptionStatus(props.order);
     await nextTick();
     readyDialogOpen.value = true;
   }
