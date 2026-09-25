@@ -285,6 +285,7 @@ function createChecklistsStore() {
 
   /* ===== Save (optimistic + debounce; writes only changed runs) ===== */
   let saveTimer: ReturnType<typeof setTimeout> | undefined;
+  let activeSaves = 0;
   const dirtyRuns = new Set<string>();
   function scheduleSave(checklistId: string) {
     dirtyRuns.add(`${selectedDate.value}\u0000${checklistId}`);
@@ -299,6 +300,8 @@ function createChecklistsStore() {
     }
     const pending = [...dirtyRuns];
     dirtyRuns.clear();
+    if (!pending.length) return;
+    activeSaves += 1;
     try {
       await Promise.all(
         pending.map(async (key) => {
@@ -315,13 +318,15 @@ function createChecklistsStore() {
     } catch (e) {
       pending.forEach((key) => dirtyRuns.add(key));
       console.error("Could not save checklists", e);
+    } finally {
+      activeSaves -= 1;
     }
   }
 
   /* ===== Realtime + rehydrate ===== */
   const unsubs: (() => void)[] = [];
   function onEvent() {
-    if (saveTimer) return; // pending local save wins
+    if (saveTimer || activeSaves || dirtyRuns.size) return;
     void loadAll().then(persistLocal);
   }
   async function startLive() {
