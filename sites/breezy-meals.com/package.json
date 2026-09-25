@@ -13,6 +13,7 @@
     "schema:checklist-assignments": "node scripts/add-checklist-assignment-schema.js",
     "schema:membership-payments": "node scripts/add-membership-payment-schema.js",
     "schema:staff-schedule": "node scripts/add-staff-schedule-schema.js",
+    "schema:payroll": "node scripts/add-payroll-schema.js",
     "schema:display-news": "node scripts/add-display-news-schema.js",
     "cleanup:commerce": "node scripts/cleanup-commerce-legacy.js",
     "preview": "nuxt generate && vite preview --outDir .output/public",

@@ -66,6 +66,7 @@ npm run preview:prod
 - `schema:harden`: protect staff collections in a PocketBase schema export
 - `schema:normalize`: add normalized migration collections without removing legacy fields
 - `schema:commerce`: add normalized menu collections and optional typed order fields
+- `schema:payroll`: add the verified-only payroll collection
 - `postinstall`: `nuxt prepare`
 
 ## PocketBase Access Rules
@@ -86,6 +87,13 @@ To regenerate it from a newer export:
 ```bash
 npm run schema:staff-schedule -- input-schema.json pb_schema.staff-schedule.json
 ```
+
+### Payroll
+
+The `/nomina` page is visible and accessible only to verified users. PocketBase
+must also enforce this restriction; see
+[docs/pocketbase-payroll.md](docs/pocketbase-payroll.md) for the complete field
+list, API rules, and import command.
 
 Export the current schema from PocketBase, then generate a hardened copy:
 

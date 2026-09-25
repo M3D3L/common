@@ -19,6 +19,7 @@ import usePocketBase from "@common/composables/usePocketbase";
 type NavLink = { to: string; label: string };
 
 const VERIFIED_ONLY_ROUTES = new Set([
+  "/nomina",
   "/redenciones",
   "/promociones",
   "/promos-dashboard",
@@ -41,6 +42,7 @@ const staffLinks: NavLink[] = business.nav?.staffLinks?.length
       { to: "/inicio", label: "🕒" },
       { to: "/horarios", label: "Horarios" },
       { to: "/listas", label: "Listas" },
+      { to: "/nomina", label: "Nómina" },
       { to: "/socios", label: "Miembros" },
       { to: "/redenciones", label: "Redenciones" },
       { to: "/comandas", label: "Comandas" },
