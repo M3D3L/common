@@ -186,7 +186,6 @@
                   class="sr-only"
                   type="file"
                   accept="image/jpeg,image/png,image/webp"
-                  capture="environment"
                   required
                   @change="selectProof"
                 />
