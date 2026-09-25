@@ -24,6 +24,7 @@ import {
 export type MenuRecordFull = MenuRecord & {
   store?: MenuCatalog | DayDishes;
   catering?: MenuCatalog | DayDishes;
+  news?: string;
   week_blocks?: WeekBlock[];
   rotation?: string[];
   rotation_anchor?: string;

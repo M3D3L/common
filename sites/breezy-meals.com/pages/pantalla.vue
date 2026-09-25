@@ -1,5 +1,6 @@
 <template>
   <div
+    ref="displayShellElement"
     class="display-shell min-h-screen overflow-hidden bg-background text-foreground"
   >
     <Head>
@@ -29,7 +30,11 @@
     </main>
 
     <main v-else class="display-content">
-      <section class="menu-board">
+      <section
+        ref="menuBoardElement"
+        class="menu-board"
+        :data-density="displayDensity"
+      >
         <div class="section-heading">
           <div class="title-brand">
             <img :src="logoSrc" :alt="brandName" />
@@ -42,7 +47,6 @@
           </div>
           <div class="menu-title">
             <h2>Menú del día</h2>
-            <p class="availability-note">Hasta agotar existencias</p>
           </div>
           <div class="board-time">
             <p>{{ clock }}</p>
@@ -50,42 +54,76 @@
           </div>
         </div>
 
-        <div v-if="menuSections.length" class="menu-columns">
-          <section
-            v-for="section in menuSections"
-            :key="section.key"
-            class="menu-section"
-          >
-            <h3>
-              <span>{{ section.emoji }}</span>
-              {{ section.label }}
-            </h3>
-            <ul>
-              <li
-                v-for="item in section.items"
-                :key="item.name"
-                :class="{ 'sold-out-item': isOut(item.name) }"
-              >
-                <span class="item-name">{{ item.name }}</span>
-                <Badge
-                  v-if="isOut(item.name)"
-                  variant="destructive"
-                  class="sold-out-badge"
-                >
-                  Agotado
-                </Badge>
-                <span class="item-rule" aria-hidden="true" />
-                <span v-if="item.price > 0" class="item-price">
-                  {{ money(item.price) }}
-                </span>
+        <div
+          ref="boardColumnsElement"
+          class="board-columns"
+          :class="{ 'board-columns-with-promos': promoCards.length }"
+        >
+          <section v-if="promoCards.length" class="promo-module">
+            <div class="promo-module-heading">
+              <div>
+                <p class="section-kicker">Aprovecha hoy</p>
+                <h2>Promociones</h2>
+              </div>
+              <Badge variant="outline">{{ promoCards.length }}</Badge>
+            </div>
+            <ul ref="promoListElement" :style="promoGridStyle">
+              <li v-for="promo in promoCards" :key="promo.id">
+                <div class="promo-module-title">
+                  <span aria-hidden="true">{{ promo.emoji || "★" }}</span>
+                  <strong>{{ promo.label }}</strong>
+                  <span v-if="promo.price > 0" class="promo-module-price">
+                    {{ money(promo.price) }}
+                  </span>
+                </div>
+                <p>
+                  {{
+                    promo.summary || "Promoción disponible por tiempo limitado."
+                  }}
+                </p>
               </li>
             </ul>
           </section>
+
+          <div v-if="menuSections.length" class="menu-columns">
+            <section
+              v-for="section in menuSections"
+              :key="section.key"
+              class="menu-section"
+            >
+              <h3>
+                <span>{{ section.emoji }}</span>
+                {{ section.label }}
+              </h3>
+              <ul>
+                <li
+                  v-for="item in section.items"
+                  :key="item.name"
+                  :class="{ 'sold-out-item': isOut(item.name) }"
+                >
+                  <span class="item-name">{{ item.name }}</span>
+                  <Badge
+                    v-if="isOut(item.name)"
+                    variant="destructive"
+                    class="sold-out-badge"
+                  >
+                    Agotado
+                  </Badge>
+                  <span class="item-rule" aria-hidden="true" />
+                  <span v-if="item.price > 0" class="item-price">
+                    {{ money(item.price) }}
+                  </span>
+                </li>
+              </ul>
+            </section>
+          </div>
+          <div v-else class="empty-copy">
+            Estamos preparando el menú de hoy.
+          </div>
         </div>
-        <div v-else class="empty-copy">Estamos preparando el menú de hoy.</div>
       </section>
 
-      <aside class="spotlight">
+      <aside class="spotlight" :data-density="cateringDensity">
         <div class="spotlight-heading">
           <span>Recomendación</span>
           <Badge variant="secondary" class="live-dot">Hoy</Badge>
@@ -110,10 +148,12 @@
             />
             <div class="feature-shade" />
             <CardHeader class="feature-copy">
-              <p class="feature-kicker">{{ featuredItem.category }}</p>
-              <CardTitle class="feature-title">
-                {{ featuredItem.name }}
-              </CardTitle>
+              <div class="min-w-0">
+                <p class="feature-kicker">{{ featuredItem.category }}</p>
+                <CardTitle class="feature-title">
+                  {{ featuredItem.name }}
+                </CardTitle>
+              </div>
               <CardDescription
                 v-if="featuredItem.price > 0"
                 class="feature-price"
@@ -127,7 +167,7 @@
           </Card>
         </Transition>
 
-        <Card styles="" class="catering-list">
+        <Card ref="cateringListElement" styles="" class="catering-list">
           <CardHeader class="flex-row items-end justify-between gap-3 p-0">
             <div>
               <p class="section-kicker">Para tu evento</p>
@@ -161,14 +201,42 @@
     </main>
 
     <footer class="display-footer">
-      <div class="flex min-w-0 items-center gap-3">
+      <div class="footer-order flex min-w-0 items-center gap-3">
         <MessageCircle class="h-6 w-6 shrink-0" />
         <div class="min-w-0">
           <p class="font-black">Ordena desde tu teléfono</p>
           <p class="truncate text-sm text-white/75">{{ orderUrl }}</p>
         </div>
       </div>
-      <div class="ml-auto flex items-center gap-3">
+
+      <div
+        v-if="tickerItems.length"
+        class="ticker"
+        role="status"
+        :aria-label="tickerItems.join('. ')"
+      >
+        <Megaphone class="ticker-icon" aria-hidden="true" />
+        <div class="ticker-viewport">
+          <div class="ticker-track" :style="tickerStyle">
+            <div
+              v-for="copy in 2"
+              :key="copy"
+              class="ticker-group"
+              :aria-hidden="copy === 2"
+            >
+              <span
+                v-for="(item, index) in tickerItems"
+                :key="`${copy}-${index}-${item}`"
+                class="ticker-item"
+              >
+                {{ item }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer-qr flex items-center gap-3">
         <p class="hidden text-right text-sm font-bold leading-tight sm:block">
           Escanea para ver<br />el menú completo
         </p>
@@ -183,7 +251,12 @@
 </template>
 
 <script setup lang="ts">
-import { LoaderCircle, MessageCircle, WifiOff } from "lucide-vue-next";
+import {
+  LoaderCircle,
+  Megaphone,
+  MessageCircle,
+  WifiOff,
+} from "lucide-vue-next";
 import { Badge } from "@common/components/ui/badge";
 import { Button } from "@common/components/ui/button";
 import {
@@ -195,6 +268,7 @@ import {
 } from "@common/components/ui/card";
 import { todayISO, type GroupKey, type MenuItem } from "~/utils/comandas";
 import { useMenuData, type MenuRecordFull } from "~/composables/useMenuData";
+import { useMenuPricing } from "~/composables/useMenuPricing";
 
 definePageMeta({ layout: false });
 
@@ -206,6 +280,7 @@ type DisplayItem = MenuItem & {
 
 const FEATURE_DURATION = 8_000;
 const REFRESH_DURATION = 60_000;
+const MIN_PROMO_CARD_WIDTH = 220;
 const runtimeConfig = useRuntimeConfig();
 const business = (runtimeConfig.public?.business ?? {}) as {
   brandName?: string;
@@ -220,6 +295,7 @@ const qrUrl = computed(
     `https://api.qrserver.com/v1/create-qr-code/?size=180x180&margin=0&data=${encodeURIComponent(orderUrl)}`,
 );
 const watermarkStyle = computed(() => ({ backgroundImage: `url(${logoSrc})` }));
+const { fetchCollection } = usePocketBaseCore();
 const { record, pending, loadError, load } =
   useLatestMenuRecord<MenuRecordFull>("menu");
 const selectedDate = ref(todayISO());
@@ -237,6 +313,24 @@ const cateringData = useMenuData({
 });
 const soldOut = computed(() => new Set(record.value?.sold_out ?? []));
 const isOut = (name: string) => soldOut.value.has(name);
+const emptyCart = reactive<Record<string, number>>({});
+const emptyTaquizaCounts = computed(() => ({ tacos: 0, quesadillas: 0 }));
+const { loadRuntimePromos, promoCardsWithAppliedState: promoCards } =
+  useMenuPricing({
+    fetchCollection,
+    cart: emptyCart,
+    menuGroups: menuData.menuGroups,
+    groupItems: menuData.groupItems,
+    isOut,
+    taquizaGroup: menuData.taquizaGroup,
+    taquizaOrderCount: emptyTaquizaCounts,
+    completedTaquizaOrderCount: emptyTaquizaCounts,
+    taquizaTotalForName: () => 0,
+    itemCount: computed(() => 0),
+    staffMode: () => false,
+    useDailyMenu: () => true,
+    showPromoStatus: () => true,
+  });
 
 const menuSections = computed(() =>
   menuData.menuGroups.value
@@ -251,6 +345,114 @@ const menuSections = computed(() =>
 const cateringItems = computed(() =>
   cateringData.groupItems("catering" as GroupKey),
 );
+const newsTickerItems = computed(() =>
+  String(record.value?.news ?? "")
+    .split(/\r?\n/)
+    .map((item) => item.trim())
+    .filter(Boolean),
+);
+const tickerItems = newsTickerItems;
+const tickerStyle = computed(() => ({
+  "--ticker-duration": `${Math.max(24, tickerItems.value.join(" ").length * 0.32)}s`,
+}));
+const menuBoardElement = ref<HTMLElement>();
+const boardColumnsElement = ref<HTMLElement>();
+const promoListElement = ref<HTMLElement>();
+const displayShellElement = ref<HTMLElement>();
+const cateringListElement = ref<HTMLElement>();
+const promoColumnCount = ref(1);
+const displayDensity = ref<"comfortable" | "compact" | "tight">("comfortable");
+const cateringDensity = ref<"comfortable" | "compact" | "tight">("comfortable");
+const promoGridStyle = computed(() => ({
+  "--promo-columns": String(promoColumnCount.value),
+}));
+
+function nextPaint() {
+  return new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+}
+
+function isOverflowing(element: HTMLElement) {
+  return (
+    element.scrollWidth > element.clientWidth + 1 ||
+    element.scrollHeight > element.clientHeight + 1
+  );
+}
+
+async function setPromoColumns() {
+  const promoList = promoListElement.value;
+  if (!promoList || !promoCards.value.length) return;
+
+  const gap = Number.parseFloat(getComputedStyle(promoList).columnGap) || 0;
+  promoColumnCount.value = Math.max(
+    1,
+    Math.min(
+      promoCards.value.length,
+      Math.floor((promoList.clientWidth + gap) / (MIN_PROMO_CARD_WIDTH + gap)),
+    ),
+  );
+  await nextPaint();
+}
+
+let fitInProgress = false;
+
+async function fitDisplay() {
+  const board = boardColumnsElement.value;
+  if (!board || fitInProgress) return;
+
+  fitInProgress = true;
+  displayDensity.value = "comfortable";
+  cateringDensity.value = "comfortable";
+  await nextTick();
+  await nextPaint();
+
+  try {
+    await setPromoColumns();
+
+    while (
+      isOverflowing(board) &&
+      promoColumnCount.value < promoCards.value.length
+    ) {
+      promoColumnCount.value += 1;
+      await nextPaint();
+    }
+
+    if (isOverflowing(board)) {
+      displayDensity.value = "compact";
+      await nextPaint();
+    }
+    if (isOverflowing(board)) {
+      displayDensity.value = "tight";
+      await nextPaint();
+    }
+
+    const catering = cateringListElement.value;
+    if (catering && isOverflowing(catering)) {
+      cateringDensity.value = "compact";
+      await nextPaint();
+    }
+    if (catering && isOverflowing(catering)) {
+      cateringDensity.value = "tight";
+    }
+  } finally {
+    fitInProgress = false;
+  }
+}
+
+let fitFrame: number | undefined;
+let boardResizeObserver: ResizeObserver | undefined;
+
+function scheduleDisplayFit() {
+  if (fitInProgress) return;
+  if (fitFrame) cancelAnimationFrame(fitFrame);
+  fitFrame = requestAnimationFrame(() => {
+    fitFrame = undefined;
+    void fitDisplay();
+  });
+}
+
+async function loadDisplayData(options?: { silent?: boolean }) {
+  await Promise.allSettled([load(options), loadRuntimePromos()]);
+}
 
 const featurePool = computed<DisplayItem[]>(() => {
   const menuItems = menuSections.value.flatMap((section) =>
@@ -290,6 +492,7 @@ function shuffleFeatures() {
 }
 
 watch(featurePool, shuffleFeatures, { immediate: true });
+watch([menuSections, promoCards], scheduleDisplayFit, { flush: "post" });
 
 const now = ref(new Date());
 const clock = computed(() =>
@@ -318,7 +521,12 @@ let featureTimer: number | undefined;
 let refreshTimer: number | undefined;
 
 onMounted(() => {
-  void load();
+  void loadDisplayData();
+  boardResizeObserver = new ResizeObserver(scheduleDisplayFit);
+  if (displayShellElement.value) {
+    boardResizeObserver.observe(displayShellElement.value);
+  }
+  void document.fonts.ready.then(scheduleDisplayFit);
   clockTimer = window.setInterval(() => {
     now.value = new Date();
     const nextDate = todayISO();
@@ -331,12 +539,14 @@ onMounted(() => {
     if (featureIndex.value === 0) shuffleFeatures();
   }, FEATURE_DURATION);
   refreshTimer = window.setInterval(
-    () => void load({ silent: true }),
+    () => void loadDisplayData({ silent: true }),
     REFRESH_DURATION,
   );
 });
 
 onBeforeUnmount(() => {
+  boardResizeObserver?.disconnect();
+  if (fitFrame) cancelAnimationFrame(fitFrame);
   if (clockTimer) clearInterval(clockTimer);
   if (featureTimer) clearInterval(featureTimer);
   if (refreshTimer) clearInterval(refreshTimer);
@@ -357,15 +567,67 @@ onBeforeUnmount(() => {
 }
 
 .display-footer {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(12rem, 20rem) minmax(0, 1fr) auto;
+  min-height: 5.5rem;
   align-items: center;
+  gap: 1.5rem;
   padding: 0.75rem 2rem;
   color: white;
-}
-
-.display-footer {
-  min-height: 5.5rem;
   background: var(--display-blue);
+}
+.footer-order {
+  overflow: hidden;
+}
+.footer-qr {
+  grid-column: 3;
+  justify-self: end;
+}
+.ticker {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  height: 2.5rem;
+  align-items: center;
+  overflow: hidden;
+  border-inline: 1px solid rgb(255 255 255 / 0.22);
+}
+.ticker-icon {
+  width: 2.75rem;
+  height: 2.5rem;
+  flex-shrink: 0;
+  padding: 0.7rem;
+}
+.ticker-viewport {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  flex: 1;
+  overflow: hidden;
+}
+.ticker-track {
+  display: flex;
+  width: max-content;
+  animation: ticker-scroll var(--ticker-duration) linear infinite;
+}
+.ticker-group {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  padding-inline-start: clamp(2rem, 4vw, 4rem);
+}
+.ticker-item {
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+  font-size: 0.95rem;
+  font-weight: 900;
+}
+.ticker-item::after {
+  margin: 0 1.5rem;
+  color: hsl(48 85% 72%);
+  content: "•";
 }
 .display-eyebrow,
 .section-kicker,
@@ -393,16 +655,95 @@ onBeforeUnmount(() => {
 }
 .display-content {
   display: grid;
-  grid-template-columns: minmax(0, 3fr) minmax(23rem, 1fr);
+  height: 100%;
+  grid-template-columns: minmax(0, 1fr) clamp(20rem, 25vw, 28rem);
   min-height: 0;
 }
+.board-columns {
+  min-height: 0;
+}
+.board-columns-with-promos {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: clamp(0.75rem, 1.5vh, 1.25rem);
+  overflow: hidden;
+}
+.board-columns-with-promos .menu-columns {
+  column-gap: clamp(1.5rem, 2.5vw, 2.5rem);
+}
+.promo-module {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: minmax(0, 1fr);
+  gap: clamp(0.55rem, 1vh, 0.8rem);
+  border-top: 0.3rem solid var(--display-green);
+  padding-top: clamp(0.6rem, 1.2vh, 0.9rem);
+}
+.promo-module-heading {
+  display: flex;
+  min-width: 0;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+.promo-module-heading h2 {
+  font-family: "Alfa Slab One", serif;
+  color: var(--display-ink);
+  font-size: clamp(1.8rem, 2.2vw, 2.4rem);
+  font-weight: 400;
+  line-height: 1;
+  overflow-wrap: anywhere;
+}
+.promo-module ul {
+  display: grid;
+  grid-template-columns: repeat(var(--promo-columns, 1), minmax(0, 1fr));
+  gap: clamp(0.45rem, 0.8vw, 0.75rem);
+}
+.promo-module li {
+  min-width: 0;
+  border-left: 0.25rem solid hsl(158 67% 29% / 0.35);
+  background: hsl(158 67% 29% / 0.055);
+  padding: clamp(0.55rem, 1vh, 0.8rem);
+}
+.promo-module-title {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 0.4rem;
+  color: var(--display-blue);
+  font-size: clamp(1.15rem, 1.45vw, 1.5rem);
+  line-height: 1.15;
+}
+.promo-module-title strong {
+  overflow-wrap: anywhere;
+}
+.promo-module-price {
+  flex-shrink: 0;
+  color: var(--display-green);
+  font-weight: 900;
+}
+.promo-module li > p {
+  display: -webkit-box;
+  margin-top: 0.4rem;
+  overflow: hidden;
+  color: hsl(218 12% 35%);
+  font-size: clamp(0.78rem, 0.85vw, 0.95rem);
+  font-weight: 700;
+  line-height: 1.3;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
 .menu-board {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
   padding: 1rem 2.5rem 1.5rem;
   overflow: hidden;
 }
 .section-heading {
   display: grid;
-  grid-template-columns: minmax(15rem, 1fr) auto minmax(15rem, 1fr);
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: center;
   gap: 1rem;
   margin-bottom: 1rem;
@@ -492,6 +833,40 @@ onBeforeUnmount(() => {
   font-weight: 900;
   line-height: 1.1;
   color: var(--display-ink);
+}
+.menu-board[data-density="compact"] .section-heading {
+  margin-bottom: 0.65rem;
+}
+.menu-board[data-density="compact"] .menu-section {
+  margin-bottom: 0.7rem;
+  padding-top: 0.65rem;
+}
+.menu-board[data-density="compact"] .menu-section h3 {
+  margin-bottom: 0.5rem;
+  font-size: 1.2rem;
+}
+.menu-board[data-density="compact"] .menu-section ul {
+  gap: 0.45rem;
+}
+.menu-board[data-density="compact"] .menu-section li {
+  font-size: clamp(1.2rem, 1.35vw, 1.65rem);
+}
+.menu-board[data-density="tight"] .section-heading {
+  margin-bottom: 0.45rem;
+}
+.menu-board[data-density="tight"] .menu-section {
+  margin-bottom: 0.5rem;
+  padding-top: 0.5rem;
+}
+.menu-board[data-density="tight"] .menu-section h3 {
+  margin-bottom: 0.4rem;
+  font-size: 1.05rem;
+}
+.menu-board[data-density="tight"] .menu-section ul {
+  gap: 0.3rem;
+}
+.menu-board[data-density="tight"] .menu-section li {
+  font-size: clamp(1.05rem, 1.15vw, 1.4rem);
 }
 .item-name {
   min-width: 0;
@@ -615,6 +990,7 @@ onBeforeUnmount(() => {
 }
 .feature-price {
   margin-top: 0.6rem;
+  color: white;
   font-size: 1.6rem;
   font-weight: 900;
 }
@@ -656,6 +1032,26 @@ onBeforeUnmount(() => {
   font-size: 1.2rem;
   font-weight: 700;
   line-height: 1.15;
+}
+.spotlight[data-density="compact"] .catering-list {
+  padding: 1.1rem;
+}
+.spotlight[data-density="compact"] .catering-list ul {
+  margin-top: 0.65rem;
+}
+.spotlight[data-density="compact"] .catering-list li {
+  padding: 0.4rem 0;
+  font-size: 1.05rem;
+}
+.spotlight[data-density="tight"] .catering-list {
+  padding: 0.85rem 1rem;
+}
+.spotlight[data-density="tight"] .catering-list ul {
+  margin-top: 0.45rem;
+}
+.spotlight[data-density="tight"] .catering-list li {
+  padding: 0.3rem 0;
+  font-size: 0.95rem;
 }
 .catering-list li span {
   overflow-wrap: anywhere;
@@ -730,6 +1126,11 @@ onBeforeUnmount(() => {
     width: 100%;
   }
 }
+@keyframes ticker-scroll {
+  to {
+    transform: translateX(-50%);
+  }
+}
 
 @media (max-width: 900px) {
   .display-shell {
@@ -744,6 +1145,18 @@ onBeforeUnmount(() => {
   .display-content {
     height: auto;
     grid-template-columns: 1fr;
+  }
+  .board-columns-with-promos {
+    grid-template-rows: auto auto;
+    overflow: visible;
+  }
+  .promo-module {
+    grid-template-columns: 1fr;
+  }
+  .promo-module-heading {
+    align-items: center;
+    justify-content: space-between;
+    flex-direction: row;
   }
   .menu-board {
     padding: 1.25rem 1rem;
@@ -762,7 +1175,15 @@ onBeforeUnmount(() => {
     grid-template-rows: 26rem auto;
   }
   .display-footer {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0.75rem;
     padding: 0.75rem 1rem;
+  }
+  .footer-order {
+    display: none;
+  }
+  .footer-qr {
+    grid-column: 2;
   }
 }
 
@@ -774,6 +1195,9 @@ onBeforeUnmount(() => {
   .feature-progress span {
     animation: none;
     width: 100%;
+  }
+  .ticker-track {
+    animation: none;
   }
 }
 </style>

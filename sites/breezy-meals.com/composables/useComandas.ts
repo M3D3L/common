@@ -42,7 +42,11 @@ import {
   redemptionReasonForOrder,
   shouldRedeemOnReady,
 } from "~/utils/comandasRedemption";
-import { comandaCreatePayload, pocketBaseDateTime } from "~/lib/comanda-record";
+import {
+  comandaCreatePayload,
+  comandaUpdatePayload,
+  pocketBaseDateTime,
+} from "~/lib/comanda-record";
 
 /* ===== Config ===== */
 const STORAGE_KEY = "comandas";
@@ -1278,6 +1282,37 @@ function createComandasStore() {
     return "completed";
   }
 
+  async function updateOrder(
+    o: StoredOrder,
+    changes: Partial<PlacedOrder>,
+  ): Promise<boolean> {
+    if (!o.recordId) {
+      toast(`La orden #${o.number} aún no está sincronizada`);
+      return false;
+    }
+
+    const { recordId, ...snapshot } = { ...o, ...changes };
+    try {
+      const saved = await updateItem(
+        COMANDAS_COLLECTION,
+        recordId,
+        comandaUpdatePayload(snapshot),
+      );
+      const updated = recordToOrder(saved as RecordModel);
+      upsertOrder(updated);
+      await normalizedComandas
+        .syncLines(recordId, updated)
+        .catch(() => undefined);
+      persist();
+      toast(`Orden #${o.number} actualizada`);
+      return true;
+    } catch (e) {
+      console.error("No se pudo actualizar la orden", e);
+      toast(`No se pudo actualizar la orden #${o.number}; reintenta`);
+      return false;
+    }
+  }
+
   function sendDeliveryDetails(o: StoredOrder) {
     if (o.mode !== "domicilio") return;
 
@@ -1392,6 +1427,7 @@ function createComandasStore() {
     toggleOut,
     clearCart,
     send,
+    updateOrder,
     completeOrder,
     sendDeliveryDetails,
     discardOrder,

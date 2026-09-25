@@ -1015,5 +1015,6 @@ onMounted(load);
 
 definePageMeta({
   layout: "staff",
+  verifiedOnly: true,
 });
 </script>

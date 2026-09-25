@@ -3,6 +3,7 @@ import test from "node:test";
 
 import {
   comandaCreatePayload,
+  comandaUpdatePayload,
   planComandaLines,
   pocketBaseDateTime,
   typedComandaFields,
@@ -50,6 +51,23 @@ test("omits absent optional values without changing the order", () => {
   assert.equal(payload.snapshot, minimal);
   assert.equal("customer_name" in payload, false);
   assert.equal("total" in payload, false);
+});
+
+test("updates the snapshot without resetting the lifecycle status", () => {
+  const edited = {
+    ...order,
+    note: "Sin cebolla",
+    cart: { Birria: 3 },
+    customer: undefined,
+  };
+  const payload = comandaUpdatePayload(edited);
+
+  assert.equal(payload.data, edited);
+  assert.equal(payload.order_number, 7);
+  assert.equal(payload.status, undefined);
+  assert.equal(payload.customer_name, null);
+  assert.equal(payload.customer_phone, null);
+  assert.equal(typeof payload.snapshot_hash, "string");
 });
 
 test("formats date filters for PocketBase", () => {

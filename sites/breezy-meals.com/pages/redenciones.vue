@@ -736,5 +736,5 @@ onBeforeUnmount(async () => {
   }
 });
 
-definePageMeta({ layout: "staff" });
+definePageMeta({ layout: "staff", verifiedOnly: true });
 </script>

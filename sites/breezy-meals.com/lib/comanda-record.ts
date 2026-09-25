@@ -59,6 +59,31 @@ export function comandaCreatePayload(
   };
 }
 
+export function comandaUpdatePayload(
+  order: PlacedOrder,
+  snapshotField = "data",
+): Record<string, unknown> {
+  const { status: _status, ...fields } = typedComandaFields(order);
+  const optionalFields = [
+    "fulfill_date",
+    "fulfill_time",
+    "customer_name",
+    "customer_phone",
+    "customer_address",
+    "member_code",
+    "subtotal",
+    "delivery_fee",
+    "total",
+    "promo_id",
+    "promo_label",
+  ];
+  return {
+    [snapshotField]: order,
+    ...Object.fromEntries(optionalFields.map((field) => [field, null])),
+    ...fields,
+  };
+}
+
 export function planComandaLines(
   comandaId: string,
   order: PlacedOrder,

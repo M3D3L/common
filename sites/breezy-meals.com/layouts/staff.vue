@@ -14,7 +14,17 @@
 </template>
 
 <script lang="ts" setup>
+import usePocketBase from "@common/composables/usePocketbase";
+
 type NavLink = { to: string; label: string };
+
+const VERIFIED_ONLY_ROUTES = new Set([
+  "/redenciones",
+  "/promociones",
+  "/promos-dashboard",
+  "/semana/menu",
+  "/semana/calendario",
+]);
 
 const runtimeConfig = useRuntimeConfig();
 const business = (runtimeConfig.public?.business ?? {}) as unknown as {
@@ -25,7 +35,7 @@ const business = (runtimeConfig.public?.business ?? {}) as unknown as {
 const logoSrc = business.logoUrl || "";
 const { sendTodayMenu } = provideComandas();
 
-const links: NavLink[] = business.nav?.staffLinks?.length
+const staffLinks: NavLink[] = business.nav?.staffLinks?.length
   ? business.nav.staffLinks
   : [
       { to: "/inicio", label: "🕒" },
@@ -42,6 +52,23 @@ const links: NavLink[] = business.nav?.staffLinks?.length
       { to: "/semana/calendario", label: "Calendario" },
       { to: "/etiquetas", label: "Etiquetas" },
     ];
+
+const pb = usePocketBase();
+const isVerified = ref(pb.authStore.model?.verified === true);
+const links = computed(() =>
+  isVerified.value
+    ? staffLinks
+    : staffLinks.filter((link) => !VERIFIED_ONLY_ROUTES.has(link.to)),
+);
+
+let stopAuthListener: (() => void) | undefined;
+onMounted(() => {
+  isVerified.value = pb.authStore.model?.verified === true;
+  stopAuthListener = pb.authStore.onChange(() => {
+    isVerified.value = pb.authStore.model?.verified === true;
+  });
+});
+onBeforeUnmount(() => stopAuthListener?.());
 
 const fallbackClientLinks: NavLink[] = [
   { to: "/menu", label: "Menú" },

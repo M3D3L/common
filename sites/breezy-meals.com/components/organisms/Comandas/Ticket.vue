@@ -265,6 +265,7 @@
 
     <!-- Footer buttons -->
     <div v-if="!readonly" class="flex items-center gap-2 mt-4">
+      <OrganismsComandasEditor :order="order" :menu="today" />
       <AlertDialog v-model:open="readyDialogOpen">
         <AlertDialogTrigger as-child>
           <Button size="sm" class="flex-1">
@@ -384,7 +385,7 @@ const props = withDefaults(
   { readonly: false },
 );
 
-const { completeOrder, sendDeliveryDetails, discardOrder, catalog } =
+const { completeOrder, sendDeliveryDetails, discardOrder, catalog, today } =
   useComandas();
 const { fetchCollection } = usePocketBaseCore();
 const readyDialogOpen = ref(false);

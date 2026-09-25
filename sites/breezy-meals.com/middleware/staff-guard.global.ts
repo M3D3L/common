@@ -12,4 +12,8 @@ export default defineNuxtRouteMiddleware((to) => {
     pb.authStore.clear();
     return navigateTo(`/login?source=${encodeURIComponent(to.fullPath)}`);
   }
+
+  if (to.meta.verifiedOnly === true && pb.authStore.model?.verified !== true) {
+    return navigateTo("/inicio");
+  }
 });
