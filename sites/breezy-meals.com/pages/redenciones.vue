@@ -198,7 +198,7 @@
                 </TableCell>
               </TableRow>
               <TableRow
-                v-for="entry in filteredRedemptions"
+                v-for="entry in paginatedRedemptions"
                 :key="entry.id"
                 :class="entry.voided ? 'opacity-60' : ''"
               >
@@ -272,6 +272,33 @@
         </div>
       </CardContent>
     </Card>
+
+    <div
+      v-if="!loading && filteredRedemptions.length"
+      class="mt-4 flex flex-col items-center justify-between gap-3 sm:flex-row"
+    >
+      <div class="flex items-center gap-2">
+        <Label for="redemptions-per-page" class="whitespace-nowrap">
+          Por pagina
+        </Label>
+        <Select v-model="pageSizeValue">
+          <SelectTrigger id="redemptions-per-page" class="w-24">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem
+              v-for="option in PAGE_SIZE_OPTIONS"
+              :key="option"
+              :value="String(option)"
+            >
+              {{ option }}
+            </SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <Pagination :total-pages="totalPages" :show-pagination="true" />
+    </div>
 
     <Dialog v-model:open="editorOpen">
       <DialogContent class="sm:max-w-xl">
@@ -459,6 +486,10 @@ const membersApi = useMembers();
 const membershipsApi = useMemberships();
 const { user, subscribe, unsubscribe } = usePocketBaseCore();
 const route = useRoute();
+const router = useRouter();
+
+const PAGE_SIZE_OPTIONS = [10, 20, 50, 100] as const;
+const DEFAULT_PAGE_SIZE = 20;
 
 const loading = ref(true);
 const saving = ref(false);
@@ -530,6 +561,45 @@ const filteredRedemptions = computed(() => {
       (!filters.from || entry.redeemed_at >= `${filters.from}T00:00:00`) &&
       (!until || entry.redeemed_at <= until)
     );
+  });
+});
+
+const currentPage = computed(() => {
+  const page = Number(route.query.page);
+  return Number.isInteger(page) && page > 0 ? page : 1;
+});
+const pageSize = computed(() => {
+  const value = Number(route.query.perPage);
+  return PAGE_SIZE_OPTIONS.includes(value as (typeof PAGE_SIZE_OPTIONS)[number])
+    ? value
+    : DEFAULT_PAGE_SIZE;
+});
+const pageSizeValue = computed({
+  get: () => String(pageSize.value),
+  set: (value: string) => {
+    void router.replace({
+      query: { ...route.query, page: 1, perPage: value },
+    });
+  },
+});
+const totalPages = computed(() =>
+  Math.ceil(filteredRedemptions.value.length / pageSize.value),
+);
+const paginatedRedemptions = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value;
+  return filteredRedemptions.value.slice(start, start + pageSize.value);
+});
+
+watch(filters, () => {
+  if (route.query.page === undefined) return;
+  const { page: _page, ...query } = route.query;
+  void router.replace({ query });
+});
+
+watch(totalPages, (pages) => {
+  if (currentPage.value <= Math.max(1, pages)) return;
+  void router.replace({
+    query: { ...route.query, page: Math.max(1, pages) },
   });
 });
 

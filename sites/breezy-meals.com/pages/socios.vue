@@ -196,9 +196,9 @@
           >
             No hay coincidencias para "{{ term.trim() }}".
           </p>
-          <div v-else class="max-h-[28rem] space-y-1.5 overflow-y-auto">
+          <div v-else class="space-y-1.5">
             <div
-              v-for="c in filteredMembers"
+              v-for="c in paginatedMembers"
               :key="c.id"
               class="flex items-center gap-2 p-2.5 border rounded-lg border-border bg-card"
             >
@@ -215,6 +215,32 @@
                   {{ c.member_code }}
                 </Badge>
               </button>
+            </div>
+
+            <div
+              class="flex flex-col items-center justify-between gap-3 pt-2 sm:flex-row"
+            >
+              <div class="flex items-center gap-2">
+                <Label for="members-per-page" class="whitespace-nowrap">
+                  Por pagina
+                </Label>
+                <Select v-model="pageSizeValue">
+                  <SelectTrigger id="members-per-page" class="w-24">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem
+                      v-for="option in PAGE_SIZE_OPTIONS"
+                      :key="option"
+                      :value="String(option)"
+                    >
+                      {{ option }}
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <Pagination :total-pages="totalPages" :show-pagination="true" />
             </div>
           </div>
         </template>
@@ -541,6 +567,13 @@ import { Input } from "@common/components/ui/input";
 import { Label } from "@common/components/ui/label";
 import { Badge } from "@common/components/ui/badge";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@common/components/ui/select";
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -580,6 +613,11 @@ const memberships = useMemberships();
 const redemptions = useRedemptions();
 const { openWhatsApp } = useWhatsappOrder();
 const { subscribe, unsubscribe } = usePocketBaseCore();
+const route = useRoute();
+const router = useRouter();
+
+const PAGE_SIZE_OPTIONS = [10, 20, 50, 100] as const;
+const DEFAULT_PAGE_SIZE = 20;
 
 // spine reactivo del check-in
 const { member, membership, candidates, status, loading, working, remaining } =
@@ -611,6 +649,45 @@ const filteredMembers = computed(() => {
     const code = (m.member_code ?? "").toLocaleLowerCase("es-MX");
     const phone = (m.phone ?? "").toLocaleLowerCase("es-MX");
     return name.includes(q) || code.includes(q) || phone.includes(q);
+  });
+});
+
+const currentPage = computed(() => {
+  const page = Number(route.query.page);
+  return Number.isInteger(page) && page > 0 ? page : 1;
+});
+const pageSize = computed(() => {
+  const value = Number(route.query.perPage);
+  return PAGE_SIZE_OPTIONS.includes(value as (typeof PAGE_SIZE_OPTIONS)[number])
+    ? value
+    : DEFAULT_PAGE_SIZE;
+});
+const pageSizeValue = computed({
+  get: () => String(pageSize.value),
+  set: (value: string) => {
+    void router.replace({
+      query: { ...route.query, page: 1, perPage: value },
+    });
+  },
+});
+const totalPages = computed(() =>
+  Math.ceil(filteredMembers.value.length / pageSize.value),
+);
+const paginatedMembers = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value;
+  return filteredMembers.value.slice(start, start + pageSize.value);
+});
+
+watch(listFilterTerm, () => {
+  if (route.query.page === undefined) return;
+  const { page: _page, ...query } = route.query;
+  void router.replace({ query });
+});
+
+watch(totalPages, (pages) => {
+  if (currentPage.value <= Math.max(1, pages)) return;
+  void router.replace({
+    query: { ...route.query, page: Math.max(1, pages) },
   });
 });
 
