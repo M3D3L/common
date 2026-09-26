@@ -97,6 +97,7 @@
             <Card
               v-for="day in week.days"
               :key="day.iso"
+              :id="day.isToday ? 'current-day-card' : undefined"
               class="border-border/70 shadow-sm transition-all duration-200 hover:shadow-md"
               :class="[
                 day.isToday && 'ring-2 ring-primary/60 bg-primary/5',
@@ -235,6 +236,22 @@ const record = ref<MenuRecordFull | null>(null);
 
 const weekColumns = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes"];
 
+const hiddenGroupLabels = new Set([
+  "Bebidas",
+  "Desayunos",
+  "Ensaladas",
+  "Sweets",
+]);
+
+async function scrollToCurrentDay() {
+  await nextTick();
+  document.getElementById("current-day-card")?.scrollIntoView({
+    behavior: "smooth",
+    block: "center",
+    inline: "center",
+  });
+}
+
 const monthStart = computed(() => {
   const now = new Date(todayISO() + "T00:00:00");
   const first = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -275,6 +292,7 @@ function dayTitle(iso: string) {
 
 function groupsForMenu(menu: DayDishes): DayGroupView[] {
   return groupsFromData(menu as Record<string, unknown>)
+    .filter((group) => !hiddenGroupLabels.has(group.label))
     .map((group) => ({
       key: group.key,
       label: group.label,
@@ -369,6 +387,7 @@ async function load() {
     record.value = null;
   } finally {
     loading.value = false;
+    await scrollToCurrentDay();
   }
 }
 
