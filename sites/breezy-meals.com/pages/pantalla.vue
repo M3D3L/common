@@ -491,8 +491,28 @@ function shuffleFeatures() {
   featureIndex.value = 0;
 }
 
-watch(featurePool, shuffleFeatures, { immediate: true });
-watch([menuSections, promoCards], scheduleDisplayFit, { flush: "post" });
+const featurePoolSignature = computed(() =>
+  JSON.stringify(
+    featurePool.value.map(({ key, name, price, image, category, surface }) => ({
+      key,
+      name,
+      price,
+      image,
+      category,
+      surface,
+    })),
+  ),
+);
+const displayLayoutSignature = computed(() =>
+  JSON.stringify({
+    sections: menuSections.value,
+    promos: promoCards.value,
+    catering: cateringItems.value,
+  }),
+);
+
+watch(featurePoolSignature, shuffleFeatures, { immediate: true });
+watch(displayLayoutSignature, scheduleDisplayFit, { flush: "post" });
 
 const now = ref(new Date());
 const clock = computed(() =>
