@@ -224,6 +224,7 @@ export default defineNuxtConfig({
             { to: "/platillos", label: "Platillos" },
             { to: "/productos", label: "Productos" },
             { to: "/recetas", label: "Recetas" },
+            { to: "/galeria", label: "Galeria" },
             { to: "/semana/menu", label: "Menú semanal" },
             { to: "/semana/calendario", label: "Calendario" },
             { to: "/etiquetas", label: "Etiquetas" },
