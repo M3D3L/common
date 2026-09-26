@@ -244,7 +244,10 @@ import { Check, CircleAlert, ImageUp, Landmark, Store } from "lucide-vue-next";
 definePageMeta({ layout: "breezy" });
 
 const requests = useMembershipPaymentRequests();
+const runtimeConfig = useRuntimeConfig();
+const { isAppleDevice, waLink } = useWhatsappOrder();
 const offer = requests.offer;
+const storeWhatsapp = runtimeConfig.public.business.whatsappNumber;
 const submitting = ref(false);
 const errorMessage = ref("");
 const submittedReference = ref("");
@@ -296,13 +299,31 @@ async function selectProof(event: Event) {
 async function submitRequest() {
   errorMessage.value = "";
   submitting.value = true;
+  const whatsappTab = isAppleDevice() ? null : window.open("", "_blank");
   try {
     const record = await requests.submit({
       ...form,
       paymentProof: paymentProof.value,
     });
     submittedReference.value = record.id.toUpperCase();
+    const message = [
+      "Nueva solicitud de membresía",
+      `Nombre: ${record.name}`,
+      `Teléfono: ${record.phone}`,
+      `Pago: ${record.payment_method === "transfer" ? "Transferencia" : "En tienda"}`,
+      `Referencia: ${submittedReference.value}`,
+      "",
+      "Por favor revisa la página de pagos.",
+    ].join("\n");
+    const whatsappUrl = waLink(message, storeWhatsapp);
+
+    if (whatsappTab && !whatsappTab.closed) {
+      whatsappTab.location.href = whatsappUrl;
+    } else {
+      window.location.href = whatsappUrl;
+    }
   } catch (error: any) {
+    whatsappTab?.close();
     errorMessage.value =
       error?.response?.message ||
       error?.message ||
