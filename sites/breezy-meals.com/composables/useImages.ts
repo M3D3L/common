@@ -1,8 +1,19 @@
 import type { RecordModel } from "pocketbase";
+import {
+  compressImage,
+  type ImageCompressionOptions,
+} from "@common/composables/useImageCompression";
 
 const COLLECTION = "Images";
 const FILE_FIELD = "field";
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
+const MAX_SOURCE_FILE_SIZE = 20 * 1024 * 1024;
+const DEFAULT_IMAGE_OPTIONS: ImageCompressionOptions = {
+  format: "webp",
+  maxSizeMB: 1,
+  maxWidthOrHeight: 1600,
+  quality: 0.8,
+};
 
 export interface ImageMetadata {
   title?: string | null;
@@ -13,13 +24,30 @@ export interface ImageMetadata {
 export default function useImages() {
   const { createItem, getFileUrl, updateItem } = usePocketBaseCore();
 
-  function validateImage(file: File) {
+  function validateImage(file: File, maxSize = MAX_SOURCE_FILE_SIZE) {
     if (!file.type.startsWith("image/")) {
       throw new Error(`${file.name} no es una imagen valida`);
     }
-    if (file.size > MAX_FILE_SIZE) {
-      throw new Error(`${file.name} supera el limite de 5 MB`);
+    if (file.size > maxSize) {
+      throw new Error(
+        `${file.name} supera el limite de ${Math.round(maxSize / 1024 / 1024)} MB`,
+      );
     }
+  }
+
+  async function optimizeImage(
+    file: File,
+    fileName: string,
+    options: ImageCompressionOptions = {},
+  ) {
+    validateImage(file);
+    const optimized = await compressImage(file, {
+      ...DEFAULT_IMAGE_OPTIONS,
+      ...options,
+      fileName,
+    });
+    validateImage(optimized, MAX_FILE_SIZE);
+    return optimized;
   }
 
   function imageUrl(record: RecordModel) {
@@ -64,10 +92,11 @@ export default function useImages() {
   async function uploadImage(
     file: File,
     metadata: ImageMetadata = {},
+    options: ImageCompressionOptions = {},
   ): Promise<string> {
-    validateImage(file);
     const title = metadata.title?.trim() || file.name.replace(/\.[^.]+$/, "");
-    const namedFile = fileFromTitle(file, title);
+    const optimized = await optimizeImage(file, title, options);
+    const namedFile = fileFromTitle(optimized, title);
     const formData = new FormData();
     formData.append(FILE_FIELD, namedFile);
     appendMetadata(formData, {
@@ -81,10 +110,13 @@ export default function useImages() {
   async function replaceImage(
     record: RecordModel,
     file: File,
+    options: ImageCompressionOptions = {},
   ): Promise<string> {
-    validateImage(file);
+    const title =
+      record.title?.trim() || record[FILE_FIELD].replace(/\.[^.]+$/, "");
+    const optimized = await optimizeImage(file, title, options);
     const formData = new FormData();
-    formData.append(FILE_FIELD, file, record[FILE_FIELD]);
+    formData.append(FILE_FIELD, optimized);
     const updated = await updateItem(COLLECTION, record.id, formData as any);
     return imageUrl(updated);
   }
