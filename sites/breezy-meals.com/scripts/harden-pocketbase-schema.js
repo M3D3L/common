@@ -2,6 +2,7 @@ import { readFile, writeFile } from "node:fs/promises";
 import { pathToFileURL } from "node:url";
 
 const AUTHENTICATED = '@request.auth.id != ""';
+const VERIFIED = "@request.auth.verified = true";
 const OWN_USER = "id = @request.auth.id";
 
 const publicRead = {
@@ -21,6 +22,13 @@ const staffOnly = {
 };
 
 export const ACCESS_RULES = {
+  Images: {
+    listRule: "",
+    viewRule: "",
+    createRule: VERIFIED,
+    updateRule: VERIFIED,
+    deleteRule: VERIFIED,
+  },
   users: {
     listRule: AUTHENTICATED,
     viewRule: AUTHENTICATED,

@@ -446,12 +446,7 @@
           </div>
           <div class="space-y-1.5 sm:col-span-2">
             <Label for="recipe-image">Imagen</Label>
-            <Input
-              id="recipe-image"
-              v-model="form.image"
-              type="url"
-              placeholder="https://..."
-            />
+            <ImageUrlInput id="recipe-image" v-model="form.image" />
           </div>
           <div class="space-y-1.5">
             <Label for="recipe-servings">Porciones</Label>
@@ -569,6 +564,7 @@ import {
 } from "@common/components/ui/select";
 import { Separator } from "@common/components/ui/separator";
 import { Textarea } from "@common/components/ui/textarea";
+import ImageUrlInput from "~/components/inputs/ImageUrlInput.vue";
 import {
   Sheet,
   SheetContent,

@@ -29,6 +29,31 @@
       </Button>
     </div>
 
+    <div class="relative mb-6 max-w-xl">
+      <Search
+        :size="16"
+        class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+      />
+      <Input
+        v-model="searchTerm"
+        type="search"
+        class="pl-9 pr-10"
+        placeholder="Buscar por nombre o pegar URL completa"
+        aria-label="Buscar imagen por nombre o URL"
+      />
+      <Button
+        v-if="searchTerm"
+        size="icon"
+        variant="ghost"
+        class="absolute right-1 top-1/2 h-7 w-7 -translate-y-1/2"
+        title="Limpiar busqueda"
+        aria-label="Limpiar busqueda"
+        @click="searchTerm = ''"
+      >
+        <X :size="14" />
+      </Button>
+    </div>
+
     <div
       v-if="loading"
       class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3"
@@ -58,9 +83,27 @@
       <CardContent class="p-12 text-center">
         <ImageOff :size="32" class="mx-auto text-muted-foreground" />
         <p class="mt-3 text-sm text-muted-foreground">
-          No hay imagenes en la coleccion.
+          {{
+            activeSearch
+              ? "No hay imagenes que coincidan con la busqueda."
+              : "No hay imagenes en la coleccion."
+          }}
         </p>
-        <Button class="mt-4" variant="outline" @click="addInput?.click()">
+        <Button
+          v-if="activeSearch"
+          class="mt-4"
+          variant="outline"
+          @click="searchTerm = ''"
+        >
+          <X :size="16" class="mr-2" />
+          Limpiar busqueda
+        </Button>
+        <Button
+          v-else
+          class="mt-4"
+          variant="outline"
+          @click="addInput?.click()"
+        >
           <Upload :size="16" class="mr-2" />
           Subir la primera
         </Button>
@@ -220,22 +263,31 @@ import {
   ExternalLink,
   ImageOff,
   RefreshCw,
+  Search,
   Trash2,
   Upload,
+  X,
 } from "lucide-vue-next";
 import type { RecordModel } from "pocketbase";
 
-const COLLECTION = "Images";
-const FILE_FIELD = "field";
 const PAGE_SIZE = 12;
-const MAX_FILE_SIZE = 5 * 1024 * 1024;
 
 const route = useRoute();
 const router = useRouter();
-const { createItem, deleteItem, fetchCollection, getFileUrl, updateItem } =
-  usePocketBaseCore();
+const { deleteItem, fetchCollection } = usePocketBaseCore();
+const {
+  collection: COLLECTION,
+  fileField: FILE_FIELD,
+  imageUrl: fullImageUrl,
+  replaceImage: replaceStoredImage,
+  uploadImage,
+  validateImage,
+} = useImages();
 
 const images = ref<RecordModel[]>([]);
+const searchTerm = ref(
+  typeof route.query.search === "string" ? route.query.search : "",
+);
 const totalPages = ref(1);
 const loading = ref(true);
 const loadError = ref(false);
@@ -250,6 +302,11 @@ const deleteDialogOpen = ref(false);
 const pendingDelete = ref<RecordModel | null>(null);
 
 let statusTimer: ReturnType<typeof setTimeout> | undefined;
+let searchTimer: ReturnType<typeof setTimeout> | undefined;
+
+const activeSearch = computed(() =>
+  typeof route.query.search === "string" ? route.query.search.trim() : "",
+);
 
 function showStatus(message: string, isError = false) {
   statusMessage.value = message;
@@ -265,6 +322,34 @@ function requestedPage() {
   return Number.isInteger(page) && page > 0 ? page : 1;
 }
 
+function escapeFilterValue(value: string) {
+  return value.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+}
+
+function imageFilter() {
+  if (!activeSearch.value) return "field != ''";
+
+  let filename = activeSearch.value;
+  let recordId = "";
+
+  try {
+    const url = new URL(activeSearch.value);
+    const segments = url.pathname
+      .split("/")
+      .filter(Boolean)
+      .map(decodeURIComponent);
+    filename = segments.at(-1) || activeSearch.value;
+    recordId = segments.at(-2) || "";
+  } catch {
+    // A normal search term is matched directly against the stored filename.
+  }
+
+  const filenameFilter = `field ~ "${escapeFilterValue(filename)}"`;
+  return recordId
+    ? `(${filenameFilter} || id = "${escapeFilterValue(recordId)}")`
+    : filenameFilter;
+}
+
 async function loadImages() {
   loading.value = true;
   loadError.value = false;
@@ -274,7 +359,7 @@ async function loadImages() {
       COLLECTION,
       requestedPage(),
       PAGE_SIZE,
-      "field != ''",
+      imageFilter(),
       "-created",
       null,
       null,
@@ -295,22 +380,17 @@ async function loadImages() {
   }
 }
 
-function fullImageUrl(record: RecordModel) {
-  const url = getFileUrl(record, record[FILE_FIELD]);
-  if (/^https?:\/\//i.test(url) || !import.meta.client) return url;
-  return new URL(url, window.location.origin).href;
-}
-
 function validateFile(file: File) {
-  if (!file.type.startsWith("image/")) {
-    showStatus(`${file.name} no es una imagen valida`, true);
+  try {
+    validateImage(file);
+    return true;
+  } catch (error) {
+    showStatus(
+      error instanceof Error ? error.message : "Imagen no valida",
+      true,
+    );
     return false;
   }
-  if (file.size > MAX_FILE_SIZE) {
-    showStatus(`${file.name} supera el limite de 5 MB`, true);
-    return false;
-  }
-  return true;
 }
 
 async function addImages(event: Event) {
@@ -322,9 +402,7 @@ async function addImages(event: Event) {
   uploading.value = true;
   try {
     for (const file of files) {
-      const formData = new FormData();
-      formData.append(FILE_FIELD, file);
-      await createItem(COLLECTION, formData as any);
+      await uploadImage(file);
     }
     if (requestedPage() !== 1) {
       await router.push({ query: { ...route.query, page: 1 } });
@@ -354,9 +432,7 @@ async function replaceImage(event: Event) {
 
   busyId.value = record.id;
   try {
-    const formData = new FormData();
-    formData.append(FILE_FIELD, file, record[FILE_FIELD]);
-    await updateItem(COLLECTION, record.id, formData as any);
+    await replaceStoredImage(record, file);
     await loadImages();
     showStatus("Imagen reemplazada; se conservo el registro y su URL");
   } catch {
@@ -407,10 +483,28 @@ function formatDate(value: string) {
   }).format(new Date(value));
 }
 
-watch(() => route.query.page, loadImages);
+watch(searchTerm, (value) => {
+  if (searchTimer) clearTimeout(searchTimer);
+  searchTimer = setTimeout(() => {
+    const search = value.trim() || undefined;
+    if (search === (activeSearch.value || undefined)) return;
+    router.replace({ query: { ...route.query, page: undefined, search } });
+  }, 300);
+});
+
+watch(
+  () => [route.query.page, route.query.search],
+  () => {
+    const routeSearch =
+      typeof route.query.search === "string" ? route.query.search : "";
+    if (routeSearch !== searchTerm.value.trim()) searchTerm.value = routeSearch;
+    loadImages();
+  },
+);
 onMounted(loadImages);
 onBeforeUnmount(() => {
   if (statusTimer) clearTimeout(statusTimer);
+  if (searchTimer) clearTimeout(searchTimer);
 });
 
 definePageMeta({

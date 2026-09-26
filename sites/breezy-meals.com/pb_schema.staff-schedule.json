@@ -156,9 +156,9 @@
     "indexes": [],
     "listRule": "",
     "viewRule": "",
-    "createRule": null,
-    "updateRule": null,
-    "deleteRule": null,
+    "createRule": "@request.auth.verified = true",
+    "updateRule": "@request.auth.verified = true",
+    "deleteRule": "@request.auth.verified = true",
     "options": {}
   },
   {
@@ -500,11 +500,7 @@
         "unique": false,
         "options": {
           "maxSelect": 1,
-          "values": [
-            "check",
-            "number",
-            "text"
-          ]
+          "values": ["check", "number", "text"]
         }
       },
       {
@@ -960,10 +956,7 @@
         "unique": false,
         "options": {
           "maxSelect": 1,
-          "values": [
-            "in_progress",
-            "done"
-          ]
+          "values": ["in_progress", "done"]
         }
       },
       {
@@ -1313,10 +1306,7 @@
         "unique": false,
         "options": {
           "maxSelect": 1,
-          "values": [
-            "in",
-            "out"
-          ]
+          "values": ["in", "out"]
         }
       },
       {
@@ -1599,11 +1589,7 @@
         "unique": false,
         "options": {
           "maxSelect": 1,
-          "values": [
-            "active",
-            "ready",
-            "discarded"
-          ]
+          "values": ["active", "ready", "discarded"]
         }
       },
       {
@@ -1616,11 +1602,7 @@
         "unique": false,
         "options": {
           "maxSelect": 1,
-          "values": [
-            "llevar",
-            "aqui",
-            "domicilio"
-          ]
+          "values": ["llevar", "aqui", "domicilio"]
         }
       },
       {
@@ -2173,12 +2155,7 @@
         "unique": false,
         "options": {
           "maxSelect": 1,
-          "values": [
-            "meal",
-            "snack",
-            "drink",
-            "sweet"
-          ]
+          "values": ["meal", "snack", "drink", "sweet"]
         }
       }
     ],
@@ -2262,11 +2239,7 @@
         "unique": false,
         "options": {
           "maxSelect": 1,
-          "values": [
-            "active",
-            "dormant",
-            "archived"
-          ]
+          "values": ["active", "dormant", "archived"]
         }
       },
       {
@@ -2404,10 +2377,7 @@
         "unique": false,
         "options": {
           "maxSelect": 1,
-          "values": [
-            "transfer",
-            "in_store"
-          ]
+          "values": ["transfer", "in_store"]
         }
       },
       {
@@ -2419,14 +2389,8 @@
         "presentable": false,
         "unique": false,
         "options": {
-          "mimeTypes": [
-            "image/jpeg",
-            "image/png",
-            "image/webp"
-          ],
-          "thumbs": [
-            "320x320"
-          ],
+          "mimeTypes": ["image/jpeg", "image/png", "image/webp"],
+          "thumbs": ["320x320"],
           "maxSelect": 1,
           "maxSize": 5242880,
           "protected": true
@@ -2456,12 +2420,7 @@
         "unique": false,
         "options": {
           "maxSelect": 1,
-          "values": [
-            "submitted",
-            "approved",
-            "rejected",
-            "cancelled"
-          ]
+          "values": ["submitted", "approved", "rejected", "cancelled"]
         }
       },
       {
@@ -2692,12 +2651,7 @@
         "unique": false,
         "options": {
           "maxSelect": 1,
-          "values": [
-            "active",
-            "exhausted",
-            "expired",
-            "cancelled"
-          ]
+          "values": ["active", "exhausted", "expired", "cancelled"]
         }
       },
       {
@@ -2896,11 +2850,7 @@
         "unique": false,
         "options": {
           "maxSelect": 1,
-          "values": [
-            "main",
-            "side",
-            "drink"
-          ]
+          "values": ["main", "side", "drink"]
         }
       },
       {
@@ -3091,10 +3041,7 @@
         "unique": false,
         "options": {
           "maxSelect": 1,
-          "values": [
-            "dishes",
-            "store"
-          ]
+          "values": ["dishes", "store"]
         }
       },
       {
@@ -3411,11 +3358,7 @@
         "unique": false,
         "options": {
           "maxSelect": 1,
-          "values": [
-            "auto",
-            "manual",
-            "legacy"
-          ]
+          "values": ["auto", "manual", "legacy"]
         }
       },
       {
@@ -3814,10 +3757,7 @@
         "unique": false,
         "options": {
           "maxSelect": 1,
-          "values": [
-            "block",
-            "closed"
-          ]
+          "values": ["block", "closed"]
         }
       },
       {
@@ -3903,11 +3843,7 @@
         "unique": false,
         "options": {
           "maxSelect": 1,
-          "values": [
-            "running",
-            "verified",
-            "failed"
-          ]
+          "values": ["running", "verified", "failed"]
         }
       },
       {
@@ -4367,11 +4303,7 @@
         "unique": false,
         "options": {
           "maxSelect": 1,
-          "values": [
-            "property",
-            "rental",
-            "lot"
-          ]
+          "values": ["property", "rental", "lot"]
         }
       },
       {
@@ -4540,12 +4472,7 @@
         "unique": false,
         "options": {
           "maxSelect": 1,
-          "values": [
-            "per/night",
-            "per/month",
-            "usd",
-            "mxn"
-          ]
+          "values": ["per/night", "per/month", "usd", "mxn"]
         }
       },
       {
@@ -5123,11 +5050,7 @@
         "unique": false,
         "options": {
           "maxSelect": 1,
-          "values": [
-            "meal",
-            "adjustment",
-            "topup_note"
-          ]
+          "values": ["meal", "adjustment", "topup_note"]
         }
       },
       {

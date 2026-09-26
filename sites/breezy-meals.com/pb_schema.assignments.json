@@ -156,9 +156,9 @@
     "indexes": [],
     "listRule": "",
     "viewRule": "",
-    "createRule": null,
-    "updateRule": null,
-    "deleteRule": null,
+    "createRule": "@request.auth.verified = true",
+    "updateRule": "@request.auth.verified = true",
+    "deleteRule": "@request.auth.verified = true",
     "options": {}
   },
   {

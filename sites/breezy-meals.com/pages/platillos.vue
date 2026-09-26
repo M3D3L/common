@@ -118,13 +118,11 @@
                   step="1"
                 />
               </div>
-              <div class="min-w-0 space-y-1.5">
+              <div class="min-w-0 space-y-1.5 sm:col-span-2">
                 <Label :for="`image-${group.key}-${index}`">Imagen</Label>
-                <Input
+                <ImageUrlInput
                   :id="`image-${group.key}-${index}`"
                   v-model="item.image"
-                  type="url"
-                  placeholder="https://..."
                 />
               </div>
             </div>
@@ -176,6 +174,7 @@ import { Button } from "@common/components/ui/button";
 import { Input } from "@common/components/ui/input";
 import { Label } from "@common/components/ui/label";
 import { Separator } from "@common/components/ui/separator";
+import ImageUrlInput from "~/components/inputs/ImageUrlInput.vue";
 import { ImageOff, Plus, Save, Trash2 } from "lucide-vue-next";
 import {
   emptyDayDishes,
