@@ -31,40 +31,48 @@
 
     <div
       v-if="loading"
-      class="rounded-lg border border-dashed border-border p-12 text-center text-sm text-muted-foreground"
+      class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3"
+      aria-label="Cargando imagenes"
     >
-      Cargando imagenes...
+      <Card v-for="index in 6" :key="index" class="overflow-hidden">
+        <Skeleton class="aspect-square w-full rounded-none" />
+        <CardContent class="space-y-3 p-4">
+          <Skeleton class="h-4 w-2/3" />
+          <Skeleton class="h-9 w-full" />
+          <Skeleton class="h-9 w-full" />
+        </CardContent>
+      </Card>
     </div>
 
-    <div
-      v-else-if="loadError"
-      class="rounded-lg border border-destructive/30 bg-destructive/5 p-8 text-center"
-    >
-      <p class="font-semibold">No se pudo cargar la galeria.</p>
-      <Button class="mt-4" variant="outline" @click="loadImages">
-        Reintentar
-      </Button>
-    </div>
+    <Alert v-else-if="loadError" variant="destructive">
+      <CircleAlert :size="18" />
+      <AlertTitle>No se pudo cargar la galeria</AlertTitle>
+      <AlertDescription>
+        <Button class="mt-3" variant="outline" @click="loadImages">
+          Reintentar
+        </Button>
+      </AlertDescription>
+    </Alert>
 
-    <div
-      v-else-if="!images.length"
-      class="rounded-lg border border-dashed border-border p-12 text-center"
-    >
-      <ImageOff :size="32" class="mx-auto text-muted-foreground" />
-      <p class="mt-3 text-sm text-muted-foreground">
-        No hay imagenes en la coleccion.
-      </p>
-      <Button class="mt-4" variant="outline" @click="addInput?.click()">
-        <Upload :size="16" class="mr-2" />
-        Subir la primera
-      </Button>
-    </div>
+    <Card v-else-if="!images.length" styles="border border-dashed bg-card">
+      <CardContent class="p-12 text-center">
+        <ImageOff :size="32" class="mx-auto text-muted-foreground" />
+        <p class="mt-3 text-sm text-muted-foreground">
+          No hay imagenes en la coleccion.
+        </p>
+        <Button class="mt-4" variant="outline" @click="addInput?.click()">
+          <Upload :size="16" class="mr-2" />
+          Subir la primera
+        </Button>
+      </CardContent>
+    </Card>
 
     <div v-else class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-      <article
+      <Card
         v-for="image in images"
         :key="image.id"
-        class="min-w-0 overflow-hidden rounded-lg border border-border bg-card"
+        styles="overflow-hidden border border-border bg-card"
+        class="min-w-0"
       >
         <a
           :href="fullImageUrl(image)"
@@ -80,7 +88,7 @@
           />
         </a>
 
-        <div class="space-y-3 p-4">
+        <CardContent class="space-y-3 p-4">
           <div class="min-w-0">
             <p class="truncate text-sm font-semibold" :title="image.field">
               {{ image.field }}
@@ -142,32 +150,72 @@
               :disabled="busyId === image.id"
               title="Eliminar imagen"
               :aria-label="`Eliminar ${image.field}`"
-              @click="removeImage(image)"
+              @click="requestDelete(image)"
             >
               <Trash2 :size="16" />
             </Button>
           </div>
-        </div>
-      </article>
+        </CardContent>
+      </Card>
     </div>
 
     <Pagination :total-pages="totalPages" :show-pagination="true" />
 
-    <div
+    <AlertDialog v-model:open="deleteDialogOpen">
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Eliminar imagen</AlertDialogTitle>
+          <AlertDialogDescription>
+            Se eliminara {{ pendingDelete?.field }} permanentemente. Esta accion
+            no se puede deshacer.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+          <AlertDialogAction
+            class="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            @click="removeImage"
+          >
+            Eliminar
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+
+    <Alert
       v-if="statusMessage"
-      class="fixed bottom-6 left-1/2 z-50 max-w-[calc(100vw-2rem)] -translate-x-1/2 rounded-lg bg-foreground px-4 py-2 text-sm text-background shadow-lg"
+      :variant="statusIsError ? 'destructive' : 'default'"
+      class="fixed bottom-6 left-1/2 z-50 w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 bg-background shadow-lg"
       role="status"
     >
-      {{ statusMessage }}
-    </div>
+      <AlertDescription>{{ statusMessage }}</AlertDescription>
+    </Alert>
   </section>
 </template>
 
 <script setup lang="ts">
 import Pagination from "@common/components/Pagination.vue";
-import { Button } from "@common/components/ui/button";
-import { Input } from "@common/components/ui/input";
 import {
+  Alert,
+  AlertDescription,
+  AlertTitle,
+} from "@common/components/ui/alert";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@common/components/ui/alert-dialog";
+import { Button } from "@common/components/ui/button";
+import { Card, CardContent } from "@common/components/ui/card";
+import { Input } from "@common/components/ui/input";
+import { Skeleton } from "@common/components/ui/skeleton";
+import {
+  CircleAlert,
   Copy,
   ExternalLink,
   ImageOff,
@@ -194,14 +242,18 @@ const loadError = ref(false);
 const uploading = ref(false);
 const busyId = ref("");
 const statusMessage = ref("");
+const statusIsError = ref(false);
 const addInput = ref<HTMLInputElement | null>(null);
 const replaceInput = ref<HTMLInputElement | null>(null);
 const replacementRecord = ref<RecordModel | null>(null);
+const deleteDialogOpen = ref(false);
+const pendingDelete = ref<RecordModel | null>(null);
 
 let statusTimer: ReturnType<typeof setTimeout> | undefined;
 
-function showStatus(message: string) {
+function showStatus(message: string, isError = false) {
   statusMessage.value = message;
+  statusIsError.value = isError;
   if (statusTimer) clearTimeout(statusTimer);
   statusTimer = setTimeout(() => {
     statusMessage.value = "";
@@ -251,11 +303,11 @@ function fullImageUrl(record: RecordModel) {
 
 function validateFile(file: File) {
   if (!file.type.startsWith("image/")) {
-    showStatus(`${file.name} no es una imagen valida`);
+    showStatus(`${file.name} no es una imagen valida`, true);
     return false;
   }
   if (file.size > MAX_FILE_SIZE) {
-    showStatus(`${file.name} supera el limite de 5 MB`);
+    showStatus(`${file.name} supera el limite de 5 MB`, true);
     return false;
   }
   return true;
@@ -281,7 +333,7 @@ async function addImages(event: Event) {
     }
     showStatus(files.length === 1 ? "Imagen agregada" : "Imagenes agregadas");
   } catch {
-    showStatus("No se pudieron agregar las imagenes");
+    showStatus("No se pudieron agregar las imagenes", true);
   } finally {
     uploading.value = false;
   }
@@ -308,16 +360,20 @@ async function replaceImage(event: Event) {
     await loadImages();
     showStatus("Imagen reemplazada; se conservo el registro y su URL");
   } catch {
-    showStatus("No se pudo reemplazar la imagen");
+    showStatus("No se pudo reemplazar la imagen", true);
   } finally {
     busyId.value = "";
   }
 }
 
-async function removeImage(record: RecordModel) {
-  if (!window.confirm(`Eliminar ${record[FILE_FIELD]} permanentemente?`)) {
-    return;
-  }
+function requestDelete(record: RecordModel) {
+  pendingDelete.value = record;
+  deleteDialogOpen.value = true;
+}
+
+async function removeImage() {
+  const record = pendingDelete.value;
+  if (!record) return;
 
   busyId.value = record.id;
   try {
@@ -325,9 +381,10 @@ async function removeImage(record: RecordModel) {
     await loadImages();
     showStatus("Imagen eliminada");
   } catch {
-    showStatus("No se pudo eliminar la imagen");
+    showStatus("No se pudo eliminar la imagen", true);
   } finally {
     busyId.value = "";
+    pendingDelete.value = null;
   }
 }
 
@@ -336,7 +393,7 @@ async function copyUrl(record: RecordModel) {
     await navigator.clipboard.writeText(fullImageUrl(record));
     showStatus("URL copiada");
   } catch {
-    showStatus("No se pudo copiar la URL");
+    showStatus("No se pudo copiar la URL", true);
   }
 }
 
