@@ -135,6 +135,18 @@ Copy `pb_hooks/protect_menu_catering.pb.js` into the PocketBase instance's
 an outdated or unrelated update attempts to clear the field; valid array updates
 from the catering editor remain allowed.
 
+The public member balance and history module uses an additive schema update:
+
+```bash
+npm run schema:client-portal -- pb_schema.payroll.json pb_schema.client-portal.json
+```
+
+Import the generated schema after taking a PocketBase backup, then copy
+`pb_hooks/client_portal.pb.js` into the instance's `pb_hooks` directory. Keep
+`members`, `memberships`, `redemptions`, `comandas`, and `comanda_lines`
+staff-only; the hook is the only public read surface. Enable PocketBase's global
+rate limiter in addition to the route's five-attempt-per-minute guard.
+
 ## Environment Variables
 
 These are read by `nuxt.config.ts` runtime config:

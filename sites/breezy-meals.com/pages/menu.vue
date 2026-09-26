@@ -542,6 +542,18 @@ const customer = reactive({ name: "", phone: "", address: "" });
 // Member code (optional, plain text). Not validated here: it's stamped in
 // the WhatsApp message so staff can see it and redeem it when serving.
 const memberCode = ref("");
+const verifiedMemberCode = useState<string>(
+  "breezy-verified-member-code",
+  () => "",
+);
+
+watch(
+  verifiedMemberCode,
+  (code) => {
+    if (!staffMode.value && code) memberCode.value = code;
+  },
+  { immediate: true },
+);
 
 async function loadMemberFromCode(code: string) {
   const normalized = code.replace(/\s+/g, "").toUpperCase();

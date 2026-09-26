@@ -1281,6 +1281,7 @@ function createComandasStore() {
       const { remaining } = await redemptions.redeem(ms, {
         staffId: user?.id,
         reason: redemptionReasonForOrder(o),
+        comandaId: o.recordId,
       });
       return remaining;
     } catch (e) {
@@ -1302,6 +1303,7 @@ function createComandasStore() {
     const wa = openBlankTab();
     let memberPhone = "";
     let memberName = "";
+    let memberId = "";
     let remainingMeals: number | undefined;
 
     if (o.memberCode) {
@@ -1309,6 +1311,7 @@ function createComandasStore() {
         const member = await members.getMemberByCode(o.memberCode);
         memberPhone = member?.phone ?? "";
         memberName = member?.name ?? "";
+        memberId = member?.id ?? "";
       } catch (e) {
         console.error("No se pudo obtener el teléfono del socio", e);
       }
@@ -1326,7 +1329,11 @@ function createComandasStore() {
     // 1) Primero la BD: conserva el registro y cambia su estado para historial.
     try {
       if (o.recordId) {
-        await updateItem(COMANDAS_COLLECTION, o.recordId, { status: "ready" });
+        await updateItem(COMANDAS_COLLECTION, o.recordId, {
+          status: "ready",
+          completed_at: pocketBaseDateTime(new Date()),
+          ...(memberId ? { member: memberId } : {}),
+        });
       }
     } catch (e) {
       console.error("No se pudo cerrar la orden en el servidor", e);

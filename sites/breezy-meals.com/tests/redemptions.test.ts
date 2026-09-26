@@ -128,7 +128,11 @@ test("redeeming the final credit exhausts the membership", async (t) => {
 
   const result = await api.redeem(
     membership({ credits_total: 5, credits_used: 4 }),
-    { staffId: "staff-1", reason: "  Comanda #9  " },
+    {
+      staffId: "staff-1",
+      reason: "  Comanda #9  ",
+      comandaId: "comanda-9",
+    },
   );
 
   assert.equal(result.remaining, 0);
@@ -141,6 +145,7 @@ test("redeeming the final credit exhausts the membership", async (t) => {
       amount: calls.creates[0]?.[1].amount,
       redeemed_by: calls.creates[0]?.[1].redeemed_by,
       reason: calls.creates[0]?.[1].reason,
+      comanda: calls.creates[0]?.[1].comanda,
       voided: calls.creates[0]?.[1].voided,
     },
     {
@@ -150,6 +155,7 @@ test("redeeming the final credit exhausts the membership", async (t) => {
       amount: 1,
       redeemed_by: "staff-1",
       reason: "Comanda #9",
+      comanda: "comanda-9",
       voided: false,
     },
   );

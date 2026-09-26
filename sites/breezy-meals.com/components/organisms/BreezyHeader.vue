@@ -76,6 +76,9 @@
               <SheetTitle class="font-heading text-xl">{{
                 headerCopy.menuTitle
               }}</SheetTitle>
+              <SheetDescription class="sr-only">
+                Enlaces de navegación y consulta de comidas.
+              </SheetDescription>
             </SheetHeader>
             <nav class="flex flex-col gap-2">
               <Button
@@ -112,6 +115,12 @@
                 </div>
               </div>
 
+              <ClientPortal
+                v-if="showClientPortal && !isLoggedIn"
+                compact
+                @verified="handleMemberVerified"
+              />
+
               <Button
                 v-if="showMenuBroadcast && isLoggedIn"
                 variant="outline"
@@ -145,12 +154,14 @@ import { Button } from "@common/components/ui/button";
 import {
   Sheet,
   SheetContent,
+  SheetDescription,
   SheetHeader,
   SheetTitle,
   SheetTrigger,
 } from "@common/components/ui/sheet";
 import { Menu, LogOut, Send } from "lucide-vue-next";
 import usePocketBase from "@common/composables/usePocketbase";
+import ClientPortal from "~/components/organisms/Menu/ClientPortal.vue";
 
 interface NavLink {
   to: string;
@@ -165,6 +176,7 @@ withDefaults(
     secondaryTitle?: string;
     showAuth?: boolean;
     showMenuBroadcast?: boolean;
+    showClientPortal?: boolean;
   }>(),
   {
     links: () => [],
@@ -172,6 +184,7 @@ withDefaults(
     secondaryTitle: "Vista del cliente",
     showAuth: false,
     showMenuBroadcast: false,
+    showClientPortal: false,
   },
 );
 
@@ -194,6 +207,10 @@ const headerCopy = {
 };
 
 const pb = usePocketBase();
+const verifiedMemberCode = useState<string>(
+  "breezy-verified-member-code",
+  () => "",
+);
 
 // Local login flag. authStore is client-only (localStorage), so start false to
 // match SSR and set the real value after mount to avoid a hydration mismatch.
@@ -239,6 +256,10 @@ const handleSignOut = async () => {
 const handleSendMenu = () => {
   open.value = false;
   emit("send-menu");
+};
+
+const handleMemberVerified = (memberCode: string) => {
+  verifiedMemberCode.value = memberCode;
 };
 
 const isActive = (to: string) =>

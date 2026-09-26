@@ -1,7 +1,7 @@
 <template>
   <div class="relative">
     <SeoMeta />
-    <OrganismsBreezyHeader :logoSrc :links />
+    <OrganismsBreezyHeader :logoSrc :links show-client-portal />
 
     <div
       v-if="showMenuStoreSwitcher"

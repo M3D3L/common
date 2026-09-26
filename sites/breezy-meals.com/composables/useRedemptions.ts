@@ -64,7 +64,7 @@ export default function useRedemptions() {
    */
   const redeem = async (
     m: Membership,
-    opts: { staffId?: string; reason?: string } = {},
+    opts: { staffId?: string; reason?: string; comandaId?: string } = {},
   ): Promise<{ redemption: Redemption; remaining: number }> => {
     if (m.credits_used >= m.credits_total)
       throw new Error("No credits remaining");
@@ -81,6 +81,7 @@ export default function useRedemptions() {
     };
     if (opts.staffId) data.redeemed_by = opts.staffId;
     if (opts.reason?.trim()) data.reason = opts.reason.trim();
+    if (opts.comandaId) data.comanda = opts.comandaId;
     const redemption = (await createItem(C, data)) as Redemption;
 
     const used = m.credits_used + 1;

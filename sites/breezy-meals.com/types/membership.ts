@@ -45,6 +45,7 @@ export interface Membership extends RecordModel {
 export interface Redemption extends RecordModel {
   membership: string;
   member: string;
+  comanda?: string;
   payment_request?: string;
   redeemed_at: string;
   redeemed_by?: string;
@@ -81,14 +82,30 @@ export interface MembershipPaymentRequest extends RecordModel {
   applied_at?: string;
 }
 
-/** Shape returned by the public /api/membership/check route. Minimal on purpose. */
-export interface MembershipCheck {
-  valid: boolean;
-  name?: string;
-  remaining?: number;
-  period?: string;
-  reason?: "not_found" | "exhausted" | "rate_limited";
+export interface ClientPortalActivity {
+  kind: RedemptionKind;
+  date: string;
+  amount: number;
 }
+
+export interface ClientPortalOrder {
+  number: number;
+  placedAt: string;
+  completedAt: string;
+  mode: "llevar" | "aqui" | "domicilio";
+  total: number;
+  promoLabel: string;
+  items: Array<{ name: string; quantity: number }>;
+}
+
+export type ClientPortalResponse =
+  | { verified: false; reason?: "rate_limited" }
+  | {
+      verified: true;
+      balance: { remaining: number; period: string };
+      activity: ClientPortalActivity[];
+      orders: ClientPortalOrder[];
+    };
 
 export type MemberStatus = Member["status"];
 export type MembershipStatus = Membership["status"];
