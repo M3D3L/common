@@ -51,6 +51,7 @@ export default function useMemberships() {
       null,
       null,
       true,
+      { requestKey: null },
     );
     return (r.items[0] as Membership) ?? null;
   };

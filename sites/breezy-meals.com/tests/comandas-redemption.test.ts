@@ -77,6 +77,42 @@ test("a completed comanda records its order and promotion context", () => {
   );
 });
 
+test("concurrent comanda eligibility lookups do not cancel each other", async (t) => {
+  const calls: unknown[][] = [];
+  const previousCore = (
+    globalThis as typeof globalThis & { usePocketBaseCore?: unknown }
+  ).usePocketBaseCore;
+
+  (
+    globalThis as typeof globalThis & { usePocketBaseCore?: unknown }
+  ).usePocketBaseCore = () => ({
+    fetchCollection: async (...args: unknown[]) => {
+      calls.push(args);
+      return { items: [], totalItems: 0 };
+    },
+  });
+  t.after(() => {
+    (
+      globalThis as typeof globalThis & { usePocketBaseCore?: unknown }
+    ).usePocketBaseCore = previousCore;
+  });
+
+  const [{ default: useMembers }, { default: useMemberships }] =
+    await Promise.all([
+      import("../composables/useMembers.ts"),
+      import("../composables/useMemberships.ts"),
+    ]);
+
+  await Promise.all([
+    useMembers().getMemberByCode("GM4218"),
+    useMemberships().getActiveMembership("member-1"),
+  ]);
+
+  assert.equal(calls.length, 2);
+  assert.ok(calls.every((args) => args[7] === true));
+  assert.ok(calls.every((args) => args[8]?.requestKey === null));
+});
+
 test("redeeming a ready comanda increments credits used by one", async (t) => {
   const updates: Array<
     [collection: string, id: string, data: Record<string, unknown>]
