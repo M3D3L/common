@@ -5,7 +5,7 @@
       type="file"
       accept="image/*"
       class="hidden"
-      :disabled="disabled || uploading"
+      :disabled="disabled || uploading || missingTitle"
       @change="handleUpload"
     />
     <div class="flex min-w-0 gap-2">
@@ -22,9 +22,17 @@
         type="button"
         variant="outline"
         class="shrink-0"
-        :disabled="disabled || uploading"
-        title="Subir imagen"
-        :aria-label="uploading ? 'Subiendo imagen' : 'Subir imagen'"
+        :disabled="disabled || uploading || missingTitle"
+        :title="
+          missingTitle ? 'Escribe el nombre antes de subir' : 'Subir imagen'
+        "
+        :aria-label="
+          missingTitle
+            ? 'Escribe el nombre antes de subir la imagen'
+            : uploading
+              ? 'Subiendo imagen'
+              : 'Subir imagen'
+        "
         @click="fileInput?.click()"
       >
         <LoaderCircle v-if="uploading" :size="16" class="mr-2 animate-spin" />
@@ -56,12 +64,15 @@ import { Button } from "@common/components/ui/button";
 import { Input } from "@common/components/ui/input";
 import { ImageMinus, LoaderCircle, Upload } from "lucide-vue-next";
 
-withDefaults(
+const props = withDefaults(
   defineProps<{
     modelValue?: string | null;
     id?: string;
     placeholder?: string;
     disabled?: boolean;
+    imageTitle?: string | null;
+    source?: string | null;
+    sourceKey?: string | null;
   }>(),
   {
     modelValue: "",
@@ -80,6 +91,9 @@ const { uploadImage } = useImages();
 const fileInput = ref<HTMLInputElement | null>(null);
 const uploading = ref(false);
 const errorMessage = ref("");
+const missingTitle = computed(
+  () => Boolean(props.source) && !props.imageTitle?.trim(),
+);
 
 function removeImage() {
   errorMessage.value = "";
@@ -96,7 +110,11 @@ async function handleUpload(event: Event) {
   uploading.value = true;
   errorMessage.value = "";
   try {
-    const url = await uploadImage(file);
+    const url = await uploadImage(file, {
+      title: props.imageTitle,
+      source: props.source,
+      sourceKey: props.sourceKey,
+    });
     emit("update:modelValue", url);
     emit("uploaded", url);
   } catch (error) {

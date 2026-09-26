@@ -446,7 +446,13 @@
           </div>
           <div class="space-y-1.5 sm:col-span-2">
             <Label for="recipe-image">Imagen</Label>
-            <ImageUrlInput id="recipe-image" v-model="form.image" />
+            <ImageUrlInput
+              id="recipe-image"
+              v-model="form.image"
+              :image-title="form.title"
+              source="recetas"
+              :source-key="form.id"
+            />
           </div>
           <div class="space-y-1.5">
             <Label for="recipe-servings">Porciones</Label>

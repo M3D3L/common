@@ -29,29 +29,45 @@
       </Button>
     </div>
 
-    <div class="relative mb-6 max-w-xl">
-      <Search
-        :size="16"
-        class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-      />
-      <Input
-        v-model="searchTerm"
-        type="search"
-        class="pl-9 pr-10"
-        placeholder="Buscar por nombre o pegar URL completa"
-        aria-label="Buscar imagen por nombre o URL"
-      />
-      <Button
-        v-if="searchTerm"
-        size="icon"
-        variant="ghost"
-        class="absolute right-1 top-1/2 h-7 w-7 -translate-y-1/2"
-        title="Limpiar busqueda"
-        aria-label="Limpiar busqueda"
-        @click="searchTerm = ''"
-      >
-        <X :size="14" />
-      </Button>
+    <div class="mb-6 grid gap-3 sm:grid-cols-[minmax(0,1fr)_12rem]">
+      <div class="relative">
+        <Search
+          :size="16"
+          class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+        />
+        <Input
+          v-model="searchTerm"
+          type="search"
+          class="pl-9 pr-10"
+          placeholder="Buscar titulo, archivo o URL"
+          aria-label="Buscar imagen por titulo, archivo o URL"
+        />
+        <Button
+          v-if="searchTerm"
+          size="icon"
+          variant="ghost"
+          class="absolute right-1 top-1/2 h-7 w-7 -translate-y-1/2"
+          title="Limpiar busqueda"
+          aria-label="Limpiar busqueda"
+          @click="searchTerm = ''"
+        >
+          <X :size="14" />
+        </Button>
+      </div>
+      <Select v-model="sourceFilter">
+        <SelectTrigger aria-label="Filtrar por origen">
+          <SelectValue placeholder="Todos los origenes" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem
+            v-for="option in sourceOptions"
+            :key="option.value"
+            :value="option.value"
+          >
+            {{ option.label }}
+          </SelectItem>
+        </SelectContent>
+      </Select>
     </div>
 
     <div
@@ -84,19 +100,19 @@
         <ImageOff :size="32" class="mx-auto text-muted-foreground" />
         <p class="mt-3 text-sm text-muted-foreground">
           {{
-            activeSearch
-              ? "No hay imagenes que coincidan con la busqueda."
+            hasActiveFilters
+              ? "No hay imagenes que coincidan con los filtros."
               : "No hay imagenes en la coleccion."
           }}
         </p>
         <Button
-          v-if="activeSearch"
+          v-if="hasActiveFilters"
           class="mt-4"
           variant="outline"
-          @click="searchTerm = ''"
+          @click="clearFilters"
         >
           <X :size="16" class="mr-2" />
-          Limpiar busqueda
+          Limpiar filtros
         </Button>
         <Button
           v-else
@@ -125,17 +141,25 @@
         >
           <img
             :src="fullImageUrl(image)"
-            :alt="image.field || 'Imagen de la galeria'"
+            :alt="image.title || image.field || 'Imagen de la galeria'"
             class="h-full w-full object-cover transition-transform duration-300 hover:scale-[1.02]"
             loading="lazy"
           />
         </a>
 
         <CardContent class="space-y-3 p-4">
-          <div class="min-w-0">
-            <p class="truncate text-sm font-semibold" :title="image.field">
-              {{ image.field }}
-            </p>
+          <div class="min-w-0 space-y-1">
+            <div class="flex min-w-0 items-center justify-between gap-2">
+              <p
+                class="truncate text-sm font-semibold"
+                :title="image.title || image.field"
+              >
+                {{ image.title || image.field }}
+              </p>
+              <Badge variant="secondary" class="shrink-0">
+                {{ sourceLabel(image.source) }}
+              </Badge>
+            </div>
             <p class="mt-1 text-xs text-muted-foreground">
               {{ formatDate(image.created) }}
             </p>
@@ -208,9 +232,12 @@
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Eliminar imagen</AlertDialogTitle>
-          <AlertDialogDescription>
-            Se eliminara {{ pendingDelete?.field }} permanentemente. Esta accion
-            no se puede deshacer.
+          <AlertDialogDescription class="min-w-0 break-words">
+            Se eliminara
+            <strong class="break-all font-semibold text-foreground">
+              {{ pendingDelete?.title || pendingDelete?.field }}
+            </strong>
+            permanentemente. Esta accion no se puede deshacer.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
@@ -253,10 +280,18 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@common/components/ui/alert-dialog";
+import { Badge } from "@common/components/ui/badge";
 import { Button } from "@common/components/ui/button";
 import { Card, CardContent } from "@common/components/ui/card";
 import { Input } from "@common/components/ui/input";
 import { Skeleton } from "@common/components/ui/skeleton";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@common/components/ui/select";
 import {
   CircleAlert,
   Copy,
@@ -288,6 +323,9 @@ const images = ref<RecordModel[]>([]);
 const searchTerm = ref(
   typeof route.query.search === "string" ? route.query.search : "",
 );
+const sourceFilter = ref(
+  typeof route.query.source === "string" ? route.query.source : "all",
+);
 const totalPages = ref(1);
 const loading = ref(true);
 const loadError = ref(false);
@@ -307,6 +345,21 @@ let searchTimer: ReturnType<typeof setTimeout> | undefined;
 const activeSearch = computed(() =>
   typeof route.query.search === "string" ? route.query.search.trim() : "",
 );
+const activeSource = computed(() =>
+  typeof route.query.source === "string" ? route.query.source : "all",
+);
+const hasActiveFilters = computed(
+  () => Boolean(activeSearch.value) || activeSource.value !== "all",
+);
+const sourceOptions = [
+  { value: "all", label: "Todos los origenes" },
+  { value: "platillos", label: "Platillos" },
+  { value: "productos", label: "Productos" },
+  { value: "catering", label: "Catering" },
+  { value: "recetas", label: "Recetas" },
+  { value: "galeria", label: "Galeria" },
+  { value: "unclassified", label: "Sin clasificar" },
+];
 
 function showStatus(message: string, isError = false) {
   statusMessage.value = message;
@@ -327,27 +380,55 @@ function escapeFilterValue(value: string) {
 }
 
 function imageFilter() {
-  if (!activeSearch.value) return "field != ''";
+  const filters = [`field != ''`];
 
-  let filename = activeSearch.value;
-  let recordId = "";
+  if (activeSearch.value) {
+    let filename = activeSearch.value;
+    let recordId = "";
 
-  try {
-    const url = new URL(activeSearch.value);
-    const segments = url.pathname
-      .split("/")
-      .filter(Boolean)
-      .map(decodeURIComponent);
-    filename = segments.at(-1) || activeSearch.value;
-    recordId = segments.at(-2) || "";
-  } catch {
-    // A normal search term is matched directly against the stored filename.
+    try {
+      const url = new URL(activeSearch.value);
+      const segments = url.pathname
+        .split("/")
+        .filter(Boolean)
+        .map(decodeURIComponent);
+      filename = segments.at(-1) || activeSearch.value;
+      recordId = segments.at(-2) || "";
+    } catch {
+      // A normal search term is matched against all identifying metadata.
+    }
+
+    const value = escapeFilterValue(filename);
+    const matches = [
+      `field ~ "${value}"`,
+      `title ~ "${value}"`,
+      `source ~ "${value}"`,
+      `source_key ~ "${value}"`,
+    ];
+    if (recordId) matches.push(`id = "${escapeFilterValue(recordId)}"`);
+    filters.push(`(${matches.join(" || ")})`);
   }
 
-  const filenameFilter = `field ~ "${escapeFilterValue(filename)}"`;
-  return recordId
-    ? `(${filenameFilter} || id = "${escapeFilterValue(recordId)}")`
-    : filenameFilter;
+  if (activeSource.value === "unclassified") {
+    filters.push(`source = ""`);
+  } else if (activeSource.value !== "all") {
+    filters.push(`source = "${escapeFilterValue(activeSource.value)}"`);
+  }
+
+  return filters.join(" && ");
+}
+
+function sourceLabel(source: string) {
+  return (
+    sourceOptions.find((option) => option.value === source)?.label ||
+    source ||
+    "Sin clasificar"
+  );
+}
+
+function clearFilters() {
+  searchTerm.value = "";
+  sourceFilter.value = "all";
 }
 
 async function loadImages() {
@@ -402,7 +483,10 @@ async function addImages(event: Event) {
   uploading.value = true;
   try {
     for (const file of files) {
-      await uploadImage(file);
+      await uploadImage(file, {
+        title: file.name.replace(/\.[^.]+$/, ""),
+        source: "galeria",
+      });
     }
     if (requestedPage() !== 1) {
       await router.push({ query: { ...route.query, page: 1 } });
@@ -492,12 +576,25 @@ watch(searchTerm, (value) => {
   }, 300);
 });
 
+watch(sourceFilter, (value) => {
+  const source = value === "all" ? undefined : value;
+  if (
+    source === (activeSource.value === "all" ? undefined : activeSource.value)
+  ) {
+    return;
+  }
+  router.replace({ query: { ...route.query, page: undefined, source } });
+});
+
 watch(
-  () => [route.query.page, route.query.search],
+  () => [route.query.page, route.query.search, route.query.source],
   () => {
     const routeSearch =
       typeof route.query.search === "string" ? route.query.search : "";
     if (routeSearch !== searchTerm.value.trim()) searchTerm.value = routeSearch;
+    const routeSource =
+      typeof route.query.source === "string" ? route.query.source : "all";
+    if (routeSource !== sourceFilter.value) sourceFilter.value = routeSource;
     loadImages();
   },
 );

@@ -123,6 +123,9 @@
                 <ImageUrlInput
                   :id="`image-${group.key}-${index}`"
                   v-model="item.image"
+                  :image-title="item.name"
+                  :source="dishes === 'store' ? 'productos' : 'platillos'"
+                  :source-key="`${group.key}:${item.name}`"
                 />
               </div>
             </div>
