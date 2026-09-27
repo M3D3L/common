@@ -59,6 +59,19 @@ export default function useMemberships() {
   const getMembership = (id: string) =>
     fetchRecord(C, id) as Promise<Membership>;
 
+  /** Non-cancelled buckets for staff-facing balance lists, newest first. */
+  const listMemberships = (page = 1, perPage = 100, ignoreCache = false) =>
+    fetchCollection(
+      C,
+      page,
+      perPage,
+      'status != "cancelled"',
+      "-created",
+      null,
+      null,
+      ignoreCache,
+    );
+
   /** Full grant history for a member, newest first (for the admin view). */
   const listForMember = (memberId: string, page = 1) =>
     fetchCollection(C, page, 24, `member = "${memberId}"`, "-period");
@@ -116,6 +129,7 @@ export default function useMemberships() {
     isUsable,
     getActiveMembership,
     getMembership,
+    listMemberships,
     listForMember,
     issueMembership,
     topUp,

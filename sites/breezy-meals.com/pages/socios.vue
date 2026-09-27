@@ -86,6 +86,12 @@
           <Badge variant="secondary" class="tabular-nums">
             {{ filteredMembers.length }}
           </Badge>
+          <Badge
+            v-if="redeemableCount"
+            class="bg-emerald-100 text-emerald-800 hover:bg-emerald-100"
+          >
+            {{ redeemableCount }} pueden canjear
+          </Badge>
         </button>
         <div class="flex items-center gap-1">
           <Button
@@ -181,6 +187,19 @@
             <UserPlus :size="15" class="mr-1.5" />
             Nuevo socio
           </Button>
+          <div class="space-y-1.5">
+            <Label>Disponibilidad</Label>
+            <Select v-model="availabilityFilter">
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos</SelectItem>
+                <SelectItem value="redeemable">Puede canjear</SelectItem>
+                <SelectItem value="empty">Sin comidas disponibles</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
           <p v-if="listLoading" class="text-sm text-muted-foreground">
             Cargando socios...
           </p>
@@ -206,12 +225,26 @@
                 class="flex items-center min-w-0 flex-1 gap-3 text-left hover:text-primary transition-colors"
                 @click="pick(c)"
               >
-                <span class="font-semibold truncate">{{ c.name }}</span>
+                <span
+                  class="font-semibold truncate"
+                  :class="canRedeem(c.id) && 'text-emerald-700'"
+                >
+                  {{ c.name }}
+                </span>
                 <span
                   class="text-xs text-muted-foreground tabular-nums truncate"
                   >{{ c.phone }}</span
                 >
-                <Badge variant="outline" class="ml-auto tabular-nums shrink-0">
+                <Badge
+                  v-if="canRedeem(c.id)"
+                  class="ml-auto shrink-0 bg-emerald-100 text-emerald-800 hover:bg-emerald-100 tabular-nums"
+                >
+                  {{ memberBalance(c.id) }} disponibles
+                </Badge>
+                <Badge v-else variant="secondary" class="ml-auto shrink-0">
+                  Sin saldo
+                </Badge>
+                <Badge variant="outline" class="tabular-nums shrink-0">
                   {{ c.member_code }}
                 </Badge>
               </button>
@@ -604,7 +637,7 @@ import useMemberships from "~/composables/useMemberships";
 import useRedemptions from "~/composables/useRedemptions";
 import { useLabelExport } from "~/composables/useLabelExport";
 import { useWhatsappOrder } from "~/composables/useWhatsappOrder";
-import type { Member, Redemption } from "~/types/membership";
+import type { Member, Membership, Redemption } from "~/types/membership";
 
 // --- composables (todas autenticadas; sin hooks ni lecturas públicas) ---
 const checkIn = useCheckIn();
@@ -630,9 +663,33 @@ const busy = ref(false);
 const listLoading = ref(false);
 const toastMsg = ref("");
 const allMembers = ref<Member[]>([]);
+const allMemberships = ref<Membership[]>([]);
 const membersDrawerOpen = ref(true);
 const deleting = ref(false);
 const lastSearchTerm = ref("");
+const availabilityFilter = ref<"all" | "redeemable" | "empty">("all");
+
+const membershipByMember = computed(() => {
+  const latest = new Map<string, Membership>();
+  for (const item of allMemberships.value) {
+    if (!latest.has(item.member)) latest.set(item.member, item);
+  }
+  return latest;
+});
+
+function memberBalance(memberId: string) {
+  const item = membershipByMember.value.get(memberId);
+  return item ? memberships.remaining(item) : 0;
+}
+
+function canRedeem(memberId: string) {
+  const item = membershipByMember.value.get(memberId);
+  return Boolean(item && memberships.isUsable(item));
+}
+
+const redeemableCount = computed(
+  () => allMembers.value.filter((item) => canRedeem(item.id)).length,
+);
 
 const listFilterTerm = computed(() => {
   const live = term.value.trim();
@@ -642,14 +699,22 @@ const listFilterTerm = computed(() => {
 
 const filteredMembers = computed(() => {
   const q = listFilterTerm.value.toLocaleLowerCase("es-MX");
-  if (!q) return allMembers.value;
+  return allMembers.value
+    .filter((m) => {
+      if (availabilityFilter.value === "redeemable" && !canRedeem(m.id))
+        return false;
+      if (availabilityFilter.value === "empty" && canRedeem(m.id)) return false;
+      if (!q) return true;
 
-  return allMembers.value.filter((m) => {
-    const name = (m.name ?? "").toLocaleLowerCase("es-MX");
-    const code = (m.member_code ?? "").toLocaleLowerCase("es-MX");
-    const phone = (m.phone ?? "").toLocaleLowerCase("es-MX");
-    return name.includes(q) || code.includes(q) || phone.includes(q);
-  });
+      const name = (m.name ?? "").toLocaleLowerCase("es-MX");
+      const code = (m.member_code ?? "").toLocaleLowerCase("es-MX");
+      const phone = (m.phone ?? "").toLocaleLowerCase("es-MX");
+      return name.includes(q) || code.includes(q) || phone.includes(q);
+    })
+    .sort((a, b) => {
+      const availability = Number(canRedeem(b.id)) - Number(canRedeem(a.id));
+      return availability || a.name.localeCompare(b.name, "es-MX");
+    });
 });
 
 const currentPage = computed(() => {
@@ -679,6 +744,12 @@ const paginatedMembers = computed(() => {
 });
 
 watch(listFilterTerm, () => {
+  if (route.query.page === undefined) return;
+  const { page: _page, ...query } = route.query;
+  void router.replace({ query });
+});
+
+watch(availabilityFilter, () => {
   if (route.query.page === undefined) return;
   const { page: _page, ...query } = route.query;
   void router.replace({ query });
@@ -791,19 +862,37 @@ async function pick(c: Member) {
 async function loadMembers() {
   listLoading.value = true;
   try {
-    const firstPage = await members.listMembers(1, 100, true);
-    const pages: Array<{ items: unknown[] }> = await Promise.all(
-      Array.from({ length: Math.max(0, firstPage.totalPages - 1) }, (_, i) =>
-        members.listMembers(i + 2, 100, true),
-      ),
-    );
+    const [firstPage, firstMembershipPage] = await Promise.all([
+      members.listMembers(1, 100, true),
+      memberships.listMemberships(1, 100, true),
+    ]);
+    const [pages, membershipPages]: Array<Array<{ items: unknown[] }>> =
+      await Promise.all([
+        Promise.all(
+          Array.from(
+            { length: Math.max(0, firstPage.totalPages - 1) },
+            (_, i) => members.listMembers(i + 2, 100, true),
+          ),
+        ),
+        Promise.all(
+          Array.from(
+            { length: Math.max(0, firstMembershipPage.totalPages - 1) },
+            (_, i) => memberships.listMemberships(i + 2, 100, true),
+          ),
+        ),
+      ]);
     allMembers.value = [
       ...(firstPage.items as Member[]),
       ...pages.flatMap((page) => page.items as Member[]),
     ];
+    allMemberships.value = [
+      ...(firstMembershipPage.items as Membership[]),
+      ...membershipPages.flatMap((page) => page.items as Membership[]),
+    ];
   } catch (e) {
     console.error("Could not load members:", e);
     allMembers.value = [];
+    allMemberships.value = [];
   } finally {
     listLoading.value = false;
   }
@@ -836,7 +925,7 @@ async function doIssue() {
   try {
     await checkIn.issueCredits(5);
     toast("Membresía creada ✅");
-    await refresh();
+    await Promise.all([refresh(), loadMembers()]);
   } catch (e: any) {
     console.error("issue failed:", e);
     toast(e?.message ?? "No se pudo crear la membresía");
@@ -855,7 +944,7 @@ async function addMeals(n: number) {
   try {
     await memberships.topUp(member.value.id, n);
     toast(`+${n} comida${n === 1 ? "" : "s"} ✅`);
-    await refresh();
+    await Promise.all([refresh(), loadMembers()]);
   } catch (e: any) {
     console.error("addMeals failed:", e);
     toast(e?.message ?? "No se pudo agregar comidas");
@@ -1137,6 +1226,7 @@ onMounted(async () => {
       "memberships",
       (event: { record: { member?: string } }) => {
         if (event.record.member === member.value?.id) void refresh();
+        void loadMembers();
       },
       "*",
     );
