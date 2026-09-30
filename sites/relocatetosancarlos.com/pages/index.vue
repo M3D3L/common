@@ -1,16 +1,26 @@
 <template>
   <div class="w-full pb-16">
     <SeoMeta :seoData="computedSeoData" />
-    <OrganismsHero v-bind="heroSection" />
+    <OrganismsHero
+      :key="partner?.id || 'default'"
+      :id="personalizedHeroSection.id"
+      :padding="personalizedHeroSection.padding"
+      :video="personalizedHeroSection.video"
+      :header-id="personalizedHeroSection.headerId"
+      :image-src="personalizedHeroSection.imageSrc"
+      :image-alt="personalizedHeroSection.imageAlt"
+      :title-line1="personalizedHeroSection.titleLine1"
+      :title-highlight="personalizedHeroSection.titleHighlight"
+      :description="personalizedHeroSection.description"
+      :buttons="personalizedHeroSection.buttons"
+      :call-to-action="personalizedHeroSection.callToAction"
+    />
 
     <div class="container">
       <TextSectionTitle
         class="pt-12 pb-8"
-        :title="propertiesSection?.value?.title || propertiesSection?.title"
-        :description="
-          propertiesSection?.value?.description ||
-          propertiesSection?.description
-        "
+        :title="personalizedPropertiesSection.title"
+        :description="personalizedPropertiesSection.description"
         :h1="false"
       />
 
@@ -58,7 +68,10 @@
       </div>
     </div>
 
-    <SectionsSocialsCarousel v-bind="socialsSection?.value || socialsSection" />
+    <SectionsSocialsCarousel
+      v-if="showSocialsSection"
+      v-bind="personalizedSocialsSection"
+    />
   </div>
 </template>
 
@@ -66,6 +79,13 @@
 import { createSeoObject } from "@common/composables/useSeo";
 
 const config = useRuntimeConfig();
+const {
+  partner,
+  partnerPhotoUrl,
+  partnerHeroImageUrl,
+  partnerHeroVideoUrl,
+  partnerLandingContent,
+} = useReferralPartner();
 
 // Layout configs (computed refs)
 import {
@@ -80,6 +100,66 @@ const props = defineProps({
     type: String,
     default: "En",
   },
+});
+
+const personalizedHeroSection = computed(() => {
+  if (!partner.value) return heroSection;
+
+  const hero = partnerLandingContent.value.hero || {};
+
+  return {
+    ...heroSection,
+    video: partnerHeroVideoUrl.value,
+    imageSrc: partnerPhotoUrl.value || partnerHeroImageUrl.value || "",
+    imageAlt: partner.value.name,
+    titleLine1:
+      hero.title_line_1 ||
+      partner.value.hero_title ||
+      `Explore San Carlos with ${partner.value.name}`,
+    titleHighlight:
+      hero.title_highlight ||
+      partner.value.brokerage ||
+      partner.value.title ||
+      "San Carlos Real Estate",
+    description:
+      hero.description ||
+      partner.value.hero_description ||
+      partner.value.welcome_message ||
+      `Explore San Carlos properties and relocation options with ${partner.value.name}.`,
+    callToAction: hero.call_to_action || "Explore San Carlos",
+  };
+});
+
+const personalizedPropertiesSection = computed(() => {
+  if (!partner.value) return propertiesSection;
+  return {
+    title:
+      partnerLandingContent.value.properties?.title ||
+      "San Carlos Homes, Rentals & Investment Opportunities",
+    description:
+      partnerLandingContent.value.properties?.description ||
+      "Browse a curated local catalog of homes, rentals, and investment properties in San Carlos, Sonora.",
+  };
+});
+
+const personalizedSocialsSection = computed(() => {
+  if (!partner.value) return socialsSection;
+  const socialContent = partnerLandingContent.value.socials || {};
+  return {
+    title: socialContent.title || `Connect with ${partner.value.name}`,
+    description: socialContent.description || "",
+    socials: Array.isArray(socialContent.items) ? socialContent.items : [],
+  };
+});
+
+const showSocialsSection = computed(() => {
+  if (!partner.value) return true;
+  const socialContent = partnerLandingContent.value.socials;
+  return Boolean(
+    socialContent?.enabled &&
+    Array.isArray(socialContent.items) &&
+    socialContent.items.length,
+  );
 });
 
 // Data
@@ -103,7 +183,7 @@ const loadProperties = async (ignoreCache = false) => {
       "-created",
       null,
       null,
-      ignoreCache
+      ignoreCache,
     );
     propertyItems.value = data || { items: [] };
   } catch (err) {
@@ -117,19 +197,33 @@ const loadProperties = async (ignoreCache = false) => {
 // SEO (PURE + SAFE)
 const computedSeoData = computed(() => {
   const defaults = seoDefaults?.home || {};
+  const partnerSeo = partnerLandingContent.value.seo || {};
+  const title = partner.value
+    ? partnerSeo.title || `San Carlos Real Estate with ${partner.value.name}`
+    : defaults.title || "Real Estate";
+  const description = partner.value
+    ? partnerSeo.description ||
+      `Explore San Carlos real estate and relocation opportunities with ${partner.value.name}.`
+    : defaults.description || "";
 
   return createSeoObject({
-    title: defaults.title || "Real Estate",
-    summary: defaults.description || "",
-    keywords: defaults.keywords || "",
-    imageUri: defaults.image || "",
+    title,
+    summary: description,
+    keywords: partner.value
+      ? partnerSeo.keywords || "San Carlos Sonora real estate"
+      : defaults.keywords || "",
+    imageUri: partner.value
+      ? partnerHeroImageUrl.value || partnerPhotoUrl.value
+      : defaults.image || "",
     pubDate: "",
-    byline: defaults.byline || "",
+    byline: partner.value
+      ? `${partner.value.name}, Referral Partner`
+      : defaults.byline || "",
     jsonLd: {
       "@type": "WebSite",
       url: config.public.siteUrl,
-      name: defaults.title,
-      description: defaults.description,
+      name: title,
+      description,
       publisher: {
         "@type": "Organization",
         name: config.public.siteName,
