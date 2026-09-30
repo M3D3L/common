@@ -35,7 +35,9 @@ export default function useReferralPartner() {
     () => partner.value?.photo_url || getPartnerFileUrl("photo"),
   );
   const partnerHeroImageUrl = computed(() => getPartnerFileUrl("hero_image"));
-  const partnerHeroVideoUrl = computed(() => getPartnerFileUrl("hero_video"));
+  const partnerHeroVideoUrl = computed(
+    () => partner.value?.hero_video_url || "",
+  );
   const partnerLandingContent = computed<Record<string, any>>(
     () => partner.value?.landing_content || {},
   );

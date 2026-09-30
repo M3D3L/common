@@ -109,7 +109,7 @@ const personalizedHeroSection = computed(() => {
 
   return {
     ...heroSection,
-    video: partnerHeroVideoUrl.value,
+    video: partnerHeroVideoUrl.value || heroSection.video,
     imageSrc: partnerPhotoUrl.value || partnerHeroImageUrl.value || "",
     imageAlt: partner.value.name,
     titleLine1:
