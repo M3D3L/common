@@ -292,7 +292,7 @@ const props = defineProps({
 const loading = ref(true);
 const data = reactive<ClockData>({ punches: [] });
 
-const tab = ref<"reloj" | "resumen">(props.isAdmin ? "resumen" : "reloj");
+const tab = ref<"reloj" | "resumen">("reloj");
 const tabs = [
   { key: "reloj", label: "Reloj" },
   { key: "resumen", label: "Resumen" },
@@ -302,7 +302,6 @@ watch(
   () => props.isAdmin,
   (isAdmin) => {
     if (isAdmin) {
-      tab.value = "resumen";
       void load();
     } else {
       staff.value = me.value.id ? [me.value] : [];

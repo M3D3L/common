@@ -50,7 +50,9 @@ export interface PromoProgressCard {
   missingTextEn: string;
 }
 
-function toRuntimePromo(record: Record<string, any>): PricingPromo | null {
+export function toRuntimePromo(
+  record: Record<string, any>,
+): PricingPromo | null {
   const data =
     record?.data && typeof record.data === "object" ? record.data : undefined;
   const id = String(record.promoId || data?.id || record.id || "").trim();

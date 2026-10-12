@@ -3,8 +3,10 @@ import test from "node:test";
 
 import {
   buildComandaDrafts,
+  membershipPromoForEditedOrder,
   promoRedeemsMembershipMeal,
 } from "../utils/comandaDrafts.ts";
+import { menuPricingConfig } from "../config/menu-pricing.ts";
 import { shouldRedeemOnReady } from "../utils/comandasRedemption.ts";
 
 const application = {
@@ -15,6 +17,31 @@ const application = {
   ],
   orderUnits: [],
 };
+
+test("an edited cart becomes redeemable after its combo is completed", () => {
+  const menu = {
+    guisos: ["Guiso"],
+    sides: ["Arroz", "Ensalada"],
+    bebidas: ["Agua"],
+  };
+
+  assert.equal(
+    membershipPromoForEditedOrder({
+      cart: { Guiso: 1, Arroz: 1 },
+      menu,
+      config: menuPricingConfig,
+    }),
+    undefined,
+  );
+
+  const promo = membershipPromoForEditedOrder({
+    cart: { Guiso: 1, Arroz: 1, Ensalada: 1, Agua: 1 },
+    menu,
+    config: menuPricingConfig,
+  });
+  assert.equal(promo?.id, "meal-combo-120");
+  assert.equal(promoRedeemsMembershipMeal(promo), true);
+});
 
 test("two eligible promo applications create two redeemable comandas", () => {
   const drafts = buildComandaDrafts({

@@ -48,6 +48,13 @@ import {
   comandaUpdatePayload,
   pocketBaseDateTime,
 } from "~/lib/comanda-record";
+import { menuPricingConfig } from "~/config/menu-pricing";
+import type { PricingConfig } from "~/utils/menuPricing";
+import {
+  membershipPromoForEditedOrder,
+  promoRedeemsMembershipMeal,
+} from "~/utils/comandaDrafts";
+import { toRuntimePromo } from "~/composables/useMenuPricing";
 
 /* ===== Config ===== */
 const STORAGE_KEY = "comandas";
@@ -179,6 +186,7 @@ function createComandasStore() {
     Record<string, RedemptionAvailability>
   >({});
   const redemptionRefreshVersion = new Map<string, number>();
+  let runtimePromoConfig: PricingConfig | null = null;
   const ordersTab = ref<"active" | "history">("active");
   const historyDate = ref(todayISO());
   const historyOrders = ref<StoredOrder[]>([]);
@@ -642,6 +650,32 @@ function createComandasStore() {
     await Promise.allSettled(
       orders.value.map((order) => refreshRedemptionStatus(order)),
     );
+  }
+
+  async function getRuntimePromoConfig(): Promise<PricingConfig> {
+    if (runtimePromoConfig) return runtimePromoConfig;
+    try {
+      const response = await fetchCollection(
+        "promos",
+        1,
+        200,
+        "active = true",
+        "priority",
+        null,
+        null,
+        true,
+        { requestKey: "comandas_runtime_promos" },
+      );
+      runtimePromoConfig = {
+        ...menuPricingConfig,
+        promos: response.items
+          .map((item) => toRuntimePromo(item as Record<string, any>))
+          .filter((item) => item !== null),
+      };
+    } catch {
+      runtimePromoConfig = { ...menuPricingConfig, promos: [] };
+    }
+    return runtimePromoConfig;
   }
 
   /* ===== PocketBase: menú ===== */
@@ -1378,7 +1412,20 @@ function createComandasStore() {
       return false;
     }
 
+    const memberCodeChanged =
+      changes.memberCode !== undefined && changes.memberCode !== o.memberCode;
+    const cartChanged = changes.cart !== undefined;
     const { recordId, ...snapshot } = { ...o, ...changes };
+    if (cartChanged) {
+      const promo = membershipPromoForEditedOrder({
+        cart: snapshot.cart,
+        menu: catalog.value,
+        config: await getRuntimePromoConfig(),
+        taquizaOrders: snapshot.taquizaOrders,
+      });
+      snapshot.promo = promo;
+      snapshot.redeemMemberMeal = promoRedeemsMembershipMeal(promo);
+    }
     try {
       const saved = await updateItem(
         COMANDAS_COLLECTION,
@@ -1387,6 +1434,10 @@ function createComandasStore() {
       );
       const updated = recordToOrder(saved as RecordModel);
       upsertOrder(updated);
+      if (cartChanged || memberCodeChanged) {
+        delete redemptionAvailability[redemptionKey(updated)];
+        await refreshRedemptionStatus(updated);
+      }
       await normalizedComandas
         .syncLines(recordId, updated)
         .catch(() => undefined);

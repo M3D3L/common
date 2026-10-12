@@ -1,5 +1,9 @@
-import type { PlacedOrder } from "./comandas.ts";
-import type { PricingLine } from "./menuPricing.ts";
+import type { DayDishes, PlacedOrder } from "./comandas.ts";
+import {
+  priceMenuOrder,
+  type PricingConfig,
+  type PricingLine,
+} from "./menuPricing.ts";
 
 type TaquizaKind = "tacos" | "quesadillas";
 
@@ -171,4 +175,60 @@ export function promoRedeemsMembershipMeal(
     promo?.redemption?.kind === "membership_meal" &&
     promo.redemption.credits > 0
   );
+}
+
+export function membershipPromoForEditedOrder(args: {
+  cart: Record<string, number>;
+  menu: DayDishes;
+  config: PricingConfig;
+  taquizaOrders?: PlacedOrder["taquizaOrders"];
+}): PlacedOrder["promo"] | undefined {
+  const items = Object.entries(args.menu)
+    .filter(([group]) => group !== "taquizas")
+    .flatMap(([group, names]) =>
+      (names ?? [])
+        .map((name) => ({
+          name,
+          group,
+          qty: Math.max(0, Number(args.cart[name]) || 0),
+          unitPrice: 0,
+        }))
+        .filter((item) => item.qty > 0),
+    );
+  const orderUnits = (["tacos", "quesadillas"] as const)
+    .map((kind) => ({
+      code: `taquiza:${kind}`,
+      label: kind,
+      qty: Math.max(0, Number(args.taquizaOrders?.[kind]) || 0),
+      unitPrice: args.config.orderUnits?.[`taquiza:${kind}`]?.unitPrice ?? 0,
+      promoEligibleQty: Math.max(0, Number(args.taquizaOrders?.[kind]) || 0),
+    }))
+    .filter((unit) => unit.qty > 0);
+  const membershipPromoIds = args.config.promos
+    .filter(
+      (promo) =>
+        promo.redemption?.kind === "membership_meal" &&
+        promo.redemption.credits > 0,
+    )
+    .map((promo) => promo.id);
+  const line = priceMenuOrder({
+    items,
+    orderUnits,
+    config: args.config,
+    preferredPromoIds: membershipPromoIds,
+  }).lines.find(
+    (entry) =>
+      entry.kind === "promo" &&
+      entry.redemption?.kind === "membership_meal" &&
+      entry.redemption.credits > 0,
+  );
+
+  return line
+    ? {
+        id: line.code,
+        label: line.label,
+        application: 1,
+        redemption: line.redemption,
+      }
+    : undefined;
 }
