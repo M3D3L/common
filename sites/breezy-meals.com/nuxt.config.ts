@@ -1,6 +1,7 @@
 import path from "path";
 
 export default defineNuxtConfig({
+  srcDir: ".",
   compatibilityDate: "2025-08-30",
   nitro: {
     preset: "github-pages",

@@ -26,8 +26,27 @@ Most sites extend common root config through Nuxt `extends` so shared behavior s
 
 ## Requirements
 
-- Node.js 20+
+- Node.js 24.15+ LTS recommended (`nvm use` from the repository root).
+  Supported Node ranges: `^22.22.3 || ^24.15.0 || >=26.0.0`, matching Nuxt 4.
 - npm 10+
+
+## Nuxt 4
+
+Common and the four actively maintained sites use Nuxt 4. Their existing
+top-level app folders are retained with `srcDir: "."`; moving code into `app/`
+is not required. Tailwind CSS remains on v3 to preserve the existing styling.
+`sancarlosinsider.com` is excluded from this upgrade.
+TypeScript uses Nuxt 4's separate app, server, shared, and Node project references.
+
+Sites extend the local common layer (and Vivir also extends Relocate), not a
+downloaded GitHub starter package. Install root dependencies before site
+dependencies, including when building a single site.
+
+The root is a shared layer, not a standalone deployable site: shared pages expect
+site-specific configuration such as `assets/configs/layout.js`. Validate it by
+building the consuming sites. CI uses Node.js 24.15.0 and generates each site
+from its own directory with the `github-pages` Nitro preset. Generated files are
+written to each site's `.output/public/` directory.
 
 ## Install Dependencies
 
@@ -36,14 +55,14 @@ Install dependencies where you are going to run commands.
 Root:
 
 ```bash
-npm install
+npm ci
 ```
 
 Per-site (example):
 
 ```bash
 cd sites/breezy-meals.com
-npm install
+npm ci
 ```
 
 Proxy worker:
