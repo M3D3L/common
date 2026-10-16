@@ -8,6 +8,34 @@ const readSource = (relativePath: string) =>
     " ",
   );
 
+test("homepage stays at root and puts the menu action before secondary destinations", () => {
+  const home = readSource("../pages/index.vue");
+  assert.match(home, /definePageMeta\(\{ layout: "breezy" \}\)/);
+  assert.doesNotMatch(home, /navigateTo|window\.location|router\.replace/);
+  assert.match(home, /<NuxtLink to="\/menu"> Ver menú y pedir/);
+  assert.ok(home.indexOf('to="/menu"') < home.indexOf('aria-labelledby="explore-title"'));
+  for (const destination of ["/promos", "/tienda", "/catering"]) {
+    assert.ok(home.includes(`to: "${destination}"`));
+  }
+});
+
+test("scrolling past the full-menu switch reveals items only for an untouched empty daily order", () => {
+  const menu = readSource("../pages/menu.vue");
+  assert.match(menu, /ref="fullMenuToggleEl"/);
+  assert.match(menu, /@click="toggleFullMenu"/);
+  assert.match(menu, /@keydown.enter.space.prevent="toggleFullMenu"/);
+  assert.match(menu, /fullMenuManuallyToggled.value = true/);
+  assert.match(menu, /!scrollingDown \|\| fullMenuVisible.value \|\| fullMenuManuallyToggled.value/);
+  assert.match(menu, /staffMode.value \|\| isCatering.value \|\| !props.useDailyMenu \|\| props.dishesField !== "dishes"/);
+  assert.match(menu, /activePromoId.value \|\| itemCount.value > 0 \|\| taquizaOrders.value.length > 0/);
+  assert.match(menu, /toggleBottom <= window.innerHeight \* 0.45/);
+  assert.match(menu, /passive: true/);
+  assert.match(menu, /cancelAnimationFrame\(autoExpandFrame\)/);
+  assert.match(menu, /style="overflow-anchor: none"/);
+  assert.match(menu, /motion-reduce:transition-none/);
+  assert.match(menu, /v-if="fullMenuVisible" class="space-y-8" data-full-menu/);
+});
+
 test("shows orderable menu content before guidance and membership promotion", () => {
   const menuPage = readSource("../pages/menu.vue");
   const orderableContent = menuPage.indexOf("<OrganismsMenuPromoList");

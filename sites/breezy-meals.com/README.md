@@ -13,6 +13,16 @@ This app owns Breezy-specific flows, including:
 - staff/admin operational pages
 - menu and order-related tooling
 
+The public homepage (`/`) introduces Breezy Market without automatically
+redirecting visitors. Its primary action opens `/menu` to start an order; promos,
+the store, and catering remain secondary destinations.
+
+On the daily menu, scrolling down past the full-menu switch reveals the dishes
+when the switch reaches the upper 45% of the viewport, provided no promo, item,
+or taquiza order is selected. Manually toggling the menu disables automatic
+opening for that visit. The reveal respects reduced-motion preferences and
+does not apply to staff, store, or catering views.
+
 Do not move these features into other site folders.
 
 ## Tech Notes

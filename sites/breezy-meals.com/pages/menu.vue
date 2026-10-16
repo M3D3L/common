@@ -58,6 +58,7 @@
       <main
         ref="menuMainEl"
         class="mx-auto max-w-2xl space-y-8 px-4 pb-6 pt-5 sm:px-6 sm:pt-7"
+        style="overflow-anchor: none"
       >
         <section
           v-if="!staffMode && props.promoConfig?.variant === 'catering'"
@@ -143,13 +144,14 @@
           v-if="
             !isCatering && promosVisible && promoCardsWithAppliedState.length
           "
+          ref="fullMenuToggleEl"
           role="switch"
           tabindex="0"
           :aria-checked="showFullMenu"
           aria-label="Ver menú completo"
           class="js-reveal-item group flex cursor-pointer items-center justify-between gap-4 rounded-lg border border-emerald-950/20 bg-emerald-800 p-4 text-white shadow-md transition-colors hover:bg-emerald-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 focus-visible:ring-offset-2"
-          @click="showFullMenu = !showFullMenu"
-          @keydown.enter.space.prevent="showFullMenu = !showFullMenu"
+          @click="toggleFullMenu"
+          @keydown.enter.space.prevent="toggleFullMenu"
         >
           <div class="flex min-w-0 items-center gap-3">
             <span
@@ -179,7 +181,12 @@
           />
         </section>
 
-        <template v-if="fullMenuVisible">
+        <Transition
+          enter-active-class="transition duration-300 ease-out motion-reduce:transition-none"
+          enter-from-class="translate-y-2 opacity-0 motion-reduce:translate-y-0"
+          enter-to-class="translate-y-0 opacity-100"
+        >
+          <div v-if="fullMenuVisible" class="space-y-8" data-full-menu>
           <!-- ===== Category chips: filter at a glance =====
                Each chip opens its section and scrolls to it. "All" expands or
                collapses everything. The badge keeps the cart count even while
@@ -228,7 +235,8 @@
               @toggle="toggleGroup(group.key)"
             />
           </section>
-        </template>
+          </div>
+        </Transition>
 
         <OrganismsMenuInstructions
           v-if="!staffMode"
@@ -396,6 +404,14 @@ const promosVisible = computed(
     (!staffMode.value && props.useDailyMenu),
 );
 const showFullMenu = ref(false);
+const fullMenuToggleEl = ref<HTMLElement | null>(null);
+const fullMenuManuallyToggled = ref(false);
+
+function toggleFullMenu() {
+  fullMenuManuallyToggled.value = true;
+  showFullMenu.value = !showFullMenu.value;
+}
+
 const fullMenuVisible = computed(
   () =>
     isCatering.value ||
@@ -581,6 +597,7 @@ const syncAuth = () => {
 let stopAuthListener: (() => void) | undefined;
 
 onMounted(() => {
+  previousMenuScrollY = window.scrollY;
   syncAuth();
   stopAuthListener = pb.authStore.onChange(syncAuth);
   if (isLoggedIn.value) setPageLayout("staff");
@@ -597,6 +614,7 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   stopAuthListener?.();
+  if (autoExpandFrame !== null) cancelAnimationFrame(autoExpandFrame);
 });
 
 watch(
@@ -774,6 +792,40 @@ const activePromo = computed(() =>
     (promo) => promo.id === activePromoId.value,
   ),
 );
+
+let previousMenuScrollY = 0;
+let autoExpandFrame: number | null = null;
+
+useEventListener("scroll", () => {
+  if (autoExpandFrame !== null) return;
+  autoExpandFrame = requestAnimationFrame(() => {
+    autoExpandFrame = null;
+    const currentScrollY = window.scrollY;
+    const scrollingDown = currentScrollY > previousMenuScrollY;
+    previousMenuScrollY = currentScrollY;
+
+    if (
+      !scrollingDown ||
+      fullMenuVisible.value ||
+      fullMenuManuallyToggled.value ||
+      staffMode.value ||
+      isCatering.value ||
+      !props.useDailyMenu ||
+      props.dishesField !== "dishes" ||
+      activePromoId.value ||
+      itemCount.value > 0 ||
+      taquizaOrders.value.length > 0 ||
+      !fullMenuToggleEl.value
+    ) return;
+
+    // Reveal while the switch is still visible, before the customer reaches checkout.
+    const toggleBottom = fullMenuToggleEl.value.getBoundingClientRect().bottom;
+    if (toggleBottom <= window.innerHeight * 0.45) {
+      showFullMenu.value = true;
+    }
+  });
+}, { passive: true });
+
 const promoBuilderEl = ref<HTMLElement | null>(null);
 
 async function selectPromo(promoId: string) {
