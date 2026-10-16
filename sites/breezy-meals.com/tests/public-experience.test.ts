@@ -122,4 +122,17 @@ test("checkout tracks valid attempts and handoffs without changing the order tra
     (checkout.match(/window.location.href = whatsappAppLink/g) || []).length,
     1,
   );
+  assert.match(checkout, /items: analyticsItems\?\.value/);
+  assert.match(checkout, /value: pricingSubtotal.value/);
+  assert.match(checkout, /shipping: appliedDeliveryFee.value/);
+  const menu = readSource("../pages/menu.vue");
+  assert.match(
+    menu,
+    /selectedAnalyticsItems\(\s*analyticsCatalog.value,\s*next,\s*previous,?\s*\)/,
+  );
+  assert.match(
+    menu,
+    /checkoutAnalyticsItems\(\s*analyticsCatalog.value,\s*orderSummaryLines.value,?\s*\)/,
+  );
+  assert.match(menu, /pricingLines: orderSummaryLines, analyticsItems,/);
 });

@@ -342,6 +342,10 @@ import { useMenuPricing } from "~/composables/useMenuPricing";
 import { useMenuCheckout } from "~/composables/useMenuCheckout";
 import { useMenuData, type MenuRecordFull } from "~/composables/useMenuData";
 import { useMenuGroupAccordion } from "~/composables/useMenuGroupAccordion";
+import {
+  checkoutAnalyticsItems,
+  selectedAnalyticsItems,
+} from "~/utils/publicAnalytics";
 import usePocketBase from "@common/composables/usePocketbase";
 import { ArrowRight, BadgeCheck, Utensils } from "lucide-vue-next";
 
@@ -750,6 +754,21 @@ const orderTotal = computed(
   () => pricingSummary.value.total + appliedDeliveryFee.value,
 );
 
+const analyticsCatalog = computed(() =>
+  menuGroups.value.flatMap((group) =>
+    groupItems(group.key).map((item) => ({
+      name: item.name,
+      group: group.key,
+      category: group.label || group.key,
+      price: item.price ?? 0,
+      surface: props.dishesField,
+    })),
+  ),
+);
+const analyticsItems = computed(() =>
+  checkoutAnalyticsItems(analyticsCatalog.value, orderSummaryLines.value),
+);
+
 const activePromo = computed(() =>
   promoCardsWithAppliedState.value.find(
     (promo) => promo.id === activePromoId.value,
@@ -758,7 +777,14 @@ const activePromo = computed(() =>
 const promoBuilderEl = ref<HTMLElement | null>(null);
 
 async function selectPromo(promoId: string) {
-  trackPublicEvent("select_promotion");
+  const promo = promoCardsWithAppliedState.value.find(
+    (entry) => entry.id === promoId,
+  );
+  if (promo)
+    trackPublicEvent("select_promotion", {
+      promotion_id: promo.id,
+      promotion_name: promo.label,
+    });
   const appliedPromoIds = orderSummaryLines.value
     .filter((line) => line.kind === "promo")
     .map((line) => line.code);
@@ -784,13 +810,16 @@ watch(
   () => ({ ...cart }),
   (next, previous) => {
     if (staffMode.value) return;
-    const added = Object.entries(next).reduce(
-      (sum, [name, quantity]) =>
-        sum + Math.max(0, quantity - (previous[name] || 0)),
-      0,
+    const items = selectedAnalyticsItems(
+      analyticsCatalog.value,
+      next,
+      previous,
     );
+    const added = items.reduce((sum, item) => sum + item.quantity, 0);
     if (added > 0)
       trackPublicEvent("add_to_cart", {
+        items,
+        value: items.reduce((sum, item) => sum + item.price * item.quantity, 0),
         quantity: added,
         item_count: totalQty.value,
       });
@@ -874,6 +903,7 @@ const { sendingOrder, showThankYou, thankYouName, clearCart, sendOrder } =
     taquizaByKind,
     taquizaOrders,
     pricingLines: orderSummaryLines,
+    analyticsItems,
     pricingSubtotal: computed(() => pricingSummary.value.total),
     deliveryFee,
     appliedDeliveryFee,

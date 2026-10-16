@@ -8,6 +8,7 @@ import type {
   CustomerOrderArgs,
 } from "~/composables/useMenuLink";
 import type { PricingLine } from "~/utils/menuPricing";
+import type { PublicAnalyticsItem } from "~/utils/publicAnalytics";
 import { comandaCreatePayload } from "~/lib/comanda-record";
 import {
   buildComandaDrafts,
@@ -41,6 +42,7 @@ export function useMenuCheckout(params: {
   taquizaByKind: ComputedRef<Record<TaquizaKind, Record<string, number>>>;
   taquizaOrders: Ref<TaquizaOrder[]>;
   pricingLines: ComputedRef<PricingLine[]>;
+  analyticsItems?: ComputedRef<PublicAnalyticsItem[]>;
   pricingSubtotal: ComputedRef<number>;
   deliveryFee: Ref<number>;
   appliedDeliveryFee: ComputedRef<number>;
@@ -77,6 +79,7 @@ export function useMenuCheckout(params: {
     taquizaByKind,
     taquizaOrders,
     pricingLines,
+    analyticsItems,
     pricingSubtotal,
     deliveryFee,
     appliedDeliveryFee,
@@ -203,7 +206,9 @@ export function useMenuCheckout(params: {
 
     sendingOrder.value = true;
     const analyticsSummary = {
-      value: pricingSubtotal.value + appliedDeliveryFee.value,
+      items: analyticsItems?.value,
+      value: pricingSubtotal.value,
+      shipping: appliedDeliveryFee.value,
       quantity: Object.values(cart).reduce(
         (sum, quantity) => sum + Math.max(0, quantity),
         0,
