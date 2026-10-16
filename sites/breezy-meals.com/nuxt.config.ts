@@ -38,7 +38,32 @@ export default defineNuxtConfig({
   extends: ["../../nuxt.config.ts"],
   css: ["@/assets/css/tailwind.css"],
 
-  modules: ["@nuxtjs/sitemap"],
+  modules: ["@nuxtjs/sitemap", "nuxt-gtag"],
+
+  gtag: {
+    id: "",
+    initMode: "manual",
+    config: {
+      send_page_view: false,
+      page_location: "https://breezy-meals.com",
+      page_title: "Breezy Meals",
+      allow_google_signals: false,
+      allow_ad_personalization_signals: false,
+      page_referrer: "",
+    },
+    initCommands: [
+      [
+        "consent",
+        "default",
+        {
+          ad_storage: "denied",
+          ad_user_data: "denied",
+          ad_personalization: "denied",
+          analytics_storage: "denied",
+        },
+      ],
+    ],
+  },
 
   sitemap: {
     exclude: [
@@ -154,6 +179,9 @@ export default defineNuxtConfig({
 
   runtimeConfig: {
     public: {
+      breezyAnalyticsId:
+        process.env.NUXT_PUBLIC_BREEZY_ANALYTICS_ID ||
+        (process.env.NODE_ENV === "production" ? "G-6Y0PKGKKMS" : ""),
       pocketbaseUrl:
         process.env.BREEZY_MEALS_POCKETBASE_URL ||
         (process.env.NODE_ENV === "production"

@@ -34,7 +34,7 @@
             {{ totalQty }} {{ totalQty === 1 ? "artículo" : "artículos" }} ·
             {{ modeLabel }}
           </template>
-          <template v-else> Tu pedido / Your order · {{ modeLabel }} </template>
+          <template v-else> Tu pedido · {{ modeLabel }} </template>
         </span>
         <span v-if="showTotal" class="font-semibold tabular-nums">
           {{ money(total) }}

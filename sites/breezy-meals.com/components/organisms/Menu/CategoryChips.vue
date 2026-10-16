@@ -10,7 +10,7 @@
         :variant="allOpen ? 'default' : 'outline'"
         @click="$emit('toggle-all')"
       >
-        Todo / All
+        Todo
       </Button>
 
       <Button

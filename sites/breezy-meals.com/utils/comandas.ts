@@ -85,9 +85,9 @@ export const groups = [
   },
   {
     key: "sides",
-    label: "Guarniciones / Sides",
+    label: "Guarniciones",
     emoji: "🥗",
-    heading: "GUARNICIONES / SIDES",
+    heading: "GUARNICIONES",
     subtitle: "_Elige hasta 2_",
     kind: "side",
     defaultCombo: {

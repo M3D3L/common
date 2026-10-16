@@ -230,7 +230,7 @@ export function useMenuPricing(params: {
 
     if (requirement.targetType === "group") {
       const mapped = groupLabels[requirement.target];
-      if (mapped) return `${mapped.es} / ${mapped.en}`;
+      if (mapped) return mapped.es;
       return (
         menuGroups.value.find((group) => group.key === requirement.target)
           ?.label ??
@@ -421,13 +421,12 @@ export function useMenuPricing(params: {
 
         const summaryEs =
           promo.display?.summary ?? promoSummaryLang(promo, "es");
-        const summaryEn = promoSummaryLang(promo, "en");
 
         return {
           id: promo.id,
           label: promo.label,
           emoji: promo.emoji,
-          summary: `${summaryEs} / ${summaryEn}`,
+          summary: summaryEs,
           price: promo.pricing.amount,
           requirements,
           eligible: missingPartsEs.length === 0,
@@ -567,7 +566,7 @@ export function useMenuPricing(params: {
       );
       return {
         met: true,
-        title: "Promos aplicadas / Applied promos",
+        title: "Promos aplicadas",
         message: labels.join(" · "),
       };
     }
@@ -583,8 +582,8 @@ export function useMenuPricing(params: {
 
     return {
       met: false,
-      title: `Vas en camino a ${nextPromo.label} / You're on track for ${nextPromo.label}`,
-      message: `Te falta ${nextPromo.missingTextEs} para activar ${money(nextPromo.price)}. / Missing ${nextPromo.missingTextEn} to activate ${money(nextPromo.price)}.`,
+      title: `Vas en camino a ${nextPromo.label}`,
+      message: `Te falta ${nextPromo.missingTextEs} para activar ${money(nextPromo.price)}.`,
     };
   });
 

@@ -12,19 +12,14 @@
       </div>
       <DialogHeader class="text-center sm:text-center">
         <DialogTitle class="text-center font-heading text-xl">
-          ¡Gracias {{ thankYouName }} por tu pedido! / Thank you
-          {{ thankYouName }} for your order!
+          ¡Gracias {{ thankYouName }} por tu pedido!
         </DialogTitle>
         <DialogDescription class="text-center">
           Ya lo recibimos en cocina y lo estamos preparando.
-          <br />
-          We've received it in the kitchen and it's being prepared.
         </DialogDescription>
       </DialogHeader>
       <DialogFooter class="sm:justify-center">
-        <Button class="w-full" @click="open = false">
-          Entendido / Got it
-        </Button>
+        <Button class="w-full" @click="open = false"> Entendido </Button>
       </DialogFooter>
     </DialogContent>
   </Dialog>
