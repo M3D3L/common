@@ -172,11 +172,25 @@ preferences control to change the choice later. Signed-in staff are excluded.
 
 Events are `page_view`, `select_promotion`, `add_to_cart`, `begin_checkout`,
 `whatsapp_handoff`, and `membership_submit`. Only public paths without query
-strings, aggregate numeric totals/counts, order mode and payment method are
-allowlisted. Names, phones, addresses, notes, member codes, receipts and request
-references are not sent. These are aggregate custom funnel events, not a complete
-GA4 ecommerce item feed. A WhatsApp handoff is not a confirmed sale;
+strings, numeric totals/counts, order mode and payment method are allowlisted.
+Cart additions, checkout attempts and WhatsApp handoffs include GA4 `items`:
+catalog product ID, name, category, quantity and unit price. IDs combine the menu
+surface, category key and product name; renaming a product changes its analytics
+identity. Cart additions use catalog prices. Checkout uses the pricing engine's
+result, with combo prices allocated evenly across included units (not separate
+catalog charges). Taquiza orders appear as priced taco/quesadilla order units.
+Checkout `value` excludes delivery, reported separately as `shipping`.
+Promotion selections include the catalog promotion ID and name.
+Customer names, phones, addresses, notes, member codes, receipts and request
+references are not sent. A WhatsApp handoff is not a confirmed sale;
 `membership_submit` means the request was saved, not that payment was approved.
+
+Use GA4's Ecommerce purchases report or an Exploration with Item name, Item ID,
+Item category, and Items added to cart / Items checked out to compare products.
+The custom `whatsapp_handoff` event also contains items, but it does not populate
+purchase revenue; no `purchase` event is emitted. Item fields on custom events
+may require BigQuery export for detailed analysis. This change only records new
+activity after deployment; earlier aggregate events cannot be backfilled.
 
 The existing bank/payment verification and credit redemption logic is unchanged.
 The membership page describes the current absence of a fixed credit expiry;

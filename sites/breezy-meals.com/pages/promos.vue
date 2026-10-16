@@ -248,7 +248,10 @@ function money(value: number) {
 
 function openPromo(promo: PricingPromo) {
   if (promo.active === false) return;
-  trackPublicEvent("select_promotion");
+  trackPublicEvent("select_promotion", {
+    promotion_id: promo.id,
+    promotion_name: promo.label,
+  });
   return navigateTo({ path: "/menu", query: { promo: promo.id } });
 }
 
