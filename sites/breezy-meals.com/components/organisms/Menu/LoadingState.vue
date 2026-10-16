@@ -1,5 +1,5 @@
 <template>
-  <div class="mx-auto max-w-2xl px-4 pb-44 pt-8 sm:px-6">
+  <div class="mx-auto max-w-2xl px-4 pb-6 pt-8 sm:px-6">
     <div class="mt-12 space-y-3">
       <Skeleton class="h-3 w-24" />
       <Skeleton v-for="i in 4" :key="i" class="h-20 w-full rounded-xl" />

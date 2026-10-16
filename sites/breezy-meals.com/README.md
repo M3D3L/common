@@ -155,6 +155,10 @@ Google Analytics 4's standard service is free. No analytics is sent and no Googl
 script is loaded without a valid measurement ID and the visitor's explicit
 acceptance. Rejection is saved locally; the public footer provides a privacy
 preferences control to change the choice later. Signed-in staff are excluded.
+The footer uses compact spacing; ordering pages reserve only the measured height
+of the fixed cart bar, including its mobile safe-area padding.
+Menu loading, unavailable, and closed states stay in normal document flow without
+forcing a full viewport of space above the privacy control.
 
 1. Production builds use the configured GA4 measurement ID `G-6Y0PKGKKMS` for
    `https://breezy-meals.com`. Local development is untracked by default.

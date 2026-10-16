@@ -1,6 +1,6 @@
 <template>
   <div
-    class="relative min-h-screen overflow-x-clip bg-gradient-to-b from-background via-background to-muted/20 text-foreground font-body"
+    class="relative overflow-x-clip bg-gradient-to-b from-background via-background to-muted/20 text-foreground font-body"
   >
     <!-- Gradiant Block -->
     <div class="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
@@ -28,7 +28,7 @@
     <!-- No service today (weekend / closed week / no menu for today) -->
     <div
       v-else-if="!hasMenu"
-      class="grid place-items-center p-6 text-center fixed top-0 left-0 w-full h-full"
+      class="grid place-items-center p-6 text-center"
     >
       <div
         class="w-full max-w-md rounded-2xl border border-border/60 bg-card/80 p-6 shadow-xl backdrop-blur"
@@ -57,7 +57,7 @@
       <!-- Hero -->
       <main
         ref="menuMainEl"
-        class="mx-auto max-w-2xl space-y-8 px-4 pb-48 pt-5 sm:px-6 sm:pt-7"
+        class="mx-auto max-w-2xl space-y-8 px-4 pb-6 pt-5 sm:px-6 sm:pt-7"
       >
         <section
           v-if="!staffMode && props.promoConfig?.variant === 'catering'"

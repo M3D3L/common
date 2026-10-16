@@ -1,5 +1,5 @@
 <template>
-  <div class="relative">
+  <div class="relative" :style="{ paddingBottom: `${cartBarHeight}px` }">
     <SeoMeta />
     <OrganismsBreezyHeader :logoSrc :links show-client-portal />
 
@@ -90,6 +90,7 @@ if (!links.length) {
 const route = useRoute();
 const pb = usePocketBase();
 const isStaff = ref(false);
+const cartBarHeight = useState("breezy-cart-bar-height", () => 0);
 
 onMounted(() => {
   isStaff.value = pb.authStore.isValid;

@@ -1,7 +1,7 @@
 <template>
   <aside
     v-if="configured && !isStaff"
-    class="mx-auto max-w-2xl px-4 pb-48 pt-4 text-sm"
+    class="mx-auto max-w-2xl px-4 py-4 text-sm"
     aria-label="Preferencias de privacidad"
   >
     <div v-if="showChoices" class="border-y border-border py-4">

@@ -105,6 +105,38 @@ test("membership tracking follows a successful save and never replaces WhatsApp 
   assert.ok(membership.indexOf('window.open("", "_blank")') < save);
 });
 
+test("privacy footer stays compact while the layout reserves the measured order bar height", () => {
+  const consent = readSource("../components/organisms/AnalyticsConsent.vue");
+  const menu = readSource("../pages/menu.vue");
+  const layout = readSource("../layouts/breezy.vue");
+  const cart = readSource("../components/organisms/Menu/CartBar.vue");
+
+  assert.match(consent, /px-4 py-4 text-sm/);
+  assert.doesNotMatch(consent, /pb-48/);
+  assert.doesNotMatch(menu, /pb-48/);
+  assert.match(layout, /paddingBottom: `\$\{cartBarHeight\}px`/);
+  assert.match(layout, /useState\("breezy-cart-bar-height", \(\) => 0\)/);
+  assert.match(cart, /ref="cartBar"/);
+  assert.match(cart, /useState\("breezy-cart-bar-height", \(\) => 0\)/);
+  assert.match(cart, /useResizeObserver\(cartBar/);
+  assert.match(cart, /cartBar\.value\.getBoundingClientRect\(\)\.height/);
+  assert.match(cart, /onBeforeUnmount\(\(\) => \{ cartBarHeight.value = 0;/);
+});
+
+test("menu states keep privacy preferences in normal flow without viewport-sized gaps", () => {
+  const menu = readSource("../pages/menu.vue");
+  const unavailable = readSource("../components/organisms/Menu/UnavailableState.vue");
+  const loading = readSource("../components/organisms/Menu/LoadingState.vue");
+
+  assert.doesNotMatch(menu, /min-h-screen/);
+  assert.match(
+    menu,
+    /v-else-if="!hasMenu" class="grid place-items-center p-6 text-center"/,
+  );
+  assert.doesNotMatch(unavailable, /min-h-screen|h-screen|fixed/);
+  assert.match(loading, /px-4 pb-6 pt-8/);
+});
+
 test("checkout tracks valid attempts and handoffs without changing the order transport", () => {
   const checkout = readSource("../composables/useMenuCheckout.ts");
   const validation = checkout.indexOf(

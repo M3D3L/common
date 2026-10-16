@@ -1,5 +1,6 @@
 <template>
   <div
+    ref="cartBar"
     class="fixed inset-x-0 bottom-0 z-30 border-t border-border/70 bg-background/80 px-4 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] pt-3 shadow-[0_-10px_30px_-20px_rgba(0,0,0,0.5)] backdrop-blur-xl sm:px-6"
   >
     <div class="mx-auto max-w-2xl space-y-2">
@@ -80,7 +81,21 @@
 
 <script lang="ts" setup>
 import { Button } from "@common/components/ui/button";
+import { useResizeObserver } from "@vueuse/core";
 import { Trash2 } from "lucide-vue-next";
+
+const cartBar = ref<HTMLElement | null>(null);
+const cartBarHeight = useState("breezy-cart-bar-height", () => 0);
+
+useResizeObserver(cartBar, () => {
+  if (cartBar.value) {
+    cartBarHeight.value = cartBar.value.getBoundingClientRect().height;
+  }
+});
+
+onBeforeUnmount(() => {
+  cartBarHeight.value = 0;
+});
 
 defineProps<{
   promoStatusBanner: { met: boolean; title: string; message: string } | null;

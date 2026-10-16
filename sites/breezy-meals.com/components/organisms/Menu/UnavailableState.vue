@@ -1,5 +1,5 @@
 <template>
-  <div class="grid min-h-screen place-items-center p-6 text-center">
+  <div class="grid place-items-center p-6 text-center">
     <div
       class="w-full max-w-md rounded-2xl border border-border/60 bg-card/80 p-6 shadow-xl backdrop-blur"
     >
