@@ -3,6 +3,7 @@ import { blogRoutes } from "./routes/blogRoutes";
 import { propertyRoutes } from "./routes/propertyRoutes";
 
 export default defineNuxtConfig({
+  srcDir: ".",
   compatibilityDate: "2025-08-30",
 
   /* -----------------------------
@@ -11,7 +12,7 @@ export default defineNuxtConfig({
   ssr: true,
 
   nitro: {
-    preset: "netlify",
+    preset: "github-pages",
     prerender: {
       routes: [...blogRoutes, ...propertyRoutes, "/sitemap.xml"],
       crawlLinks: true,

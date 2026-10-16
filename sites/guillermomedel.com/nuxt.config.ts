@@ -2,6 +2,7 @@ import path from "path";
 import { blogRoutes } from "./routes/blogRoutes";
 
 export default defineNuxtConfig({
+  srcDir: ".",
   compatibilityDate: "2025-08-30",
   nitro: {
     preset: "github-pages",

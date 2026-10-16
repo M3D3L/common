@@ -20,6 +20,7 @@ const configureSharedComponents = defineNuxtModule({
 });
 
 export default defineNuxtConfig({
+  srcDir: ".",
   compatibilityDate: "2025-08-30",
   devtools: { enabled: true },
   modules: [
@@ -41,6 +42,20 @@ export default defineNuxtConfig({
 
   build: {
     transpile: ["vueuc"],
+  },
+
+  vite: {
+    ssr: {
+      // Shared UI packages must use the app's Vue instance, not the layer's.
+      noExternal: ["reka-ui", "radix-vue", "@floating-ui/vue"],
+    },
+  },
+
+  postcss: {
+    plugins: {
+      "tailwindcss/nesting": false,
+      "tailwindcss/nesting/index.js": {},
+    },
   },
 
   runtimeConfig: {
