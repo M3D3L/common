@@ -19,6 +19,10 @@
             Compra tu paquete por transferencia o paga directamente en tienda.
             Tus créditos se activan después de verificar el pago.
           </p>
+          <p class="mt-3 text-sm text-muted-foreground">
+            Actualmente, los créditos de tu membresía no tienen una fecha fija
+            de vencimiento.
+          </p>
         </div>
         <div class="border-l-4 border-primary pl-5">
           <p class="text-sm text-muted-foreground">Precio por comida</p>
@@ -204,6 +208,40 @@
               </AlertDescription>
             </Alert>
 
+            <aside
+              aria-label="Aviso de privacidad"
+              class="border-t border-border pt-4 text-sm text-muted-foreground"
+            >
+              <h2 class="mb-2 font-semibold text-foreground">
+                Aviso de privacidad
+              </h2>
+              <p>
+                Breezy Meals usa tu nombre, teléfono, dirección opcional y
+                comprobante de pago para verificar tu compra, activar y
+                administrar tu membresía y contactarte sobre esta solicitud. Tu
+                comprobante está protegido y su consulta requiere acceso
+                autorizado.
+              </p>
+              <p class="mt-2">
+                Al continuar a WhatsApp, se comparte tu nombre, teléfono, forma
+                de pago y referencia de solicitud con Breezy Meals a través de
+                ese servicio. Para solicitar acceso, corrección o eliminación de
+                tus datos,
+                <a
+                  :href="
+                    waLink(
+                      'Hola, quiero consultar sobre mis datos personales.',
+                      storeWhatsapp,
+                    )
+                  "
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="underline underline-offset-2"
+                  >contáctanos por WhatsApp</a
+                >.
+              </p>
+            </aside>
+
             <Button
               class="h-12 w-full"
               type="submit"
@@ -244,6 +282,7 @@ import { Check, CircleAlert, ImageUp, Landmark, Store } from "lucide-vue-next";
 definePageMeta({ layout: "breezy" });
 
 const requests = useMembershipPaymentRequests();
+const trackPublicEvent = useBreezyAnalytics();
 const runtimeConfig = useRuntimeConfig();
 const { isAppleDevice, waLink } = useWhatsappOrder();
 const offer = requests.offer;
@@ -306,6 +345,11 @@ async function submitRequest() {
       paymentProof: paymentProof.value,
     });
     submittedReference.value = record.id.toUpperCase();
+    trackPublicEvent("membership_submit", {
+      value: offer.price,
+      credits: offer.credits,
+      payment_method: form.paymentMethod,
+    });
     const message = [
       "Nueva solicitud de membresía",
       `Nombre: ${record.name}`,

@@ -149,11 +149,47 @@ rate limiter in addition to the route's five-attempt-per-minute guard.
 
 ## Environment Variables
 
+### Free Analytics (Optional)
+
+Google Analytics 4's standard service is free. No analytics is sent and no Google
+script is loaded without a valid measurement ID and the visitor's explicit
+acceptance. Rejection is saved locally; the public footer provides a privacy
+preferences control to change the choice later. Signed-in staff are excluded.
+
+1. Production builds use the configured GA4 measurement ID `G-6Y0PKGKKMS` for
+   `https://breezy-meals.com`. Local development is untracked by default.
+2. In that stream, disable **Enhanced measurement**, including automatic page
+   views, form interactions, outbound clicks and site search. This app sends
+   explicit, sanitized events instead. Leave Google signals, user-provided data
+   collection and advertising personalization disabled. Do not add separate
+   Google Tag Manager or automatic tracking tags to this app.
+3. Regenerate and deploy the static site to activate this configuration. No
+   additional environment variable is required. To override the ID, set
+   `NUXT_PUBLIC_BREEZY_ANALYTICS_ID=G-YOURID` in the build environment. Static
+   deployments require a rebuild for environment changes to take effect.
+4. Accept statistics in the public footer and inspect GA4 Realtime. Declining
+   must produce no events. Ad blockers and declined consent will reduce counts.
+
+Events are `page_view`, `select_promotion`, `add_to_cart`, `begin_checkout`,
+`whatsapp_handoff`, and `membership_submit`. Only public paths without query
+strings, aggregate numeric totals/counts, order mode and payment method are
+allowlisted. Names, phones, addresses, notes, member codes, receipts and request
+references are not sent. These are aggregate custom funnel events, not a complete
+GA4 ecommerce item feed. A WhatsApp handoff is not a confirmed sale;
+`membership_submit` means the request was saved, not that payment was approved.
+
+The existing bank/payment verification and credit redemption logic is unchanged.
+The membership page describes the current absence of a fixed credit expiry;
+it does not introduce a new expiry or retention policy. The inline privacy
+disclosure describes the form's operational data use and WhatsApp handoff. It is
+not a substitute for a full business privacy policy reviewed for applicable law.
+
 These are read by `nuxt.config.ts` runtime config:
 
 - `BREEZY_MEALS_POCKETBASE_URL`
 - `WHATSAPP_NUMBER`
 - `NODE_ENV`
+- `NUXT_PUBLIC_BREEZY_ANALYTICS_ID` (optional GA4 measurement ID)
 - `BUSINESS_BRAND_NAME`
 - `BUSINESS_NAME`
 - `BUSINESS_LOGO_URL`

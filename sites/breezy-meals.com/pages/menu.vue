@@ -59,12 +59,6 @@
         ref="menuMainEl"
         class="mx-auto max-w-2xl space-y-8 px-4 pb-48 pt-5 sm:px-6 sm:pt-7"
       >
-        <!-- Instructions -->
-        <OrganismsMenuInstructions
-          v-if="!staffMode"
-          :whatsapp-number="RESTAURANT_WHATSAPP"
-        />
-
         <section
           v-if="!staffMode && props.promoConfig?.variant === 'catering'"
           class="js-reveal-item overflow-hidden rounded-lg border border-emerald-700/25 bg-emerald-50 text-emerald-950 shadow-sm"
@@ -97,42 +91,6 @@
               {{ props.promoConfig.ctaLabel }}
               <ArrowRight :size="17" aria-hidden="true" />
             </a>
-          </div>
-        </section>
-
-        <section
-          v-else-if="!staffMode"
-          class="js-reveal-item overflow-hidden rounded-lg border border-emerald-700/25 bg-emerald-50 text-emerald-950 shadow-sm"
-          aria-labelledby="membership-promo-title"
-        >
-          <div class="grid gap-5 p-5 sm:grid-cols-[1fr_auto] sm:items-center">
-            <div>
-              <p
-                class="flex items-center gap-2 text-xs font-bold uppercase text-emerald-800"
-              >
-                <BadgeCheck :size="17" aria-hidden="true" />
-                Membresía Breezy
-              </p>
-              <h2
-                id="membership-promo-title"
-                class="mt-2 font-heading text-xl font-extrabold"
-              >
-                {{ membershipOffer.credits }} comidas por ${{
-                  membershipOffer.price
-                }}
-              </h2>
-              <p class="mt-1 text-sm text-emerald-900/80">
-                Compra tu paquete, usa tus créditos cuando quieras y pide
-                directo desde el menú.
-              </p>
-            </div>
-            <NuxtLink
-              to="/membresia"
-              class="inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-emerald-800 px-4 text-sm font-bold text-white transition-colors hover:bg-emerald-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 focus-visible:ring-offset-2"
-            >
-              Adquirir Membresía
-              <ArrowRight :size="17" aria-hidden="true" />
-            </NuxtLink>
           </div>
         </section>
 
@@ -272,6 +230,47 @@
           </section>
         </template>
 
+        <OrganismsMenuInstructions
+          v-if="!staffMode"
+          :whatsapp-number="RESTAURANT_WHATSAPP"
+        />
+
+        <section
+          v-if="!staffMode && props.promoConfig?.variant !== 'catering'"
+          class="js-reveal-item overflow-hidden rounded-lg border border-emerald-700/25 bg-emerald-50 text-emerald-950 shadow-sm"
+          aria-labelledby="membership-promo-title"
+        >
+          <div class="grid gap-5 p-5 sm:grid-cols-[1fr_auto] sm:items-center">
+            <div>
+              <p
+                class="flex items-center gap-2 text-xs font-bold uppercase text-emerald-800"
+              >
+                <BadgeCheck :size="17" aria-hidden="true" />
+                Membresía Breezy
+              </p>
+              <h2
+                id="membership-promo-title"
+                class="mt-2 font-heading text-xl font-extrabold"
+              >
+                {{ membershipOffer.credits }} comidas por ${{
+                  membershipOffer.price
+                }}
+              </h2>
+              <p class="mt-1 text-sm text-emerald-900/80">
+                Compra tu paquete, usa tus créditos cuando quieras y pide
+                directo desde el menú.
+              </p>
+            </div>
+            <NuxtLink
+              to="/membresia"
+              class="inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-emerald-800 px-4 text-sm font-bold text-white transition-colors hover:bg-emerald-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 focus-visible:ring-offset-2"
+            >
+              Adquirir Membresía
+              <ArrowRight :size="17" aria-hidden="true" />
+            </NuxtLink>
+          </div>
+        </section>
+
         <OrganismsMenuOrderSummary
           v-if="orderSummaryLines.length"
           :lines="orderSummaryLines"
@@ -402,6 +401,7 @@ const fullMenuVisible = computed(
 );
 const route = useRoute();
 const runtimeConfig = useRuntimeConfig();
+const trackPublicEvent = useBreezyAnalytics();
 const membershipOffer = runtimeConfig.public.membershipOffer as {
   credits: number;
   price: number;
@@ -677,9 +677,7 @@ const pickupTime = computed(() => {
 });
 
 const timeLabel = computed(() =>
-  mode.value === "aqui"
-    ? "Hora de llegada / Arrival time"
-    : "Hora de recolección / Pickup time",
+  mode.value === "aqui" ? "Hora de llegada" : "Hora de recolección",
 );
 
 function clearTime() {
@@ -760,6 +758,7 @@ const activePromo = computed(() =>
 const promoBuilderEl = ref<HTMLElement | null>(null);
 
 async function selectPromo(promoId: string) {
+  trackPublicEvent("select_promotion");
   const appliedPromoIds = orderSummaryLines.value
     .filter((line) => line.kind === "promo")
     .map((line) => line.code);
@@ -779,6 +778,23 @@ watch(itemCount, (count) => {
 
 const totalQty = computed(() =>
   cartItems.value.reduce((sum, it) => sum + it.qty, 0),
+);
+
+watch(
+  () => ({ ...cart }),
+  (next, previous) => {
+    if (staffMode.value) return;
+    const added = Object.entries(next).reduce(
+      (sum, [name, quantity]) =>
+        sum + Math.max(0, quantity - (previous[name] || 0)),
+      0,
+    );
+    if (added > 0)
+      trackPublicEvent("add_to_cart", {
+        quantity: added,
+        item_count: totalQty.value,
+      });
+  },
 );
 
 const needsAddress = computed(
@@ -809,11 +825,11 @@ const hint = computed(() =>
   hasIncompleteTaquizaOrder.value
     ? "Completa todas las piezas de cada orden de tacos o quesadillas."
     : needsName.value
-      ? "Please enter your name to proceed / Ingresa tu nombre para continuar."
+      ? "Ingresa tu nombre para continuar."
       : needsPhone.value
-        ? "Phone is required for delivery / Se requiere teléfono para el envío."
+        ? "Se requiere teléfono para el envío."
         : needsAddress.value
-          ? "Address is required for delivery / Se requiere dirección para el envío."
+          ? "Se requiere dirección para el envío."
           : "",
 );
 

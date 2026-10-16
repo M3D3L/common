@@ -3,7 +3,7 @@
     <h2
       class="mb-2 inline-flex items-center rounded-full border border-border/70 bg-muted/40 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-foreground/80"
     >
-      Totales / Pricing totals
+      Totales
     </h2>
     <Card
       class="rounded-2xl border-border/70 bg-card/85 p-4 shadow-sm"
@@ -35,7 +35,7 @@
         <div
           class="flex items-center justify-between text-sm text-muted-foreground"
         >
-          <span>Total de piezas / Items</span>
+          <span>Total de piezas</span>
           <span class="font-semibold tabular-nums">{{ totalQty }}</span>
         </div>
 
@@ -43,7 +43,7 @@
           v-if="deliveryFee > 0"
           class="flex items-center justify-between gap-3 text-sm"
         >
-          <p class="font-semibold">Envío / Delivery</p>
+          <p class="font-semibold">Envío</p>
           <p class="font-semibold tabular-nums">{{ money(deliveryFee) }}</p>
         </div>
 

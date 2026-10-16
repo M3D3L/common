@@ -54,6 +54,7 @@
       </div>
     </div>
     <slot />
+    <OrganismsAnalyticsConsent />
   </div>
 </template>
 

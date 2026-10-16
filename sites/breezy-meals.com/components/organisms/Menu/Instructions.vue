@@ -1,15 +1,35 @@
 <template>
-  <section
-    class="js-reveal-item rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/10 via-background to-background p-4 shadow-sm"
-  >
+  <section class="js-reveal-item border-y border-border py-4">
+    <h2 class="text-base font-bold">Servicio y entregas</h2>
+    <dl class="my-4 grid gap-3 text-sm sm:grid-cols-2">
+      <div>
+        <dt class="font-semibold">Horario</dt>
+        <dd class="text-muted-foreground">{{ businessHours }}</dd>
+      </div>
+      <div>
+        <dt class="font-semibold">Pedidos del día</dt>
+        <dd class="text-muted-foreground">{{ cutoff }}</dd>
+      </div>
+      <div>
+        <dt class="font-semibold">Entrega a domicilio</dt>
+        <dd class="text-muted-foreground">
+          San Carlos, Sonora. Envío desde $60 MXN; confirma cobertura y costo
+          por WhatsApp.
+        </dd>
+      </div>
+      <div>
+        <dt class="font-semibold">Para recoger</dt>
+        <dd class="text-muted-foreground">
+          Breezy Market, San Carlos. Confirma la ubicación y el tiempo de
+          preparación por WhatsApp.
+        </dd>
+      </div>
+    </dl>
     <div class="mb-3 flex items-center justify-between gap-4">
       <div>
         <p class="text-xs font-bold uppercase tracking-widest text-primary">
           Breezy Meals
         </p>
-        <h3 class="mt-1 flex items-center gap-2 text-sm font-bold">
-          <span>💡</span> How to order / Cómo pedir
-        </h3>
       </div>
       <div class="flex shrink-0 items-center gap-2">
         <span
@@ -51,17 +71,26 @@
         />
       </div>
     </div>
-    <ol
-      class="list-inside list-decimal space-y-1.5 text-xs text-muted-foreground"
-    >
-      <li>Select your dishes / Selecciona tus platillos.</li>
-      <li>Choose delivery/pickup / Elige entrega o recoger.</li>
-      <li>
-        Fill in your name (required for delivery) / Ingresa tu nombre (requerido
-        para domicilio).
-      </li>
-      <li>Tap "Order on WhatsApp" / Presiona "Pedir por WhatsApp".</li>
-    </ol>
+    <details>
+      <summary class="cursor-pointer py-2 text-sm font-semibold">
+        Cómo pedir
+      </summary>
+      <ol
+        class="list-inside list-decimal space-y-1.5 text-sm text-muted-foreground"
+      >
+        <li>Selecciona tus platillos.</li>
+        <li>Elige entrega a domicilio, para llevar o para comer aquí.</li>
+        <li>Ingresa tu nombre y los datos de entrega cuando corresponda.</li>
+        <li>
+          Presiona "Pedir por WhatsApp" y envía el mensaje para confirmar tu
+          pedido.
+        </li>
+      </ol>
+      <p class="mt-3 text-sm text-muted-foreground">
+        El tiempo de entrega y la forma de pago de tu pedido se confirman por
+        WhatsApp.
+      </p>
+    </details>
   </section>
 </template>
 
@@ -70,4 +99,11 @@ import { Button } from "@common/components/ui/button";
 import { Instagram } from "lucide-vue-next";
 
 defineProps<{ whatsappNumber: string }>();
+
+const runtimeConfig = useRuntimeConfig();
+const broadcast = runtimeConfig.public.business.menuBroadcast;
+const businessHours = String(
+  broadcast.businessHours || "9:00 a. m. a 7:00 p. m.",
+).replace(/Business hours:/i, "Horario:");
+const cutoff = String(broadcast.cutoff || "Ordena antes de las 5:00 p. m.");
 </script>

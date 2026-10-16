@@ -1,4 +1,5 @@
 import { ref, type ComputedRef, type Ref } from "vue";
+import { useBreezyAnalytics } from "~/composables/useBreezyAnalytics";
 import type { DayDishes, PlacedOrder } from "~/utils/comandas";
 import type { OrderMode } from "~/composables/useWhatsappOrder";
 import type { TaquizaKind, TaquizaOrder } from "~/composables/useTaquizaOrders";
@@ -95,6 +96,7 @@ export function useMenuCheckout(params: {
   } = params;
 
   const sendingOrder = ref(false);
+  const trackPublicEvent = useBreezyAnalytics();
   const showThankYou = ref(false);
   // Nombre a mostrar en el modal de agradecimiento.
   const thankYouName = ref("");
@@ -200,6 +202,15 @@ export function useMenuCheckout(params: {
     if (!record.value || !canSend.value || sendingOrder.value) return;
 
     sendingOrder.value = true;
+    const analyticsSummary = {
+      value: pricingSubtotal.value + appliedDeliveryFee.value,
+      quantity: Object.values(cart).reduce(
+        (sum, quantity) => sum + Math.max(0, quantity),
+        0,
+      ),
+      order_mode: mode.value,
+    };
+    trackPublicEvent("begin_checkout", analyticsSummary);
 
     const a = active.value; // menú resuelto (rotación o `active` de hoy)
 
@@ -277,6 +288,7 @@ export function useMenuCheckout(params: {
     showThankYou.value = true;
 
     if (typeof window !== "undefined") {
+      trackPublicEvent("whatsapp_handoff", analyticsSummary);
       window.location.href = whatsappAppLink(text, restaurantWhatsapp);
     }
 

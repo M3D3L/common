@@ -3,7 +3,7 @@
     <h2
       class="mb-2 inline-flex items-center rounded-full border border-border/70 bg-muted/40 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-foreground/80"
     >
-      ¿Cómo lo quieres? / How do you want it?
+      ¿Cómo lo quieres?
     </h2>
     <Tabs v-model="mode">
       <TabsList

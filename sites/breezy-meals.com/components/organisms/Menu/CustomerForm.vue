@@ -3,21 +3,21 @@
     <h2
       class="mb-2 inline-flex items-center rounded-full border border-border/70 bg-muted/40 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-foreground/80"
     >
-      Tus datos / Your Info
+      Tus datos
     </h2>
     <Card
       class="space-y-4 rounded-2xl border-border/70 bg-card/85 p-4 shadow-sm"
     >
       <div class="space-y-1.5">
         <Label for="c-name" class="flex items-center gap-1">
-          Tu nombre / Your name
+          Tu nombre
           <span v-if="nameRequired" class="text-destructive">*</span>
           <span v-else class="text-muted-foreground">(opcional)</span>
         </Label>
         <Input
           id="c-name"
           v-model="customer.name"
-          placeholder="Ej. Juan Pérez / e.g. John Doe"
+          placeholder="Ej. Juan Pérez"
           :class="{
             'border-destructive focus-visible:ring-destructive':
               itemCount > 0 && nameRequired && !customer.name.trim(),
@@ -27,14 +27,14 @@
           v-if="itemCount > 0 && nameRequired && !customer.name.trim()"
           class="text-[11px] text-destructive"
         >
-          Required to complete your order / Requerido para completar tu pedido.
+          Requerido para completar tu pedido.
         </p>
       </div>
 
       <!-- Código de socio (opcional). Texto plano: se estampa en el
           mensaje de WhatsApp; el staff valida y redime al servir. -->
       <div v-if="showMemberCode" class="space-y-1.5">
-        <Label for="c-code">Código de socio / Member code (opcional)</Label>
+        <Label for="c-code">Código de socio (opcional)</Label>
         <Input
           id="c-code"
           v-model="memberCode"
@@ -53,7 +53,7 @@
       <template v-if="staffMode || mode === 'domicilio'">
         <div class="space-y-1.5">
           <Label for="c-phone" class="flex items-center gap-1">
-            WhatsApp / Phone
+            Teléfono de WhatsApp
             <span v-if="mode === 'domicilio'" class="text-destructive">*</span>
             <span v-else class="text-muted-foreground">(opcional)</span>
           </Label>
@@ -71,13 +71,13 @@
             v-if="itemCount > 0 && needsPhone"
             class="text-[11px] text-destructive"
           >
-            Required for delivery / Requerido para coordinar la entrega.
+            Requerido para coordinar la entrega.
           </p>
         </div>
 
         <div class="space-y-1.5">
           <Label for="c-address" class="flex items-center gap-1">
-            Dirección / Address
+            Dirección
             <span v-if="mode === 'domicilio'" class="text-destructive">*</span>
           </Label>
           <Input
@@ -93,12 +93,12 @@
             v-if="itemCount > 0 && needsAddress"
             class="text-[11px] text-destructive"
           >
-            Required for delivery / Requerida para envíos a domicilio.
+            Requerida para envíos a domicilio.
           </p>
         </div>
 
         <div v-if="mode === 'domicilio'" class="space-y-1.5">
-          <Label for="c-delivery-fee">Costo de envío / Delivery fee</Label>
+          <Label for="c-delivery-fee">Costo de envío</Label>
           <div v-if="canEditDeliveryFee" class="relative">
             <span
               class="pointer-events-none absolute inset-y-0 left-3 flex items-center font-semibold text-muted-foreground"
@@ -133,7 +133,7 @@
 
       <!-- Hora: para "aquí" y "para llevar" (no domicilio). Opcional, sin default -->
       <div v-if="mode !== 'domicilio'" class="space-y-1.5">
-        <Label>{{ timeLabel }} (opcional/optional)</Label>
+        <Label>{{ timeLabel }} (opcional)</Label>
         <div class="flex items-center gap-1.5">
           <Select v-model="selHour">
             <SelectTrigger class="flex-1">
@@ -192,17 +192,17 @@
           class="text-[11px] font-bold underline text-muted-foreground hover:text-primary"
           @click="$emit('clear-time')"
         >
-          Lo antes posible / ASAP
+          Lo antes posible
         </button>
       </div>
 
       <div class="space-y-1.5">
-        <Label for="c-note">Nota / Note (opcional/optional)</Label>
+        <Label for="c-note">Nota (opcional)</Label>
         <Textarea
           id="c-note"
           v-model="note"
           rows="2"
-          placeholder="Sin cebolla, casa roja / No onions, red house…"
+          placeholder="Sin cebolla, casa roja…"
         />
       </div>
     </Card>

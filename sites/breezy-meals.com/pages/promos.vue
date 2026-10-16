@@ -130,6 +130,7 @@ import type {
 definePageMeta({ layout: "breezy" });
 
 const { fetchCollection } = usePocketBaseCore();
+const trackPublicEvent = useBreezyAnalytics();
 const promos = ref<PricingPromo[]>([...menuPricingConfig.promos]);
 
 function toRuntimePromo(record: Record<string, any>): PricingPromo | null {
@@ -247,6 +248,7 @@ function money(value: number) {
 
 function openPromo(promo: PricingPromo) {
   if (promo.active === false) return;
+  trackPublicEvent("select_promotion");
   return navigateTo({ path: "/menu", query: { promo: promo.id } });
 }
 
