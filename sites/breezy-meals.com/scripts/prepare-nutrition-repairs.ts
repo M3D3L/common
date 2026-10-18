@@ -19,6 +19,7 @@ export interface SourcedNutritionProfile {
   nutrition_description: string;
   nutrition_retrieved_at: string;
   grams_per_ml?: number;
+  unit_weights?: Record<string, number>;
 }
 const nutrients = ["kcal", "protein", "fat", "carbs", "fiber", "sodium"] as const;
 
@@ -32,7 +33,8 @@ export function prepareNutritionRepairs(
       || !profile.nutrition_description.trim()
       || !/^\d{4}-\d{2}-\d{2}$/.test(profile.nutrition_retrieved_at)
       || !nutrients.every((key) => Number.isFinite(profile.nutrition[key]) && profile.nutrition[key] >= 0)
-      || (profile.grams_per_ml !== undefined && (!Number.isFinite(profile.grams_per_ml) || profile.grams_per_ml <= 0))) {
+      || (profile.grams_per_ml !== undefined && (!Number.isFinite(profile.grams_per_ml) || profile.grams_per_ml <= 0))
+      || (profile.unit_weights && Object.values(profile.unit_weights).some((value) => !Number.isFinite(value) || value <= 0))) {
       throw new Error(`Invalid sourced nutrition profile: ${profile.fdcId}`);
     }
     for (const name of profile.names) {
@@ -71,6 +73,12 @@ export function prepareNutritionRepairs(
     }
     const sameProfile = profile && ingredient.nutrition_source === profile.nutrition_source
       && nutrients.every((nutrient) => ingredient.nutrition?.[nutrient] === profile.nutrition[nutrient]);
+    if (profile?.unit_weights && (!ingredient.nutrition_verified || sameProfile)) {
+      const missing = Object.fromEntries(Object.entries(profile.unit_weights)
+        .filter(([unit]) => !(unit in (ingredient.unit_weights ?? {}))
+          && !(unit === ingredient.base_unit && Number.isFinite(ingredient.grams_per_unit) && ingredient.grams_per_unit! > 0)));
+      if (Object.keys(missing).length) data.unit_weights = { ...ingredient.unit_weights, ...missing };
+    }
     if (profile?.grams_per_ml && ingredient.base_unit === "ml"
       && !(Number.isFinite(ingredient.grams_per_unit) && ingredient.grams_per_unit! > 0)
       && (!ingredient.nutrition_verified || sameProfile)) {

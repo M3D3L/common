@@ -1,10 +1,12 @@
 import usePocketBase from "@common/composables/usePocketbase";
+import { canonicalIngredientName, ingredientKey } from "~/lib/ingredient-identities";
 import type {
   Ingredient, RecipeIngredient, PlanningRecipe, MenuComponent, NutritionProfile,
 } from "~/lib/meal-planning";
 
 export interface PlanningIngredient extends Ingredient {
   canonical_key: string;
+  aliases?: string[];
   nutrition_description?: string;
   nutrition_retrieved_at?: string;
 }
@@ -12,7 +14,6 @@ export interface PlanningRecipeRecord extends PlanningRecipe {
   yield_verified: boolean;
   planning_draft: boolean;
   planning_notes: string;
-  equipment_methods?: { thermomix?: string[]; ninja?: string[]; riceCooker?: string[] };
   protein_yield_g?: number;
   protein_yield_verified?: boolean;
 }
@@ -85,10 +86,11 @@ export default function useMealPlanning() {
     });
   }
   async function createIngredient(name: string) {
-    const canonical = name.trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+    const canonicalName = canonicalIngredientName(name.trim());
+    const canonical = ingredientKey(canonicalName);
     if (!canonical) throw new Error("Escribe el nombre del ingrediente.");
     return pb.collection("ingredients").create<PlanningIngredient>({
-      name: name.trim(), canonical_key: canonical, base_unit: "g", nutrition_verified: false,
+      name: canonicalName, canonical_key: canonical, base_unit: "g", nutrition_verified: false,
     });
   }
   async function saveRecipeDetails(recipe: PlanningRecipeRecord, rows: RecipeIngredient[]) {
@@ -101,16 +103,6 @@ export default function useMealPlanning() {
       }
       if (!Number.isFinite(row.quantity) || row.quantity < 0) throw new Error("Cantidad no válida.");
     }
-    if (!recipe.planning_draft && (!recipe.yield_verified || rows.some((row) => row.review_required))) {
-      throw new Error("Antes de aprobar, verifica el rendimiento y todos los ingredientes.");
-    }
-    if (recipe.protein_yield_g != null && (!Number.isFinite(recipe.protein_yield_g) || recipe.protein_yield_g < 0)) {
-      throw new Error("El peso final del alimento proteico no puede ser negativo.");
-    }
-    if (recipe.protein_yield_verified && !(recipe.protein_yield_g && recipe.protein_yield_g > 0)) {
-      throw new Error("Registra el peso final medido del alimento proteico antes de verificarlo.");
-    }
-    // Child writes first; a partial failure cannot mark an incomplete recipe approved.
     for (const row of rows) {
       await pb.collection("recipe_ingredients").update(row.id, {
         ingredient: row.ingredient, quantity: row.quantity, unit: row.unit,
@@ -119,10 +111,7 @@ export default function useMealPlanning() {
     }
     await pb.collection("recipes").update(recipe.id, {
       yield_portions: recipe.yield_portions, yield_verified: recipe.yield_verified,
-      planning_draft: recipe.planning_draft, planning_notes: recipe.planning_notes,
-      equipment_methods: recipe.equipment_methods ?? {},
-      protein_yield_g: recipe.protein_yield_g ?? 0,
-      protein_yield_verified: recipe.protein_yield_verified === true,
+      planning_notes: recipe.planning_notes,
     });
   }
   async function addComponent(menuItem: string, recipe: string, portions: number) {
@@ -136,16 +125,17 @@ export default function useMealPlanning() {
   async function removeComponent(id: string) {
     return pb.collection("menu_item_components").delete(id);
   }
-  async function saveComponent(id: string, portions: number, proteinTarget: number) {
-    if (!Number.isFinite(portions) || portions <= 0 || !Number.isFinite(proteinTarget) || proteinTarget < 0) {
-      throw new Error("Confirma porciones mayores que cero y un objetivo de peso no negativo.");
+  async function saveComponent(id: string, portions: number) {
+    if (!Number.isFinite(portions) || portions <= 0) {
+      throw new Error("Confirma porciones mayores que cero.");
     }
     return pb.collection("menu_item_components").update(id, {
-      portions, protein_target_g: proteinTarget,
+      portions,
     });
   }
   return {
-    load, loadRecipe, saveIngredient, createIngredient, saveRecipeDetails, addComponent, removeComponent, saveComponent,
+    load, loadRecipe, loadIngredientCatalog: () => all<PlanningIngredient>("ingredients", "name"),
+    saveIngredient, createIngredient, saveRecipeDetails, addComponent, removeComponent, saveComponent,
     savePlan: (data: Omit<SavedMealPlan, "id">) => pb.collection("meal_plans").create<SavedMealPlan>(data),
   };
 }

@@ -17,6 +17,8 @@ export interface Ingredient {
   base_unit: "g" | "ml" | "piece";
   /** Grams per ml or per piece; never inferred from an ingredient name. */
   grams_per_unit?: number;
+  /** Sourced grams for an explicit normalized unit (ml, piece, diente, hoja, etc.). */
+  unit_weights?: Record<string, number>;
   nutrition?: NutritionProfile | null;
   /** A nonblank source and explicit verification are both required for complete nutrition. */
   nutrition_source?: string;
@@ -83,6 +85,7 @@ export interface RecipeNutritionResult {
   total: NutritionProfile;
   perPortion: NutritionProfile | null;
   complete: boolean;
+  includedIngredients: number;
   warnings: string[];
 }
 
@@ -134,27 +137,29 @@ const countedUnits: Record<string, { unit: string; label: string }> = {
   barra: { unit: "barra", label: "en barra" }, barras: { unit: "barra", label: "en barra" },
   rebanada: { unit: "rebanada", label: "" }, rebanadas: { unit: "rebanada", label: "" },
   envase: { unit: "envase", label: "" }, envases: { unit: "envase", label: "" },
+  sobre: { unit: "sobre", label: "en sobre" }, sobres: { unit: "sobre", label: "en sobre" },
+  pizca: { unit: "pizca", label: "" }, pizcas: { unit: "pizca", label: "" },
+  pellizco: { unit: "pizca", label: "" }, pellizcos: { unit: "pizca", label: "" },
+  mazo: { unit: "mazo", label: "" }, mazos: { unit: "mazo", label: "" },
+  cabeza: { unit: "cabeza", label: "" }, cabezas: { unit: "cabeza", label: "" },
+  cubo: { unit: "cubo", label: "en cubo" }, cubos: { unit: "cubo", label: "en cubo" },
+  cubito: { unit: "cubo", label: "en cubo" }, cubitos: { unit: "cubo", label: "en cubo" },
+  taza: { unit: "taza", label: "" }, tazas: { unit: "taza", label: "" },
+  pechuga: { unit: "pechuga", label: "" }, pechugas: { unit: "pechuga", label: "" },
 };
 
 export const PLANNING_UNITS = [
-  "g", "kg", "ml", "l", "piece", "diente", "rama", "hoja",
-  "lata", "paquete", "barra", "rebanada", "envase", "cucharada", "cucharadita",
+  "g", "kg", "ml", "l", "piece", "pechuga", "diente", "rama", "hoja",
+  "lata", "paquete", "barra", "rebanada", "envase", "sobre", "pizca", "mazo", "cabeza", "cubo", "taza", "cucharada", "cucharadita",
 ];
 
-function purchaseQuantity(row: RecipeIngredient): { quantity: number; unit: string } | null {
+export function normalizeIngredientQuantity(row: Pick<RecipeIngredient, "quantity" | "unit">): { quantity: number; unit: string } | null {
   if (!positive(row.quantity)) return null;
   const unit = resolveUnit(row.unit);
   const counted = countedUnits[normalize(row.unit)];
   if (!unit && !counted) return null;
   const quantity = row.quantity * (unit?.factor ?? 1);
   return nonnegative(quantity) ? { quantity, unit: unit?.base ?? counted!.unit } : null;
-}
-
-function canonicalQuantity(row: RecipeIngredient, ingredient: Ingredient): number | null {
-  const unit = resolveUnit(row.unit);
-  if (!positive(row.quantity) || !unit || (unit.base !== "g" && unit.base !== ingredient.base_unit)) return null;
-  const quantity = row.quantity * unit.factor;
-  return nonnegative(quantity) ? quantity : null;
 }
 
 function uniqueIndex<T extends { id: string }>(items: T[], kind: string, warnings: string[]): Map<string, T> {
@@ -249,7 +254,7 @@ export function aggregateRequirements(
           warn(`No se encontró el ingrediente "${row.ingredient}" de la fila "${row.id}".`);
           continue;
         }
-        const purchase = purchaseQuantity(row);
+        const purchase = normalizeIngredientQuantity(row);
         if (!purchase) {
           warn(`Cantidad o unidad sin resolver en "${row.text}" (fila "${row.id}"; ${row.unit || "sin unidad"}).`);
           continue;
@@ -292,6 +297,7 @@ export function calculateRecipeNutrition(
   };
   const ingredientIndex = uniqueIndex(ingredients, "ingrediente", warnings);
   const total: NutritionProfile = { kcal: 0, protein: 0, fat: 0, carbs: 0, fiber: 0, sodium: 0 };
+  let includedIngredients = 0;
   const matching = rows.filter((row) => row.recipe === recipe.id);
   if (!matching.length) warn(`No hay filas de ingredientes para la receta "${recipe.id}".`);
   if (!positive(recipe.yield_portions)) warn(`Rendimiento inválido para la receta "${recipe.id}".`);
@@ -302,15 +308,18 @@ export function calculateRecipeNutrition(
       warn(`No se encontró el ingrediente "${row.ingredient}" de la fila "${row.id}".`);
       continue;
     }
-    const quantity = canonicalQuantity(row, ingredient);
-    if (quantity === null) {
+    const measure = normalizeIngredientQuantity(row);
+    if (measure === null) {
       warn(`Cantidad o conversión de unidades sin resolver en la fila "${row.id}".`);
       continue;
     }
-    const grams = resolveUnit(row.unit)?.base === "g"
-      ? quantity
-      : positive(ingredient.grams_per_unit ?? NaN)
-        ? quantity * ingredient.grams_per_unit!
+    const unitWeight = ingredient.unit_weights?.[measure.unit];
+    const grams = measure.unit === "g"
+      ? measure.quantity
+      : positive(unitWeight ?? NaN)
+        ? measure.quantity * unitWeight!
+        : measure.unit === ingredient.base_unit && positive(ingredient.grams_per_unit ?? NaN)
+        ? measure.quantity * ingredient.grams_per_unit!
         : null;
     const profile = ingredient.nutrition;
     const validProfile = profile && nutrientKeys.every((key) => nonnegative(profile[key]));
@@ -329,6 +338,7 @@ export function calculateRecipeNutrition(
       continue;
     }
     nutrientKeys.forEach((key, index) => { total[key] += contribution[index]!; });
+    includedIngredients++;
   }
   let perPortion: NutritionProfile | null = null;
   if (positive(recipe.yield_portions)) {
@@ -340,7 +350,7 @@ export function calculateRecipeNutrition(
       warn(`Los valores nutrimentales por porción de la receta "${recipe.id}" exceden el límite numérico.`);
     }
   }
-  return { total, perPortion, complete: warnings.length === 0, warnings: [...new Set(warnings)] };
+  return { total, perPortion, complete: warnings.length === 0, includedIngredients, warnings: [...new Set(warnings)] };
 }
 
 export function availableCredits(
@@ -419,7 +429,7 @@ export function allocatePlates(total: number, weights: number[]): number[] {
 }
 
 export function parseIngredientLine(text: string): ParsedIngredientLine {
-  const original = text.trim().replace(/\s+/g, " ");
+  const original = text.trim().replace(/^-\s+/, "").replace(/\s+/g, " ");
   const unresolved = (): ParsedIngredientLine => ({
     name: original, quantity: null, unit: null, review_required: true,
   });
@@ -449,7 +459,7 @@ export function parseIngredientLine(text: string): ParsedIngredientLine {
   const ambiguousUnits = ["taza", "tazas", "cucharada", "cucharadas", "cucharadita", "cucharaditas", "cda", "cdas", "cdta", "cdtas", "cdita", "cditas"];
   const ambiguous = ambiguousUnits.includes(normalize(rawUnit));
   let unit = known?.name ?? counted?.unit ?? (ambiguous ? normalize(rawUnit) : null);
-  const remainder = (unit ? match[3]! : `${rawUnit} ${match[3]!}`).trim();
+  const remainder = (unit && counted?.unit !== "pechuga" ? match[3]! : `${rawUnit} ${match[3]!}`).trim();
   // Ranges and compound quantities must not turn into a plausible single amount.
   if (/^(?:[-–—/+.,]|\d|a\s+\d|y\s+\d)/i.test(remainder)) return unresolved();
   let name = remainder.replace(/^de(?:l)?\s+/i, "").trim();
@@ -459,7 +469,7 @@ export function parseIngredientLine(text: string): ParsedIngredientLine {
     unit = "rebanada";
     name = "queso amarillo";
   }
-  if (!unit && /^(?:cebollas?|tomates?|jitomates?|ajos?|elotes?|chayotes?|papas?|zanahorias?|calabacitas?|huevos?|naranjas?|limones?|aguacates?|tamales? de elote|chiles? verde anaheim|jalape[nñ]os? curtidos|lechuga bola)(?:$|\s+(?:picad|pelad|enter|sin|con))/i.test(name)) {
+  if (!unit && /^(?:cebollas?|tomates?(?: pera)?|jitomates?(?: saladet)?|ajos?|elotes?|chayotes?|papas?|zanahorias?|calabacitas?|huevos?|naranjas?|limon(?:es)?(?: amarillo)?|aguacates?|tamales? de elote|chiles? (?:verde(?: anaheim)?|serrano|ancho|pasilla|guajillo|poblano|morita)s?|jalapenos? curtidos|lechuga bola|manzana(?:, tipo gala)?|platano|pechugas? de pollo(?: aplanadas)?|camarones crudos|filetes? de pescado blanco|tortillas de maiz|echalot|yema de huevo|clara de huevo|yogur natural desnatado|puerro|pimiento rojo|brocoli|pepino|clavo de olor)(?:$|[, ]+(?:picad|pelad|enter|sin|con|deshuesad|fresc|mediano))/i.test(normalize(name).replace(/\s+,/g, ","))) {
     unit = "piece";
   }
   if (counted?.label && name) name = `${name} (${counted.label})`;
@@ -470,7 +480,7 @@ export function parseIngredientLine(text: string): ParsedIngredientLine {
 export function parseYield(text: string): number | null {
   const normalized = normalize(text);
   const match = normalized.match(/^(\d+(?:[.,]\d+)?)$/) ??
-    normalized.match(/^(?:(?:rinde|rendimiento)\s*:?\s+)?(\d+(?:[.,]\d+)?)\s+(?:porciones?|personas?|raciones?)$/);
+    normalized.match(/^(?:(?:rinde|rendimiento)\s*:?\s+)?(\d+(?:[.,]\d+)?)\s+(?:porcion(?:es)?|personas?|raciones?|unidades?|piezas?|vasos?|rebanadas?)$/);
   if (!match) return null;
   const value = Number(match[1]!.replace(",", "."));
   return positive(value) ? value : null;

@@ -3,6 +3,10 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 import { runInNewContext } from "node:vm";
 import ts from "typescript";
+import { compileTemplate, parse } from "@vue/compiler-sfc";
+import type { PlanningRecipeRecord } from "../composables/useMealPlanning.ts";
+import type { RecipeIngredient } from "../lib/meal-planning.ts";
+import * as identities from "../lib/ingredient-identities.ts";
 
 function loadComposable<T>(name: string, globals: Record<string, unknown>, imports: Record<string, unknown> = {}): T {
   const source = readFileSync(new URL(`../composables/${name}.ts`, import.meta.url), "utf8");
@@ -13,6 +17,7 @@ function loadComposable<T>(name: string, globals: Record<string, unknown>, impor
   runInNewContext(compiled.outputText, {
     module, exports: module.exports, ...globals,
     require: (id: string) => {
+      if (id === "~/lib/ingredient-identities") return identities;
       if (!(id in imports)) throw new Error(`Unexpected import: ${id}`);
       return imports[id];
     },
@@ -53,6 +58,73 @@ test("planner reads every collection and recipe with no-store on every load", as
   assert.ok(calls.every((call) => call.options.cache === "no-store"));
   assert.ok(calls.some((call) => call.name === "memberships"));
   assert.ok(calls.some((call) => call.name === "meal_plans"));
+});
+
+test("the shared recipe editor removes only generated equipment guidance", () => {
+  const source = readFileSync(new URL("../components/recipes/RecipePlanningEditor.vue", import.meta.url), "utf8");
+  const { descriptor, errors } = parse(source);
+  assert.deepEqual(errors, []);
+  assert.ok(descriptor.template);
+  assert.doesNotMatch(descriptor.template.content, /Thermomix|Ninja|slow cooker|Arrocera|riceCooker/i);
+  assert.doesNotMatch(descriptor.scriptSetup?.content ?? "", /equipment_methods|thermomix|ninja|riceCooker/);
+  assert.doesNotMatch(descriptor.template.content, /planning_draft|pendiente de aprobación|Borrador/);
+  assert.doesNotMatch(descriptor.template.content, /Peso final medido|protein_yield_g|protein_yield_verified/);
+  assert.match(descriptor.template.content, /Notas de producción y variantes/);
+  assert.match(descriptor.template.content, /Porciones por receta/);
+  assert.deepEqual(compileTemplate({
+    source: descriptor.template.content, filename: "RecipePlanningEditor.vue", id: "recipe-planning-editor",
+  }).errors, []);
+});
+
+test("saving recipe production data does not write or clear historical equipment guidance", async () => {
+  const equipment = { thermomix: ["Old guidance"], ninja: ["Old guidance"], riceCooker: ["Old guidance"] };
+  const stored = { equipment_methods: equipment, yield_portions: 5, planning_draft: true,
+    protein_yield_g: 1200, protein_yield_verified: true };
+  const calls: Array<{ collection: string; id: string; data: Record<string, unknown> }> = [];
+  const pb = {
+    collection: (collection: string) => ({
+      update: async (id: string, data: Record<string, unknown>) => {
+        calls.push({ collection, id, data });
+        if (collection === "recipes") Object.assign(stored, data);
+      },
+    }),
+  };
+  const { default: useMealPlanning } = loadComposable<{
+    default: () => { saveRecipeDetails: (recipe: PlanningRecipeRecord, rows: RecipeIngredient[]) => Promise<void> };
+  }>("useMealPlanning", {}, { "@common/composables/usePocketbase": { default: () => pb } });
+  const api = useMealPlanning();
+  const recipe = {
+    id: "recipe", title: "Recipe", yield_portions: 10, yield_verified: false,
+    planning_draft: false, planning_notes: "Production notes",
+  };
+  await api.saveRecipeDetails(recipe, [
+    { id: "row", recipe: "recipe", ingredient: "ingredient", quantity: 100, unit: "g", text: "100 g ingredient" },
+  ]);
+  assert.deepEqual(calls.map((call) => call.collection), ["recipe_ingredients", "recipes"]);
+  assert.ok(calls.every((call) => !("equipment_methods" in call.data)));
+  assert.ok(calls.every((call) => !("planning_draft" in call.data)));
+  assert.ok(calls.every((call) => !("protein_yield_g" in call.data) && !("protein_yield_verified" in call.data)));
+  assert.equal(stored.protein_yield_g, 1200);
+  assert.equal(stored.protein_yield_verified, true);
+  assert.equal(stored.equipment_methods, equipment);
+  assert.equal(stored.planning_draft, true);
+  assert.equal(stored.yield_portions, 10);
+  assert.equal(calls[0]?.data.quantity, 100);
+  assert.equal(calls[1]?.data.planning_notes, "Production notes");
+  await assert.rejects(api.saveRecipeDetails(recipe, [
+    { id: "invalid-row", recipe: "recipe", ingredient: "", quantity: 100, unit: "g", text: "100 g ingredient" },
+  ]), /Faltan datos de ingrediente/);
+  assert.equal(calls.length, 2);
+});
+
+test("recipe lists and planner templates have no recipe approval badges or exclusion control", () => {
+  for (const name of ["recetas", "planeacion", "semana/menu"]) {
+    const source = readFileSync(new URL(`../pages/${name}.vue`, import.meta.url), "utf8");
+    const { descriptor } = parse(source);
+    assert.ok(descriptor.template);
+    assert.doesNotMatch(descriptor.template.content, /planningDraft|planning_draft|allowDrafts|pendiente de aprobación|Borrador/);
+    assert.doesNotMatch(descriptor.scriptSetup?.content ?? "", /!recipe\.planningDraft/);
+  }
 });
 
 test("planner menu loading bypasses application cache and propagates no-store to normalized reads", async () => {

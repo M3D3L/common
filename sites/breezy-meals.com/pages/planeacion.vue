@@ -101,15 +101,13 @@
             <label class="text-sm">Margen de producción (%)<input v-model.number="buffer" type="number" min="0" class="mt-1 block w-full rounded border bg-background p-2" /></label>
           </div>
           <div class="flex flex-wrap gap-4 text-sm">
-            <label><input v-model="respectProteinTargets" type="checkbox" /> Aplicar objetivos de carne definidos manualmente (0 = porciones originales de receta)</label>
-            <label><input v-model="allowDrafts" type="checkbox" /> Incluir borradores en estimaciones (nunca aprobarlos)</label>
             <label><input v-model="showNutrition" type="checkbox" /> Mostrar nutrición estimada</label>
           </div>
           <div class="flex flex-wrap gap-3 text-sm">
             <span>Grupos a repartir como platos principales:</span>
             <label v-for="group in availableGroups" :key="group"><input v-model="selectedGroups" type="checkbox" :value="group" /> {{ group }}</label>
           </div>
-          <p class="text-xs text-muted-foreground">Créditos × consumo esperado ÷ días; se suman extras y después el margen. Los rendimientos originales de Thermomix o de la receta tienen prioridad. 150 g de carne es solo una referencia general: no reemplaza esas porciones. Los platos se reparten entre los grupos seleccionados, no una vez por grupo. Agrega guarniciones mediante componentes o líneas manuales. Regenerar reemplaza las cantidades manuales.</p>
+          <p class="text-xs text-muted-foreground">Créditos × consumo esperado ÷ días; se suman extras y después el margen. Las cantidades se escalan según las porciones por receta. Los platos se reparten entre los grupos seleccionados, no una vez por grupo. Agrega guarniciones mediante componentes o líneas manuales. Regenerar reemplaza las cantidades manuales.</p>
           <Button :disabled="busy" @click="generate">Proponer cantidades desde la rotación semanal</Button>
           <p v-if="forecastError" role="alert" class="text-sm text-destructive">{{ forecastError }}</p>
         </details>
@@ -137,8 +135,8 @@
         </details>
 
         <details v-if="showSettings" class="space-y-3 rounded-xl border p-4">
-          <summary class="cursor-pointer text-sm font-semibold">Nutrición y aprobación de cocina</summary>
-          <p class="text-sm text-muted-foreground">Revisión interna opcional. No es necesaria para guardar el plan ni descargar compras.</p>
+          <summary class="cursor-pointer text-sm font-semibold">Nutrición y versiones fijas</summary>
+          <p class="text-sm text-muted-foreground">Guardar una versión fija es opcional. Las recetas están disponibles sin aprobación.</p>
           <details v-if="approvalWarnings.length" class="text-sm">
             <summary>Requisitos para congelar una versión revisada</summary>
             <ul class="mt-2 list-disc pl-5"><li v-for="warning in approvalWarnings" :key="warning">{{ warning }}</li></ul>
@@ -147,21 +145,21 @@
             <summary>Nutrición por receta de producción</summary>
             <div v-for="entry in productionNutrition" :key="`${entry.date}-${entry.recipe}`" class="mt-2 rounded bg-muted/40 p-2">
               <strong>{{ entry.date }} · {{ entry.title }} — {{ entry.complete ? "ingredientes verificados" : "PARCIAL" }}</strong>
-              <p>{{ entry.portions.toFixed(1) }} porciones previstas; {{ entry.kcal.toFixed(0) }} kcal totales conocidas.</p>
+              <p>{{ entry.portions.toFixed(1) }} porciones previstas; {{ entry.kcal === null ? "nutrición no disponible" : `${entry.kcal.toFixed(0)} kcal conocidas${entry.complete ? "" : " (subtotal parcial)"}` }}.</p>
               <NuxtLink :to="`/planeacion?recipe=${entry.recipe}`" class="underline" @click="selectedRecipe = entry.recipe; tab = 'recipes'">Revisar receta y macros</NuxtLink>
             </div>
           </details>
           <div class="flex flex-wrap gap-3">
-            <Button :disabled="busy || !lines.length" @click="savePlan(false)">Guardar borrador</Button>
-            <Button :disabled="busy || !!approvalWarnings.length || !lines.length" @click="savePlan(true)">Aprobar y congelar plan</Button>
+            <Button :disabled="busy || !lines.length" @click="savePlan(false)">Guardar plan</Button>
+            <Button :disabled="busy || !!approvalWarnings.length || !lines.length" @click="savePlan(true)">Guardar versión fija</Button>
             <Button variant="outline" :disabled="loading || busy || !shopping.requirements.length" @click="exportShoppingList">Descargar compras TXT</Button>
           </div>
-          <p class="text-xs text-muted-foreground">La aprobación guarda una instantánea y requiere recetas, rendimientos y cantidades revisados para toda la semana. La nutrición incompleta permanece señalada.</p>
+          <p class="text-xs text-muted-foreground">La versión fija conserva una instantánea del plan con cantidades calculables y objetivos diarios completos. La nutrición incompleta permanece señalada.</p>
         </details>
         <details class="space-y-2 rounded-xl border p-4">
           <summary class="cursor-pointer text-sm font-semibold">Versiones guardadas de esta semana</summary>
           <div v-for="plan in data.plans.filter(plan => plan.week_start === weekStart)" :key="plan.id" class="flex flex-wrap items-center justify-between gap-2 text-sm">
-            <span>{{ plan.week_start }} — {{ plan.status === "approved" ? "Aprobado (instantánea)" : "Borrador" }}</span>
+            <span>{{ plan.week_start }} — {{ plan.status === "approved" ? "Versión fija" : "Plan guardado" }}</span>
             <Button size="sm" variant="outline" @click="viewPlan(plan)">Ver / usar como nueva propuesta</Button>
           </div>
           <details v-if="savedSnapshot"><summary class="cursor-pointer text-xs text-muted-foreground">Datos de la instantánea (avanzado)</summary><pre class="max-h-80 overflow-auto whitespace-pre-wrap rounded bg-muted p-3 text-xs">{{ savedSnapshot }}</pre></details>
@@ -176,11 +174,10 @@
           <h3 class="font-semibold">{{ item.name }}</h3>
           <div v-for="component in data.components.filter(row => row.menu_item === item.id)" :key="component.id" class="flex flex-wrap items-center gap-2 text-sm">
             <span>{{ recipeName(component.recipe) }} × {{ component.portions }}</span>
-            <label>Objetivo opcional de carne por plato (g; 0 = porciones de receta)
-              <input v-model.number="component.protein_target_g" type="number" min="0" step="any" class="w-24 rounded border bg-background p-1" />
+            <label>Porciones de receta por plato
+              <input v-model.number="component.portions" type="number" min="0.01" step="any" class="w-24 rounded border bg-background p-1" />
             </label>
-            <Button size="sm" variant="outline" :disabled="busy" @click="saveMapping(component.id, component.portions, component.protein_target_g ?? 0)">Guardar objetivo</Button>
-            <span v-if="data.recipes.find(recipe => recipe.id === component.recipe)?.planning_draft" class="text-amber-700">Borrador</span>
+            <Button size="sm" variant="outline" :disabled="busy" @click="saveMapping(component.id, component.portions)">Guardar porciones</Button>
             <Button size="sm" variant="ghost" @click="selectedRecipe = component.recipe; tab = 'recipes'">Revisar receta</Button>
             <Button size="sm" variant="ghost" :disabled="busy" @click="removeMapping(component.id)">Desvincular</Button>
           </div>
@@ -189,14 +186,14 @@
             <input v-model.number="mappingPortions[item.id]" type="number" min="0.01" step="any" placeholder="1" aria-label="Porciones por platillo" class="w-24 rounded border bg-background p-2" />
             <Button size="sm" :disabled="busy" @click="addMapping(item.id)">Asociar</Button>
           </div>
-          <p class="text-xs text-muted-foreground">Referencia general: aproximadamente 150 g de carne sin salsa ni guarniciones. Usa primero las porciones de la receta. Un objetivo manual en gramos requiere medir el peso final de carne del lote.</p>
+          <p class="text-xs text-muted-foreground">Las cantidades de ingredientes se calculan usando las porciones por receta y las porciones de receta necesarias para cada plato.</p>
         </article>
       </section>
 
       <section v-if="tab === 'recipes'" class="space-y-4">
-        <h2 class="text-xl font-semibold">Recetas, rendimientos y equipo</h2>
-        <p class="text-sm">Las recetas nuevas son propuestas de cocina, no recetas verificadas. Confirma ingredientes, variantes, porciones y métodos. No se presupone capacidad ni programa de Thermomix o Ninja.</p>
-        <select v-model="selectedRecipe" aria-label="Seleccionar receta de producción" class="w-full rounded border bg-background p-2"><option value="">Seleccionar receta...</option><option v-for="recipe in data.recipes" :key="recipe.id" :value="recipe.id">{{ recipe.title }}{{ recipe.planning_draft ? " — borrador" : "" }}</option></select>
+        <h2 class="text-xl font-semibold">Recetas y rendimientos</h2>
+        <p class="text-sm">Todas las recetas están disponibles. Selecciona una para ajustar sus porciones e ingredientes.</p>
+        <select v-model="selectedRecipe" aria-label="Seleccionar receta de producción" class="w-full rounded border bg-background p-2"><option value="">Seleccionar receta...</option><option v-for="recipe in data.recipes" :key="recipe.id" :value="recipe.id">{{ recipe.title }}</option></select>
         <RecipesRecipePlanningEditor v-if="selectedRecipe" :recipe-id="selectedRecipe" @saved="load" />
         <NuxtLink to="/recetas" class="inline-block text-sm underline">Editar texto e instrucciones en el recetario</NuxtLink>
       </section>
@@ -253,9 +250,7 @@ const serviceDays = ref(5);
 const utilization = ref(100);
 const extraDaily = ref(15);
 const buffer = ref(0);
-const allowDrafts = ref(true);
 const showNutrition = ref(true);
-const respectProteinTargets = ref(true);
 const selectedGroups = ref(["guisos", "caldos"]);
 const shoppingDate = ref("");
 const dailyTargets = ref<Record<string, number>>({});
@@ -310,7 +305,7 @@ const missingCoverage = computed(() => data.value?.menuItems.filter((item) => !d
 const filteredMenu = computed(() => data.value?.menuItems.filter((item) => normalize(item.name).includes(normalize(coverageSearch.value))) ?? []);
 const recipeName = (id: string) => data.value?.recipes.find((recipe) => recipe.id === id)?.title ?? id;
 const effectiveComponents = computed(() => data.value?.components.map((component) => ({
-  ...component, protein_target_g: respectProteinTargets.value ? component.protein_target_g : 0,
+  ...component, protein_target_g: 0,
 })) ?? []);
 const shopping = computed(() => {
   if (!data.value) return { requirements: [], warnings: [], recipePortions: [] };
@@ -331,9 +326,6 @@ const purchaseHighlights = computed(() => purchaseGroups.value.filter((group) =>
 const planWarnings = computed(() => {
   if (!data.value) return ["Sin datos."];
   const result = [...generationWarnings.value];
-  if (!respectProteinTargets.value && data.value.components.some((component) => (component.protein_target_g ?? 0) > 0 && lines.value.some((line) => line.menu_item === component.menu_item && line.quantity > 0))) {
-    result.push("Estimación por porciones originales: no se está aplicando el objetivo de peso de carne. Actívalo antes de aprobar.");
-  }
   if (forecastError.value) result.push(forecastError.value);
   if (!dates.value.length) result.push("Selecciona fechas válidas.");
   if (lines.value.some((line) => !dates.value.includes(line.date))) result.push("Hay líneas fuera del período seleccionado; regenera o corrige el plan.");
@@ -347,18 +339,16 @@ const planWarnings = computed(() => {
 const approvalWarnings = computed(() => {
   if (!data.value) return ["Sin datos."];
   const result = [...allRequirements.value.warnings, ...planWarnings.value];
-  for (const portion of allRequirements.value.recipePortions) {
-    const recipe = data.value.recipes.find((item) => item.id === portion.recipe);
-    if (recipe?.planning_draft || !recipe?.yield_verified) result.push(`${recipe?.title ?? portion.recipe}: receta o rendimiento pendiente de aprobación.`);
-  }
   return [...new Set(result)];
 });
 const warnings = computed(() => [...new Set([...shopping.value.warnings, ...planWarnings.value])]);
 const productionNutrition = computed(() => shopping.value.recipePortions.map((portion) => {
   const recipe = data.value?.recipes.find((item) => item.id === portion.recipe);
-  if (!recipe || !data.value) return { date: portion.date, recipe: portion.recipe, title: portion.recipe, portions: portion.portions, kcal: 0, complete: false };
+  if (!recipe || !data.value) return { date: portion.date, recipe: portion.recipe, title: portion.recipe, portions: portion.portions, kcal: null, complete: false };
   const nutrition = calculateRecipeNutrition(recipe, data.value.rows.filter((row) => row.recipe === recipe.id), data.value.ingredients);
-  return { date: portion.date, recipe: recipe.id, title: recipe.title, portions: portion.portions, kcal: (nutrition.perPortion?.kcal ?? 0) * portion.portions, complete: nutrition.complete };
+  return { date: portion.date, recipe: recipe.id, title: recipe.title, portions: portion.portions,
+    kcal: nutrition.includedIngredients && nutrition.perPortion ? nutrition.perPortion.kcal * portion.portions : null,
+    complete: nutrition.complete };
 }));
 watch(selectedIngredient, (id) => {
   const ingredient = data.value?.ingredients.find((row) => row.id === id);
@@ -479,10 +469,6 @@ function generate() {
       const item = matches[0];
       if (usedItems.has(item.id)) continue;
       usedItems.add(item.id);
-      const components = data.value.components.filter((component) => component.menu_item === item.id);
-      if (!allowDrafts.value && components.some((component) => data.value?.recipes.find((recipe) => recipe.id === component.recipe)?.planning_draft)) {
-        generationWarnings.value.push(`${date}: "${name}" excluido por receta borrador.`); continue;
-      }
       lines.value.push({ key: ++sequence, date, menu_item: item.id, quantity: 0, weight: 1 });
     }
     if (lines.value.some((line) => line.date === date)) rebalance(date);
@@ -496,8 +482,8 @@ async function addMapping(menuItem: string) {
   });
 }
 async function removeMapping(id: string) { await action(async () => { await api.removeComponent(id); await load(); }); }
-async function saveMapping(id: string, portions: number, target: number) {
-  await action(async () => { await api.saveComponent(id, portions, target); notice.value = "Objetivo guardado."; });
+async function saveMapping(id: string, portions: number) {
+  await action(async () => { await api.saveComponent(id, portions); notice.value = "Porciones guardadas."; });
 }
 async function createIngredient() {
   await action(async () => { const ingredient = await api.createIngredient(newIngredientName.value); await load(); selectedIngredient.value = ingredient.id; newIngredientName.value = ""; });
@@ -516,7 +502,7 @@ async function savePlan(approve: boolean) {
     if (!await load()) throw new Error(error.value);
     if (!lines.value.length) throw new Error("Agrega al menos una línea.");
     if (!syncDemand()) throw new Error(error.value);
-    if (approve && approvalWarnings.value.length) throw new Error("Resuelve las advertencias antes de aprobar.");
+    if (approve && approvalWarnings.value.length) throw new Error("Corrige los datos del plan antes de guardar una versión fija.");
     if (lines.value.some((line) => !line.menu_item || !Number.isInteger(line.quantity) || line.quantity < 0)) throw new Error("Corrige platillos y cantidades enteras.");
     const ingredientRows = data.value!.rows.filter((row) => allRequirements.value.recipePortions.some((portion) => portion.recipe === row.recipe));
     const ingredientIds = new Set(ingredientRows.map((row) => row.ingredient));
@@ -526,15 +512,15 @@ async function savePlan(approve: boolean) {
       recipes: data.value!.recipes.filter((recipe) => allRequirements.value.recipePortions.some((portion) => portion.recipe === recipe.id)),
       ingredient_rows: ingredientRows,
       ingredients: data.value!.ingredients.filter((ingredient) => ingredientIds.has(ingredient.id)),
-      components: data.value!.components.filter((component) => lines.value.some((line) => line.menu_item === component.menu_item)),
+      components: effectiveComponents.value.filter((component) => lines.value.some((line) => line.menu_item === component.menu_item)),
     };
     const saved = await api.savePlan({
       week_start: weekStart.value, status: approve ? "approved" : "draft",
-      parameters: { serviceDays: serviceDays.value, utilization: utilization.value, extraDaily: extraDaily.value, walkInDaily: extraDaily.value, buffer: buffer.value, allowDrafts: allowDrafts.value, showNutrition: showNutrition.value, respectProteinTargets: respectProteinTargets.value, selectedGroups: selectedGroups.value, dailyTargets: dailyTargets.value, forecastCredits: forecastCredits.value, autoDemand: autoDemand.value },
+      parameters: { serviceDays: serviceDays.value, utilization: utilization.value, extraDaily: extraDaily.value, walkInDaily: extraDaily.value, buffer: buffer.value, showNutrition: showNutrition.value, selectedGroups: selectedGroups.value, dailyTargets: dailyTargets.value, forecastCredits: forecastCredits.value, autoDemand: autoDemand.value },
       lines: lines.value.map(({ date, menu_item, quantity, weight }) => ({ date, menu_item, quantity, weight })), snapshot,
     });
     data.value!.plans.unshift(saved);
-    notice.value = approve ? "Plan aprobado. Se guardó una instantánea independiente de futuras ediciones." : "Borrador guardado.";
+    notice.value = approve ? "Versión fija guardada. Se conservó una instantánea independiente de futuras ediciones." : "Plan guardado.";
   });
 }
 function viewPlan(plan: SavedMealPlan) {
@@ -550,9 +536,7 @@ function viewPlan(plan: SavedMealPlan) {
   extraDaily.value = typeof params.walkInDaily === "number" ? params.walkInDaily
     : typeof params.extraDaily === "number" && params.extraDaily > 0 ? params.extraDaily : 15;
   if (typeof params.buffer === "number") buffer.value = params.buffer;
-  if (typeof params.allowDrafts === "boolean") allowDrafts.value = params.allowDrafts;
   if (typeof params.showNutrition === "boolean") showNutrition.value = params.showNutrition;
-  if (typeof params.respectProteinTargets === "boolean") respectProteinTargets.value = params.respectProteinTargets;
   if (Array.isArray(params.selectedGroups) && params.selectedGroups.every((group) => typeof group === "string")) selectedGroups.value = params.selectedGroups;
   dailyTargets.value = {};
   if (params.dailyTargets && typeof params.dailyTargets === "object") {

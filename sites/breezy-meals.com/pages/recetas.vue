@@ -133,7 +133,6 @@
             <CardTitle class="line-clamp-2 text-base leading-snug">{{
               recipe.title
             }}</CardTitle>
-            <Badge v-if="recipe.planningDraft" variant="outline">Borrador de cocina</Badge>
             <p v-if="recipe.description" class="line-clamp-2 text-xs text-muted-foreground">{{ recipe.description }}</p>
             <div
               class="flex min-h-5 flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground"
@@ -223,7 +222,6 @@
                 Ingredientes y preparación de {{ selectedRecipe.title }}
               </SheetDescription>
               <p v-if="selectedRecipe.description" class="text-sm text-muted-foreground">{{ selectedRecipe.description }}</p>
-              <Badge v-if="selectedRecipe.planningDraft" variant="outline">Propuesta pendiente de validación en cocina</Badge>
             </SheetHeader>
 
             <div class="grid grid-cols-2 gap-2 sm:grid-cols-4">
@@ -422,7 +420,9 @@
           </div>
           <DialogDescription>
             Guarda los datos de la receta en el catálogo compartido. La IA solo
-            completa campos vacíos.
+            completa campos vacíos e interpreta ingredientes usando el catálogo y
+            las unidades disponibles. Al guardar se reutilizan ingredientes
+            equivalentes o se crean los que falten.
           </DialogDescription>
         </DialogHeader>
 
@@ -546,7 +546,7 @@
           <Button variant="outline" :disabled="saving" @click="formOpen = false"
             >Cancelar</Button
           >
-          <Button :disabled="saving || !form.title.trim()" @click="saveRecipe">
+          <Button :disabled="saving || aiLoading || !form.title.trim()" @click="saveRecipe">
             <LoaderCircle v-if="saving" :size="16" class="mr-2 animate-spin" />
             <Save v-else :size="16" class="mr-2" />
             {{ saving ? "Guardando..." : "Guardar receta" }}
@@ -559,6 +559,11 @@
 
 <script setup lang="ts">
 import { useIntersectionObserver } from "@vueuse/core";
+import { PLANNING_UNITS } from "~/lib/meal-planning";
+import {
+  parseRecipeAiFields, RECIPE_AI_COMMAND, validateRecipeAiIngredients,
+  type StructuredRecipeIngredient,
+} from "~/lib/recipe-ingredients";
 import {
   Alert,
   AlertDescription,
@@ -637,6 +642,7 @@ interface Recipe {
   totalTime?: string | null;
   category?: string | null;
   ingredients?: string[];
+  structuredIngredients?: StructuredRecipeIngredient[];
   steps?: string[];
   nutrition?: Nutrition | null;
   hasDetail: boolean;
@@ -667,6 +673,8 @@ const {
   deleteRecipe: deleteNormalizedRecipe,
 } = useNormalizedOperations();
 const { run: runChatGPT, loading: aiLoading } = useChatGPT();
+const planningApi = useMealPlanning();
+const structuredIngredients = ref<StructuredRecipeIngredient[]>([]);
 const recipes = ref<Recipe[]>([]);
 const loading = ref(true);
 const saving = ref(false);
@@ -718,6 +726,7 @@ const loadRecipes = async () => {
 const openCreateForm = () => {
   editingRecipeId.value = "";
   formError.value = "";
+  structuredIngredients.value = [];
   Object.assign(form, emptyForm(), { id: `r${Date.now()}` });
   formOpen.value = true;
 };
@@ -725,6 +734,7 @@ const openCreateForm = () => {
 const openEditForm = (recipe: Recipe) => {
   editingRecipeId.value = recipe.recordId || recipe.id;
   formError.value = "";
+  structuredIngredients.value = recipe.structuredIngredients ?? [];
   Object.assign(form, emptyForm(), {
     id: recipe.id,
     title: recipe.title,
@@ -752,20 +762,6 @@ const lines = (value: string) =>
     .map((line) => line.trim())
     .filter(Boolean);
 
-type AiRecipeFields = Partial<{
-  category: string;
-  servings: string;
-  prepTime: string;
-  cookTime: string;
-  totalTime: string;
-  ingredients: string[];
-  steps: string[];
-  calories: string;
-  carbs: string;
-  fat: string;
-  protein: string;
-}>;
-
 const missingAiFields = () => {
   const fields: string[] = [];
   if (!form.category.trim()) fields.push("category");
@@ -779,27 +775,23 @@ const missingAiFields = () => {
   if (!form.carbs.trim()) fields.push("carbs");
   if (!form.fat.trim()) fields.push("fat");
   if (!form.protein.trim()) fields.push("protein");
-  return fields;
-};
-
-const parseAiFields = (raw: string): AiRecipeFields => {
-  const json = raw.match(/```(?:json)?\s*([\s\S]*?)```/i)?.[1] ?? raw;
-  return JSON.parse(json.trim()) as AiRecipeFields;
+  return [...fields, "structuredIngredients"];
 };
 
 const completeWithAi = async () => {
   formError.value = "";
   const missingFields = missingAiFields();
-  if (!missingFields.length) {
-    formError.value = "No hay campos culinarios pendientes por completar.";
-    return;
-  }
-
-  const command = `Completa únicamente los campos faltantes de una receta para 10 porciones. Usa cocina práctica, cantidades métricas y pasos claros en español. No modifiques ni contradigas los datos existentes. Devuelve solo JSON válido y exclusivamente las claves solicitadas. ingredients y steps deben ser arrays de strings. Los tiempos deben usar formatos como "15 min" o "1 h 20 min". La nutrición debe ser una estimación por porción con unidades, por ejemplo "320 kcal" o "24 g". Si falta información para inferir un campo razonablemente, omítelo en vez de inventar una fuente o URL.`;
-
+  const originalForm = JSON.stringify(form);
   try {
-    const raw = await runChatGPT(command, {
+    const catalog = await planningApi.loadIngredientCatalog();
+    if (JSON.stringify(form) !== originalForm) throw new Error("La receta cambió. Vuelve a completar con IA.");
+    const raw = await runChatGPT(RECIPE_AI_COMMAND, {
       missingFields,
+      supportedUnits: PLANNING_UNITS,
+      ingredientCatalog: catalog.map((ingredient) => ({
+        id: ingredient.id, name: ingredient.name, aliases: ingredient.aliases ?? [],
+        baseUnit: ingredient.base_unit,
+      })),
       recipe: {
         title: form.title.trim(),
         description: form.description.trim(),
@@ -818,7 +810,10 @@ const completeWithAi = async () => {
         },
       },
     });
-    const result = parseAiFields(raw);
+    if (JSON.stringify(form) !== originalForm) throw new Error("La receta cambió. Vuelve a completar con IA.");
+    const result = parseRecipeAiFields(raw);
+    const ingredientTexts = lines(form.ingredientsText).length ? lines(form.ingredientsText) : result.ingredients ?? [];
+    const interpretations = validateRecipeAiIngredients(ingredientTexts, result.structuredIngredients, catalog);
     const requested = new Set(missingFields);
     const assignString = (field: keyof RecipeForm, value: unknown) => {
       if (typeof value === "string" && value.trim() && !form[field].trim()) {
@@ -853,6 +848,7 @@ const completeWithAi = async () => {
         .filter((item) => typeof item === "string")
         .join("\n");
     }
+    structuredIngredients.value = interpretations;
   } catch (error) {
     formError.value =
       error instanceof Error
@@ -877,6 +873,7 @@ const recipeFromForm = (): Recipe => {
     ...existing,
     id: form.id.trim(),
     title: form.title.trim(),
+    description: form.description.trim(),
     url: form.url.trim(),
     image: form.image.trim() || null,
     servings: form.servings.trim() || null,
@@ -885,6 +882,7 @@ const recipeFromForm = (): Recipe => {
     totalTime: form.totalTime.trim() || null,
     category: form.category.trim() || null,
     ingredients,
+    structuredIngredients: structuredIngredients.value.filter((row) => ingredients.includes(row.text)),
     steps,
     nutrition: Object.values(nutrition).some(Boolean) ? nutrition : null,
     hasDetail: Boolean(ingredients.length || steps.length),

@@ -54,8 +54,8 @@ size, cube weight or nutrition. These conventions are noted on the page and TXT.
 Mixed seasonings remain one recipe mixture rather than guessing its proportions.
 Counts may be fractional recipe requirements; round up presentations when buying.
 
-Recipe associations, ingredient nutrition and equipment setup are behind
-**Configuración**. Demand settings, manual production, kitchen approval and
+Recipe associations and ingredient nutrition are behind
+**Configuración**. Demand settings, manual production, optional fixed versions and
 version history are collapsed below the everyday overview. Saving and exporting
 the purchasing list remain primary actions.
 
@@ -65,9 +65,13 @@ lines using the same rounded metric display as the page, not raw floating-point
 decimals. Incomplete totals are labeled provisional at the top; review details
 are kept in a separate section below the shopping list, not mixed into ingredient
 rows. The download does not resolve missing recipe quantities or conversions.
-Kitchen-approval flags are not shopping errors: normal planning, saving and
-exporting work without approving each recipe. Optional kitchen review and its
-approval-only notices are visible under **Configuración** only. Genuine missing
+Recipes appear and work by default without approval. Historical `planning_draft`
+and `yield_verified` flags never exclude recipes or block production saves,
+shopping exports or fixed plan versions. Recipe lists and editors show no pending
+approval badges or draft toggles; production saves preserve the historical draft
+flag instead of declaring an unmeasured recipe verified. Old `allowDrafts: false`
+plan settings no longer exclude dishes. Optional fixed plan versions are available
+under **Configuración** and require calculable quantities, not recipe approval. Genuine missing
 quantities, broken associations and invalid production totals still surface in
 the everyday view and exports.
 
@@ -165,10 +169,11 @@ saved production quantities were not changed. Other recipes still contain 112
 source rows needing interpretation; this does not prevent recipes with known
 quantities from being planned.
 
-Draft recipes are estimated proposals, not kitchen-tested instructions. Thermomix,
-Ninja slow-cooker and rice-cooker methods require checking the actual model manual,
-capacity and appropriate food-safety procedures. Conventional equipment remains
-necessary for dishes requiring frying, baking or searing.
+Draft recipes are estimated proposals, not kitchen-tested instructions. The recipe
+and planning interfaces do not show or edit the generated Thermomix, Ninja /
+slow-cooker or rice-cooker guidance. Production saves omit `equipment_methods`,
+leaving existing database values untouched for historical compatibility. Original
+recipe preparation steps and source information remain unchanged.
 
 ## Forecast
 
@@ -194,15 +199,11 @@ five days, 100% utilization and no extras/buffer, the result is 57 plates split
 Regenerating intentionally replaces manual
 lines. Unresolved rotation names and closed/unresolved days are surfaced.
 
-Original recipe/Thermomix portion yields take precedence. Approximately 150 g of
-meat/protein food excluding sauce and sides is a general reference only, not an
-automatic override. Components default to `protein_target_g = 0`, meaning original
-recipe portions. For an explicit weight override, enter the
-measured finished meat-only yield for the whole recipe to scale a batch to that
-target. Missing cooked yield blocks those purchasing totals rather than treating
-raw input weight as plated weight. An unverified entered yield remains provisional.
-Disable the target toggle only for a clearly labeled original-portion draft
-estimate; approval remains blocked while a required target is disabled.
+Production scales only from **Porciones por receta** and each component's
+recipe portions per plate. The planner ignores historical protein-weight targets
+for shopping, exports and new snapshots. Removed weight/equipment fields are not
+cleared from old records. A yield expressed only in grams cannot establish a
+serving count; enter actual portions rather than treating grams as portions.
 
 Purchasing totals are gross requirements; inventory, package rounding, cooking
 loss and procurement lead times are not automatically deducted. The date filter
@@ -227,6 +228,40 @@ Missing sources, unverified profiles, unresolved amounts and missing weight
 conversions produce explicit partial-calculation warnings. Unknown values are
 never presented as verified zeroes.
 
+Explicit counts, including individual drinks, are valid purchasing quantities
+without an assumed container volume or weight. Cups remain cups. Nutrition uses
+sourced `unit_weights` (grams per exact unit) independently of the preferred
+purchasing unit. Household weights are standard-food estimates, not measured
+package weights; existing measured conversions are preserved. Branded products
+without a label remain nutritionally incomplete, not zero-calorie.
+
+Chicken breasts remain countable as `pechuga` / `pechugas`, separate from grams
+and generic pieces, in recipe editing, AI completion, shopping totals and exports.
+No purchasing conversion assumes a standard breast weight.
+
+User-approved recipe measurement estimates use recipe-specific amounts and the
+upper end of explicit ranges. Ingredient names and replacement text remain in
+Spanish. Estimates are recorded in production notes and
+`legacy_payload.measurementEstimates`, retaining original text and removed
+non-ingredient fragments. Kitchen verification is not asserted. Mass-only sauce
+yields can receive explicit estimated condiment portions rather than grams being
+silently treated as portions. Ordinary recipe saves preserve this history.
+
+## Catalog-aware recipe completion
+
+**Completar con IA** receives the current ingredient catalog, aliases and
+supported units. It can deduce regional synonyms and context, with reasoning,
+but cannot replace explicit quantities, guess package sizes, conflate seasonings
+with meat, or invent exact amounts for ranges and “al gusto.”
+
+On Save, equivalent ingredients reuse their catalog IDs; missing identities are
+created without invented nutrition. Recipe rows store the original text alongside
+the shared ingredient relation, quantity and unit consumed by both recipes and
+planning. Existing manually entered measurements survive unchanged/reordered
+lines. AI interpretations and reasoning persist in the recipe's existing
+`legacy_payload.ingredientInterpretations`. Completing a form without saving does
+not create unused catalog entries.
+
 ## Migration and preservation
 
 Before live changes, create and verify a PocketBase server backup and export the
@@ -237,6 +272,8 @@ Never put credentials or private exports in the repository.
 npm run schema:meal-planning -- current-schema.json planning-schema.json
 node scripts/extract-usda-planning-nutrition.ts usda-sr.zip profiles.json
 node scripts/prepare-meal-planning-migration.ts snapshot.json profiles.json migration.json
+node scripts/prepare-catalog-unit-repairs.ts snapshot.json profiles.json unit-repairs.json
+node scripts/prepare-measurement-estimates.ts snapshot.json measurement-estimates.json
 ```
 
 The preparation script produces a preview and deterministic record IDs. It is not
@@ -248,10 +285,12 @@ recipe text, ingredient order, instructions and store records were preserved.
 Do not blindly replay create operations; reconcile deterministic IDs first.
 
 Editing recipe ingredient text invalidates its previous structured interpretation.
-Changed yields require re-verification; changed ingredients return the recipe to
-draft. Unchanged rows retain their associations. Recipe descriptions and source
+Changed yields invalidate prior verification; changed ingredients retain an
+internal draft marker for provenance without hiding or disabling the recipe.
+Unchanged rows retain their associations. Recipe descriptions and source
 nutrition remain separately editable, and calculated nutrition is shown alongside
-the original source estimate. Weekly recipe suggestions exclude draft recipes.
+the original source estimate. Weekly recipe suggestions include all recipes with
+details and ingredient lists, regardless of historical draft or approval flags.
 
 ## Initial live rollout (2026-10-18 UTC)
 

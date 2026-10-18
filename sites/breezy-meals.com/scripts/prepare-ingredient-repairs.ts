@@ -4,6 +4,7 @@ import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { canonicalIngredientName, ingredientKey } from "../lib/ingredient-identities.ts";
 import { parseIngredientLine, type Ingredient, type RecipeIngredient } from "../lib/meal-planning.ts";
+import { matchRecipeIngredient } from "../lib/recipe-ingredients.ts";
 
 interface IngredientRecord extends Ingredient {
   canonical_key: string;
@@ -71,18 +72,24 @@ export function prepareIngredientRepairs(source: Snapshot) {
     const current = source.ingredients.find((ingredient) => ingredient.id === row.ingredient);
     if (!current) throw new Error(`Missing ingredient ${row.ingredient} in row ${row.id}`);
     const parsed = parseIngredientLine(row.text);
-    const importedUnit = !row.unit || /^(?:cucharadas?|cucharaditas?|cdas?|cdtas?|cditas?)$/.test(row.unit);
+    const importedUnit = !row.unit || /^(?:tazas?|cucharadas?|cucharaditas?|cdas?|cdtas?|cditas?)$/.test(row.unit);
     const canRepairCount = row.review_required && importedUnit && row.parsed_text === row.text
       && !parsed.review_required && parsed.quantity !== null && parsed.unit !== null
       && (row.quantity === parsed.quantity || row.quantity === 0);
     const name = canonicalIngredientName(canRepairCount ? parsed.name : current.name);
     const key = ingredientKey(name);
-    let target = targets.get(key);
+    let target = targets.get(key) ?? matchRecipeIngredient(name, [...targets.values()]) ?? undefined;
+    if (!target && current.nutrition_verified) {
+      conflicts.push(`${row.id}: sourced ingredient identity preserved while repairing its measurement.`);
+      target = current;
+    }
     if (!target) {
       const id = createHash("sha256").update(`ingredient-repair-v1:${key}`).digest("hex").slice(0, 15);
       if (source.ingredients.some((ingredient) => ingredient.id === id)) throw new Error(`Ingredient ID collision: ${id}`);
       target = {
-        id, name, canonical_key: key, aliases: [], base_unit: "piece",
+        id, name, canonical_key: key, aliases: [],
+        base_unit: parsed.unit === "g" || parsed.unit === "kg" ? "g"
+          : parsed.unit === "ml" || parsed.unit === "l" ? "ml" : "piece",
         nutrition: null, nutrition_verified: false,
       };
       targets.set(key, target);
@@ -90,7 +97,7 @@ export function prepareIngredientRepairs(source: Snapshot) {
     }
     if (current.nutrition_verified && current.id !== target.id && !sameNutrition(current, target)) {
       conflicts.push(`${row.id}: verified nutrition differs between ${current.id} and ${target.id}; association preserved.`);
-      continue;
+      target = current;
     }
     const data: Record<string, unknown> = {};
     if (row.ingredient !== target.id) {

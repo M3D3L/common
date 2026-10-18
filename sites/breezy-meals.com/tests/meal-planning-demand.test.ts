@@ -12,6 +12,7 @@ const dates = ["2026-10-19", "2026-10-20", "2026-10-21", "2026-10-22", "2026-10-
 interface SavedPayload {
   parameters: Record<string, unknown>;
   lines: Array<{ quantity: number }>;
+  snapshot: { warnings: string[]; components: Array<{ protein_target_g: number }>; requirements: planning.RequirementsResult };
 }
 interface Planner {
   load: () => Promise<boolean>;
@@ -24,9 +25,13 @@ interface Planner {
   forecastCredits: vue.Ref<number | null>;
   extraDaily: vue.Ref<number>;
   error: vue.Ref<string>;
+  generate: () => void;
+  lines: vue.Ref<Array<{ menu_item: string; quantity: number }>>;
 }
 
-function setupPlanner(t: TestContext, options: { credits?: number; autoDemand?: boolean; walkInDaily?: number } = {}) {
+function setupPlanner(t: TestContext, options: {
+  credits?: number; autoDemand?: boolean; walkInDaily?: number; unreviewedRecipes?: boolean; allowDrafts?: boolean; proteinTarget?: number;
+} = {}) {
   let balance = options.credits ?? 57;
   const downloads: Blob[] = [];
   const saves: SavedPayload[] = [];
@@ -37,6 +42,8 @@ function setupPlanner(t: TestContext, options: { credits?: number; autoDemand?: 
       dailyTargets: Object.fromEntries(dates.map((date) => [date, 16])),
       ...(options.autoDemand === undefined ? {} : { autoDemand: options.autoDemand }),
       ...(options.walkInDaily === undefined ? {} : { walkInDaily: options.walkInDaily }),
+      ...(options.allowDrafts === undefined ? {} : { allowDrafts: options.allowDrafts }),
+      respectProteinTargets: true,
     },
     lines: dates.flatMap((date) => [
       { date, menu_item: "a", quantity: 8, weight: 1 },
@@ -47,10 +54,11 @@ function setupPlanner(t: TestContext, options: { credits?: number; autoDemand?: 
     memberships: [{ credits_total: balance, credits_used: 0, status: "active" }],
     plans: [savedPlan],
     menuItems: [{ id: "a", name: "A", category: "guisos" }, { id: "b", name: "B", category: "guisos" }],
-    recipes: [{ id: "recipe", title: "Receta", yield_portions: 4, yield_verified: true, planning_draft: false }],
+    recipes: [{ id: "recipe", title: "Receta", yield_portions: 4,
+      yield_verified: !options.unreviewedRecipes, planning_draft: options.unreviewedRecipes === true }],
     ingredients: [{ id: "ingredient", name: "carne de res", base_unit: "g" }],
     rows: [{ id: "row", recipe: "recipe", ingredient: "ingredient", text: "400 g carne de res", quantity: 400, unit: "g" }],
-    components: ["a", "b"].map((menu_item) => ({ menu_item, recipe: "recipe", portions: 1 })),
+    components: ["a", "b"].map((menu_item) => ({ menu_item, recipe: "recipe", portions: 1, protein_target_g: options.proteinTarget ?? 0 })),
   };
   const api = {
     load: async () => ({ ...structuredClone(loaded), memberships: [{ credits_total: balance, credits_used: 0, status: "active" }] }),
@@ -59,7 +67,7 @@ function setupPlanner(t: TestContext, options: { credits?: number; autoDemand?: 
   const imports: Record<string, unknown> = {
     "~/lib/meal-planning": planning,
     "~/lib/meal-planning-summary": summary,
-    "~/utils/rotation": rotation,
+    "~/utils/rotation": { ...rotation, resolveDay: () => ({ menu: { guisos: ["A", "B"] } }) },
     "@common/composables/usePocketbase": {
       default: () => ({ collection: () => ({ getFullList: async () => [] }) }),
     },
@@ -67,7 +75,7 @@ function setupPlanner(t: TestContext, options: { credits?: number; autoDemand?: 
   const source = readFileSync(new URL("../pages/planeacion.vue", import.meta.url), "utf8");
   const script = source.match(/<script setup lang="ts">([\s\S]*?)<\/script>/)?.[1];
   assert.ok(script);
-  const compiled = ts.transpileModule(`${script}\nmodule.exports = { load, savePlan, exportShoppingList, weekStart, totalPlates, dailyTargets, dailyForecastLabel, forecastCredits, extraDaily, error };`, {
+  const compiled = ts.transpileModule(`${script}\nmodule.exports = { load, savePlan, exportShoppingList, weekStart, totalPlates, dailyTargets, dailyForecastLabel, forecastCredits, extraDaily, error, generate, lines };`, {
     compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
   });
   const module = { exports: {} };
@@ -80,7 +88,7 @@ function setupPlanner(t: TestContext, options: { credits?: number; autoDemand?: 
     definePageMeta: () => {},
     onMounted: () => {},
     useMealPlanning: () => api,
-    useLatestMenuRecord: () => ({ record: vue.ref(null), loadError: vue.ref(false), load: async () => {} }),
+    useLatestMenuRecord: () => ({ record: vue.ref({}), loadError: vue.ref(false), load: async () => {} }),
     require: (id: string) => {
       if (!(id in imports)) throw new Error(`Unexpected import: ${id}`);
       return imports[id];
@@ -108,6 +116,41 @@ test("opening an 80-plate draft uses exactly 57 credits when non-member customer
   assert.equal(planner.forecastCredits.value, 57);
   assert.equal(savedPlan.lines.reduce((sum, line) => sum + line.quantity, 0), 80);
   assert.equal(saves.length, 0, "opening must not overwrite the historical version");
+});
+
+test("recipes are usable without approval even when a legacy plan excluded drafts", async (t) => {
+  const { planner, saves, downloads } = setupPlanner(t, { unreviewedRecipes: true, allowDrafts: false });
+  await planner.load();
+  planner.generate();
+  assert.equal(planner.error.value, "");
+  assert.equal(planner.totalPlates.value, 132);
+  assert.equal(planner.lines.value.length, 10);
+  await planner.exportShoppingList();
+  assert.equal(downloads.length, 1);
+  assert.doesNotMatch(await downloads[0]!.text(), /pendiente de aprobación|excluido por receta borrador/);
+  await planner.savePlan(false);
+  await planner.savePlan(true);
+  assert.equal(planner.error.value, "");
+  assert.equal(saves.length, 2);
+  for (const save of saves) {
+    assert.ok(!("allowDrafts" in save.parameters));
+    assert.deepEqual([...save.snapshot.warnings], []);
+    assert.equal(save.lines.reduce((sum, line) => sum + line.quantity, 0), 132);
+  }
+});
+
+test("historical protein targets cannot override recipe portions in shopping exports or saved versions", async (t) => {
+  const { planner, saves, downloads } = setupPlanner(t, { proteinTarget: 150 });
+  await planner.load();
+  await planner.exportShoppingList();
+  await planner.savePlan(true);
+  assert.equal(planner.error.value, "");
+  const saved = saves[0]!;
+  assert.ok(!("respectProteinTargets" in saved.parameters));
+  assert.ok(saved.snapshot.components.every((component) => component.protein_target_g === 0));
+  assert.equal(saved.snapshot.requirements.requirements[0]?.quantity, 13200);
+  assert.deepEqual([...saved.snapshot.warnings], []);
+  assert.doesNotMatch(await downloads[0]!.text(), /rendimiento.*prote|peso.*medido/i);
 });
 
 test("refreshing and downloading rebases quantities to the latest credits before exporting", async (t) => {

@@ -943,7 +943,6 @@ async function load() {
       (recipe): recipe is typeof recipe & RecipeCandidate =>
         Boolean(
           recipe.hasDetail &&
-          !recipe.planningDraft &&
           Array.isArray(recipe.ingredients) &&
           recipe.ingredients.length,
         ),

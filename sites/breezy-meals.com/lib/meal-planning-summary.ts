@@ -80,7 +80,7 @@ export function formatPurchaseQuantity(quantity: number, unit: string): string {
   if (unit === "g" && quantity >= 1000) { value /= 1000; label = "kg"; }
   if (unit === "ml" && quantity >= 1000) { value /= 1000; label = "L"; }
   if (unit === "piece") label = quantity === 1 ? "pieza" : "piezas";
-  if (["diente", "rama", "hoja", "lata", "paquete", "barra", "rebanada", "envase"].includes(unit)) label = quantity === 1 ? unit : `${unit}s`;
+  if (["pechuga", "diente", "rama", "hoja", "lata", "paquete", "barra", "rebanada", "envase", "sobre", "pizca", "mazo", "cabeza", "cubo", "taza"].includes(unit)) label = quantity === 1 ? unit : `${unit}s`;
   return `${new Intl.NumberFormat("es-MX", { maximumFractionDigits: 2 }).format(value)} ${label}`;
 }
 

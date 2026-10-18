@@ -47,7 +47,7 @@ export function addMealPlanningSchema(source) {
   const ingredients = collection("brzingredients1", "ingredients", [
     text("mpname0001", "name"), text("mpkey00001", "canonical_key"),
     text("mpcat00001", "category"), text("mpbase0001", "base_unit"),
-    number("mpgrams001", "grams_per_unit"), json("mpaliases1", "aliases"),
+    number("mpgrams001", "grams_per_unit"), json("mpunitwts1", "unit_weights"), json("mpaliases1", "aliases"),
     json("mpnutri001", "nutrition"), text("mpsource01", "nutrition_source"),
     text("mpdesc0001", "nutrition_description"), bool("mpnutver01", "nutrition_verified"),
     text("mpdate0001", "nutrition_retrieved_at"),

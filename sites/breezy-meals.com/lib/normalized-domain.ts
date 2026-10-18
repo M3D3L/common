@@ -5,6 +5,7 @@ import type {
   ChecklistTemplate,
   RunsByDate,
 } from "~/utils/checklists";
+import { parseRecipeAiFields, type StructuredRecipeIngredient } from "./recipe-ingredients.ts";
 
 export interface NormalizedRecord {
   id: string;
@@ -25,6 +26,7 @@ export interface RecipeView {
   totalTime?: string | null;
   category?: string | null;
   ingredients: string[];
+  structuredIngredients?: StructuredRecipeIngredient[];
   steps: string[];
   nutrition?: {
     calories?: string | null;
@@ -104,6 +106,10 @@ export function buildRecipeViews(
       .map(value);
 
   return recipes.map((record) => {
+    const legacy = record.legacy_payload;
+    const structuredIngredients = typeof legacy === "object" && legacy !== null && "ingredientInterpretations" in legacy
+      ? parseRecipeAiFields(JSON.stringify({ structuredIngredients: legacy.ingredientInterpretations })).structuredIngredients
+      : undefined;
     const nutrition = {
       calories: optionalText(record.calories),
       carbs: optionalText(record.carbs),
@@ -124,6 +130,7 @@ export function buildRecipeViews(
       totalTime: optionalText(record.total_time),
       category: optionalText(record.category),
       ingredients: children(ingredients, record.id, (item) => text(item.text)),
+      ...(structuredIngredients ? { structuredIngredients } : {}),
       steps: children(steps, record.id, (step) => text(step.instruction)),
       nutrition: Object.values(nutrition).some(Boolean) ? nutrition : null,
       hasDetail: record.has_detail === true,

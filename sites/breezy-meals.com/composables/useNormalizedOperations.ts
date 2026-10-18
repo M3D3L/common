@@ -11,6 +11,11 @@ import {
 } from "~/lib/normalized-domain";
 import { stableFingerprint } from "~/lib/legacy-normalization";
 import { parseYield } from "~/lib/meal-planning";
+import { ingredientKey, canonicalIngredientName } from "~/lib/ingredient-identities";
+import {
+  isIngredientKeyConflict, matchRecipeIngredient, planRecipeIngredientRows,
+  type RecipeIngredientCatalogEntry,
+} from "~/lib/recipe-ingredients";
 import type { ChecklistRun, ItemKind } from "~/utils/checklists";
 
 export interface ChecklistAssignment {
@@ -95,19 +100,63 @@ export default function useNormalizedOperations() {
   }
 
   async function saveRecipe(recipe: RecipeView): Promise<RecipeView> {
-    const [existingRecipe, previousIngredients] = recipe.recordId
+    const [existingRecipe, previousIngredients, previousSteps] = recipe.recordId
       ? await Promise.all([
           pb.collection("recipes").getOne(recipe.recordId, { requestKey: null }),
           pb.collection("recipe_ingredients").getFullList({
             filter: pb.filter("recipe = {:id}", { id: recipe.recordId }),
-            sort: "sort_order", requestKey: null,
+            sort: "sort_order", requestKey: null, cache: "no-store",
+          }),
+          pb.collection("recipe_steps").getFullList({
+            filter: pb.filter("recipe = {:id}", { id: recipe.recordId }),
+            sort: "sort_order", requestKey: null, cache: "no-store",
           }),
         ])
-      : [null, []];
+      : [null, [], []];
+    const catalog = await pb.collection("ingredients").getFullList<RecipeIngredientCatalogEntry>({
+      sort: "name", requestKey: null, cache: "no-store",
+    });
+    const ingredientPlan = planRecipeIngredientRows(
+      previousIngredients.map(recordData), recipe.ingredients, catalog, recipe.structuredIngredients,
+    );
+    const preparedIngredients: Array<{ id?: string; payload: Record<string, unknown> }> = [];
+    for (const row of ingredientPlan.rows) {
+      const parsed = row.interpretation;
+      let ingredient = parsed.ingredient ?? matchRecipeIngredient(parsed.name, catalog);
+      if (!ingredient && parsed.name) {
+        const name = canonicalIngredientName(parsed.name);
+        const canonical_key = ingredientKey(name);
+        try {
+          ingredient = await pb.collection("ingredients").create<RecipeIngredientCatalogEntry>({
+            name, canonical_key, base_unit: parsed.base_unit, aliases: [],
+            category: /\b(sazonador|knorr|caldo|consom[eé])\b/i.test(name) ? "Sazonadores" : "",
+            grams_per_unit: 0, nutrition: null, nutrition_source: "", nutrition_verified: false,
+          }, { requestKey: null });
+        } catch (error) {
+          if (!isIngredientKeyConflict(error)) throw error;
+          const matches = await pb.collection("ingredients").getFullList<RecipeIngredientCatalogEntry>({
+            filter: pb.filter("canonical_key = {:key}", { key: canonical_key }), requestKey: null, cache: "no-store",
+          });
+          if (!matches[0]) throw error;
+          ingredient = matches[0];
+        }
+        catalog.push(ingredient);
+      }
+      const payload = {
+        text: row.text, sort_order: row.sortOrder, ingredient: ingredient?.id ?? "",
+        quantity: parsed.quantity, unit: parsed.unit, review_required: parsed.review_required,
+        parsed_text: row.text,
+      };
+      if (!row.previous || Object.entries(payload).some(([key, value]) => row.previous?.[key] !== value)) {
+        preparedIngredients.push({ id: row.previous?.id, payload });
+      }
+    }
     const ingredientsChanged = previousIngredients.length !== recipe.ingredients.length ||
       previousIngredients.some((row, index) => row.text !== recipe.ingredients[index]);
     const yieldChanged = !existingRecipe || existingRecipe.servings !== (recipe.servings ?? "");
     const legacyPayload = {
+      ...(typeof existingRecipe?.legacy_payload === "object" && existingRecipe.legacy_payload !== null
+        && !Array.isArray(existingRecipe.legacy_payload) ? existingRecipe.legacy_payload : {}),
       id: recipe.id,
       title: recipe.title,
       description: recipe.description ?? "",
@@ -119,6 +168,7 @@ export default function useNormalizedOperations() {
       totalTime: recipe.totalTime,
       category: recipe.category,
       ingredients: recipe.ingredients,
+      ingredientInterpretations: (recipe.structuredIngredients ?? []).filter((row) => recipe.ingredients.includes(row.text)),
       steps: recipe.steps,
       nutrition: recipe.nutrition,
       hasDetail: recipe.hasDetail,
@@ -160,30 +210,15 @@ export default function useNormalizedOperations() {
           { requestKey: null },
         );
 
-    const [oldIngredients, oldSteps] = await Promise.all([
-      pb.collection("recipe_ingredients").getFullList({
-        filter: `recipe = "${record.id}"`,
-        requestKey: null,
-      }),
-      pb.collection("recipe_steps").getFullList({
-        filter: `recipe = "${record.id}"`,
-        requestKey: null,
-      }),
-    ]);
-    const ingredientPlan = planOrderedChildren(
-      oldIngredients.map(recordData),
-      recipe.ingredients,
-      "text",
-    );
     const stepPlan = planOrderedChildren(
-      oldSteps.map(recordData),
+      previousSteps.map(recordData),
       recipe.steps,
       "instruction",
     );
     const upsertChildren = async (
-      collection: "recipe_ingredients" | "recipe_steps",
-      field: "text" | "instruction",
-      entries: typeof ingredientPlan.upserts,
+      collection: "recipe_steps",
+      field: "instruction",
+      entries: typeof stepPlan.upserts,
     ) =>
       Promise.all(
         entries.map(({ id, value, sortOrder }) => {
@@ -191,9 +226,6 @@ export default function useNormalizedOperations() {
             recipe: record.id,
             [field]: value,
             sort_order: sortOrder,
-            ...(collection === "recipe_ingredients" ? {
-              ingredient: "", quantity: 0, unit: "", review_required: true, parsed_text: "",
-            } : {}),
           };
           return id
             ? pb
@@ -206,7 +238,9 @@ export default function useNormalizedOperations() {
       );
 
     await Promise.all([
-      upsertChildren("recipe_ingredients", "text", ingredientPlan.upserts),
+      Promise.all(preparedIngredients.map(({ id, payload }) => id
+        ? pb.collection("recipe_ingredients").update(id, { ...payload, recipe: record.id }, { requestKey: null })
+        : pb.collection("recipe_ingredients").create({ ...payload, recipe: record.id }, { requestKey: null }))),
       upsertChildren("recipe_steps", "instruction", stepPlan.upserts),
     ]);
     await Promise.all([

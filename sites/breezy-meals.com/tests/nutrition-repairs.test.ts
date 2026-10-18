@@ -6,6 +6,7 @@ import { canonicalIngredientName } from "../lib/ingredient-identities.ts";
 import { calculateRecipeNutrition, parseIngredientLine } from "../lib/meal-planning.ts";
 import type { Ingredient, NutritionProfile } from "../lib/meal-planning.ts";
 import { MENU_RECIPE_DRAFTS } from "../lib/menu-recipe-drafts.ts";
+import { prepareCatalogUnitRepairs } from "../scripts/prepare-catalog-unit-repairs.ts";
 
 const profile: SourcedNutritionProfile = {
   names: ["leche pasteurizada"], fdcId: 171265,
@@ -78,6 +79,37 @@ test("repairs reject invalid provenance, nutrient values, conflicts and missing 
     ...profile, fdcId: 123, nutrition_source: "https://fdc.nal.usda.gov/food-details/123/nutrients",
   }]), /Conflicting food/);
   assert.throws(() => prepareNutritionRepairs({ ingredients: [{ ...milk, updated: "" }] }, [profile]), /timestamp/);
+});
+
+test("household repairs preserve measured conversions and are repeatable across a complete catalog", () => {
+  const reference = { ...profile, unit_weights: { ml: 1.03, taza: 244 } };
+  const measured = prepareNutritionRepairs({ ingredients: [{ ...milk, grams_per_unit: 1.04 }] }, [reference]);
+  assert.deepEqual(measured.operations[0]?.data.unit_weights, { taza: 244 });
+  const text = "2 tazas de leche pasteurizada";
+  const source = {
+    ingredients: [{ ...milk, canonical_key: milk.name }],
+    recipes: [{ id: "r", title: "Leche", servings: "4 porciones", yield_portions: 0, updated: "before" }],
+    recipe_ingredients: [{
+      id: "row", recipe: "r", ingredient: milk.id, quantity: 2, unit: "taza",
+      review_required: true, parsed_text: text, text, updated: "before",
+    }],
+  };
+  const before = structuredClone(source);
+  const result = prepareCatalogUnitRepairs(source, [reference]);
+  assert.deepEqual(source, before);
+  assert.equal(result.summary.yields, 1);
+  assert.equal(result.summary.measureRepairs, 1);
+  for (const operation of result.operations) {
+    assert.equal(operation.expectedUpdated, "before");
+    assert.ok(!("text" in operation.data) && !("servings" in operation.data));
+    const record = source[operation.collection].find((row) => row.id === operation.id);
+    assert.ok(record);
+    Object.assign(record, operation.data);
+  }
+  assert.equal(source.recipe_ingredients[0]?.review_required, false);
+  assert.equal(source.recipes[0]?.yield_portions, 4);
+  assert.equal(calculateRecipeNutrition(source.recipes[0]!, source.recipe_ingredients, source.ingredients).complete, true);
+  assert.deepEqual(prepareCatalogUnitRepairs(source, [reference]).operations, []);
 });
 
 test("the chicken sandwich recipe's eight nutrition warnings are repaired with sourced data, not hidden", () => {

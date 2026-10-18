@@ -254,12 +254,13 @@ test("unresolved requirements stay partial while explicit dimensions are retaine
     ], ingredients);
   assert.deepEqual(result.requirements, [
     { ingredient: "rice", name: "Arroz", unit: "g", quantity: 400 },
+    { ingredient: "rice", name: "Arroz", unit: "taza", quantity: 0.4 },
     { ingredient: "milk", name: "Leche", unit: "g", quantity: 0.4 },
   ]);
   assert.match(result.warnings.join(), /requiere revisión/);
   assert.match(result.warnings.join(), /No se encontró el ingrediente/);
-  assert.equal(result.warnings.filter((warning) => warning.includes("sin resolver")).length, 2);
-  assert.ok(result.warnings.some((warning) => warning.includes('"400 g arroz"') && warning.includes('"cup"')));
+  assert.equal(result.warnings.filter((warning) => warning.includes("sin resolver")).length, 1);
+  assert.ok(!result.warnings.some((warning) => warning.includes('"cup"')));
 });
 
 test("nutrition has exact per-recipe and per-portion totals using explicit grams per unit", () => {
@@ -289,7 +290,7 @@ test("missing nutrition, grams conversion, review and unverified profiles are in
     row({ ingredient: "milk", unit: "ml" }));
   assert.match(unknownVolume.warnings.join(), /grams_per_unit/);
   assert.match(unknownVolume.warnings.join(), /Información nutrimental faltante o inválida/);
-  assert.match(run(ingredients[0]!, row({ unit: "l" })).warnings.join(), /sin resolver/);
+  assert.match(run(ingredients[0]!, row({ unit: "l" })).warnings.join(), /grams_per_unit/);
   assert.match(run({ ...ingredients[0]!, nutrition: { ...profile, sodium: NaN } }).warnings.join(), /nutrimental faltante o inválida/);
   const invalidYield = run(ingredients[0]!, row(), { ...recipe, yield_portions: 0 });
   assert.equal(invalidYield.perPortion, null);
@@ -416,16 +417,16 @@ test("Spanish parser handles explicit decimals, fractions, Unicode fractions and
   }
 });
 
-test("parser uses standard metric spoons but preserves ambiguous cups and unknown quantities", () => {
+test("parser uses metric spoons and preserves cups as their own dimension without assuming their volume", () => {
   assert.deepEqual(parseIngredientLine("1/2 taza de harina"), {
-    name: "harina", quantity: 0.5, unit: "taza", review_required: true,
+    name: "harina", quantity: 0.5, unit: "taza", review_required: false,
   });
   assert.deepEqual(parseIngredientLine("2 cucharadas de aceite"), {
     name: "aceite", quantity: 2, unit: "cucharada", review_required: false,
   });
   for (const [unit, normalizedUnit] of [["cdita", "cucharadita"], ["cucharada", "cucharada"], ["taza", "taza"]]) {
     assert.deepEqual(parseIngredientLine(`1 ${unit} de sal`), {
-      name: "sal", quantity: 1, unit: normalizedUnit, review_required: unit === "taza",
+      name: "sal", quantity: 1, unit: normalizedUnit, review_required: false,
     });
   }
   for (const unit of ["piece", "pieza", "piezas", "pza", "pzas"]) {
@@ -520,10 +521,44 @@ test("source counts are parsed without assuming item weights or package sizes", 
 test("an unresolved source measure gives one actionable warning rather than two ID-only messages", () => {
   const result = aggregateRequirements([{ date: "2026-10-19", menu_item: "plate", quantity: 4 }],
     [{ menu_item: "plate", recipe: "dish", portions: 1 }], [recipe],
-    [row({ unit: "taza", review_required: true, text: "1 taza de sal" })], ingredients);
+    [row({ unit: "cucharón", review_required: true, text: "1 cucharón de sal" })], ingredients);
   assert.deepEqual(result.requirements, []);
   assert.equal(result.warnings.length, 1);
-  assert.match(result.warnings[0]!, /1 taza de sal/);
+  assert.match(result.warnings[0]!, /1 cucharón de sal/);
+});
+
+test("sourced weights apply to exact explicit units independently of purchasing preferences", () => {
+  const result = calculateRecipeNutrition(recipe, [
+    row({ quantity: 40, unit: "ml" }), row({ id: "clove", quantity: 2, unit: "diente" }),
+    row({ id: "cup", quantity: 0.5, unit: "taza" }),
+  ], [{ ...ingredients[0]!, unit_weights: { ml: 1.03, diente: 3, taza: 220 } }]);
+  assert.equal(result.complete, true);
+  assert.ok(Math.abs(result.total.kcal - 157.2) < 1e-9);
+  const wrongUnit = calculateRecipeNutrition(recipe, [row({ quantity: 1, unit: "envase" })],
+    [{ ...ingredients[0]!, unit_weights: { ml: 1.03, piece: 50 } }]);
+  assert.equal(wrongUnit.complete, false);
+  assert.ok(!wrongUnit.warnings.some((warning) => warning.includes("Cantidad o conversión")));
+});
+
+test("accented single foods and fractional fruit counts retain their explicit count", () => {
+  for (const text of ["1 limón", "1 limón amarillo", "½ manzana, tipo Gala", "1 clavo de olor"]) {
+    const parsed = parseIngredientLine(text);
+    assert.equal(parsed.review_required, false, text);
+    assert.equal(parsed.unit, "piece", text);
+  }
+});
+
+test("individual packaged drinks can be purchased without invented package weights or zero-calorie nutrition", () => {
+  const drink = { id: "drink", name: "Agua mineral de sabor", base_unit: "piece" as const };
+  const drinkRow = row({ ingredient: drink.id, quantity: 10, unit: "envase", text: "10 envases individuales" });
+  const requirements = aggregateRequirements([{ date: "2026-10-19", menu_item: "menu", quantity: 10 }],
+    [{ menu_item: "menu", recipe: recipe.id, portions: 1 }], [{ ...recipe, yield_portions: 10 }], [drinkRow], [drink]);
+  assert.deepEqual(requirements.warnings, []);
+  assert.equal(requirements.requirements[0]?.quantity, 10);
+  const nutrition = calculateRecipeNutrition(recipe, [drinkRow], [drink]);
+  assert.equal(nutrition.complete, false);
+  assert.equal(nutrition.includedIngredients, 0);
+  assert.ok(!nutrition.warnings.some((warning) => warning.includes("Cantidad o conversión")));
 });
 
 test("metric spoons convert to ml without inventing salt density or splitting mixed seasonings", () => {

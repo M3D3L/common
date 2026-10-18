@@ -33,15 +33,42 @@ const result = matches.map(({ names, fdcId, assumption, volumePortion }) => {
     throw new Error(`Missing USDA food/nutrients: ${fdcId}`);
   }
   let gramsPerMl: number | undefined;
+  const foodPortions = portions.filter((row) => Number(row.fdc_id) === fdcId);
+  const unitWeights: Record<string, number> = {};
+  const portionWeight = (pattern: RegExp): number | undefined => {
+    const portion = foodPortions.find((row) => pattern.test(row.modifier ?? "")
+      && Number(row.amount) > 0 && Number(row.gram_weight) > 0);
+    return portion ? Number(portion.gram_weight) / Number(portion.amount) : undefined;
+  };
+  const volume = portionWeight(/^liter$/i);
+  const cup = portionWeight(/^cup$/i);
+  const tablespoon = portionWeight(/^tbsp$/i);
+  if (volume) unitWeights.ml = volume / 1000;
+  else if (cup) unitWeights.ml = cup / 236.5882365;
+  else if (tablespoon) unitWeights.ml = tablespoon / 14.78676478125;
+  if (cup) unitWeights.taza = cup;
+  for (const [unit, pattern] of [
+    ["diente", /^clove$/i], ["hoja", /^leaf$/i], ["rama", /^sprigs?$/i], ["pechuga", /^breast(?:$|[ ,(])/i],
+    ["piece", /^medium(?:$|[ ,(])/i], ["cabeza", /^head$/i], ["cubo", /^cube$/i],
+  ] as const) {
+    const weight = portionWeight(pattern);
+    if (weight) unitWeights[unit] = weight;
+  }
+  if (!unitWeights.piece) {
+    const typicalPiece = portionWeight(/^(?:breast|fillet|tortilla|pepper|fruit|ear)(?:$|[ ,(])/i);
+    if (typicalPiece) unitWeights.piece = typicalPiece;
+  }
   if (volumePortion) {
     const portion = portions.find((row) => Number(row.fdc_id) === fdcId
       && row.modifier === volumePortion.modifier && Number(row.amount) === 1);
     gramsPerMl = Number(portion?.gram_weight) / volumePortion.milliliters;
     if (!Number.isFinite(gramsPerMl) || gramsPerMl <= 0) throw new Error(`Missing USDA volume weight: ${fdcId}`);
+    unitWeights.ml = gramsPerMl;
   }
   return {
     names, fdcId, nutrition, nutrition_description: `${food.description}${assumption ? ` | Estimación estándar: ${assumption}` : ""}`,
     ...(gramsPerMl === undefined ? {} : { grams_per_ml: gramsPerMl }),
+    unit_weights: unitWeights,
     nutrition_source: `https://fdc.nal.usda.gov/food-details/${fdcId}/nutrients`,
     nutrition_retrieved_at: new Date().toISOString().slice(0, 10),
   };
