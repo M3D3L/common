@@ -6,7 +6,7 @@ export function useLatestMenuRecord<T>(collection = "menu") {
   const pending = ref(true);
   const loadError = ref(false);
 
-  async function load(options: { silent?: boolean } = {}) {
+  async function load(options: { silent?: boolean; cache?: RequestCache; strict?: boolean } = {}) {
     const silent = options.silent === true && record.value !== null;
     if (!silent) pending.value = true;
     if (!silent) loadError.value = false;
@@ -20,6 +20,7 @@ export function useLatestMenuRecord<T>(collection = "menu") {
         null,
         null,
         true,
+        { cache: options.cache },
       );
       const legacy = (res.items[0] as unknown as T & { id: string }) ?? null;
       if (!legacy || collection !== "menu") {
@@ -27,15 +28,17 @@ export function useLatestMenuRecord<T>(collection = "menu") {
         return;
       }
       try {
-        record.value = (await normalizedMenu.loadMenu(legacy)) as T;
-      } catch {
+        record.value = (await normalizedMenu.loadMenu(legacy, { cache: options.cache })) as T;
+      } catch (cause) {
+        if (options.strict) throw cause;
         record.value = legacy;
       }
-    } catch {
+    } catch (cause) {
       if (!silent) {
         loadError.value = true;
         record.value = null;
       }
+      if (options.strict) throw cause;
     } finally {
       if (!silent) pending.value = false;
     }

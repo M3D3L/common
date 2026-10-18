@@ -20,19 +20,34 @@
       <template v-if="tab === 'plan'">
         <section class="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-border bg-card p-4 sm:p-5" aria-label="Seleccionar semana">
           <div class="flex items-center gap-2">
-            <Button size="icon" variant="outline" aria-label="Semana anterior" @click="selectWeek(addDays(weekStart, -7))"><ChevronLeft :size="18" /></Button>
+            <Button size="icon" variant="outline" :disabled="loading || busy" aria-label="Semana anterior" @click="selectWeek(addDays(weekStart, -7))"><ChevronLeft :size="18" /></Button>
             <label class="px-2 text-xs font-medium text-muted-foreground">Semana
-              <input type="week" :value="weekInputValue(weekStart)" aria-label="Semana de planificación" class="mt-1 block min-w-44 rounded-lg border border-border bg-background px-3 py-2 text-sm font-semibold text-foreground" @change="changeWeek" />
+              <input type="week" :value="weekInputValue(weekStart)" :disabled="loading || busy" aria-label="Semana de planificación" class="mt-1 block min-w-44 rounded-lg border border-border bg-background px-3 py-2 text-sm font-semibold text-foreground" @change="changeWeek" />
             </label>
-            <Button size="icon" variant="outline" aria-label="Semana siguiente" @click="selectWeek(addDays(weekStart, 7))"><ChevronRight :size="18" /></Button>
+            <Button size="icon" variant="outline" :disabled="loading || busy" aria-label="Semana siguiente" @click="selectWeek(addDays(weekStart, 7))"><ChevronRight :size="18" /></Button>
           </div>
           <p class="text-sm font-medium">{{ dateLabel(weekStart) }} – {{ dateLabel(addDays(weekStart, 6)) }}</p>
-          <div class="flex gap-2"><Button variant="outline" :disabled="busy" @click="generate">Recalcular semana</Button><Button :disabled="busy || !lines.length" @click="savePlan(false)">Guardar plan</Button></div>
+          <div class="flex gap-2"><Button variant="outline" :disabled="busy || loading" @click="recalculateWeek">Recalcular semana</Button><Button :disabled="busy || loading || !lines.length" @click="savePlan(false)">Guardar plan</Button></div>
         </section>
         <section class="grid grid-cols-3 gap-3">
-          <div class="rounded-xl border bg-card p-4"><p class="text-xs text-muted-foreground">Platos de la semana</p><p class="mt-1 text-3xl font-bold tabular-nums">{{ totalPlates }}</p></div>
-          <div class="rounded-xl border bg-card p-4"><p class="text-xs text-muted-foreground">Previsión por día</p><p class="mt-1 text-3xl font-bold tabular-nums">{{ estimatedDaily }}</p></div>
-          <div class="rounded-xl border bg-card p-4"><p class="text-xs text-muted-foreground">Créditos disponibles</p><p class="mt-1 text-3xl font-bold tabular-nums">{{ credits }}</p></div>
+          <div class="min-w-0 rounded-xl border bg-card p-4"><p class="text-xs text-muted-foreground">Platos planeados</p><p class="mt-1 text-3xl font-bold tabular-nums">{{ totalPlates }}</p><p class="mt-2 text-xs text-muted-foreground">Membresías y clientes sin membresía</p></div>
+          <div class="min-w-0 rounded-xl border bg-card p-4"><p class="text-xs text-muted-foreground">Previsión actual por día</p><p class="mt-1 text-3xl font-bold tabular-nums">{{ dailyForecastLabel }}</p><p class="mt-2 text-xs text-muted-foreground">{{ forecastWeeklyPlates }} platos repartidos en {{ serviceDays }} días</p></div>
+          <div class="min-w-0 rounded-xl border bg-card p-4"><p class="text-xs text-muted-foreground">Créditos disponibles ahora</p><p class="mt-1 text-3xl font-bold tabular-nums">{{ credits }}</p><p class="mt-2 text-xs text-muted-foreground">Comidas de membresía aún disponibles</p></div>
+        </section>
+        <section class="flex flex-wrap items-center justify-between gap-3 rounded-xl border bg-card p-4" aria-label="Previsión de clientes sin membresía">
+          <label class="text-sm font-medium">Clientes sin membresía por día
+            <input v-model.number="extraDaily" type="number" min="0" step="1" aria-label="Clientes sin membresía por día" class="ml-2 w-20 rounded border bg-background p-2 tabular-nums" />
+          </label>
+          <p v-if="!forecastError" class="text-sm text-muted-foreground">{{ extraDaily }} personas × {{ serviceDays }} días = {{ extraDaily * serviceDays }} platos adicionales por semana. Un plato por persona.</p>
+          <p v-if="!forecastError" class="w-full text-xs text-muted-foreground">Base de la previsión: {{ credits }} créditos disponibles al {{ utilization }}% de consumo, más los clientes sin membresía; margen de producción: {{ buffer }}%.</p>
+        </section>
+        <section v-if="lines.length && !forecastError && (forecastBalanceChanged || totalPlates !== forecastWeeklyPlates)" role="status" class="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-blue-500/30 bg-blue-500/5 p-4 text-sm">
+          <div class="min-w-0 flex-1">
+            <p class="font-semibold">{{ forecastBalanceChanged ? "El saldo cambió desde que se calculó este plan" : "El plan tiene cantidades distintas a la previsión actual" }}</p>
+            <p class="mt-1">{{ forecastCredits === null ? "" : `Base del plan: ${forecastCredits} créditos. ` }}Ahora hay {{ credits }} disponibles. Las compras corresponden a los {{ totalPlates }} platos planeados.</p>
+            <p class="mt-1 text-muted-foreground">Previsión actual: {{ forecastWeeklyPlates }} platos en total, repartidos entre {{ serviceDays }} días. {{ autoDemand ? "Las cantidades se ajustan al saldo actual." : "El ajuste automático está desactivado para este plan manual." }}</p>
+          </div>
+          <Button variant="outline" :disabled="busy || loading" @click="recalculateWeek">Recalcular con saldo actual</Button>
         </section>
         <div class="flex flex-wrap items-center gap-2" aria-label="Período del resumen">
           <Button :variant="shoppingDate ? 'outline' : 'default'" size="sm" @click="shoppingDate = ''">Toda la semana</Button>
@@ -43,7 +58,7 @@
           <section class="min-w-0 space-y-4 rounded-2xl border border-border bg-card p-5 sm:p-6">
             <div class="flex flex-wrap items-start justify-between gap-3">
               <div><h2 class="text-lg font-semibold">{{ shoppingDate ? "Compras del día" : "Total de compras de la semana" }}</h2><p class="mt-1 text-sm text-muted-foreground">{{ shoppingDate ? dateLabel(shoppingDate) : `${dateLabel(weekStart)} – ${dateLabel(dates[dates.length - 1] || addDays(weekStart, 6))}` }}</p></div>
-              <Button size="sm" variant="outline" :disabled="!shopping.requirements.length" @click="exportCsv">Descargar lista</Button>
+              <Button size="sm" variant="outline" :disabled="loading || busy || !shopping.requirements.length" @click="exportShoppingList">Descargar lista TXT</Button>
             </div>
             <div v-if="purchaseHighlights.length" class="grid grid-cols-2 gap-3" aria-label="Totales de ingredientes principales">
               <div v-for="group in purchaseHighlights" :key="group.name" class="rounded-xl bg-muted/50 p-3">
@@ -65,21 +80,24 @@
                 </div>
                 <ul class="divide-y divide-border/50">
                   <li v-for="row in group.items" :key="row.ingredient" class="flex items-start justify-between gap-4 py-2 text-sm">
-                    <span>{{ row.name }}</span><span class="shrink-0 font-medium tabular-nums">{{ formatPurchaseQuantity(row.quantity, row.unit) }}</span>
+                    <span>{{ row.name }}</span><span class="text-right font-medium tabular-nums">{{ row.totals.map(total => formatPurchaseQuantity(total.quantity, total.unit)).join(' + ') }}</span>
                   </li>
                 </ul>
               </section>
               <p v-if="!shopping.requirements.length" class="py-10 text-center text-sm text-muted-foreground">No hay ingredientes calculables para este período.</p>
             </div>
             <p class="text-xs text-muted-foreground">Totales brutos, antes de descontar inventario. Los cortes se desglosan por separado; no se sustituyen entre sí.</p>
+            <p class="text-xs text-muted-foreground">Estimación según las recetas. Cucharada = 15 ml; cucharadita = 5 ml. Piezas y envases conservan la presentación de la receta, sin adivinar su peso.</p>
+            <p class="text-xs text-muted-foreground">Media crema por envase, queso amarillo por rebanada y Knorr por pieza.</p>
           </section>
         </div>
         <details class="space-y-4 rounded-xl border p-4">
           <summary class="cursor-pointer text-sm font-semibold">Ajustar previsión y opciones</summary>
+          <label class="block text-sm"><input v-model="autoDemand" type="checkbox" /> Ajustar automáticamente los platos al saldo actual</label>
+          <p class="text-xs text-muted-foreground">Activado por defecto. Al cargar, guardar o descargar se actualizan las cantidades sin cambiar los pesos de los platillos. Desactívalo solo para un plan con cantidades manuales.</p>
           <div class="grid gap-4 sm:grid-cols-3">
             <label class="text-sm">Días de servicio (desde la fecha inicial)<input v-model.number="serviceDays" type="number" min="1" max="7" class="mt-1 block w-full rounded border bg-background p-2" /></label>
             <label class="text-sm">Créditos que se espera consumir (%)<input v-model.number="utilization" type="number" min="0" max="100" class="mt-1 block w-full rounded border bg-background p-2" /></label>
-            <label class="text-sm">Platos adicionales diarios (venta sin membresía)<input v-model.number="extraDaily" type="number" min="0" class="mt-1 block w-full rounded border bg-background p-2" /></label>
             <label class="text-sm">Margen de producción (%)<input v-model.number="buffer" type="number" min="0" class="mt-1 block w-full rounded border bg-background p-2" /></label>
           </div>
           <div class="flex flex-wrap gap-4 text-sm">
@@ -102,7 +120,7 @@
           <div v-for="date in dates" :key="date" class="space-y-2 border-b pb-4">
             <div class="flex flex-wrap items-center gap-3">
               <h3 class="font-semibold">{{ date }}</h3>
-              <label class="text-xs">Objetivo de platos<input v-model.number="dailyTargets[date]" type="number" min="0" class="ml-2 w-24 rounded border bg-background p-1" /></label>
+              <label class="text-xs">Objetivo de platos<input v-model.number="dailyTargets[date]" :disabled="autoDemand" type="number" min="0" class="ml-2 w-24 rounded border bg-background p-1" /></label>
               <Button size="sm" variant="outline" @click="rebalance(date)">Repartir por pesos</Button>
               <span class="text-xs">Asignados: {{ lines.filter(line => line.date === date).reduce((sum, line) => sum + line.quantity, 0) }}</span>
             </div>
@@ -110,16 +128,21 @@
               <select v-model="line.menu_item" aria-label="Platillo" class="max-w-full flex-1 rounded border bg-background p-2">
                 <option value="">Seleccionar platillo</option><option v-for="item in data.menuItems" :key="item.id" :value="item.id">{{ item.name }}</option>
               </select>
-              <label>Cantidad <input v-model.number="line.quantity" type="number" min="0" step="1" class="w-20 rounded border bg-background p-2" /></label>
+              <label>Cantidad <input v-model.number="line.quantity" :disabled="autoDemand" type="number" min="0" step="1" class="w-20 rounded border bg-background p-2" /></label>
               <label>Peso <input v-model.number="line.weight" type="number" min="0" step="any" class="w-20 rounded border bg-background p-2" /></label>
-              <Button variant="ghost" size="sm" @click="lines = lines.filter(item => item.key !== line.key)">Quitar</Button>
+              <Button variant="ghost" size="sm" @click="removeLine(line.key)">Quitar</Button>
             </div>
             <Button size="sm" variant="outline" @click="addLine(date)">Agregar platillo</Button>
           </div>
         </details>
 
-        <details class="space-y-3 rounded-xl border p-4">
+        <details v-if="showSettings" class="space-y-3 rounded-xl border p-4">
           <summary class="cursor-pointer text-sm font-semibold">Nutrición y aprobación de cocina</summary>
+          <p class="text-sm text-muted-foreground">Revisión interna opcional. No es necesaria para guardar el plan ni descargar compras.</p>
+          <details v-if="approvalWarnings.length" class="text-sm">
+            <summary>Requisitos para congelar una versión revisada</summary>
+            <ul class="mt-2 list-disc pl-5"><li v-for="warning in approvalWarnings" :key="warning">{{ warning }}</li></ul>
+          </details>
           <details v-if="showNutrition" class="text-sm">
             <summary>Nutrición por receta de producción</summary>
             <div v-for="entry in productionNutrition" :key="`${entry.date}-${entry.recipe}`" class="mt-2 rounded bg-muted/40 p-2">
@@ -131,7 +154,7 @@
           <div class="flex flex-wrap gap-3">
             <Button :disabled="busy || !lines.length" @click="savePlan(false)">Guardar borrador</Button>
             <Button :disabled="busy || !!approvalWarnings.length || !lines.length" @click="savePlan(true)">Aprobar y congelar plan</Button>
-            <Button variant="outline" :disabled="!shopping.requirements.length" @click="exportCsv">Descargar compras CSV</Button>
+            <Button variant="outline" :disabled="loading || busy || !shopping.requirements.length" @click="exportShoppingList">Descargar compras TXT</Button>
           </div>
           <p class="text-xs text-muted-foreground">La aprobación guarda una instantánea y requiere recetas, rendimientos y cantidades revisados para toda la semana. La nutrición incompleta permanece señalada.</p>
         </details>
@@ -206,13 +229,13 @@
 import { Button } from "@common/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-vue-next";
 import usePocketBase from "@common/composables/usePocketbase";
-import { aggregateRequirements, allocatePlates, availableCredits, calculateRecipeNutrition, forecastDaily, type NutritionProfile, type ProductionLine } from "~/lib/meal-planning";
+import { aggregateRequirements, allocatePlates, availableCredits, calculateRecipeNutrition, forecastWeekly, type NutritionProfile, type ProductionLine } from "~/lib/meal-planning";
 import { addDays, mondayOf, resolveDay } from "~/utils/rotation";
 import type { MenuRecordFull } from "~/composables/useMenuData";
 import type { PlanningIngredient, SavedMealPlan } from "~/composables/useMealPlanning";
-import { allocateMealShare, formatPurchaseQuantity, summarizeMealShares, summarizePurchases, weekInputValue, weekStartFromInput } from "~/lib/meal-planning-summary";
+import { allocateMealShare, buildShoppingText, formatPurchaseQuantity, rebalanceProductionPlan, summarizeMealShares, summarizePurchases, weekInputValue, weekStartFromInput } from "~/lib/meal-planning-summary";
 
-definePageMeta({ layout: "staff", staffOnly: true, verifiedOnly: true });
+definePageMeta({ layout: "staff", staffOnly: true, verifiedOnly: true, keepalive: false });
 useHead({ title: "Planeación | Breezy Meals" });
 const api = useMealPlanning();
 const menu = useLatestMenuRecord<MenuRecordFull>();
@@ -228,7 +251,7 @@ const showSettings = ref(!!route.query.recipe);
 const weekStart = ref(mondayOf(addDays(new Date().toLocaleDateString("en-CA", { timeZone: "America/Hermosillo" }), 7)));
 const serviceDays = ref(5);
 const utilization = ref(100);
-const extraDaily = ref(0);
+const extraDaily = ref(15);
 const buffer = ref(0);
 const allowDrafts = ref(true);
 const showNutrition = ref(true);
@@ -236,6 +259,8 @@ const respectProteinTargets = ref(true);
 const selectedGroups = ref(["guisos", "caldos"]);
 const shoppingDate = ref("");
 const dailyTargets = ref<Record<string, number>>({});
+const forecastCredits = ref<number | null>(null);
+const autoDemand = ref(true);
 interface EditableLine extends ProductionLine { key: number; weight: number }
 const lines = ref<EditableLine[]>([]);
 let sequence = 0;
@@ -261,12 +286,25 @@ const normalize = (value: string) => value.normalize("NFD").replace(/[\u0300-\u0
 const credits = computed(() => data.value ? availableCredits(data.value.memberships) : 0);
 const forecastError = computed(() => {
   if (!Number.isInteger(serviceDays.value) || serviceDays.value < 1 || serviceDays.value > 7) return "Selecciona entre 1 y 7 días de servicio.";
-  try { forecastDaily(credits.value, serviceDays.value, utilization.value, extraDaily.value, buffer.value); return ""; }
+  if (!Number.isSafeInteger(extraDaily.value) || extraDaily.value < 0) return "Indica un número entero de clientes sin membresía, desde cero.";
+  try { forecastWeekly(credits.value, serviceDays.value, utilization.value, extraDaily.value, buffer.value); return ""; }
   catch (cause) { return cause instanceof Error ? cause.message : "Parámetros no válidos."; }
 });
-const estimatedDaily = computed(() => forecastError.value ? 0 : forecastDaily(credits.value, serviceDays.value, utilization.value, extraDaily.value, buffer.value));
+const forecastWeeklyPlates = computed(() => forecastError.value ? 0 : forecastWeekly(credits.value, serviceDays.value, utilization.value, extraDaily.value, buffer.value));
+const forecastBalanceChanged = computed(() => forecastCredits.value !== null && forecastCredits.value !== credits.value);
 const dates = computed(() => /^\d{4}-\d{2}-\d{2}$/.test(weekStart.value) && Number.isInteger(serviceDays.value) && serviceDays.value >= 1 && serviceDays.value <= 7
   ? Array.from({ length: serviceDays.value }, (_, index) => addDays(weekStart.value, index)) : []);
+const forecastTargets = computed(() => {
+  if (forecastError.value || !dates.value.length) return {};
+  const quantities = allocatePlates(forecastWeeklyPlates.value, dates.value.map(() => 1));
+  return Object.fromEntries(dates.value.map((date, index) => [date, quantities[index]!]));
+});
+const dailyForecastLabel = computed(() => {
+  const counts = Object.values(forecastTargets.value);
+  if (!counts.length) return "0";
+  const min = Math.min(...counts); const max = Math.max(...counts);
+  return min === max ? String(min) : `${min}–${max}`;
+});
 const availableGroups = computed(() => [...new Set(data.value?.menuItems.map((item) => item.category) ?? [])]);
 const missingCoverage = computed(() => data.value?.menuItems.filter((item) => !data.value?.components.some((component) => component.menu_item === item.id)).length ?? 0);
 const filteredMenu = computed(() => data.value?.menuItems.filter((item) => normalize(item.name).includes(normalize(coverageSearch.value))) ?? []);
@@ -290,9 +328,9 @@ const mealShares = computed(() => summarizeMealShares(
 ));
 const purchaseGroups = computed(() => summarizePurchases(shopping.value.requirements));
 const purchaseHighlights = computed(() => purchaseGroups.value.filter((group) => group.name !== "Otros ingredientes"));
-const approvalWarnings = computed(() => {
+const planWarnings = computed(() => {
   if (!data.value) return ["Sin datos."];
-  const result = [...allRequirements.value.warnings, ...generationWarnings.value];
+  const result = [...generationWarnings.value];
   if (!respectProteinTargets.value && data.value.components.some((component) => (component.protein_target_g ?? 0) > 0 && lines.value.some((line) => line.menu_item === component.menu_item && line.quantity > 0))) {
     result.push("Estimación por porciones originales: no se está aplicando el objetivo de peso de carne. Actívalo antes de aprobar.");
   }
@@ -304,13 +342,18 @@ const approvalWarnings = computed(() => {
     const actual = lines.value.filter((line) => line.date === date).reduce((sum, line) => sum + line.quantity, 0);
     if (!Number.isInteger(target) || target < 0 || actual !== target) result.push(`${date}: las cantidades no coinciden con el objetivo diario.`);
   }
+  return [...new Set(result)];
+});
+const approvalWarnings = computed(() => {
+  if (!data.value) return ["Sin datos."];
+  const result = [...allRequirements.value.warnings, ...planWarnings.value];
   for (const portion of allRequirements.value.recipePortions) {
     const recipe = data.value.recipes.find((item) => item.id === portion.recipe);
     if (recipe?.planning_draft || !recipe?.yield_verified) result.push(`${recipe?.title ?? portion.recipe}: receta o rendimiento pendiente de aprobación.`);
   }
   return [...new Set(result)];
 });
-const warnings = computed(() => [...new Set([...shopping.value.warnings, ...approvalWarnings.value])]);
+const warnings = computed(() => [...new Set([...shopping.value.warnings, ...planWarnings.value])]);
 const productionNutrition = computed(() => shopping.value.recipePortions.map((portion) => {
   const recipe = data.value?.recipes.find((item) => item.id === portion.recipe);
   if (!recipe || !data.value) return { date: portion.date, recipe: portion.recipe, title: portion.recipe, portions: portion.portions, kcal: 0, complete: false };
@@ -323,14 +366,28 @@ watch(selectedIngredient, (id) => {
   nutritionForm.value = ingredient?.nutrition ? { ...ingredient.nutrition } : emptyNutrition();
 });
 watch(dates, (values) => { if (shoppingDate.value && !values.includes(shoppingDate.value)) shoppingDate.value = ""; });
+watch([credits, dates, utilization, extraDaily, buffer, autoDemand], () => syncDemand());
+function syncDemand(): boolean {
+  if (!autoDemand.value || !data.value || !lines.value.length) return true;
+  try {
+    if (forecastError.value || !dates.value.length) throw new Error(forecastError.value || "Selecciona fechas válidas.");
+    lines.value = rebalanceProductionPlan(lines.value.filter((line) => dates.value.includes(line.date)), forecastTargets.value);
+    dailyTargets.value = { ...forecastTargets.value };
+    forecastCredits.value = credits.value;
+    return true;
+  } catch (cause) {
+    error.value = cause instanceof Error ? cause.message : "No se pudieron ajustar las cantidades al saldo actual.";
+    return false;
+  }
+}
 async function load() {
   loading.value = true;
   error.value = "";
   try {
-    const [loaded] = await Promise.all([api.load(), menu.load()]);
+    const [loaded] = await Promise.all([api.load(), menu.load({ cache: "no-store", strict: true })]);
     // Category keys are used by weekly menus; catalog relations are resolved here.
     const pb = usePocketBase();
-    const categories = await pb.collection("menu_categories").getFullList<{ id: string; key: string }>({ requestKey: null });
+    const categories = await pb.collection("menu_categories").getFullList<{ id: string; key: string }>({ requestKey: null, cache: "no-store" });
     for (const item of loaded.menuItems) item.category = categories.find((category) => category.id === item.category)?.key ?? item.category;
     availableCredits(loaded.memberships);
     data.value = loaded;
@@ -342,7 +399,11 @@ async function load() {
         else generate();
       }
     }
-  } catch (cause) { error.value = cause instanceof Error ? cause.message : "No se pudieron cargar los datos."; }
+    return syncDemand();
+  } catch (cause) {
+    error.value = cause instanceof Error ? cause.message : "No se pudieron cargar los datos.";
+    return false;
+  }
   finally { loading.value = false; }
 }
 async function action(work: () => Promise<void>) {
@@ -353,9 +414,14 @@ async function action(work: () => Promise<void>) {
 }
 function addLine(date: string) {
   lines.value.push({ key: ++sequence, date, menu_item: "", quantity: 0, weight: 1 });
-  dailyTargets.value[date] ??= estimatedDaily.value;
+  dailyTargets.value[date] ??= forecastTargets.value[date] ?? 0;
 }
-function selectWeek(date: string) {
+function removeLine(key: number) {
+  lines.value = lines.value.filter((line) => line.key !== key);
+  syncDemand();
+}
+async function selectWeek(date: string) {
+  if (loading.value || busy.value || !await load()) return;
   weekStart.value = mondayOf(date);
   shoppingDate.value = "";
   savedSnapshot.value = "";
@@ -387,20 +453,22 @@ function changeMealShare(id: string, percentage: number) {
 function rebalance(date: string) {
   error.value = "";
   try {
-    const dayLines = lines.value.filter((line) => line.date === date);
-    const quantities = allocatePlates(dailyTargets.value[date] ?? estimatedDaily.value, dayLines.map((line) => line.weight));
-    dayLines.forEach((line, index) => { line.quantity = quantities[index]; });
+    lines.value = rebalanceProductionPlan(lines.value, { [date]: dailyTargets.value[date] ?? forecastTargets.value[date] ?? 0 });
   } catch (cause) { error.value = cause instanceof Error ? cause.message : "No se pudieron repartir los platos."; }
+}
+async function recalculateWeek() {
+  if (await load()) generate();
 }
 function generate() {
   error.value = ""; generationWarnings.value = [];
   if (!data.value) return;
   if (forecastError.value || !dates.value.length) { error.value = forecastError.value || "Selecciona una fecha válida."; return; }
   if (!menu.record.value || menu.loadError.value) { error.value = "No se pudo cargar la rotación del menú. Reintenta antes de generar."; return; }
+  forecastCredits.value = credits.value;
   lines.value = [];
   const rec = menu.record.value;
   for (const date of dates.value) {
-    dailyTargets.value[date] = estimatedDaily.value;
+    dailyTargets.value[date] = forecastTargets.value[date] ?? 0;
     const resolved = resolveDay(date, { blocks: rec.week_blocks ?? [], rotation: rec.rotation ?? [], anchor: rec.rotation_anchor ?? "", overrides: rec.overrides ?? {} });
     if (!resolved) { generationWarnings.value.push(`${date}: sin menú resuelto; confirma si hay servicio o define cantidades manuales.`); continue; }
     const entries = selectedGroups.value.flatMap((group) => (resolved.menu[group] ?? []).map((name) => ({ name, group })));
@@ -445,20 +513,24 @@ async function saveIngredient() {
 }
 async function savePlan(approve: boolean) {
   await action(async () => {
+    if (!await load()) throw new Error(error.value);
     if (!lines.value.length) throw new Error("Agrega al menos una línea.");
+    if (!syncDemand()) throw new Error(error.value);
     if (approve && approvalWarnings.value.length) throw new Error("Resuelve las advertencias antes de aprobar.");
     if (lines.value.some((line) => !line.menu_item || !Number.isInteger(line.quantity) || line.quantity < 0)) throw new Error("Corrige platillos y cantidades enteras.");
+    const ingredientRows = data.value!.rows.filter((row) => allRequirements.value.recipePortions.some((portion) => portion.recipe === row.recipe));
+    const ingredientIds = new Set(ingredientRows.map((row) => row.ingredient));
     const snapshot = {
       generated_at: new Date().toISOString(), credits: credits.value,
       requirements: allRequirements.value, warnings: approvalWarnings.value,
       recipes: data.value!.recipes.filter((recipe) => allRequirements.value.recipePortions.some((portion) => portion.recipe === recipe.id)),
-      ingredient_rows: data.value!.rows.filter((row) => allRequirements.value.recipePortions.some((portion) => portion.recipe === row.recipe)),
-      ingredients: data.value!.ingredients.filter((ingredient) => allRequirements.value.requirements.some((row) => row.ingredient === ingredient.id)),
+      ingredient_rows: ingredientRows,
+      ingredients: data.value!.ingredients.filter((ingredient) => ingredientIds.has(ingredient.id)),
       components: data.value!.components.filter((component) => lines.value.some((line) => line.menu_item === component.menu_item)),
     };
     const saved = await api.savePlan({
       week_start: weekStart.value, status: approve ? "approved" : "draft",
-      parameters: { serviceDays: serviceDays.value, utilization: utilization.value, extraDaily: extraDaily.value, buffer: buffer.value, allowDrafts: allowDrafts.value, showNutrition: showNutrition.value, respectProteinTargets: respectProteinTargets.value, selectedGroups: selectedGroups.value, dailyTargets: dailyTargets.value },
+      parameters: { serviceDays: serviceDays.value, utilization: utilization.value, extraDaily: extraDaily.value, walkInDaily: extraDaily.value, buffer: buffer.value, allowDrafts: allowDrafts.value, showNutrition: showNutrition.value, respectProteinTargets: respectProteinTargets.value, selectedGroups: selectedGroups.value, dailyTargets: dailyTargets.value, forecastCredits: forecastCredits.value, autoDemand: autoDemand.value },
       lines: lines.value.map(({ date, menu_item, quantity, weight }) => ({ date, menu_item, quantity, weight })), snapshot,
     });
     data.value!.plans.unshift(saved);
@@ -469,9 +541,14 @@ function viewPlan(plan: SavedMealPlan) {
   savedSnapshot.value = JSON.stringify(plan.snapshot, null, 2);
   weekStart.value = plan.week_start;
   const params = plan.parameters;
+  autoDemand.value = params.autoDemand !== false;
+  const snapshotCredits = plan.snapshot && typeof plan.snapshot === "object" && "credits" in plan.snapshot ? plan.snapshot.credits : null;
+  const basis = "forecastCredits" in params ? params.forecastCredits : snapshotCredits;
+  forecastCredits.value = typeof basis === "number" && Number.isFinite(basis) && basis >= 0 ? basis : null;
   if (typeof params.serviceDays === "number") serviceDays.value = params.serviceDays;
   if (typeof params.utilization === "number") utilization.value = params.utilization;
-  if (typeof params.extraDaily === "number") extraDaily.value = params.extraDaily;
+  extraDaily.value = typeof params.walkInDaily === "number" ? params.walkInDaily
+    : typeof params.extraDaily === "number" && params.extraDaily > 0 ? params.extraDaily : 15;
   if (typeof params.buffer === "number") buffer.value = params.buffer;
   if (typeof params.allowDrafts === "boolean") allowDrafts.value = params.allowDrafts;
   if (typeof params.showNutrition === "boolean") showNutrition.value = params.showNutrition;
@@ -490,17 +567,25 @@ function viewPlan(plan: SavedMealPlan) {
     });
   }
   generationWarnings.value = [];
+  if (!syncDemand()) return;
   notice.value = "Plan de la semana cargado. Los cambios se guardarán como una nueva versión.";
 }
-function exportCsv() {
-  const quote = (value: string | number) => {
-    const text = String(value);
-    const safe = typeof value === "string" && /^[=+\-@\t\r]/.test(text) ? `'${text}` : text;
-    return `"${safe.replace(/"/g, '""')}"`;
-  };
-  const content = [["Ingrediente", "Cantidad", "Unidad"], ...shopping.value.requirements.map((row) => [row.name, row.quantity, row.unit]), ...warnings.value.map((warning) => ["ADVERTENCIA", warning, ""])].map((row) => row.map(quote).join(",")).join("\r\n");
-  const url = URL.createObjectURL(new Blob(["\uFEFF", content], { type: "text/csv;charset=utf-8" }));
-  const anchor = document.createElement("a"); anchor.href = url; anchor.download = `compras-${shoppingDate.value || weekStart.value}.csv`; anchor.click(); URL.revokeObjectURL(url);
+async function exportShoppingList() {
+  if (loading.value || busy.value || !await load()) return;
+  const period = shoppingDate.value ? `Día: ${shoppingDate.value}` : `Semana: ${weekStart.value} al ${addDays(weekStart.value, 6)}`;
+  const content = buildShoppingText(shopping.value.requirements, period, warnings.value, {
+    plannedPlates: mealShares.value.reduce((total, item) => total + item.quantity, 0),
+    availableCredits: credits.value, forecastCredits: forecastCredits.value,
+    walkIns: { daily: extraDaily.value, days: shoppingDate.value ? 1 : serviceDays.value },
+  });
+  const url = URL.createObjectURL(new Blob(["\uFEFF", content], { type: "text/plain;charset=utf-8" }));
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = `compras-${shoppingDate.value || weekStart.value}.txt`;
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 onMounted(load);
 </script>

@@ -1,4 +1,5 @@
 import { allocatePlates, type ProductionLine, type Requirement } from "./meal-planning.ts";
+import { canonicalIngredientName, ingredientKey } from "./ingredient-identities.ts";
 import { addDays, mondayOf } from "../utils/rotation.ts";
 
 export function weekInputValue(date: string): string {
@@ -60,6 +61,18 @@ export function allocateMealShare(items: Array<{ id: string; quantity: number }>
   return allocatePlates(total, weights);
 }
 
+export function rebalanceProductionPlan<T extends ProductionLine & { weight: number }>(
+  lines: T[], targets: Record<string, number>,
+): T[] {
+  const result = lines.map((line) => ({ ...line }));
+  for (const [date, total] of Object.entries(targets)) {
+    const day = result.filter((line) => line.date === date);
+    const quantities = allocatePlates(total, day.map((line) => line.weight));
+    day.forEach((line, index) => { line.quantity = quantities[index]!; });
+  }
+  return result;
+}
+
 export function formatPurchaseQuantity(quantity: number, unit: string): string {
   if (!Number.isFinite(quantity) || quantity < 0) throw new Error("Cantidad de compra no válida.");
   let value = quantity;
@@ -67,6 +80,7 @@ export function formatPurchaseQuantity(quantity: number, unit: string): string {
   if (unit === "g" && quantity >= 1000) { value /= 1000; label = "kg"; }
   if (unit === "ml" && quantity >= 1000) { value /= 1000; label = "L"; }
   if (unit === "piece") label = quantity === 1 ? "pieza" : "piezas";
+  if (["diente", "rama", "hoja", "lata", "paquete", "barra", "rebanada", "envase"].includes(unit)) label = quantity === 1 ? unit : `${unit}s`;
   return `${new Intl.NumberFormat("es-MX", { maximumFractionDigits: 2 }).format(value)} ${label}`;
 }
 
@@ -76,19 +90,27 @@ function purchaseFamily(name: string): string {
     if (/\b(res|beef)\b/.test(value)) return "Res";
     if (/\bpollo\b/.test(value)) return "Pollo";
     if (/\b(cerdo|puerco)\b/.test(value)) return "Cerdo";
-    if (/\b(pescado|camaron|camarones|marlin|atun)\b/.test(value)) return "Pescados y mariscos";
+    if (/\b(pescado|camaron|camarones|marlin|atun|surimi)\b/.test(value)) return "Pescados y mariscos";
   }
-  if (/\barroz\b/.test(value) && !/\b(harina|leche|vinagre)\b/.test(value)) return "Arroz";
+  if (/\barroz\b/.test(value) && !/\b(agua|harina|leche|vinagre)\b/.test(value)) return "Arroz";
   return "Otros ingredientes";
 }
 
 export function summarizePurchases(requirements: Requirement[]) {
-  const groups = new Map<string, { name: string; items: Requirement[]; totals: Array<{ unit: string; quantity: number }> }>();
+  type Total = { unit: string; quantity: number };
+  type Item = { ingredient: string; name: string; totals: Total[] };
+  const groups = new Map<string, { name: string; items: Item[]; totals: Total[] }>();
   for (const row of requirements) {
     if (!Number.isFinite(row.quantity) || row.quantity < 0) throw new Error("Cantidad de compra no válida.");
-    const name = purchaseFamily(row.name);
+    const ingredientName = canonicalIngredientName(row.name);
+    const name = purchaseFamily(ingredientName);
     const group = groups.get(name) ?? { name, items: [], totals: [] };
-    group.items.push(row);
+    const item = group.items.find((item) => ingredientKey(item.name) === ingredientKey(ingredientName))
+      ?? { ingredient: row.ingredient, name: ingredientName, totals: [] };
+    const itemTotal = item.totals.find((total) => total.unit === row.unit);
+    if (itemTotal) itemTotal.quantity += row.quantity;
+    else item.totals.push({ unit: row.unit, quantity: row.quantity });
+    if (!group.items.includes(item)) group.items.push(item);
     // These are family subtotals only; distinct cuts and ingredient IDs stay separate below.
     const total = group.totals.find((total) => total.unit === row.unit);
     if (total) total.quantity += row.quantity;
@@ -99,4 +121,66 @@ export function summarizePurchases(requirements: Requirement[]) {
   return [...groups.values()].map((group) => ({
     ...group, items: [...group.items].sort((left, right) => left.name.localeCompare(right.name, "es")),
   })).sort((left, right) => order.indexOf(left.name) - order.indexOf(right.name));
+}
+
+export interface ShoppingPlanContext {
+  plannedPlates: number;
+  availableCredits: number;
+  forecastCredits: number | null;
+  walkIns?: { daily: number; days: number };
+}
+
+export function buildShoppingText(requirements: Requirement[], period: string, warnings: string[], context?: ShoppingPlanContext): string {
+  const groups = summarizePurchases(requirements);
+  const reviewItems = [...new Set(warnings)];
+  const lines = [
+    "BREEZY MEALS - LISTA DE COMPRAS",
+    period,
+    "Estimación según las recetas y porciones del plan.",
+    "Cantidades brutas, antes de descontar inventario.",
+  ];
+  if (context) {
+    const values = [context.plannedPlates, context.availableCredits, ...(context.forecastCredits === null ? [] : [context.forecastCredits])];
+    if (values.some((value) => !Number.isFinite(value) || value < 0)) throw new Error("Base de planeación no válida.");
+    if (context.walkIns && (!Number.isSafeInteger(context.walkIns.daily) || context.walkIns.daily < 0
+      || !Number.isSafeInteger(context.walkIns.days) || context.walkIns.days < 1)) throw new Error("Previsión de clientes sin membresía no válida.");
+    lines.push(
+      `Platos planeados: ${context.plannedPlates}.`,
+      `Créditos disponibles al descargar: ${context.availableCredits}.`,
+      context.forecastCredits === null ? "Base de créditos del plan no registrada."
+        : `Base de la previsión guardada: ${context.forecastCredits} créditos.`,
+    );
+    if (context.walkIns) {
+      const { daily, days } = context.walkIns;
+      lines.push(`Clientes sin membresía: ${daily} por día × ${days} días = ${daily * days} platos, antes del margen de producción.`);
+    }
+    if (context.forecastCredits !== null && context.forecastCredits !== context.availableCredits) {
+      lines.push("El saldo cambió. Las compras corresponden a los platos planeados, no al saldo actual.");
+    }
+  }
+  if (reviewItems.length) {
+    lines.push(
+      "",
+      `TOTALES PROVISIONALES - ${reviewItems.length} datos por revisar.`,
+      "Solo incluye cantidades calculables; revisa los pendientes antes de comprar.",
+    );
+  }
+  lines.push("", "RESUMEN", "-------");
+  for (const group of groups.filter((group) => group.name !== "Otros ingredientes")) {
+    lines.push(`${group.name}: ${group.totals.map((total) => formatPurchaseQuantity(total.quantity, total.unit)).join(" + ")}`);
+  }
+  lines.push("", "INGREDIENTES", "------------");
+  for (const group of groups) {
+    lines.push("", group.name);
+    for (const row of group.items) lines.push(`- ${row.name}: ${row.totals.map((total) => formatPurchaseQuantity(total.quantity, total.unit)).join(" + ")}`);
+  }
+  lines.push("", "Los cortes se compran por separado; no se sustituyen entre sí.");
+  lines.push("Cucharada = 15 ml; cucharadita = 5 ml. No se convierten piezas o envases a gramos.");
+  lines.push("Media crema por envase; queso amarillo por rebanada; Knorr por pieza.");
+  lines.push("Se respeta la presentación de cada receta; redondea piezas y envases al comprar.");
+  if (reviewItems.length) {
+    lines.push("", "DATOS POR REVISAR (NO SON INGREDIENTES)", "-------------------------------------");
+    for (const warning of reviewItems) lines.push(`- ${warning}`);
+  }
+  return `${lines.join("\r\n")}\r\n`;
 }

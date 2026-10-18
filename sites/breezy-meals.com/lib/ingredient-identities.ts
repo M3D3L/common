@@ -2,10 +2,27 @@ export const ingredientKey = (value: string): string =>
   value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim().replace(/\s+/g, " ");
 
 const aliases: Record<string, string> = {
+  "res": "carne de res",
+  "carne molida": "carne molida de res",
   "carne de res molida": "carne molida de res",
   "res molida": "carne molida de res",
   "ground beef": "carne molida de res",
   "diente de ajo": "ajo", "dientes de ajo": "ajo",
+  "ajos": "ajo",
+  "calabaza": "calabacita", "calabacitas": "calabacita",
+  "agua potable": "agua",
+  "pulpa de aguacate": "aguacate",
+  "hojas de cilantro": "cilantro",
+  "hojas de cilantro, frescas": "cilantro",
+  "hoja de cilantro": "cilantro",
+  "cerdo": "carne de cerdo", "puerco": "carne de cerdo",
+  "lomo de puerco": "lomo de cerdo",
+  "tomatillo": "tomate verde", "tomatillos": "tomate verde",
+  "tomate": "jitomate", "tomates": "jitomate",
+  "elotes": "elote",
+  "zanahorias": "zanahoria", "cebollas": "cebolla",
+  "quesos amarillos": "queso amarillo",
+  "fresas": "fresa",
   "huevos": "huevo",
   "cilantro fresco": "cilantro",
   "perejil fresco": "perejil",
@@ -15,9 +32,14 @@ const aliases: Record<string, string> = {
 
 export function canonicalIngredientName(value: string): string {
   const prepared = value.trim().replace(
-    /(?:,\s*|\s+)(?:finamente\s+)?(?:picad[oa]s?|rallad[oa]s?|en cubos|en trozos|en rodajas)$/i,
+    /\s*\((?:proteína provisional|base roja provisional|ajustar según arroz)\)\s*$/i,
+    "",
+  ).replace(
+    /(?:,\s*|\s+)(?:finamente\s+)?(?:picad[oa]s?|rallad[oa]s?|en cubos|en trozos|en rodajas)(?:\s+finamente)?$/i,
     "",
   );
+  const packaged = prepared.match(/^(.*?)\s+\((en lata|en paquete|en barra)\)$/i);
+  if (packaged) return `${canonicalIngredientName(packaged[1]!)} (${packaged[2]!.toLowerCase()})`;
   return aliases[ingredientKey(prepared)] ?? prepared;
 }
 

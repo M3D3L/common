@@ -71,7 +71,7 @@
 
 <script setup lang="ts">
 import { Button } from "@common/components/ui/button";
-import { calculateRecipeNutrition, type RecipeIngredient, type NutritionProfile } from "~/lib/meal-planning";
+import { calculateRecipeNutrition, PLANNING_UNITS, type RecipeIngredient, type NutritionProfile } from "~/lib/meal-planning";
 import type { PlanningIngredient, PlanningRecipeRecord } from "~/composables/useMealPlanning";
 
 const props = defineProps<{ recipeId: string }>();
@@ -87,7 +87,7 @@ const error = ref("");
 const thermomix = ref("");
 const ninja = ref("");
 const riceCooker = ref("");
-const units = ["g", "kg", "ml", "l", "piece"];
+const units = PLANNING_UNITS;
 const nutrition = computed(() => recipe.value
   ? calculateRecipeNutrition(recipe.value, rows.value, ingredients.value) : null);
 const formatNutrition = (value: NutritionProfile) =>

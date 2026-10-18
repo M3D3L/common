@@ -6,6 +6,7 @@ import {
   availableCredits,
   calculateRecipeNutrition,
   forecastDaily,
+  forecastWeekly,
   parseIngredientLine,
   parseYield,
   type Ingredient,
@@ -48,6 +49,19 @@ test("forecast uses adjustable days, utilization, extras, buffer and one ceiling
     [NaN, 5, 80, 0, 0], [100, 5, 80, -1, 0], [100, 5, 80, 0, Infinity]]) {
     assert.throws(() => forecastDaily(...args as [number, number, number, number, number]), RangeError);
   }
+});
+
+test("weekly demand uses the actual credit budget and rounds only the weekly total", () => {
+  assert.equal(forecastWeekly(57, 5, 100, 0, 0), 57);
+  assert.deepEqual(allocatePlates(forecastWeekly(57, 5, 100, 0, 0), [1, 1, 1, 1, 1]), [12, 12, 11, 11, 11]);
+  assert.equal(forecastWeekly(57, 5, 100, 15, 0), 132);
+  assert.deepEqual(allocatePlates(forecastWeekly(57, 5, 100, 15, 0), [1, 1, 1, 1, 1]), [27, 27, 26, 26, 26]);
+  assert.equal(forecastWeekly(80, 5, 100, 0, 0), 80);
+  assert.equal(forecastWeekly(57, 5, 50, 0, 0), 29);
+  assert.equal(forecastWeekly(57, 5, 100, 2, 10), 74);
+  assert.equal(forecastWeekly(0, 5, 100, 0, 0), 0);
+  assert.throws(() => forecastWeekly(57, 0, 100, 0, 0), RangeError);
+  assert.throws(() => forecastWeekly(Number.MAX_VALUE, 5, 100, 0, 0), RangeError);
 });
 
 test("validation errors are Spanish without changing error types", () => {
@@ -229,7 +243,7 @@ test("missing components, recipes, yields, rows and invalid production quantitie
   assert.match(invalid.warnings.join(), /Línea de producción inválida/);
 });
 
-test("unresolved requirements remain visibly partial; no densities, name aliases or cup guessing", () => {
+test("unresolved requirements stay partial while explicit dimensions are retained without conversion", () => {
   const result = aggregateRequirements([{ date: "2026-10-19", menu_item: "plate", quantity: 4 }],
     [{ menu_item: "plate", recipe: "dish", portions: 1 }], [recipe], [
       row({ review_required: true }),
@@ -238,13 +252,14 @@ test("unresolved requirements remain visibly partial; no densities, name aliases
       row({ id: "density", ingredient: "milk", unit: "g" }),
       row({ id: "negative", quantity: -1 }),
     ], ingredients);
-  assert.deepEqual(result.requirements, [{ ingredient: "rice", name: "Arroz", unit: "g", quantity: 400 }]);
+  assert.deepEqual(result.requirements, [
+    { ingredient: "rice", name: "Arroz", unit: "g", quantity: 400 },
+    { ingredient: "milk", name: "Leche", unit: "g", quantity: 0.4 },
+  ]);
   assert.match(result.warnings.join(), /requiere revisión/);
   assert.match(result.warnings.join(), /No se encontró el ingrediente/);
-  assert.equal(result.warnings.filter((warning) => warning.includes("sin resolver")).length, 3);
-  assert.ok(result.warnings.includes(
-    'Receta "Plato" (dish): Cantidad o conversión de unidades sin resolver en la fila "density" (g → ml).',
-  ));
+  assert.equal(result.warnings.filter((warning) => warning.includes("sin resolver")).length, 2);
+  assert.ok(result.warnings.some((warning) => warning.includes('"400 g arroz"') && warning.includes('"cup"')));
 });
 
 test("nutrition has exact per-recipe and per-portion totals using explicit grams per unit", () => {
@@ -401,16 +416,16 @@ test("Spanish parser handles explicit decimals, fractions, Unicode fractions and
   }
 });
 
-test("parser preserves ambiguous household units and unknown names without guessing", () => {
+test("parser uses standard metric spoons but preserves ambiguous cups and unknown quantities", () => {
   assert.deepEqual(parseIngredientLine("1/2 taza de harina"), {
     name: "harina", quantity: 0.5, unit: "taza", review_required: true,
   });
   assert.deepEqual(parseIngredientLine("2 cucharadas de aceite"), {
-    name: "aceite", quantity: 2, unit: "cucharadas", review_required: true,
+    name: "aceite", quantity: 2, unit: "cucharada", review_required: false,
   });
-  for (const unit of ["cdita", "cucharada", "taza"]) {
+  for (const [unit, normalizedUnit] of [["cdita", "cucharadita"], ["cucharada", "cucharada"], ["taza", "taza"]]) {
     assert.deepEqual(parseIngredientLine(`1 ${unit} de sal`), {
-      name: "sal", quantity: 1, unit, review_required: true,
+      name: "sal", quantity: 1, unit: normalizedUnit, review_required: unit === "taza",
     });
   }
   for (const unit of ["piece", "pieza", "piezas", "pza", "pzas"]) {
@@ -419,10 +434,10 @@ test("parser preserves ambiguous household units and unknown names without guess
     });
   }
   assert.deepEqual(parseIngredientLine("2 huevos"), {
-    name: "huevos", quantity: 2, unit: null, review_required: true,
+    name: "huevos", quantity: 2, unit: "piece", review_required: false,
   });
   assert.deepEqual(parseIngredientLine("1 paquete de queso"), {
-    name: "paquete de queso", quantity: 1, unit: null, review_required: true,
+    name: "queso (en paquete)", quantity: 1, unit: "paquete", review_required: false,
   });
   for (const text of ["sal al gusto", "", "1-2 kg de pollo", "1 a 2 kg de pollo", "1/0 kg de arroz", "-2 g de sal", "0 g de sal", "1.000,5 g de arroz"])
     assert.deepEqual(parseIngredientLine(text), { name: text, quantity: null, unit: null, review_required: true });
@@ -435,4 +450,94 @@ test("yield parser accepts a single explicit yield and rejects prose, ranges and
   assert.equal(parseYield("2,5 porciones"), 2.5);
   for (const text of ["", "0", "-1", "4-6 porciones", "4 a 6", "4 porciones de 200 g", "4 personas / 2 días", "unas 4 porciones", "Infinity", "1/2 porción", "Rinde 4", "rinde4 porciones", "4porciones"])
     assert.equal(parseYield(text), null);
+});
+
+test("purchasing combines confirmed aliases but preserves cuts, cooking states and mixed meats", () => {
+  const names = ["res", "carne de res", "carne molida", "carne molida de res", "bistec de res",
+    "calabaza", "calabacitas", "calabacita", "carne molida mixta", "res cocida"];
+  const catalog: Ingredient[] = names.map((name, index) => ({ id: String(index), name, base_unit: "g" }));
+  const rows = catalog.map((ingredient) => row({ id: ingredient.id, ingredient: ingredient.id, quantity: 100, unit: "g" }));
+  const result = aggregateRequirements([{ date: "2026-10-19", menu_item: "plate", quantity: 4 }],
+    [{ menu_item: "plate", recipe: "dish", portions: 1 }], [recipe], rows, catalog);
+  assert.deepEqual(result.requirements.map(({ name, quantity }) => ({ name, quantity })), [
+    { name: "carne de res", quantity: 200 },
+    { name: "carne molida de res", quantity: 200 },
+    { name: "bistec de res", quantity: 100 },
+    { name: "calabacita", quantity: 300 },
+    { name: "carne molida mixta", quantity: 100 },
+    { name: "res cocida", quantity: 100 },
+  ]);
+  assert.deepEqual(result.warnings, []);
+});
+
+test("purchasing retains grams, millilitres and count measures without invented conversions", () => {
+  const result = aggregateRequirements([{ date: "2026-10-19", menu_item: "plate", quantity: 4 }],
+    [{ menu_item: "plate", recipe: "dish", portions: 1 }], [recipe], [
+      row({ quantity: 30, unit: "ml" }), row({ id: "mass", quantity: 13, unit: "g" }),
+      row({ id: "count", quantity: 2, unit: "diente" }), row({ id: "can", quantity: 0.5, unit: "lata" }),
+    ], [{ id: "rice", name: "Ajo", base_unit: "g" }]);
+  assert.deepEqual(result.requirements.map(({ quantity, unit }) => ({ quantity, unit })), [
+    { quantity: 30, unit: "ml" }, { quantity: 13, unit: "g" },
+    { quantity: 2, unit: "diente" }, { quantity: 0.5, unit: "lata" },
+  ]);
+  assert.deepEqual(result.warnings, []);
+});
+
+test("nutrition uses explicit gram quantities even when the preferred purchasing unit is ml", () => {
+  const result = calculateRecipeNutrition(recipe, [row({ ingredient: "milk", quantity: 100, unit: "g" })],
+    [{ ...ingredients[1]!, grams_per_unit: undefined }]);
+  assert.deepEqual(result.total, profile);
+  assert.equal(result.complete, true);
+});
+
+test("source counts are parsed without assuming item weights or package sizes", () => {
+  const cases: Array<[string, string, number, string]> = [
+    ["2 dientes de ajo", "ajo", 2, "diente"],
+    ["1 rama de cilantro fresco", "cilantro fresco", 1, "rama"],
+    ["6 hojas de hierbabuena fresca", "hierbabuena fresca", 6, "hoja"],
+    ["4 latas atun", "atun (en lata)", 4, "lata"],
+    ["1/2 lata elotes", "elotes (en lata)", 0.5, "lata"],
+    ["1 paquete de achiote", "achiote (en paquete)", 1, "paquete"],
+    ["1 Barra Pan Bimbo", "Pan Bimbo (en barra)", 1, "barra"],
+    ["4 rebanadas queso amarillo", "queso amarillo", 4, "rebanada"],
+    ["½ papa", "papa", 0.5, "piece"],
+    ["2 zanahorias", "zanahorias", 2, "piece"],
+    ["10 Tamales de Elote", "Tamales de Elote", 10, "piece"],
+    ["El jugo de 4 naranjas", "naranja para jugo", 4, "piece"],
+    ["1 knorr pollo", "knorr pollo", 1, "piece"],
+    ["1 knorr tomate", "knorr tomate", 1, "piece"],
+    ["2 media crema", "media crema", 2, "envase"],
+    ["4 quesos amarillos", "queso amarillo", 4, "rebanada"],
+  ];
+  for (const [text, name, quantity, unit] of cases) {
+    assert.deepEqual(parseIngredientLine(text), { name, quantity, unit, review_required: false });
+  }
+  for (const text of ["1 ajo en polvo", "queso al gusto", "un paquete de achiote"]) {
+    assert.equal(parseIngredientLine(text).review_required, true, text);
+  }
+});
+
+test("an unresolved source measure gives one actionable warning rather than two ID-only messages", () => {
+  const result = aggregateRequirements([{ date: "2026-10-19", menu_item: "plate", quantity: 4 }],
+    [{ menu_item: "plate", recipe: "dish", portions: 1 }], [recipe],
+    [row({ unit: "taza", review_required: true, text: "1 taza de sal" })], ingredients);
+  assert.deepEqual(result.requirements, []);
+  assert.equal(result.warnings.length, 1);
+  assert.match(result.warnings[0]!, /1 taza de sal/);
+});
+
+test("metric spoons convert to ml without inventing salt density or splitting mixed seasonings", () => {
+  const salt = { id: "salt", name: "sal", base_unit: "g" as const };
+  const blend = { id: "blend", name: "sal, pimienta y ajo en polvo", base_unit: "g" as const };
+  const result = aggregateRequirements([{ date: "2026-10-19", menu_item: "plate", quantity: 4 }],
+    [{ menu_item: "plate", recipe: "dish", portions: 1 }], [recipe], [
+      row({ ingredient: "salt", quantity: 1.5, unit: "cucharada" }),
+      row({ id: "spice", ingredient: "blend", quantity: 1, unit: "cucharadita" }),
+    ], [salt, blend]);
+  assert.deepEqual(result.requirements.map(({ name, quantity, unit }) => ({ name, quantity, unit })), [
+    { name: "sal", quantity: 22.5, unit: "ml" },
+    { name: "sal, pimienta y ajo en polvo", quantity: 5, unit: "ml" },
+  ]);
+  assert.deepEqual(result.warnings, []);
+  assert.equal(calculateRecipeNutrition(recipe, [row({ ingredient: "salt", quantity: 1.5, unit: "cucharada" })], [salt]).complete, false);
 });

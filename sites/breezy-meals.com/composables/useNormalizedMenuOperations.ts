@@ -79,26 +79,28 @@ export function useNormalizedMenuOperations() {
   async function fetchAll(
     collection: string,
     sort = "created",
+    options: { cache?: RequestCache } = {},
   ): Promise<NormalizedRecord[]> {
     const records = await pb.collection(collection).getFullList({
       sort,
       requestKey: null,
+      ...options,
     });
     return records.map(recordData);
   }
 
-  async function fetchMenuCollections(): Promise<MenuCollections> {
+  async function fetchMenuCollections(options: { cache?: RequestCache } = {}): Promise<MenuCollections> {
     const entries = await Promise.all(
       menuCollectionNames.map(
         async (name) =>
-          [name, await fetchAll(name, menuCollectionSorts[name])] as const,
+          [name, await fetchAll(name, menuCollectionSorts[name], options)] as const,
       ),
     );
     return Object.fromEntries(entries) as MenuCollections;
   }
 
-  async function loadMenu<T extends NormalizedRecord>(legacy: T): Promise<T> {
-    const collections = await fetchMenuCollections();
+  async function loadMenu<T extends NormalizedRecord>(legacy: T, options: { cache?: RequestCache } = {}): Promise<T> {
+    const collections = await fetchMenuCollections(options);
     return buildNormalizedMenuRecord(legacy, menuRows(collections));
   }
 

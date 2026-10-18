@@ -4,7 +4,8 @@ The staff-only `/planeacion` page combines membership demand, dated production,
 recipe components, ingredient purchasing and nutrition. Only `menu_items` with
 `surface = "dishes"` are included. Store and catering catalogs are excluded.
 All purchasing quantities are metric (g/kg, ml/l), or individually counted pieces.
-Unknown household measures remain review items rather than guessed conversions.
+Standard measuring tablespoons use 15 ml and teaspoons use 5 ml. Unknown household
+measures such as unspecified cups remain review items rather than guessed weights.
 
 ## Everyday planning view
 
@@ -18,16 +19,79 @@ edit a meal's percentage: the remaining meals are redistributed while preserving
 the exact integer daily plate total. Zero-share meals remain available in that
 day's editor. Weekly percentages combine occurrences of the same dish.
 
+The visible **Clientes sin membresía por día** field defaults to **15 every
+service day**, estimating one plate per customer. Five days add 75 plates to the
+membership-based weekly demand; 57 available credits at 100% consumption plus
+these customers therefore gives 132 plates before a production buffer, allocated
+27, 27, 26, 26, 26. Editing the field updates automatic production quantities,
+meal shares and purchasing totals. Set it to zero for membership-only planning.
+The chosen value persists as `parameters.walkInDaily` (and the compatible
+`extraDaily` field). Legacy plans with no explicit walk-in setting and the old
+zero default use 15; a previously positive `extraDaily` value is preserved.
+An explicit `walkInDaily: 0` remains zero on reload. TXT exports include the daily
+customer count and its total over the exported period.
+
 Purchasing totals show kg for quantities of at least 1,000 g and L for at least
 1,000 ml. Beef, chicken, pork, seafood and rice have family subtotals with separate
 ingredient/cut breakdowns; mass, volume and pieces are never added together.
 Bouillon and strawberries are not classified as meat. Subtotals only include
 calculable requirements and remain visibly provisional when data is incomplete.
 
+Confirmed equivalent names share one shopping line: for example `res` / `carne de
+res`, `carne molida` / `carne molida de res`, and local `calabaza` / `calabacita` /
+`calabacitas`. Different cuts, mixed meats, varieties and raw/cooked states are not
+merged. These local aliases also apply to newly prepared ingredient migrations.
+Mass, volume and counts for the same food appear together but remain separate,
+such as `ajo: 49 g + 3 dientes`; no density or whole-item weight is invented.
+The ingredient's preferred base unit never prevents an explicit requirement in a
+different dimension from appearing in the shopping list.
+
+Source recipes can use cloves, sprigs, leaves, cans, packages, loaves/bars and
+slices. Known whole-food counts and oranges used for juice are retained as
+counts. Everyday packaged-food shorthand is interpreted as media crema containers,
+yellow-cheese slices and individual Knorr products, without inventing container
+size, cube weight or nutrition. These conventions are noted on the page and TXT.
+Mixed seasonings remain one recipe mixture rather than guessing its proportions.
+Counts may be fractional recipe requirements; round up presentations when buying.
+
 Recipe associations, ingredient nutrition and equipment setup are behind
 **Configuración**. Demand settings, manual production, kitchen approval and
 version history are collapsed below the everyday overview. Saving and exporting
 the purchasing list remain primary actions.
+
+Both download buttons export a UTF-8 plain-text (`.txt`) shopping list for the
+selected week or day. The file contains family subtotals and separate ingredient
+lines using the same rounded metric display as the page, not raw floating-point
+decimals. Incomplete totals are labeled provisional at the top; review details
+are kept in a separate section below the shopping list, not mixed into ingredient
+rows. The download does not resolve missing recipe quantities or conversions.
+Kitchen-approval flags are not shopping errors: normal planning, saving and
+exporting work without approving each recipe. Optional kitchen review and its
+approval-only notices are visible under **Configuración** only. Genuine missing
+quantities, broken associations and invalid production totals still surface in
+the everyday view and exports.
+
+Planner data requests explicitly use `cache: "no-store"`; menu rotation reads also
+bypass the shared application cache. The page is not kept alive between route
+visits. Opening the planner, switching weeks, recalculating or downloading fetches
+current data from PocketBase. By default, loading a saved plan or refreshing
+inputs automatically redistributes plate quantities to today's weekly demand,
+retaining dish choices and their allocation weights. If refreshing fails,
+the page shows the error and does not export or regenerate with stale data.
+Saved plan versions remain intentional records, not a data cache; their ingredient
+requirements are recalculated against current recipe and ingredient data.
+The summary distinguishes **Platos planeados** (the saved/edited quantities),
+**Previsión actual por día** (the live forecast) and **Créditos disponibles ahora**
+(the live balance). Plans record the credit balance used when generated in
+`parameters.forecastCredits`; older plans use `snapshot.credits` where present.
+Automatic demand adjustment (`parameters.autoDemand`, default true, including
+older drafts) applies when opening, refreshing, saving or downloading the plan,
+and when forecast parameters change. Stored historical versions are not
+overwritten; saving creates a new version. Disable automatic adjustment explicitly
+for manual plate quantities. In manual mode, a visible explanation distinguishes
+the saved plan from current demand and offers **Recalcular con saldo actual**.
+Saving a manual plan does not relabel it as generated from today's balance.
+TXT exports include the same plan/current-balance distinction.
 
 ## Data model
 
@@ -42,6 +106,26 @@ the purchasing list remain primary actions.
 - `meal_plans`: parameters, dated menu quantities and a calculation snapshot.
   Approved plans cannot be updated through the collection's staff API rules.
 
+`scripts/prepare-ingredient-repairs.ts snapshot.json operations.json` prepares
+repeatable, non-destructive identity and imported-measure repairs. It remaps
+ingredient references to canonical records, retains old IDs and source recipe
+text, preserves manually changed quantities, and never changes recipe yields or
+approval flags. Existing sourced nutrition may be copied between exact aliases
+of the same food and preferred unit; conflicting verified profiles prevent that
+association from being changed. New food/package identities have no invented
+nutrition. Back up PocketBase and check concurrent record updates before applying
+the generated operations.
+
+The October 18, 2026 repair applied 276 writes after the verified
+`ingredient-repair-before-2026-10-18.zip` backup: 90 ingredient associations and
+89 count rows were repaired in the first pass, then 94 additional common-measure
+rows. Across both passes, 183 imported rows gained usable measures, 20 ingredient
+identities were added and 93 row associations were canonicalized. All 1,265
+original ingredient texts were retained; recipe yields, dish/store records and
+saved production quantities were not changed. Other recipes still contain 112
+source rows needing interpretation; this does not prevent recipes with known
+quantities from being planned.
+
 Draft recipes are estimated proposals, not kitchen-tested instructions. Thermomix,
 Ninja slow-cooker and rice-cooker methods require checking the actual model manual,
 capacity and appropriate food-safety procedures. Conventional equipment remains
@@ -54,17 +138,21 @@ at zero per bucket. Carry-forward statuses remain eligible, matching existing
 membership logic. Cached `credits_used` must be reconciled against the redemption
 ledger through existing administrative tools if it drifts.
 
-Daily forecast:
+Weekly forecast:
 
 ```text
-ceil((available credits * utilization / 100 / service days + extra daily meals)
+ceil((available credits * utilization / 100 + extra daily meals * service days)
      * (1 + production buffer / 100))
 ```
 
 The default is 100% utilization over five consecutive service dates beginning
 with the selected start date. This is a planning assumption, not a prediction.
-Adjust consumption, daily targets and weights. Largest-remainder allocation
-preserves the integer daily total. Regenerating intentionally replaces manual
+Adjust consumption and meal weights, or explicitly switch to manual daily targets.
+Largest-remainder allocation distributes the weekly budget across service days
+and then dishes, preserving the exact weekly total. For 57 available credits,
+five days, 100% utilization and no extras/buffer, the result is 57 plates split
+12, 12, 11, 11, 11, not five independently rounded 12-plate days.
+Regenerating intentionally replaces manual
 lines. Unresolved rotation names and closed/unresolved days are surfaced.
 
 Original recipe/Thermomix portion yields take precedence. Approximately 150 g of

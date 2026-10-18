@@ -1,3 +1,5 @@
+import { canonicalIngredientName, ingredientKey } from "./ingredient-identities.ts";
+
 /** Nutrients per 100 grams: kcal, grams of macronutrients/fiber, milligrams sodium. */
 export interface NutritionProfile {
   kcal: number;
@@ -115,12 +117,42 @@ function resolveUnit(raw: string): Unit | null {
     return { base: "ml", factor: 1000, name: "l" };
   if (["piece", "pieces", "pieza", "piezas", "pza", "pzas", "unidad", "unidades"].includes(unit))
     return { base: "piece", factor: 1, name: "piece" };
+  if (["cucharada", "cucharadas", "cda", "cdas"].includes(unit))
+    return { base: "ml", factor: 15, name: "cucharada" };
+  if (["cucharadita", "cucharaditas", "cdta", "cdtas", "cdita", "cditas"].includes(unit))
+    return { base: "ml", factor: 5, name: "cucharadita" };
   return null;
+}
+
+const countedUnits: Record<string, { unit: string; label: string }> = {
+  diente: { unit: "diente", label: "" }, dientes: { unit: "diente", label: "" },
+  rama: { unit: "rama", label: "" }, ramas: { unit: "rama", label: "" },
+  ramita: { unit: "rama", label: "" }, ramitas: { unit: "rama", label: "" },
+  hoja: { unit: "hoja", label: "" }, hojas: { unit: "hoja", label: "" },
+  lata: { unit: "lata", label: "en lata" }, latas: { unit: "lata", label: "en lata" },
+  paquete: { unit: "paquete", label: "en paquete" }, paquetes: { unit: "paquete", label: "en paquete" },
+  barra: { unit: "barra", label: "en barra" }, barras: { unit: "barra", label: "en barra" },
+  rebanada: { unit: "rebanada", label: "" }, rebanadas: { unit: "rebanada", label: "" },
+  envase: { unit: "envase", label: "" }, envases: { unit: "envase", label: "" },
+};
+
+export const PLANNING_UNITS = [
+  "g", "kg", "ml", "l", "piece", "diente", "rama", "hoja",
+  "lata", "paquete", "barra", "rebanada", "envase", "cucharada", "cucharadita",
+];
+
+function purchaseQuantity(row: RecipeIngredient): { quantity: number; unit: string } | null {
+  if (!positive(row.quantity)) return null;
+  const unit = resolveUnit(row.unit);
+  const counted = countedUnits[normalize(row.unit)];
+  if (!unit && !counted) return null;
+  const quantity = row.quantity * (unit?.factor ?? 1);
+  return nonnegative(quantity) ? { quantity, unit: unit?.base ?? counted!.unit } : null;
 }
 
 function canonicalQuantity(row: RecipeIngredient, ingredient: Ingredient): number | null {
   const unit = resolveUnit(row.unit);
-  if (!positive(row.quantity) || !unit || unit.base !== ingredient.base_unit) return null;
+  if (!positive(row.quantity) || !unit || (unit.base !== "g" && unit.base !== ingredient.base_unit)) return null;
   const quantity = row.quantity * unit.factor;
   return nonnegative(quantity) ? quantity : null;
 }
@@ -141,7 +173,8 @@ function uniqueIndex<T extends { id: string }>(items: T[], kind: string, warning
 }
 
 /**
- * Only explicit, same-dimension unit conversions are allowed for purchasing.
+ * Purchasing retains each explicit dimension, independent of the preferred ingredient unit.
+ * Mass, volume and count measures stay separate; no densities or item weights are inferred.
  * Meat/protein targets use measured finished batch yields, never inferred raw-to-cooked ratios.
  */
 export function aggregateRequirements(
@@ -211,27 +244,30 @@ export function aggregateRequirements(
       const rows = recipeIngredients.filter((row) => row.recipe === recipe.id);
       if (!rows.length) warn(`No hay filas de ingredientes para la receta "${recipe.id}".`);
       for (const row of rows) {
-        if (row.review_required) warn(`La fila de ingrediente "${row.id}" requiere revisión.`);
         const ingredient = ingredientIndex.get(row.ingredient);
         if (!ingredient) {
           warn(`No se encontró el ingrediente "${row.ingredient}" de la fila "${row.id}".`);
           continue;
         }
-        const quantity = canonicalQuantity(row, ingredient);
-        if (quantity === null) {
-          warn(`Cantidad o conversión de unidades sin resolver en la fila "${row.id}" (${row.unit} → ${ingredient.base_unit}).`);
+        const purchase = purchaseQuantity(row);
+        if (!purchase) {
+          warn(`Cantidad o unidad sin resolver en "${row.text}" (fila "${row.id}"; ${row.unit || "sin unidad"}).`);
           continue;
         }
-        const scaled = quantity * (portions / recipe.yield_portions);
-        const existing = requirements.get(ingredient.id)?.quantity ?? 0;
+        if (row.review_required) warn(`El ingrediente "${row.text}" (fila "${row.id}") requiere revisión.`);
+        const name = canonicalIngredientName(ingredient.name);
+        const requirementKey = JSON.stringify([ingredientKey(name), purchase.unit]);
+        const scaled = purchase.quantity * (portions / recipe.yield_portions);
+        const previousRequirement = requirements.get(requirementKey);
+        const existing = previousRequirement?.quantity ?? 0;
         if (!nonnegative(scaled) || !nonnegative(existing + scaled)) {
           warn(`La cantidad requerida en la fila "${row.id}" excede el límite numérico.`);
           continue;
         }
-        requirements.set(ingredient.id, {
-          ingredient: ingredient.id,
-          name: ingredient.name,
-          unit: ingredient.base_unit,
+        requirements.set(requirementKey, {
+          ingredient: previousRequirement?.ingredient ?? ingredient.id,
+          name,
+          unit: purchase.unit,
           quantity: existing + scaled,
         });
       }
@@ -271,7 +307,7 @@ export function calculateRecipeNutrition(
       warn(`Cantidad o conversión de unidades sin resolver en la fila "${row.id}".`);
       continue;
     }
-    const grams = ingredient.base_unit === "g"
+    const grams = resolveUnit(row.unit)?.base === "g"
       ? quantity
       : positive(ingredient.grams_per_unit ?? NaN)
         ? quantity * ingredient.grams_per_unit!
@@ -321,18 +357,33 @@ export function availableCredits(
   return total;
 }
 
-/** Round up once, after applying utilization, extra daily meals, and the buffer. */
-export function forecastDaily(
+function validateForecast(
   credits: number,
   serviceDays: number,
   utilizationPercent: number,
   extraDaily: number,
   bufferPercent: number,
-): number {
+): void {
   if (!nonnegative(credits) || !Number.isSafeInteger(serviceDays) || serviceDays <= 0 ||
       !nonnegative(utilizationPercent) || utilizationPercent > 100 ||
       !nonnegative(extraDaily) || !nonnegative(bufferPercent))
     throw new RangeError("Los datos de la estimación diaria son inválidos.");
+}
+
+export function forecastWeekly(
+  credits: number, serviceDays: number, utilizationPercent: number, extraDaily: number, bufferPercent: number,
+): number {
+  validateForecast(credits, serviceDays, utilizationPercent, extraDaily, bufferPercent);
+  const total = Math.ceil((credits * utilizationPercent / 100 + extraDaily * serviceDays) * (1 + bufferPercent / 100));
+  if (!Number.isSafeInteger(total)) throw new RangeError("La estimación semanal excede el rango de enteros seguros.");
+  return total;
+}
+
+/** Legacy per-day estimate; weekly planning rounds the weekly budget only once. */
+export function forecastDaily(
+  credits: number, serviceDays: number, utilizationPercent: number, extraDaily: number, bufferPercent: number,
+): number {
+  validateForecast(credits, serviceDays, utilizationPercent, extraDaily, bufferPercent);
   const total = Math.ceil(((credits / serviceDays) * (utilizationPercent / 100) + extraDaily) * (1 + bufferPercent / 100));
   if (!Number.isSafeInteger(total)) throw new RangeError("La estimación diaria excede el rango de enteros seguros.");
   return total;
@@ -375,6 +426,10 @@ export function parseIngredientLine(text: string): ParsedIngredientLine {
   const expanded = original.replace(/(\d)([½¼¾⅓⅔⅛⅜⅝⅞])/g, "$1 $2")
     .replace(/[½¼¾⅓⅔⅛⅜⅝⅞]/g, (fraction) =>
       ({ "½": "1/2", "¼": "1/4", "¾": "3/4", "⅓": "1/3", "⅔": "2/3", "⅛": "1/8", "⅜": "3/8", "⅝": "5/8", "⅞": "7/8" })[fraction]!);
+  const juiceFruit = expanded.match(/^(?:el\s+)?jugo de (\d+) naranjas?$/i);
+  if (juiceFruit && positive(Number(juiceFruit[1]))) {
+    return { name: "naranja para jugo", quantity: Number(juiceFruit[1]), unit: "piece", review_required: false };
+  }
   const match = expanded.match(/^(\d+\s+\d+\s*\/\s*\d+|\d+\s*\/\s*\d+|\d+(?:[.,]\d+)?)(?:\s*([a-záéíóúüñ]+)\.?)?\s*(.*)$/i);
   if (!match) return unresolved();
   const numeric = match[1]!;
@@ -390,14 +445,25 @@ export function parseIngredientLine(text: string): ParsedIngredientLine {
   if (!positive(quantity)) return unresolved();
   const rawUnit = match[2] ?? "";
   const known = resolveUnit(rawUnit);
+  const counted = countedUnits[normalize(rawUnit)];
   const ambiguousUnits = ["taza", "tazas", "cucharada", "cucharadas", "cucharadita", "cucharaditas", "cda", "cdas", "cdta", "cdtas", "cdita", "cditas"];
   const ambiguous = ambiguousUnits.includes(normalize(rawUnit));
-  const unit = known?.name ?? (ambiguous ? normalize(rawUnit) : null);
+  let unit = known?.name ?? counted?.unit ?? (ambiguous ? normalize(rawUnit) : null);
   const remainder = (unit ? match[3]! : `${rawUnit} ${match[3]!}`).trim();
   // Ranges and compound quantities must not turn into a plausible single amount.
   if (/^(?:[-–—/+.,]|\d|a\s+\d|y\s+\d)/i.test(remainder)) return unresolved();
-  const name = remainder.replace(/^de(?:l)?\s+/i, "").trim();
-  return { name, quantity, unit, review_required: !known || !name };
+  let name = remainder.replace(/^de(?:l)?\s+/i, "").trim();
+  if (!unit && normalize(name) === "media crema") unit = "envase";
+  if (!unit && /^knorr (?:pollo|tomate)$/i.test(name)) unit = "piece";
+  if (!unit && normalize(name) === "quesos amarillos") {
+    unit = "rebanada";
+    name = "queso amarillo";
+  }
+  if (!unit && /^(?:cebollas?|tomates?|jitomates?|ajos?|elotes?|chayotes?|papas?|zanahorias?|calabacitas?|huevos?|naranjas?|limones?|aguacates?|tamales? de elote|chiles? verde anaheim|jalape[nñ]os? curtidos|lechuga bola)(?:$|\s+(?:picad|pelad|enter|sin|con))/i.test(name)) {
+    unit = "piece";
+  }
+  if (counted?.label && name) name = `${name} (${counted.label})`;
+  return { name, quantity, unit, review_required: (!known && !counted && !["piece", "envase", "rebanada"].includes(unit ?? "")) || !name };
 }
 
 /** Accept one explicit portions/persons marker (or a bare positive number), never ranges. */

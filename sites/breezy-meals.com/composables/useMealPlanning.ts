@@ -34,7 +34,7 @@ export interface SavedMealPlan {
 export default function useMealPlanning() {
   const pb = usePocketBase();
   async function all<T>(name: string, sort = "created"): Promise<T[]> {
-    return pb.collection(name).getFullList<T>({ sort, requestKey: null });
+    return pb.collection(name).getFullList<T>({ sort, requestKey: null, cache: "no-store" });
   }
   async function load() {
     const [ingredients, recipes, rows, components, menuItems, memberships, plans] = await Promise.all([
@@ -43,7 +43,7 @@ export default function useMealPlanning() {
       all<RecipeIngredient>("recipe_ingredients", "sort_order"),
       all<MenuComponent & { id: string }>("menu_item_components"),
       pb.collection("menu_items").getFullList<PlanningMenuItem>({
-        filter: 'surface = "dishes"', sort: "name", requestKey: null,
+        filter: 'surface = "dishes"', sort: "name", requestKey: null, cache: "no-store",
       }),
       all<{ id: string; credits_total: number; credits_used: number; status: string }>("memberships"),
       all<SavedMealPlan>("meal_plans", "-created"),
@@ -52,9 +52,9 @@ export default function useMealPlanning() {
   }
   async function loadRecipe(id: string) {
     const [recipe, rows, ingredients] = await Promise.all([
-      pb.collection("recipes").getOne<PlanningRecipeRecord>(id),
+      pb.collection("recipes").getOne<PlanningRecipeRecord>(id, { cache: "no-store" }),
       pb.collection("recipe_ingredients").getFullList<RecipeIngredient>({
-        filter: pb.filter("recipe = {:id}", { id }), sort: "sort_order", requestKey: null,
+        filter: pb.filter("recipe = {:id}", { id }), sort: "sort_order", requestKey: null, cache: "no-store",
       }),
       all<PlanningIngredient>("ingredients", "name"),
     ]);
