@@ -28,6 +28,8 @@ const aliases: Record<string, string> = {
   "perejil fresco": "perejil",
   "tomate rojo": "jitomate",
   "sal fina": "sal",
+  "knorr pollo": "sazonador Knorr de pollo",
+  "knorr tomate": "sazonador Knorr de tomate",
 };
 
 export function canonicalIngredientName(value: string): string {

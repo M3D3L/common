@@ -116,6 +116,45 @@ association from being changed. New food/package identities have no invented
 nutrition. Back up PocketBase and check concurrent record updates before applying
 the generated operations.
 
+`scripts/extract-usda-planning-nutrition.ts usda-sr.zip profiles.json` reads the
+official USDA SR Legacy archive, requiring all six nutrients rather than filling
+missing values with zero. Alongside exact food matches, the explicit mappings in
+`lib/nutrition-standard-foods.ts` provide standard-food estimates approved for
+generic ingredients. Their descriptions record assumptions such as whole milk,
+regular mayonnaise, skinless boneless raw chicken breast, or 85/15 ground beef.
+These estimates do not rename different foods or collapse raw/cooked identities.
+Branded products and unspecified mixtures are not assigned generic meat profiles.
+Source verification means the nutrient reference was checked, not that a
+particular brand, finished recipe or kitchen yield was measured.
+
+`scripts/prepare-nutrition-repairs.ts snapshot.json profiles.json operations.json`
+prepares ingredient-only updates, retaining verified profiles and measured
+conversions. It never changes recipe text, quantities, yields, menu items or saved
+plans. A generated operation includes the original `updated` timestamp; the
+operator must refuse concurrent changes before applying it. Milliliter
+conversions are included only where an explicit USDA volume/weight portion is
+available: milk uses 30.5 g per US fluid ounce (29.5735295625 ml), and drinking
+water uses 1000 g per liter. These are standard estimates, not package weights;
+they are never written as a grams-per-piece conversion.
+
+**Knorr pollo and Knorr tomate are seasonings, not meat.** Their canonical names
+identify them as Knorr seasonings, and shopping summaries exclude Knorr, bouillon,
+consomme and other named seasonings from meat totals. Original recipe wording and
+product counts stay intact. Brand-specific nutrition and grams per product still
+require the actual label/presentation; a chicken-meat profile is never substituted.
+
+The subsequent nutrition repair, backed up as
+`nutrition-data-repair-before-2026-10-18.zip`, updated 269 existing ingredient
+records: 267 gained sourced profiles, 15 gained explicit ml-to-gram conversions,
+and both Knorr identities gained seasoning names/categories. All 1,358 written
+fields were independently verified; recipe rows, yields, menu records and the
+saved plan were unchanged. Re-running the generator produces no additional
+updates. The eight reported chicken-sandwich recipe warnings now resolve to a
+complete sourced estimate. This is not a claim of complete catalog nutrition:
+130 identities still lack a suitable profile, and other recipes still contain
+unresolved measures, product sizes or mixtures. Those diagnostics remain visible
+until their underlying data is known; they are not suppressed or marked verified.
+
 The October 18, 2026 repair applied 276 writes after the verified
 `ingredient-repair-before-2026-10-18.zip` backup: 90 ingredient associations and
 89 count rows were repaired in the first pass, then 94 additional common-measure

@@ -86,7 +86,7 @@ export function formatPurchaseQuantity(quantity: number, unit: string): string {
 
 function purchaseFamily(name: string): string {
   const value = name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
-  if (!/\b(caldo|concentrado|sazonador|extracto)\b/.test(value)) {
+  if (!/\b(caldo|concentrado|sazonador|extracto|knorr|consome|condimento|bouillon)\b/.test(value)) {
     if (/\b(res|beef)\b/.test(value)) return "Res";
     if (/\bpollo\b/.test(value)) return "Pollo";
     if (/\b(cerdo|puerco)\b/.test(value)) return "Cerdo";

@@ -83,6 +83,23 @@ test("shopping text exports readable metric totals, separate cuts and rounded qu
   assert.ok(!text.includes("PROVISIONALES"));
 });
 
+test("Knorr and chicken-flavored seasonings never contribute to chicken meat totals", () => {
+  const requirements = [
+    { ingredient: "meat", name: "Pechuga de pollo cruda", quantity: 1200, unit: "g" },
+    ...["knorr pollo", "Knorr tomate", "Consomé de pollo", "Condimento de pollo", "Chicken bouillon"]
+      .map((name, index) => ({ ingredient: `seasoning-${index}`, name, quantity: 2, unit: "piece" })),
+  ];
+  const groups = summarizePurchases(requirements);
+  const chicken = groups.find((group) => group.name === "Pollo")!;
+  assert.deepEqual(chicken.totals, [{ quantity: 1200, unit: "g" }]);
+  assert.deepEqual(chicken.items.map((item) => item.ingredient), ["meat"]);
+  assert.equal(groups.find((group) => group.name === "Otros ingredientes")?.items.length, 5);
+  const text = buildShoppingText(requirements, "Semana", []);
+  assert.ok(text.includes("Pollo: 1.2 kg\r\n"));
+  assert.ok(!text.includes("Pollo: 1.2 kg +"));
+  assert.ok(text.includes("- sazonador Knorr de pollo: 2 piezas\r\n"));
+});
+
 test("shopping text labels incomplete totals and keeps review details outside the shopping list", () => {
   const warning = 'Receta "Sopa": cantidad de aceite pendiente.';
   const text = buildShoppingText([
