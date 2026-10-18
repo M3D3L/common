@@ -11,6 +11,7 @@
         </p>
       </div>
       <div class="flex flex-wrap items-center gap-3">
+        <NuxtLink to="/planeacion" class="text-sm underline">Planeación y compras</NuxtLink>
         <div class="flex items-center gap-2 text-sm text-muted-foreground">
           <BookOpen :size="18" />
           <span class="font-semibold text-foreground">{{
@@ -132,6 +133,8 @@
             <CardTitle class="line-clamp-2 text-base leading-snug">{{
               recipe.title
             }}</CardTitle>
+            <Badge v-if="recipe.planningDraft" variant="outline">Borrador de cocina</Badge>
+            <p v-if="recipe.description" class="line-clamp-2 text-xs text-muted-foreground">{{ recipe.description }}</p>
             <div
               class="flex min-h-5 flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground"
             >
@@ -219,6 +222,8 @@
               <SheetDescription class="sr-only">
                 Ingredientes y preparación de {{ selectedRecipe.title }}
               </SheetDescription>
+              <p v-if="selectedRecipe.description" class="text-sm text-muted-foreground">{{ selectedRecipe.description }}</p>
+              <Badge v-if="selectedRecipe.planningDraft" variant="outline">Propuesta pendiente de validación en cocina</Badge>
             </SheetHeader>
 
             <div class="grid grid-cols-2 gap-2 sm:grid-cols-4">
@@ -332,7 +337,7 @@
             <section v-if="selectedRecipe.nutrition" class="break-inside-avoid">
               <Separator class="mb-5" />
               <h2 class="mb-3 text-sm font-bold uppercase tracking-widest">
-                Nutrición
+                Nutrición de la fuente (referencia)
               </h2>
               <div class="flex flex-wrap gap-2">
                 <Badge
@@ -356,6 +361,13 @@
               </div>
             </section>
 
+            <RecipesRecipePlanningEditor
+              v-if="selectedRecipe.recordId"
+              :key="`${selectedRecipe.recordId}-${planningRevision}`"
+              :recipe-id="selectedRecipe.recordId"
+              class="print:hidden"
+            />
+
             <SheetFooter class="flex-row gap-2 border-t pt-5 print:hidden">
               <Button variant="outline" @click="openEditForm(selectedRecipe)">
                 <Pencil :size="16" class="mr-2" /> Editar
@@ -368,7 +380,7 @@
               >
                 <Trash2 :size="16" class="mr-2" /> Eliminar
               </Button>
-              <Button variant="outline" as-child>
+              <Button v-if="selectedRecipe.url" variant="outline" as-child>
                 <a
                   :href="selectedRecipe.url"
                   target="_blank"
@@ -426,6 +438,10 @@
           <div class="space-y-1.5">
             <Label for="recipe-id">ID</Label>
             <Input id="recipe-id" v-model="form.id" placeholder="r123456" />
+          </div>
+          <div class="space-y-1.5 sm:col-span-2">
+            <Label for="recipe-description">Descripción</Label>
+            <textarea id="recipe-description" v-model="form.description" rows="2" class="w-full rounded border border-border bg-background p-2 text-sm" />
           </div>
           <div class="space-y-1.5">
             <Label for="recipe-category">Categoría</Label>
@@ -611,6 +627,8 @@ interface Recipe {
   recordId?: string;
   id: string;
   title: string;
+  description?: string;
+  planningDraft?: boolean;
   url: string;
   image?: string | null;
   servings?: string | null;
@@ -627,6 +645,7 @@ interface Recipe {
 interface RecipeForm {
   id: string;
   title: string;
+  description: string;
   url: string;
   image: string;
   servings: string;
@@ -659,12 +678,14 @@ const query = ref("");
 const category = ref("all");
 const sortBy = ref<"title" | "newest" | "time">("title");
 const selectedRecipe = ref<Recipe | null>(null);
+const planningRevision = ref(0);
 const detailsOpen = ref(false);
 const loadMoreTarget = ref<HTMLElement | null>(null);
 const visibleCount = ref(24);
 const emptyForm = (): RecipeForm => ({
   id: "",
   title: "",
+  description: "",
   url: "",
   image: "",
   servings: "10 porciones",
@@ -707,6 +728,7 @@ const openEditForm = (recipe: Recipe) => {
   Object.assign(form, emptyForm(), {
     id: recipe.id,
     title: recipe.title,
+    description: recipe.description ?? "",
     url: recipe.url ?? "",
     image: recipe.image ?? "",
     servings: recipe.servings ?? "",
@@ -780,6 +802,7 @@ const completeWithAi = async () => {
       missingFields,
       recipe: {
         title: form.title.trim(),
+        description: form.description.trim(),
         category: form.category.trim() || undefined,
         servings: form.servings.trim() || "10 porciones",
         prepTime: form.prepTime.trim() || undefined,
@@ -899,6 +922,7 @@ const saveRecipe = async () => {
         )
       : [...recipes.value, saved];
     selectedRecipe.value = saved;
+    planningRevision.value++;
     formOpen.value = false;
   } catch (error) {
     formError.value =

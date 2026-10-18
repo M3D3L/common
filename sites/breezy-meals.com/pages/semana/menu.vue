@@ -8,6 +8,9 @@
       <Button as-child size="sm" variant="ghost">
         <NuxtLink to="/semana/calendario">Calendario</NuxtLink>
       </Button>
+      <Button as-child size="sm" variant="ghost">
+        <NuxtLink to="/planeacion">Producción y compras</NuxtLink>
+      </Button>
     </div>
 
     <h2 class="text-xl font-bold">Bloques de semana</h2>
@@ -640,7 +643,7 @@ async function generateWeek() {
   generationError.value = "";
   if (!recipeCandidates.value.length) {
     generationError.value =
-      "No hay recetas detalladas disponibles en la colección recipies.";
+      "No hay recetas detalladas disponibles en el recetario.";
     return;
   }
   const groups = menuGroups.value.map(({ key, label, kind }) => ({
@@ -940,6 +943,7 @@ async function load() {
       (recipe): recipe is typeof recipe & RecipeCandidate =>
         Boolean(
           recipe.hasDetail &&
+          !recipe.planningDraft &&
           Array.isArray(recipe.ingredients) &&
           recipe.ingredients.length,
         ),

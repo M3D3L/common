@@ -187,54 +187,54 @@
           enter-to-class="translate-y-0 opacity-100"
         >
           <div v-if="fullMenuVisible" class="space-y-8" data-full-menu>
-          <!-- ===== Category chips: filter at a glance =====
-               Each chip opens its section and scrolls to it. "All" expands or
-               collapses everything. The badge keeps the cart count even while
-               the section is closed, so the user never loses track of their order. -->
-          <OrganismsMenuCategoryChips
-            v-if="!isCatering"
-            :groups="visibleMenuGroups"
-            :all-open="allGroupsOpen"
-            :is-group-open="isGroupOpen"
-            :group-cart-count="groupCartCount"
-            @toggle-all="toggleAllGroups"
-            @focus-group="focusGroup"
-          />
-
-          <section
-            v-for="group in menuGroups"
-            v-show="showGroupSection(group.key)"
-            :key="group.key"
-            :ref="(el) => setSectionRef(group.key, el)"
-            class="js-reveal-section scroll-mt-20 rounded-2xl border border-border/70 bg-card/70 p-3 shadow-sm backdrop-blur"
-          >
-            <OrganismsMenuGroupSection
-              :group="group"
-              :is-open="isGroupOpen(group.key)"
-              :items="groupItems(group.key)"
-              :cart-count="groupCartCount(group.key)"
-              :is-taquiza="!!(taquizaGroup && group.key === taquizaGroup.key)"
-              :taquiza-kinds="taquizaKinds"
-              :taquiza-cap="TAQUIZA_CAP"
-              :taquiza-orders="taquizaOrders"
-              :order-fill-total="orderFillTotal"
-              :can-add-to-order="canAddToOrder"
-              :set-order-fill="setOrderFill"
-              :add-taquiza-order="addTaquizaOrder"
-              :remove-taquiza-order="removeTaquizaOrder"
-              :cart="cart"
-              :is-out="isOut"
-              :can-add-group-items="canAddItem(group.key)"
-              :is-locked="isGroupLocked(group.key)"
-              :lock-reason="lockReason(group.key)"
-              :staff-mode="staffMode"
-              :is-logged-in="isLoggedIn"
-              :money="money"
-              :set-qty="(name, delta) => setQty(group.key, name, delta)"
-              :toggle-out="toggleOut"
-              @toggle="toggleGroup(group.key)"
+            <!-- ===== Category chips: filter at a glance =====
+                 Each chip opens its section and scrolls to it. "All" expands or
+                 collapses everything. The badge keeps the cart count even while
+                 the section is closed, so the user never loses track of their order. -->
+            <OrganismsMenuCategoryChips
+              v-if="!isCatering"
+              :groups="visibleMenuGroups"
+              :all-open="allGroupsOpen"
+              :is-group-open="isGroupOpen"
+              :group-cart-count="groupCartCount"
+              @toggle-all="toggleAllGroups"
+              @focus-group="focusGroup"
             />
-          </section>
+
+            <section
+              v-for="group in menuGroups"
+              v-show="showGroupSection(group.key)"
+              :key="group.key"
+              :ref="(el) => setSectionRef(group.key, el)"
+              class="js-reveal-section scroll-mt-20 rounded-2xl border border-border/70 bg-card/70 p-3 shadow-sm backdrop-blur"
+            >
+              <OrganismsMenuGroupSection
+                :group="group"
+                :is-open="isGroupOpen(group.key)"
+                :items="groupItems(group.key)"
+                :cart-count="groupCartCount(group.key)"
+                :is-taquiza="!!(taquizaGroup && group.key === taquizaGroup.key)"
+                :taquiza-kinds="taquizaKinds"
+                :taquiza-cap="TAQUIZA_CAP"
+                :taquiza-orders="taquizaOrders"
+                :order-fill-total="orderFillTotal"
+                :can-add-to-order="canAddToOrder"
+                :set-order-fill="setOrderFill"
+                :add-taquiza-order="addTaquizaOrder"
+                :remove-taquiza-order="removeTaquizaOrder"
+                :cart="cart"
+                :is-out="isOut"
+                :can-add-group-items="canAddItem(group.key)"
+                :is-locked="isGroupLocked(group.key)"
+                :lock-reason="lockReason(group.key)"
+                :staff-mode="staffMode"
+                :is-logged-in="isLoggedIn"
+                :money="money"
+                :set-qty="(name, delta) => setQty(group.key, name, delta)"
+                :toggle-out="toggleOut"
+                @toggle="toggleGroup(group.key)"
+              />
+            </section>
           </div>
         </Transition>
 
@@ -796,35 +796,39 @@ const activePromo = computed(() =>
 let previousMenuScrollY = 0;
 let autoExpandFrame: number | null = null;
 
-useEventListener("scroll", () => {
-  if (autoExpandFrame !== null) return;
-  autoExpandFrame = requestAnimationFrame(() => {
-    autoExpandFrame = null;
-    const currentScrollY = window.scrollY;
-    const scrollingDown = currentScrollY > previousMenuScrollY;
-    previousMenuScrollY = currentScrollY;
+useEventListener(
+  "scroll",
+  () => {
+    if (autoExpandFrame !== null) return;
+    autoExpandFrame = requestAnimationFrame(() => {
+      autoExpandFrame = null;
+      const currentScrollY = window.scrollY;
+      const scrollingDown = currentScrollY > previousMenuScrollY;
+      previousMenuScrollY = currentScrollY;
 
-    if (
-      !scrollingDown ||
-      fullMenuVisible.value ||
-      fullMenuManuallyToggled.value ||
-      staffMode.value ||
-      isCatering.value ||
-      !props.useDailyMenu ||
-      props.dishesField !== "dishes" ||
-      activePromoId.value ||
-      itemCount.value > 0 ||
-      taquizaOrders.value.length > 0 ||
-      !fullMenuToggleEl.value
-    ) return;
+      if (
+        !scrollingDown ||
+        fullMenuVisible.value ||
+        fullMenuManuallyToggled.value ||
+        staffMode.value ||
+        isCatering.value ||
+        !props.useDailyMenu ||
+        props.dishesField !== "dishes" ||
+        activePromoId.value ||
+        itemCount.value > 0 ||
+        taquizaOrders.value.length > 0 ||
+        !fullMenuToggleEl.value
+      ) return;
 
-    // Reveal while the switch is still visible, before the customer reaches checkout.
-    const toggleBottom = fullMenuToggleEl.value.getBoundingClientRect().bottom;
-    if (toggleBottom <= window.innerHeight * 0.45) {
-      showFullMenu.value = true;
-    }
-  });
-}, { passive: true });
+      // Reveal while the switch is still visible, before the customer reaches checkout.
+      const toggleBottom = fullMenuToggleEl.value.getBoundingClientRect().bottom;
+      if (toggleBottom <= window.innerHeight * 0.45) {
+        showFullMenu.value = true;
+      }
+    });
+  },
+  { passive: true },
+);
 
 const promoBuilderEl = ref<HTMLElement | null>(null);
 

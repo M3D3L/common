@@ -42,6 +42,7 @@
           >
             {{ item.name }}
           </p>
+          <p v-if="item.description" class="mt-1 text-xs text-muted-foreground">{{ item.description }}</p>
         </div>
 
         <div v-if="!isOut(item.name)" class="flex shrink-0 items-center gap-1">

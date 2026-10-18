@@ -228,6 +228,7 @@ export function createCommerceMigrationPlan(
               name,
               price: numberValue(item.price),
               image_url: stringValue(item.image),
+              description: stringValue(item.description),
               combo: item.combo,
               source_record: source.id,
               source_index: storage?.sourceIndex ?? sourceIndex,

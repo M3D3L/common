@@ -15,6 +15,8 @@ export interface RecipeView {
   recordId: string;
   id: string;
   title: string;
+  description?: string;
+  planningDraft?: boolean;
   url: string;
   image?: string | null;
   servings?: string | null;
@@ -112,6 +114,8 @@ export function buildRecipeViews(
       recordId: record.id,
       id: text(record.legacy_id),
       title: text(record.title),
+      description: text(record.description),
+      planningDraft: record.planning_draft === true,
       url: text(record.source_url),
       image: optionalText(record.image_url),
       servings: optionalText(record.servings),

@@ -20,6 +20,7 @@
     "schema:staff-schedule": "node scripts/add-staff-schedule-schema.js",
     "schema:payroll": "node scripts/add-payroll-schema.js",
     "schema:display-news": "node scripts/add-display-news-schema.js",
+    "schema:meal-planning": "node scripts/add-meal-planning-schema.js",
     "cleanup:commerce": "node scripts/cleanup-commerce-legacy.js",
     "preview": "nuxt generate && vite preview --outDir .output/public",
     "preview:prod": "NODE_ENV=production nuxt generate && vite preview --outDir .output/public --base /portfolio2025/",

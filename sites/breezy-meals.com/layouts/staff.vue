@@ -26,6 +26,7 @@ const VERIFIED_ONLY_ROUTES = new Set([
   "/promos-dashboard",
   "/semana/menu",
   "/semana/calendario",
+  "/planeacion",
 ]);
 
 const runtimeConfig = useRuntimeConfig();
@@ -51,6 +52,7 @@ const staffLinks: NavLink[] = business.nav?.staffLinks?.length
       { to: "/platillos", label: "Platillos" },
       { to: "/productos", label: "Productos" },
       { to: "/recetas", label: "Recetas" },
+      { to: "/planeacion", label: "Planeación" },
       { to: "/galeria", label: "Galeria" },
       { to: "/semana/menu", label: "Menú semanal" },
       { to: "/semana/calendario", label: "Calendario" },

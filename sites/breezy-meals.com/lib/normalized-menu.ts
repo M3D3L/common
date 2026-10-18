@@ -127,6 +127,7 @@ function buildCatalog(
     if (!value.image && text(item.image_url)) {
       value.image = text(item.image_url);
     }
+    if (text(item.description)) value.description = text(item.description);
     if (!value.combo && item.combo && typeof item.combo === "object") {
       value.combo = item.combo as MenuItem["combo"];
     }

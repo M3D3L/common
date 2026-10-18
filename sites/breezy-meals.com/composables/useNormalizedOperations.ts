@@ -10,6 +10,7 @@ import {
   type RecipeView,
 } from "~/lib/normalized-domain";
 import { stableFingerprint } from "~/lib/legacy-normalization";
+import { parseYield } from "~/lib/meal-planning";
 import type { ChecklistRun, ItemKind } from "~/utils/checklists";
 
 export interface ChecklistAssignment {
@@ -94,9 +95,22 @@ export default function useNormalizedOperations() {
   }
 
   async function saveRecipe(recipe: RecipeView): Promise<RecipeView> {
+    const [existingRecipe, previousIngredients] = recipe.recordId
+      ? await Promise.all([
+          pb.collection("recipes").getOne(recipe.recordId, { requestKey: null }),
+          pb.collection("recipe_ingredients").getFullList({
+            filter: pb.filter("recipe = {:id}", { id: recipe.recordId }),
+            sort: "sort_order", requestKey: null,
+          }),
+        ])
+      : [null, []];
+    const ingredientsChanged = previousIngredients.length !== recipe.ingredients.length ||
+      previousIngredients.some((row, index) => row.text !== recipe.ingredients[index]);
+    const yieldChanged = !existingRecipe || existingRecipe.servings !== (recipe.servings ?? "");
     const legacyPayload = {
       id: recipe.id,
       title: recipe.title,
+      description: recipe.description ?? "",
       url: recipe.url,
       image: recipe.image,
       servings: recipe.servings,
@@ -112,6 +126,7 @@ export default function useNormalizedOperations() {
     const payload = {
       legacy_id: recipe.id,
       title: recipe.title,
+      description: recipe.description ?? "",
       source_url: recipe.url,
       image_url: recipe.image ?? "",
       servings: recipe.servings ?? "",
@@ -125,6 +140,12 @@ export default function useNormalizedOperations() {
       protein: recipe.nutrition?.protein ?? "",
       has_detail: recipe.hasDetail,
       legacy_payload: legacyPayload,
+      ...(yieldChanged ? {
+        yield_portions: parseYield(recipe.servings ?? "") ?? 0,
+        yield_verified: false,
+      } : {}),
+      ...(!existingRecipe || ingredientsChanged || yieldChanged ? { planning_draft: true } : {}),
+      ...(ingredientsChanged ? { protein_yield_verified: false } : {}),
     };
     const record = recipe.recordId
       ? await pb
@@ -170,6 +191,9 @@ export default function useNormalizedOperations() {
             recipe: record.id,
             [field]: value,
             sort_order: sortOrder,
+            ...(collection === "recipe_ingredients" ? {
+              ingredient: "", quantity: 0, unit: "", review_required: true, parsed_text: "",
+            } : {}),
           };
           return id
             ? pb
@@ -193,7 +217,7 @@ export default function useNormalizedOperations() {
         pb.collection("recipe_steps").delete(id, { requestKey: null }),
       ),
     ]);
-    return { ...recipe, recordId: record.id };
+    return { ...recipe, recordId: record.id, planningDraft: record.planning_draft === true };
   }
 
   async function deleteRecipe(recordId: string): Promise<void> {

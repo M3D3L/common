@@ -1,0 +1,74 @@
+export const ingredientKey = (value: string): string =>
+  value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim().replace(/\s+/g, " ");
+
+const aliases: Record<string, string> = {
+  "carne de res molida": "carne molida de res",
+  "res molida": "carne molida de res",
+  "ground beef": "carne molida de res",
+  "diente de ajo": "ajo", "dientes de ajo": "ajo",
+  "huevos": "huevo",
+  "cilantro fresco": "cilantro",
+  "perejil fresco": "perejil",
+  "tomate rojo": "jitomate",
+  "sal fina": "sal",
+};
+
+export function canonicalIngredientName(value: string): string {
+  const prepared = value.trim().replace(
+    /(?:,\s*|\s+)(?:finamente\s+)?(?:picad[oa]s?|rallad[oa]s?|en cubos|en trozos|en rodajas)$/i,
+    "",
+  );
+  return aliases[ingredientKey(prepared)] ?? prepared;
+}
+
+// Exact food identities only. Cuts, raw/cooked states and brands are not interchangeable.
+export const USDA_INGREDIENT_MATCHES: Array<{ names: string[]; fdcId: number }> = [
+  { names: ["cebolla"], fdcId: 170000 },
+  { names: ["jitomate"], fdcId: 170457 },
+  { names: ["zanahoria"], fdcId: 170393 },
+  { names: ["ajo"], fdcId: 169230 },
+  { names: ["cilantro"], fdcId: 169997 },
+  { names: ["perejil"], fdcId: 170416 },
+  { names: ["jugo de limón verde"], fdcId: 168156 },
+  { names: ["jugo de limón amarillo"], fdcId: 167747 },
+  { names: ["sal"], fdcId: 173468 },
+  { names: ["chile serrano"], fdcId: 169395 },
+  { names: ["apio"], fdcId: 169988 },
+  { names: ["brócoli"], fdcId: 170379 },
+  { names: ["champiñones blancos crudos"], fdcId: 169251 },
+  { names: ["ejotes"], fdcId: 169961 },
+  { names: ["calabacita"], fdcId: 169291 },
+  { names: ["papa"], fdcId: 170026 },
+  { names: ["huevo"], fdcId: 171287 },
+  { names: ["arroz blanco de grano largo crudo"], fdcId: 169756 },
+  { names: ["azúcar", "azúcar blanca"], fdcId: 169655 },
+  { names: ["aguacate"], fdcId: 171705 },
+  { names: ["ajo en polvo"], fdcId: 171325 },
+  { names: ["canela en polvo"], fdcId: 171320 },
+  { names: ["clara de huevo"], fdcId: 172183 },
+  { names: ["col"], fdcId: 169975 },
+  { names: ["coliflor"], fdcId: 169986 },
+  { names: ["berenjena"], fdcId: 169228 },
+  { names: ["betabel"], fdcId: 169145 },
+  { names: ["chayote"], fdcId: 170402 },
+  { names: ["fresa", "fresas", "fresas limpias sin pedúnculo"], fdcId: 167762 },
+  { names: ["guayaba"], fdcId: 173044 },
+  { names: ["piña"], fdcId: 169124 },
+  { names: ["espinaca", "espinacas"], fdcId: 168462 },
+  { names: ["lechuga romana"], fdcId: 169247 },
+  { names: ["lentejas secas"], fdcId: 172420 },
+  { names: ["frijol pinto seco"], fdcId: 175199 },
+  { names: ["garbanzos secos"], fdcId: 173756 },
+  { names: ["fécula de maíz"], fdcId: 169698 },
+  { names: ["harina de trigo integral", "harina integral"], fdcId: 168893 },
+  { names: ["azúcar moreno"], fdcId: 168833 },
+  { names: ["pimienta negra", "pimienta negra molida", "pimienta negra recién molida"], fdcId: 170931 },
+  { names: ["paprika"], fdcId: 171329 },
+  { names: ["vainilla natural"], fdcId: 173471 },
+  { names: ["vinagre blanco"], fdcId: 172237 },
+  { names: ["vinagre de manzana"], fdcId: 173469 },
+  { names: ["chícharos"], fdcId: 170419 },
+  { names: ["tomatillo", "tomatillos"], fdcId: 168566 },
+  { names: ["rábanos"], fdcId: 169276 },
+  { names: ["pepino con cáscara"], fdcId: 168409 },
+];

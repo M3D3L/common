@@ -190,6 +190,7 @@ export interface MenuItem {
   name: string;
   price: number;
   image?: string;
+  description?: string;
   combo?: ComboPolicy;
 }
 
@@ -284,6 +285,9 @@ function normalizeMenuItem(group: GroupKey, entry: unknown): MenuItem | null {
   };
 
   if (image) normalized.image = image;
+  if (entry && typeof entry === "object" && "description" in entry && typeof entry.description === "string") {
+    normalized.description = entry.description.trim();
+  }
 
   if (MAIN_GROUP_KEYS.includes(group)) {
     normalized.combo = {
@@ -339,6 +343,7 @@ export function normalizeMenuCatalog(
             ...existing,
             ...item,
             image: item.image || existing.image,
+            description: item.description || existing.description,
             combo: item.combo || existing.combo,
           }),
         );

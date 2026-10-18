@@ -118,6 +118,10 @@
                   step="1"
                 />
               </div>
+              <div v-if="dishes === 'dishes'" class="min-w-0 space-y-1.5 sm:col-span-2">
+                <Label :for="`description-${group.key}-${index}`">Descripción</Label>
+                <textarea :id="`description-${group.key}-${index}`" v-model="item.description" rows="2" class="w-full rounded border border-border bg-background p-2 text-sm" />
+              </div>
               <div class="min-w-0 space-y-1.5 sm:col-span-2">
                 <Label :for="`image-${group.key}-${index}`">Imagen</Label>
                 <ImageUrlInput

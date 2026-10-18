@@ -25,6 +25,7 @@
         >
           {{ item.name }}
         </p>
+        <p v-if="item.description" class="mt-1 text-xs leading-relaxed text-muted-foreground">{{ item.description }}</p>
         <p
           v-if="item?.price !== 0"
           class="mt-0.5 text-[11px] font-semibold text-muted-foreground"
