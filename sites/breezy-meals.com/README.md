@@ -25,6 +25,45 @@ does not apply to staff, store, or catering views.
 
 Do not move these features into other site folders.
 
+## TV menu display
+
+`/pantalla` is a fixed-viewport signage page. The main board shows daily menu
+items (including sold-out labels) in readable columns, scrolling left in a
+seamless horizontal loop at 32 CSS pixels per second when they overflow.
+The loop follows the browser's actual column layout, so wrapped names, viewport
+changes, and font loading are included in the fit calculation. The right rail shows a stack of eligible
+promotions with their full descriptions and prices. When they exceed the rail's
+height, they scroll upward in a seamless vertical loop at 24 CSS pixels per
+second. A short list stays still. The duplicate loop is hidden from assistive
+technology. Either panel stays still when its content fits. Focusing a panel
+pauses its marquee; reduced-motion preferences disable both animations and allow
+manual scrolling in each panel's direction instead.
+An additional cream-and-gold catering rail slides in after 30 seconds hidden,
+scrolls its entire collection downward once at 96 CSS pixels per second, then
+slides out and waits another 30 seconds. There is only one copy of the catering
+list: it starts bottom-aligned with the collection viewport and ends when its
+top aligns with the viewport's top. There is no empty entry/exit travel or
+trailing gap, and no repeated list. The animation holds its final position
+during the exit. It uses the catering catalog
+independently of the daily menu, excludes sold-out items, and shows one to three
+photo-led cards at a time according to the available height. A collection that
+fits fills the available height and stays still for 10 seconds instead. Missing
+photos use the brand logo. The rail is skipped when no catering items are
+available. The existing menu and promotions narrow smoothly to make room; menu
+columns adapt to their actual width. Marquees pause briefly during the layout
+transition. Focusing the catering collection pauses it. Reduced-motion
+preferences disable the slide and marquee animations, allow manual scrolling,
+and use a reading timer equivalent to the full loop (at least 10 seconds).
+Item-photo recommendations are not displayed.
+
+The promotion rail has a compact, stationary "Promociones" heading above the
+scrolling cards, without a "Hoy" badge or status dot. The news
+ticker fills the footer width remaining between the ordering information and QR
+code. The menu header, ordering QR code, and news footer stay stationary.
+Menu data and promotions refresh every minute; unchanged data does not restart
+the marquees.
+Test on the TV's actual browser viewport, not just its physical screen size.
+
 ## Tech Notes
 
 - Nuxt 3 (SSG-friendly setup)

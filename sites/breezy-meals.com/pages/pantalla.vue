@@ -1,8 +1,5 @@
 <template>
-  <div
-    ref="displayShellElement"
-    class="display-shell min-h-screen overflow-hidden bg-background text-foreground"
-  >
+  <div ref="displayShellElement" class="display-shell">
     <Head>
       <Title>Pantalla de menú | {{ brandName }}</Title>
       <Meta name="robots" content="noindex, nofollow" />
@@ -15,200 +12,179 @@
     </Head>
 
     <main v-if="pending && !record" class="display-state">
-      <LoaderCircle class="h-12 w-12 animate-spin text-primary" />
+      <LoaderCircle class="h-12 w-12 animate-spin" />
       <p>Cargando el menú de hoy…</p>
     </main>
-
     <main v-else-if="loadError || !record" class="display-state">
-      <div class="display-watermark" :style="watermarkStyle" />
-      <WifiOff class="h-12 w-12 text-primary" />
+      <WifiOff class="h-12 w-12" />
       <h2>El menú volverá en un momento</h2>
       <p>No pudimos actualizar la pantalla. Reintentaremos automáticamente.</p>
-      <Button type="button" class="retry-button" @click="load">
-        Reintentar
-      </Button>
+      <Button type="button" @click="loadDisplayData()">Reintentar</Button>
     </main>
-
-    <main v-else class="display-content">
-      <section
-        ref="menuBoardElement"
-        class="menu-board"
-        :data-density="displayDensity"
-      >
-        <div class="section-heading">
+    <main
+      v-else
+      class="display-content"
+      :class="{ 'catering-visible': cateringVisible, 'is-reflowing': cateringTransitioning }"
+    >
+      <section class="menu-board" aria-label="Menú del día">
+        <header class="section-heading">
           <div class="title-brand">
             <img :src="logoSrc" :alt="brandName" />
-            <div class="min-w-0">
-              <Badge variant="secondary" class="display-eyebrow">
-                San Carlos, Sonora
-              </Badge>
-              <h1 class="display-brand">{{ brandName }}</h1>
+            <div>
+              <p class="display-eyebrow">San Carlos, Sonora</p>
+              <h1>{{ brandName }}</h1>
             </div>
           </div>
-          <div class="menu-title">
-            <h2>Menú del día</h2>
-          </div>
+          <h2>Menú del día</h2>
           <div class="board-time">
             <p>{{ clock }}</p>
             <span>{{ dateLabel }}</span>
           </div>
-        </div>
+        </header>
 
         <div
-          ref="boardColumnsElement"
-          class="board-columns"
-          :class="{ 'board-columns-with-promos': promoCards.length }"
+          ref="menuViewportElement"
+          class="menu-viewport"
+          :tabindex="menuOverflow ? 0 : undefined"
+          aria-label="Platillos del menú"
         >
-          <section v-if="promoCards.length" class="promo-module">
-            <div class="promo-module-heading">
-              <div>
-                <p class="section-kicker">Aprovecha hoy</p>
-                <h2>Promociones</h2>
-              </div>
-              <Badge variant="outline">{{ promoCards.length }}</Badge>
-            </div>
-            <ul ref="promoListElement" :style="promoGridStyle">
-              <li v-for="promo in promoCards" :key="promo.id">
-                <div class="promo-module-title">
-                  <span aria-hidden="true">{{ promo.emoji || "★" }}</span>
-                  <strong>{{ promo.label }}</strong>
-                  <span v-if="promo.price > 0" class="promo-module-price">
-                    {{ money(promo.price) }}
-                  </span>
-                </div>
-                <p>
-                  {{
-                    promo.summary || "Promoción disponible por tiempo limitado."
-                  }}
-                </p>
-              </li>
-            </ul>
-          </section>
-
-          <div v-if="menuSections.length" class="menu-columns">
-            <section
-              v-for="section in menuSections"
-              :key="section.key"
-              class="menu-section"
+          <div
+            v-if="menuSections.length"
+            ref="menuTrackElement"
+            class="menu-track"
+            :class="{ 'is-scrolling': menuOverflow }"
+            :style="menuScrollStyle"
+          >
+            <div
+              v-for="copy in menuOverflow ? 2 : 1"
+              :key="copy"
+              class="menu-columns"
+              :aria-hidden="copy === 2"
             >
-              <h3>
-                <span>{{ section.emoji }}</span>
-                {{ section.label }}
-              </h3>
-              <ul>
-                <li
-                  v-for="item in section.items"
-                  :key="item.name"
-                  :class="{ 'sold-out-item': isOut(item.name) }"
-                >
-                  <span class="item-name">{{ item.name }}</span>
-                  <Badge
-                    v-if="isOut(item.name)"
-                    variant="destructive"
-                    class="sold-out-badge"
+              <section
+                v-for="section in menuSections"
+                :key="section.key"
+                class="menu-section"
+              >
+                <h3><span aria-hidden="true">{{ section.emoji }}</span> {{ section.label }}</h3>
+                <ul>
+                  <li
+                    v-for="item in section.items"
+                    :key="item.name"
+                    :class="{ 'sold-out-item': isOut(item.name) }"
                   >
-                    Agotado
-                  </Badge>
-                  <span class="item-rule" aria-hidden="true" />
-                  <span v-if="item.price > 0" class="item-price">
-                    {{ money(item.price) }}
-                  </span>
-                </li>
-              </ul>
-            </section>
+                    <span class="item-name">
+                      {{ item.name }}
+                      <span v-if="isOut(item.name)" class="sold-out-badge">Agotado</span>
+                    </span>
+                    <span class="item-rule" aria-hidden="true" />
+                    <span v-if="item.price > 0" class="item-price">{{ money(item.price) }}</span>
+                  </li>
+                </ul>
+              </section>
+            </div>
           </div>
-          <div v-else class="empty-copy">
-            Estamos preparando el menú de hoy.
-          </div>
+          <div v-else class="empty-copy">Estamos preparando el menú de hoy.</div>
         </div>
       </section>
 
-      <aside class="spotlight" :data-density="cateringDensity">
-        <div class="spotlight-heading">
-          <span>Recomendación</span>
-          <Badge variant="secondary" class="live-dot">Hoy</Badge>
-        </div>
-        <Transition name="feature" mode="out-in">
-          <Card
-            v-if="featuredItem"
-            :key="featuredItem.key"
-            styles=""
-            class="feature-slide"
+      <aside class="promo-rail" aria-label="Promociones">
+        <h2 class="promo-heading">Promociones</h2>
+        <div
+          ref="promoViewportElement"
+          class="promo-viewport"
+          :tabindex="promoOverflow ? 0 : undefined"
+          aria-label="Promociones"
+        >
+          <div
+            v-if="promoCards.length"
+            ref="promoTrackElement"
+            class="promo-track"
+            :class="{ 'is-scrolling': promoOverflow }"
+            :style="promoScrollStyle"
           >
-            <img
-              v-if="featuredItem.image"
-              :src="featuredItem.image"
-              :alt="featuredItem.name"
-              class="feature-image"
-            />
             <div
-              v-else
-              class="feature-image feature-fallback"
-              :style="watermarkStyle"
-            />
-            <div class="feature-shade" />
-            <CardHeader class="feature-copy">
-              <div class="min-w-0">
-                <p class="feature-kicker">{{ featuredItem.category }}</p>
-                <CardTitle class="feature-title">
-                  {{ featuredItem.name }}
-                </CardTitle>
-              </div>
-              <CardDescription
-                v-if="featuredItem.price > 0"
-                class="feature-price"
-              >
-                {{ money(featuredItem.price) }}
-              </CardDescription>
-            </CardHeader>
-            <div class="feature-progress" aria-hidden="true">
-              <span :key="featuredItem.key" />
+              v-for="copy in promoOverflow ? 2 : 1"
+              :key="copy"
+              class="promo-group"
+              :aria-hidden="copy === 2"
+            >
+              <article v-for="promo in promoCards" :key="promo.id" class="promo-card">
+                <div class="promo-card-heading">
+                  <h2><span aria-hidden="true">{{ promo.emoji || "★" }}</span> {{ promo.label }}</h2>
+                  <p v-if="promo.price > 0" class="promo-price">{{ money(promo.price) }}</p>
+                </div>
+                <p class="promo-summary">
+                  {{ promo.summary || "Promoción disponible por tiempo limitado." }}
+                </p>
+              </article>
             </div>
-          </Card>
-        </Transition>
+          </div>
+          <div v-else class="rail-empty">
+            <img :src="logoSrc" :alt="brandName" />
+            <h2>¡Buen provecho!</h2>
+            <p>Escanea el código QR para ordenar desde tu teléfono.</p>
+          </div>
+        </div>
+      </aside>
 
-        <Card ref="cateringListElement" styles="" class="catering-list">
-          <CardHeader class="flex-row items-end justify-between gap-3 p-0">
-            <div>
-              <p class="section-kicker">Para tu evento</p>
-              <CardTitle class="catering-title">Catering</CardTitle>
+      <aside
+        v-if="cateringItems.length"
+        class="catering-rail"
+        :aria-hidden="!cateringVisible"
+        aria-label="Catering por encargo"
+      >
+        <div class="catering-panel">
+          <header class="catering-heading">
+            <p class="catering-eyebrow">Para compartir</p>
+            <h2>Catering</h2>
+            <p>Haz especial tu próxima reunión</p>
+          </header>
+          <div
+            ref="cateringViewportElement"
+            class="catering-collection"
+            :tabindex="cateringOverflow ? 0 : undefined"
+            aria-label="Opciones de catering"
+          >
+            <div
+              :key="cateringRunKey"
+              ref="cateringTrackElement"
+              class="catering-track"
+              :class="{ 'is-scrolling': cateringOverflow }"
+              :style="cateringScrollStyle"
+              @animationend="onCateringLoopComplete"
+            >
+              <div class="catering-group">
+                <article v-for="item in cateringItems" :key="item.name" class="catering-card">
+                  <img
+                    :src="item.image || logoSrc"
+                    :alt="item.image ? item.name : brandName"
+                    class="catering-photo"
+                    :class="{ 'is-logo': !item.image }"
+                  />
+                  <div class="catering-card-copy">
+                    <h3>{{ item.name }}</h3>
+                    <p v-if="item.price > 0">{{ money(item.price) }}</p>
+                  </div>
+                </article>
+              </div>
             </div>
-            <Badge variant="outline" class="order-badge">Por encargo</Badge>
-          </CardHeader>
-          <CardContent class="p-0">
-            <ul>
-              <li
-                v-for="item in cateringItems"
-                :key="item.name"
-                :class="{ 'sold-out-item': isOut(item.name) }"
-              >
-                <span>
-                  {{ item.name }}
-                  <Badge
-                    v-if="isOut(item.name)"
-                    variant="destructive"
-                    class="sold-out-label"
-                  >
-                    Agotado
-                  </Badge>
-                </span>
-                <strong>{{ money(item.price) }}</strong>
-              </li>
-            </ul>
-          </CardContent>
-        </Card>
+          </div>
+          <footer class="catering-note">
+            <span>Por encargo</span>
+          </footer>
+        </div>
       </aside>
     </main>
 
     <footer class="display-footer">
-      <div class="footer-order flex min-w-0 items-center gap-3">
+      <div class="footer-order">
         <MessageCircle class="h-6 w-6 shrink-0" />
-        <div class="min-w-0">
-          <p class="font-black">Ordena desde tu teléfono</p>
-          <p class="truncate text-sm text-white/75">{{ orderUrl }}</p>
+        <div>
+          <p>Ordena desde tu teléfono</p>
+          <p class="order-url">{{ orderUrl }}</p>
         </div>
       </div>
-
       <div
         v-if="tickerItems.length"
         class="ticker"
@@ -228,59 +204,35 @@
                 v-for="(item, index) in tickerItems"
                 :key="`${copy}-${index}-${item}`"
                 class="ticker-item"
-              >
-                {{ item }}
-              </span>
+              >{{ item }}</span>
             </div>
           </div>
         </div>
       </div>
-
-      <div class="footer-qr flex items-center gap-3">
-        <p class="hidden text-right text-sm font-bold leading-tight sm:block">
-          Escanea para ver<br />el menú completo
-        </p>
-        <img
-          :src="qrUrl"
-          alt="Código QR para ordenar"
-          class="h-16 w-16 rounded bg-white p-1"
-        />
+      <div class="footer-qr">
+        <p>Escanea para ver<br />el menú completo</p>
+        <img :src="qrUrl" alt="Código QR para ordenar" />
       </div>
     </footer>
   </div>
 </template>
 
 <script setup lang="ts">
-import {
-  LoaderCircle,
-  Megaphone,
-  MessageCircle,
-  WifiOff,
-} from "lucide-vue-next";
-import { Badge } from "@common/components/ui/badge";
+import { LoaderCircle, Megaphone, MessageCircle, WifiOff } from "lucide-vue-next";
 import { Button } from "@common/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@common/components/ui/card";
-import { todayISO, type GroupKey, type MenuItem } from "~/utils/comandas";
+import { todayISO } from "~/utils/comandas";
 import { useMenuData, type MenuRecordFull } from "~/composables/useMenuData";
 import { useMenuPricing } from "~/composables/useMenuPricing";
 
 definePageMeta({ layout: false });
 
-type DisplayItem = MenuItem & {
-  key: string;
-  category: string;
-  surface: "menu" | "catering";
-};
-
-const FEATURE_DURATION = 8_000;
+const MENU_SCROLL_SPEED = 32;
+const PROMO_SCROLL_SPEED = 24;
+const CATERING_HIDDEN_DURATION = 30_000;
+const CATERING_SCROLL_SPEED = 96;
+const CATERING_STILL_DURATION = 10_000;
+const CATERING_TRANSITION_DURATION = 900;
 const REFRESH_DURATION = 60_000;
-const MIN_PROMO_CARD_WIDTH = 220;
 const runtimeConfig = useRuntimeConfig();
 const business = (runtimeConfig.public?.business ?? {}) as {
   brandName?: string;
@@ -291,13 +243,10 @@ const brandName = business.brandName || "Breezy Meals";
 const logoSrc = business.logoUrl || "";
 const orderUrl = business.menuUrl || "https://breezy-meals.com/menu";
 const qrUrl = computed(
-  () =>
-    `https://api.qrserver.com/v1/create-qr-code/?size=180x180&margin=0&data=${encodeURIComponent(orderUrl)}`,
+  () => `https://api.qrserver.com/v1/create-qr-code/?size=180x180&margin=0&data=${encodeURIComponent(orderUrl)}`,
 );
-const watermarkStyle = computed(() => ({ backgroundImage: `url(${logoSrc})` }));
 const { fetchCollection } = usePocketBaseCore();
-const { record, pending, loadError, load } =
-  useLatestMenuRecord<MenuRecordFull>("menu");
+const { record, pending, loadError, load } = useLatestMenuRecord<MenuRecordFull>("menu");
 const selectedDate = ref(todayISO());
 const menuData = useMenuData({
   record,
@@ -313,25 +262,44 @@ const cateringData = useMenuData({
 });
 const soldOut = computed(() => new Set(record.value?.sold_out ?? []));
 const isOut = (name: string) => soldOut.value.has(name);
+const cateringItems = computed(() =>
+  cateringData.menuGroups.value
+    .flatMap((group) => cateringData.groupItems(group.key))
+    .filter((item) => !isOut(item.name)),
+);
+const cateringVisible = ref(false);
+const cateringTransitioning = ref(false);
+const cateringOverflow = ref(false);
+const cateringCardHeight = ref(210);
+const cateringCycleHeight = ref(0);
+const cateringViewportHeight = ref(0);
+const cateringPassDuration = computed(() =>
+  Math.max(0, cateringCycleHeight.value - cateringViewportHeight.value) / CATERING_SCROLL_SPEED * 1000,
+);
+const cateringRunKey = ref(0);
+const reducedMotion = ref(false);
+const cateringScrollStyle = computed(() => ({
+  "--catering-card-height": `${cateringCardHeight.value}px`,
+  "--catering-duration": `${cateringPassDuration.value / 1000}s`,
+  "--catering-viewport-height": `${cateringViewportHeight.value}px`,
+}));
 const emptyCart = reactive<Record<string, number>>({});
 const emptyTaquizaCounts = computed(() => ({ tacos: 0, quesadillas: 0 }));
-const { loadRuntimePromos, promoCardsWithAppliedState: promoCards } =
-  useMenuPricing({
-    fetchCollection,
-    cart: emptyCart,
-    menuGroups: menuData.menuGroups,
-    groupItems: menuData.groupItems,
-    isOut,
-    taquizaGroup: menuData.taquizaGroup,
-    taquizaOrderCount: emptyTaquizaCounts,
-    completedTaquizaOrderCount: emptyTaquizaCounts,
-    taquizaTotalForName: () => 0,
-    itemCount: computed(() => 0),
-    staffMode: () => false,
-    useDailyMenu: () => true,
-    showPromoStatus: () => true,
-  });
-
+const { loadRuntimePromos, promoCardsWithAppliedState: promoCards } = useMenuPricing({
+  fetchCollection,
+  cart: emptyCart,
+  menuGroups: menuData.menuGroups,
+  groupItems: menuData.groupItems,
+  isOut,
+  taquizaGroup: menuData.taquizaGroup,
+  taquizaOrderCount: emptyTaquizaCounts,
+  completedTaquizaOrderCount: emptyTaquizaCounts,
+  taquizaTotalForName: () => 0,
+  itemCount: computed(() => 0),
+  staffMode: () => false,
+  useDailyMenu: () => true,
+  showPromoStatus: () => true,
+});
 const menuSections = computed(() =>
   menuData.menuGroups.value
     .map((group) => ({
@@ -342,222 +310,259 @@ const menuSections = computed(() =>
     }))
     .filter((section) => section.items.length > 0),
 );
-const cateringItems = computed(() =>
-  cateringData.groupItems("catering" as GroupKey),
+const tickerItems = computed(() =>
+  String(record.value?.news ?? "").split(/\r?\n/).map((item) => item.trim()).filter(Boolean),
 );
-const newsTickerItems = computed(() =>
-  String(record.value?.news ?? "")
-    .split(/\r?\n/)
-    .map((item) => item.trim())
-    .filter(Boolean),
-);
-const tickerItems = newsTickerItems;
 const tickerStyle = computed(() => ({
   "--ticker-duration": `${Math.max(24, tickerItems.value.join(" ").length * 0.32)}s`,
 }));
-const menuBoardElement = ref<HTMLElement>();
-const boardColumnsElement = ref<HTMLElement>();
-const promoListElement = ref<HTMLElement>();
 const displayShellElement = ref<HTMLElement>();
-const cateringListElement = ref<HTMLElement>();
-const promoColumnCount = ref(1);
-const displayDensity = ref<"comfortable" | "compact" | "tight">("comfortable");
-const cateringDensity = ref<"comfortable" | "compact" | "tight">("comfortable");
-const promoGridStyle = computed(() => ({
-  "--promo-columns": String(promoColumnCount.value),
+const menuViewportElement = ref<HTMLElement>();
+const menuTrackElement = ref<HTMLElement>();
+const promoViewportElement = ref<HTMLElement>();
+const promoTrackElement = ref<HTMLElement>();
+const cateringViewportElement = ref<HTMLElement>();
+const cateringTrackElement = ref<HTMLElement>();
+const menuOverflow = ref(false);
+const menuCycleWidth = ref(0);
+const menuColumnCount = ref(2);
+const menuScrollStyle = computed(() => ({
+  "--menu-duration": `${menuCycleWidth.value / MENU_SCROLL_SPEED}s`,
+  "--menu-cycle-width": `${menuCycleWidth.value}px`,
+  "--menu-columns": String(menuColumnCount.value),
+  "--menu-group-width": menuColumnCount.value === 1 ? "85%" : "100%",
+}));
+const promoOverflow = ref(false);
+const promoCycleHeight = ref(0);
+const promoScrollStyle = computed(() => ({
+  "--promo-duration": `${promoCycleHeight.value / PROMO_SCROLL_SPEED}s`,
 }));
 
-function nextPaint() {
-  return new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+let clockTimer: number | undefined;
+let refreshTimer: number | undefined;
+let cateringTimer: number | undefined;
+let cateringTransitionTimer: number | undefined;
+let layoutFrame: number | undefined;
+let resizeObserver: ResizeObserver | undefined;
+let motionPreference: MediaQueryList | undefined;
+let disposed = false;
+
+function setCateringVisible(visible: boolean) {
+  const nextVisible = visible && cateringItems.value.length > 0;
+  if (cateringVisible.value === nextVisible) return;
+  cateringTransitioning.value = true;
+  cateringVisible.value = nextVisible;
+  if (cateringTimer) clearTimeout(cateringTimer);
+  cateringTimer = undefined;
+  if (nextVisible) cateringRunKey.value += 1;
+  if (cateringTransitionTimer) clearTimeout(cateringTransitionTimer);
+  cateringTransitionTimer = window.setTimeout(() => {
+    cateringTransitionTimer = undefined;
+    cateringTransitioning.value = false;
+    if (!cateringVisible.value) scheduleCateringCycle();
+    scheduleDisplayLayout();
+  }, CATERING_TRANSITION_DURATION);
 }
 
-function isOverflowing(element: HTMLElement) {
-  return (
-    element.scrollWidth > element.clientWidth + 1 ||
-    element.scrollHeight > element.clientHeight + 1
-  );
+function scheduleCateringCycle() {
+  if (cateringTimer) clearTimeout(cateringTimer);
+  cateringTimer = undefined;
+  if (disposed || cateringVisible.value || !cateringItems.value.length) return;
+  cateringTimer = window.setTimeout(() => {
+    cateringTimer = undefined;
+    setCateringVisible(true);
+  }, CATERING_HIDDEN_DURATION);
 }
 
-async function setPromoColumns() {
-  const promoList = promoListElement.value;
-  if (!promoList || !promoCards.value.length) return;
-
-  const gap = Number.parseFloat(getComputedStyle(promoList).columnGap) || 0;
-  promoColumnCount.value = Math.max(
-    1,
-    Math.min(
-      promoCards.value.length,
-      Math.floor((promoList.clientWidth + gap) / (MIN_PROMO_CARD_WIDTH + gap)),
-    ),
-  );
-  await nextPaint();
+function onCateringLoopComplete(event: AnimationEvent) {
+  if (event.target !== event.currentTarget || !cateringVisible.value) return;
+  setCateringVisible(false);
 }
 
-let fitInProgress = false;
-
-async function fitDisplay() {
-  const board = boardColumnsElement.value;
-  if (!board || fitInProgress) return;
-
-  fitInProgress = true;
-  displayDensity.value = "comfortable";
-  cateringDensity.value = "comfortable";
-  await nextTick();
-  await nextPaint();
-
-  try {
-    await setPromoColumns();
-
-    while (
-      isOverflowing(board) &&
-      promoColumnCount.value < promoCards.value.length
-    ) {
-      promoColumnCount.value += 1;
-      await nextPaint();
-    }
-
-    if (isOverflowing(board)) {
-      displayDensity.value = "compact";
-      await nextPaint();
-    }
-    if (isOverflowing(board)) {
-      displayDensity.value = "tight";
-      await nextPaint();
-    }
-
-    const catering = cateringListElement.value;
-    if (catering && isOverflowing(catering)) {
-      cateringDensity.value = "compact";
-      await nextPaint();
-    }
-    if (catering && isOverflowing(catering)) {
-      cateringDensity.value = "tight";
-    }
-  } finally {
-    fitInProgress = false;
+function syncCateringPlayback() {
+  if (!cateringVisible.value || cateringTransitioning.value) return;
+  if (cateringOverflow.value && !reducedMotion.value) {
+    if (cateringTimer) clearTimeout(cateringTimer);
+    cateringTimer = undefined;
+    return;
   }
+  if (cateringTimer) return;
+  const readingDuration = cateringOverflow.value
+    ? Math.max(CATERING_STILL_DURATION, cateringPassDuration.value)
+    : CATERING_STILL_DURATION;
+  cateringTimer = window.setTimeout(() => {
+    cateringTimer = undefined;
+    setCateringVisible(false);
+  }, readingDuration);
 }
 
-let fitFrame: number | undefined;
-let boardResizeObserver: ResizeObserver | undefined;
+function updateMotionPreference(event: MediaQueryListEvent) {
+  reducedMotion.value = event.matches;
+  if (cateringVisible.value && cateringTimer) {
+    clearTimeout(cateringTimer);
+    cateringTimer = undefined;
+  }
+  scheduleDisplayLayout();
+}
 
-function scheduleDisplayFit() {
-  if (fitInProgress) return;
-  if (fitFrame) cancelAnimationFrame(fitFrame);
-  fitFrame = requestAnimationFrame(() => {
-    fitFrame = undefined;
-    void fitDisplay();
+function measureCateringMarquee() {
+  const viewport = cateringViewportElement.value;
+  const group = cateringTrackElement.value?.firstElementChild;
+  if (!viewport || !group || !viewport.clientHeight) {
+    cateringOverflow.value = false;
+    cateringCycleHeight.value = 0;
+    cateringViewportHeight.value = 0;
+    return;
+  }
+  cateringViewportHeight.value = viewport.getBoundingClientRect().height;
+  const gap = Number.parseFloat(getComputedStyle(group).rowGap);
+  const visibleCards = Math.max(
+    1,
+    Math.min(3, cateringItems.value.length, Math.floor(viewport.clientHeight / 210)),
+  );
+  const cardHeight = visibleCards === 1 && cateringItems.value.length > 1
+    ? viewport.clientHeight * 0.82
+    : (viewport.clientHeight - gap * (visibleCards - 1)) / visibleCards;
+  if (Math.abs(cateringCardHeight.value - cardHeight) > 0.5) {
+    cateringCardHeight.value = cardHeight;
+    scheduleDisplayLayout();
+    return;
+  }
+  cateringCycleHeight.value = group.getBoundingClientRect().height;
+  cateringOverflow.value = cateringCycleHeight.value > viewport.clientHeight + 1;
+}
+
+function measureMenuMarquee() {
+  const columns = menuTrackElement.value?.firstElementChild;
+  if (!columns || !columns.clientWidth || !columns.clientHeight) {
+    menuOverflow.value = false;
+    menuCycleWidth.value = 0;
+    return;
+  }
+  const nextColumnCount = (menuViewportElement.value?.clientWidth ?? 0) >= 680 ? 2 : 1;
+  if (menuColumnCount.value !== nextColumnCount) {
+    menuColumnCount.value = nextColumnCount;
+    scheduleDisplayLayout();
+    return;
+  }
+  // CSS flows whole rows into equal-height columns, including off-screen pages.
+  const style = getComputedStyle(columns);
+  const gap = Number.parseFloat(style.columnGap);
+  const visibleColumns = Number.parseInt(style.columnCount, 10);
+  const width = columns.getBoundingClientRect().width;
+  const columnStride = (width + gap) / visibleColumns;
+  const totalColumns = Math.max(
+    visibleColumns,
+    Math.ceil((columns.scrollWidth + gap - 1) / columnStride),
+  );
+  menuCycleWidth.value = totalColumns * columnStride;
+  menuOverflow.value = columns.scrollWidth > width + 1;
+}
+
+function measurePromoMarquee() {
+  const viewport = promoViewportElement.value;
+  const group = promoTrackElement.value?.firstElementChild;
+  if (!viewport || !group) {
+    promoOverflow.value = false;
+    promoCycleHeight.value = 0;
+    return;
+  }
+  const style = getComputedStyle(viewport);
+  const availableHeight = viewport.clientHeight
+    - Number.parseFloat(style.paddingTop)
+    - Number.parseFloat(style.paddingBottom);
+  const groupHeight = group.getBoundingClientRect().height;
+  const trailingGap = Number.parseFloat(getComputedStyle(group).paddingBottom);
+  promoCycleHeight.value = groupHeight;
+  promoOverflow.value = groupHeight - trailingGap > availableHeight + 1;
+}
+
+function scheduleDisplayLayout() {
+  if (disposed) return;
+  if (layoutFrame) cancelAnimationFrame(layoutFrame);
+  layoutFrame = requestAnimationFrame(() => {
+    layoutFrame = undefined;
+    measureMenuMarquee();
+    measurePromoMarquee();
+    measureCateringMarquee();
+    syncCateringPlayback();
   });
 }
 
 async function loadDisplayData(options?: { silent?: boolean }) {
-  await Promise.allSettled([load(options), loadRuntimePromos()]);
+  await Promise.all([load(options), loadRuntimePromos()]);
 }
 
-const featurePool = computed<DisplayItem[]>(() => {
-  const menuItems = menuSections.value.flatMap((section) =>
-    section.items
-      .filter((item) => !isOut(item.name))
-      .map((item) => ({
-        ...item,
-        key: `menu:${section.key}:${item.name}`,
-        category: section.label,
-        surface: "menu" as const,
-      })),
-  );
-  const catering = cateringItems.value
-    .filter((item) => !isOut(item.name))
-    .map((item) => ({
-      ...item,
-      key: `catering:${item.name}`,
-      category: "Catering",
-      surface: "catering" as const,
-    }));
-  const pool = [...menuItems, ...catering];
-  const withImages = pool.filter((item) => item.image);
-  return withImages.length ? withImages : pool;
-});
-
-const shuffledFeatures = ref<DisplayItem[]>([]);
-const featureIndex = ref(0);
-const featuredItem = computed(
-  () => shuffledFeatures.value[featureIndex.value] ?? featurePool.value[0],
-);
-
-function shuffleFeatures() {
-  shuffledFeatures.value = [...featurePool.value].sort(
-    () => Math.random() - 0.5,
-  );
-  featureIndex.value = 0;
+const menuSignature = computed(() => JSON.stringify({
+  sections: menuSections.value,
+  soldOut: [...soldOut.value],
+}));
+watch(menuSignature, scheduleDisplayLayout, { flush: "post" });
+watch(menuTrackElement, scheduleDisplayLayout, { flush: "post" });
+watch(promoTrackElement, scheduleDisplayLayout, { flush: "post" });
+watch(cateringTrackElement, scheduleDisplayLayout, { flush: "post" });
+function observeViewport(element: HTMLElement | undefined, previous: HTMLElement | undefined) {
+  if (previous) resizeObserver?.unobserve(previous);
+  if (element) resizeObserver?.observe(element);
+  scheduleDisplayLayout();
 }
-
-const featurePoolSignature = computed(() =>
-  JSON.stringify(
-    featurePool.value.map(({ key, name, price, image, category, surface }) => ({
-      key,
-      name,
-      price,
-      image,
-      category,
-      surface,
-    })),
-  ),
-);
-const displayLayoutSignature = computed(() =>
-  JSON.stringify({
-    sections: menuSections.value,
-    promos: promoCards.value,
-    catering: cateringItems.value,
-  }),
-);
-
-watch(featurePoolSignature, shuffleFeatures, { immediate: true });
-watch(displayLayoutSignature, scheduleDisplayFit, { flush: "post" });
+watch(menuViewportElement, observeViewport, { flush: "post" });
+watch(promoViewportElement, observeViewport, { flush: "post" });
+watch(cateringViewportElement, observeViewport, { flush: "post" });
+watch(() => JSON.stringify(promoCards.value), scheduleDisplayLayout, { flush: "post" });
+watch(() => JSON.stringify(cateringItems.value), () => {
+  cateringRunKey.value += 1;
+  if (!cateringItems.value.length) {
+    setCateringVisible(false);
+    if (cateringTimer) clearTimeout(cateringTimer);
+    cateringTimer = undefined;
+  } else if (!cateringTimer) {
+    scheduleCateringCycle();
+  }
+  if (cateringVisible.value && cateringTimer) {
+    clearTimeout(cateringTimer);
+    cateringTimer = undefined;
+  }
+  scheduleDisplayLayout();
+}, { flush: "post" });
 
 const now = ref(new Date());
-const clock = computed(() =>
-  now.value.toLocaleTimeString("es-MX", {
-    hour: "2-digit",
-    minute: "2-digit",
-  }),
-);
-const dateLabel = computed(() =>
-  now.value.toLocaleDateString("es-MX", {
-    timeZone: "America/Hermosillo",
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-  }),
-);
-const money = (value: number) =>
-  new Intl.NumberFormat("es-MX", {
-    style: "currency",
-    currency: "MXN",
-    maximumFractionDigits: 0,
-  }).format(value);
-
-let clockTimer: number | undefined;
-let featureTimer: number | undefined;
-let refreshTimer: number | undefined;
+const clock = computed(() => now.value.toLocaleTimeString("es-MX", {
+  timeZone: "America/Hermosillo",
+  hour: "2-digit",
+  minute: "2-digit",
+}));
+const dateLabel = computed(() => now.value.toLocaleDateString("es-MX", {
+  timeZone: "America/Hermosillo",
+  weekday: "long",
+  day: "numeric",
+  month: "long",
+}));
+const money = (value: number) => new Intl.NumberFormat("es-MX", {
+  style: "currency",
+  currency: "MXN",
+  maximumFractionDigits: 0,
+}).format(value);
 
 onMounted(() => {
   void loadDisplayData();
-  boardResizeObserver = new ResizeObserver(scheduleDisplayFit);
-  if (displayShellElement.value) {
-    boardResizeObserver.observe(displayShellElement.value);
-  }
-  void document.fonts.ready.then(scheduleDisplayFit);
+  resizeObserver = new ResizeObserver(scheduleDisplayLayout);
+  if (displayShellElement.value) resizeObserver.observe(displayShellElement.value);
+  if (menuViewportElement.value) resizeObserver.observe(menuViewportElement.value);
+  if (promoViewportElement.value) resizeObserver.observe(promoViewportElement.value);
+  if (cateringViewportElement.value) resizeObserver.observe(cateringViewportElement.value);
+  window.addEventListener("resize", scheduleDisplayLayout);
+  void document.fonts.ready.then(scheduleDisplayLayout);
+  document.fonts.addEventListener("loadingdone", scheduleDisplayLayout);
+  motionPreference = window.matchMedia("(prefers-reduced-motion: reduce)");
+  reducedMotion.value = motionPreference.matches;
+  motionPreference.addEventListener("change", updateMotionPreference);
+  scheduleCateringCycle();
   clockTimer = window.setInterval(() => {
     now.value = new Date();
     const nextDate = todayISO();
     if (nextDate !== selectedDate.value) selectedDate.value = nextDate;
   }, 1_000);
-  featureTimer = window.setInterval(() => {
-    const count = shuffledFeatures.value.length;
-    if (!count) return;
-    featureIndex.value = (featureIndex.value + 1) % count;
-    if (featureIndex.value === 0) shuffleFeatures();
-  }, FEATURE_DURATION);
   refreshTimer = window.setInterval(
     () => void loadDisplayData({ silent: true }),
     REFRESH_DURATION,
@@ -565,11 +570,16 @@ onMounted(() => {
 });
 
 onBeforeUnmount(() => {
-  boardResizeObserver?.disconnect();
-  if (fitFrame) cancelAnimationFrame(fitFrame);
+  disposed = true;
+  resizeObserver?.disconnect();
+  window.removeEventListener("resize", scheduleDisplayLayout);
+  document.fonts.removeEventListener("loadingdone", scheduleDisplayLayout);
+  motionPreference?.removeEventListener("change", updateMotionPreference);
+  if (layoutFrame) cancelAnimationFrame(layoutFrame);
   if (clockTimer) clearInterval(clockTimer);
-  if (featureTimer) clearInterval(featureTimer);
   if (refreshTimer) clearInterval(refreshTimer);
+  if (cateringTimer) clearTimeout(cateringTimer);
+  if (cateringTransitionTimer) clearTimeout(cateringTransitionTimer);
 });
 </script>
 
@@ -581,643 +591,420 @@ onBeforeUnmount(() => {
   --display-paper: hsl(48 35% 97%);
   display: grid;
   grid-template-rows: minmax(0, 1fr) auto;
-  font-family: "Roboto", sans-serif;
+  height: 100vh;
   height: 100svh;
+  overflow: hidden;
   background: var(--display-paper);
-}
-
-.display-footer {
-  display: grid;
-  grid-template-columns: minmax(12rem, 20rem) minmax(0, 1fr) auto;
-  min-height: 5.5rem;
-  align-items: center;
-  gap: 1.5rem;
-  padding: 0.75rem 2rem;
-  color: white;
-  background: var(--display-blue);
-}
-.footer-order {
-  overflow: hidden;
-}
-.footer-qr {
-  grid-column: 3;
-  justify-self: end;
-}
-.ticker {
-  display: flex;
-  width: 100%;
-  min-width: 0;
-  max-width: 100%;
-  height: 2.5rem;
-  align-items: center;
-  overflow: hidden;
-  border-inline: 1px solid rgb(255 255 255 / 0.22);
-}
-.ticker-icon {
-  width: 2.75rem;
-  height: 2.5rem;
-  flex-shrink: 0;
-  padding: 0.7rem;
-}
-.ticker-viewport {
-  width: 100%;
-  min-width: 0;
-  max-width: 100%;
-  flex: 1;
-  overflow: hidden;
-}
-.ticker-track {
-  display: flex;
-  width: max-content;
-  animation: ticker-scroll var(--ticker-duration) linear infinite;
-}
-.ticker-group {
-  display: flex;
-  flex-shrink: 0;
-  align-items: center;
-  padding-inline-start: clamp(2rem, 4vw, 4rem);
-}
-.ticker-item {
-  display: inline-flex;
-  align-items: center;
-  white-space: nowrap;
-  font-size: 0.95rem;
-  font-weight: 900;
-}
-.ticker-item::after {
-  margin: 0 1.5rem;
-  color: hsl(48 85% 72%);
-  content: "•";
-}
-.display-eyebrow,
-.section-kicker,
-.feature-kicker {
-  font-weight: 900;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-}
-.display-eyebrow {
-  width: fit-content;
-  margin-bottom: 0.2rem;
-  border-radius: 999px;
-  background: hsl(158 67% 29% / 0.1);
-  padding: 0.2rem 0.55rem;
-  font-size: 0.72rem;
-  color: var(--display-green);
-}
-.display-brand {
-  font-family: "Alfa Slab One", cursive !important;
-  font-size: 2rem;
-  line-height: 1.05;
-  font-weight: 300 !important;
-  color: hsl(197 82% 38%);
-  letter-spacing: 0;
+  color: var(--display-ink);
+  font-family: "Roboto", sans-serif;
 }
 .display-content {
+  --catering-width: 26vw;
   display: grid;
-  height: 100%;
-  grid-template-columns: minmax(0, 1fr) clamp(20rem, 25vw, 28rem);
+  grid-template-columns: minmax(0, 7fr) minmax(0, 3fr) 0px;
   min-height: 0;
-}
-.board-columns {
-  min-height: 0;
-}
-.board-columns-with-promos {
-  display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
-  gap: clamp(0.75rem, 1.5vh, 1.25rem);
   overflow: hidden;
+  transition: grid-template-columns 0.85s cubic-bezier(0.22, 1, 0.36, 1);
 }
-.board-columns-with-promos .menu-columns {
-  column-gap: clamp(1.5rem, 2.5vw, 2.5rem);
+.display-content.catering-visible {
+  grid-template-columns: minmax(0, 7fr) minmax(0, 3fr) var(--catering-width);
 }
-.promo-module {
-  display: grid;
-  min-width: 0;
-  grid-template-columns: minmax(0, 1fr);
-  gap: clamp(0.55rem, 1vh, 0.8rem);
-  border-top: 0.3rem solid var(--display-green);
-  padding-top: clamp(0.6rem, 1.2vh, 0.9rem);
-}
-.promo-module-heading {
-  display: flex;
-  min-width: 0;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 0.75rem;
-}
-.promo-module-heading h2 {
-  font-family: "Alfa Slab One", serif;
-  color: var(--display-ink);
-  font-size: clamp(1.8rem, 2.2vw, 2.4rem);
-  font-weight: 400;
-  line-height: 1;
-  overflow-wrap: anywhere;
-}
-.promo-module ul {
-  display: grid;
-  grid-template-columns: repeat(var(--promo-columns, 1), minmax(0, 1fr));
-  gap: clamp(0.45rem, 0.8vw, 0.75rem);
-}
-.promo-module li {
-  min-width: 0;
-  border-left: 0.25rem solid hsl(158 67% 29% / 0.35);
-  background: hsl(158 67% 29% / 0.055);
-  padding: clamp(0.55rem, 1vh, 0.8rem);
-}
-.promo-module-title {
-  display: grid;
-  min-width: 0;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  align-items: baseline;
-  gap: 0.4rem;
-  color: var(--display-blue);
-  font-size: clamp(1.15rem, 1.45vw, 1.5rem);
-  line-height: 1.15;
-}
-.promo-module-title strong {
-  overflow-wrap: anywhere;
-}
-.promo-module-price {
-  flex-shrink: 0;
-  color: var(--display-green);
-  font-weight: 900;
-}
-.promo-module li > p {
-  display: -webkit-box;
-  margin-top: 0.4rem;
-  overflow: hidden;
-  color: hsl(218 12% 35%);
-  font-size: clamp(0.78rem, 0.85vw, 0.95rem);
-  font-weight: 700;
-  line-height: 1.3;
-  line-clamp: 2;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
+.display-content.is-reflowing .menu-track,
+.display-content.is-reflowing .promo-track {
+  animation-play-state: paused;
 }
 .menu-board {
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
-  padding: 1rem 2.5rem 1.5rem;
-  overflow: hidden;
+  min-width: 0;
+  min-height: 0;
+  padding: clamp(0.75rem, 1.5vw, 2rem);
 }
 .section-heading {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: center;
   gap: 1rem;
-  margin-bottom: 1rem;
+  padding-bottom: clamp(0.75rem, 2vh, 1.5rem);
 }
 .title-brand {
   display: flex;
-  min-width: 0;
   align-items: center;
-  gap: 0.8rem;
+  gap: 0.6rem;
+  min-width: 0;
 }
 .title-brand img {
-  width: 3.5rem;
-  height: 3.5rem;
-  flex-shrink: 0;
-  border: 2px solid hsl(197 82% 38% / 0.2);
-  border-radius: 999px;
-  background: white;
-  object-fit: cover;
+  width: clamp(2.5rem, 4vw, 4rem);
+  height: clamp(2.5rem, 4vw, 4rem);
+  border-radius: 50%;
+  object-fit: contain;
 }
-.menu-title {
-  text-align: center;
+.title-brand h1 {
+  font-family: "Alfa Slab One", serif;
+  font-size: clamp(1rem, 1.6vw, 2rem);
+  line-height: 1.1;
+  color: hsl(197 82% 38%);
 }
-.board-time {
-  text-align: right;
-}
-.board-time p {
-  color: var(--display-ink);
-  font-size: 1.65rem;
+.display-eyebrow {
+  margin-bottom: 0.3rem;
+  font-size: clamp(0.55rem, 0.65vw, 0.85rem);
   font-weight: 900;
-  line-height: 1;
+  text-transform: uppercase;
+  color: var(--display-green);
+}
+.section-heading > h2 {
+  font-family: "Alfa Slab One", serif;
+  font-size: clamp(1.5rem, 2.3vw, 3rem);
+  line-height: 1.1;
+}
+.board-time { text-align: right; }
+.board-time p {
+  font-size: clamp(1.15rem, 1.6vw, 2rem);
+  font-weight: 900;
   font-variant-numeric: tabular-nums;
 }
 .board-time span {
-  color: hsl(218 12% 35%);
-  font-size: 0.75rem;
-  font-weight: 900;
+  display: block;
+  font-size: clamp(0.6rem, 0.7vw, 0.9rem);
+  font-weight: 700;
   text-transform: uppercase;
 }
-.section-heading h2,
-.catering-title {
-  font-family: "Alfa Slab One", serif;
-  font-size: 2.75rem;
-  line-height: 1.05;
-  font-weight: 400;
-  color: var(--display-ink);
+.menu-viewport {
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+  border-top: 0.3rem solid var(--display-green);
+  padding-top: 0.75rem;
 }
-.section-kicker {
-  margin-bottom: 0.3rem;
-  font-size: 0.8rem;
-  color: var(--display-green);
+.menu-track {
+  position: relative;
+  width: 100%;
+  height: 100%;
 }
-.availability-note {
-  margin-top: 0.2rem;
-  font-size: 0.75rem;
-  font-weight: 700;
-  color: hsl(218 12% 35%);
+.menu-track.is-scrolling {
+  animation: menu-scroll var(--menu-duration) linear infinite;
+}
+.menu-columns[aria-hidden="true"] {
+  position: absolute;
+  top: 0;
+  left: var(--menu-cycle-width);
+}
+.menu-viewport:focus-visible {
+  outline: 3px solid var(--display-blue);
+  outline-offset: -3px;
+}
+.menu-viewport:focus .menu-track {
+  animation-play-state: paused;
 }
 .menu-columns {
-  columns: 2;
-  column-gap: 2.5rem;
+  width: var(--menu-group-width, 100%);
+  height: 100%;
+  column-count: var(--menu-columns, 2);
+  column-gap: clamp(1.25rem, 2.5vw, 3rem);
+  column-fill: auto;
 }
 .menu-section {
-  min-width: 0;
-  break-inside: avoid;
-  border-top: 0.3rem solid var(--display-blue);
-  margin-bottom: 1rem;
-  padding-top: 0.9rem;
+  margin-bottom: 1.5rem;
 }
 .menu-section h3 {
-  display: flex;
-  align-items: center;
-  gap: 0.45rem;
-  margin-bottom: 0.75rem;
-  font-size: 1.35rem;
+  break-after: avoid;
+  margin-bottom: 0.8rem;
   color: var(--display-blue);
-}
-.menu-section ul {
-  display: grid;
-  gap: 0.65rem;
+  font-size: clamp(1.1rem, 1.35vw, 1.8rem);
+  font-weight: 900;
+  line-height: 1.2;
 }
 .menu-section li {
   display: flex;
-  min-width: 0;
+  break-inside: avoid;
   align-items: baseline;
-  gap: 0.65rem;
-  font-size: clamp(1.45rem, 1.55vw, 1.9rem);
-  font-weight: 900;
-  line-height: 1.1;
+  gap: 0.5rem;
+  padding-bottom: clamp(0.7rem, 1.3vh, 1.1rem);
   color: var(--display-ink);
+  font-size: clamp(1.2rem, 1.6vw, 2.1rem);
+  font-weight: 900;
+  line-height: 1.2;
 }
-.menu-board[data-density="compact"] .section-heading {
-  margin-bottom: 0.65rem;
-}
-.menu-board[data-density="compact"] .menu-section {
-  margin-bottom: 0.7rem;
-  padding-top: 0.65rem;
-}
-.menu-board[data-density="compact"] .menu-section h3 {
-  margin-bottom: 0.5rem;
-  font-size: 1.2rem;
-}
-.menu-board[data-density="compact"] .menu-section ul {
-  gap: 0.45rem;
-}
-.menu-board[data-density="compact"] .menu-section li {
-  font-size: clamp(1.2rem, 1.35vw, 1.65rem);
-}
-.menu-board[data-density="tight"] .section-heading {
-  margin-bottom: 0.45rem;
-}
-.menu-board[data-density="tight"] .menu-section {
-  margin-bottom: 0.5rem;
-  padding-top: 0.5rem;
-}
-.menu-board[data-density="tight"] .menu-section h3 {
-  margin-bottom: 0.4rem;
-  font-size: 1.05rem;
-}
-.menu-board[data-density="tight"] .menu-section ul {
-  gap: 0.3rem;
-}
-.menu-board[data-density="tight"] .menu-section li {
-  font-size: clamp(1.05rem, 1.15vw, 1.4rem);
-}
-.item-name {
-  min-width: 0;
-  overflow-wrap: anywhere;
-}
+.item-name { min-width: 0; overflow-wrap: anywhere; }
 .item-rule {
-  min-width: 0.75rem;
   flex: 1;
+  min-width: 0.5rem;
   border-bottom: 2px dotted hsl(205 25% 13% / 0.2);
 }
-.item-price {
-  flex-shrink: 0;
-  color: var(--display-green);
-  font-weight: 900;
-}
+.item-price { flex-shrink: 0; color: var(--display-green); }
 .sold-out-item .item-name,
-.sold-out-item .item-price,
-.catering-list .sold-out-item strong {
-  color: hsl(218 8% 48%);
-  text-decoration: line-through;
-}
-.sold-out-badge,
-.sold-out-label {
-  flex-shrink: 0;
+.sold-out-item .item-price { color: hsl(218 8% 48%); text-decoration: line-through; }
+.sold-out-badge {
+  display: inline-block;
   border-radius: 0.25rem;
-  background: hsl(6 85% 55% / 0.12);
   padding: 0.2rem 0.4rem;
+  background: hsl(6 85% 55% / 0.12);
   color: hsl(6 72% 44%);
-  font-size: 0.8rem;
-  font-style: normal;
-  font-weight: 900;
-  line-height: 1;
+  font-size: 0.65em;
+  text-decoration: none;
   text-transform: uppercase;
 }
-.sold-out-label {
-  display: inline-block;
-  margin-left: 0.25rem;
-  font-size: 0.65rem;
-}
-
-.spotlight {
+button { border-radius: 0.25rem; padding: 0.15rem 0.6rem; font-size: 1.3em; }
+button:focus-visible { outline: 3px solid currentColor; outline-offset: 2px; }
+.promo-rail {
   display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  min-height: 0;
   min-width: 0;
-  grid-template-rows: auto minmax(0, 0.9fr) minmax(17rem, 1.1fr);
-  border-left: 0.5rem solid var(--display-green);
-  background: var(--display-ink);
+  border-left: 0.4rem solid var(--display-green);
+  background: var(--display-blue);
   color: white;
 }
-.spotlight-heading {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 1.1rem 1.5rem;
-  border-bottom: 1px solid rgb(255 255 255 / 0.14);
-  font-size: 0.85rem;
+.promo-heading {
+  padding: 0.65rem clamp(0.75rem, 1.3vw, 1.5rem);
+  border-bottom: 1px solid rgb(255 255 255 / 0.18);
+  color: white;
+  font-size: clamp(1rem, 1.25vw, 1.6rem);
   font-weight: 900;
+  line-height: 1.2;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.promo-viewport {
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+  padding: clamp(0.75rem, 1.3vw, 1.5rem);
+  background: radial-gradient(ellipse at top right, hsl(158 67% 29% / 0.5), transparent 75%);
+}
+.promo-track {
+  width: 100%;
+}
+.promo-track.is-scrolling {
+  animation: promo-scroll var(--promo-duration) linear infinite;
+}
+.promo-viewport:focus-visible {
+  outline: 3px solid white;
+  outline-offset: -3px;
+}
+.promo-viewport:focus .promo-track {
+  animation-play-state: paused;
+}
+.promo-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding-bottom: 0.75rem;
+}
+.promo-card {
+  flex-shrink: 0;
+  padding: clamp(0.75rem, 1.2vw, 1.5rem);
+  border: 1px solid rgb(255 255 255 / 0.2);
+  border-left: 0.25rem solid hsl(151 75% 76%);
+  border-radius: 0.5rem;
+  background: rgb(255 255 255 / 0.07);
+  overflow-wrap: anywhere;
+}
+.promo-card-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+.promo-card h2 {
+  min-width: 0;
+  color: white;
+  font-size: clamp(1.1rem, 1.4vw, 1.9rem);
+  font-weight: 900;
+  line-height: 1.2;
+}
+.promo-summary {
+  margin-top: 0.6rem;
+  color: rgb(255 255 255 / 0.85);
+  font-size: clamp(0.95rem, 1vw, 1.4rem);
+  line-height: 1.4;
+}
+.promo-price {
+  flex-shrink: 0;
+  color: hsl(48 85% 76%);
+  font-size: clamp(1.2rem, 1.65vw, 2.2rem);
+  font-weight: 900;
+  line-height: 1.2;
+}
+.rail-empty {
+  display: grid;
+  height: 100%;
+  align-content: center;
+  padding: 1.5rem;
+  text-align: center;
+  font-size: clamp(1rem, 1.4vw, 1.75rem);
+}
+.rail-empty img { width: 40%; margin: 0 auto 1.5rem; }
+.rail-empty h2 { margin-bottom: 1rem; font-weight: 900; }
+.catering-rail {
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  background: hsl(42 40% 94%);
+}
+.catering-panel {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  width: var(--catering-width);
+  height: 100%;
+  padding: clamp(0.85rem, 1.4vw, 2rem);
+  border-left: 0.25rem solid hsl(39 45% 58%);
+  color: hsl(190 30% 17%);
+  transform: translateX(100%);
+  opacity: 0;
+  transition:
+    transform 0.85s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.5s ease;
+}
+.catering-visible .catering-panel {
+  transform: translateX(0);
+  opacity: 1;
+}
+.catering-heading {
+  padding-bottom: clamp(0.75rem, 1.5vh, 1.25rem);
+}
+.catering-eyebrow {
+  margin: 0 0 0.3rem;
+  color: hsl(35 43% 36%);
+  font-size: clamp(0.65rem, 0.8vw, 1rem);
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+.catering-heading h2 {
+  color: hsl(190 30% 17%);
+  font-size: clamp(2rem, 3vw, 4rem);
+  font-weight: 700;
+  line-height: 1.1;
+}
+.catering-heading > p:last-child {
+  margin: 0.4rem 0 0;
+  font-size: clamp(0.8rem, 0.95vw, 1.2rem);
+}
+.catering-collection {
+  min-height: 0;
+  overflow: hidden;
+}
+.catering-track.is-scrolling {
+  animation: catering-scroll var(--catering-duration) linear 1 both;
+  animation-play-state: paused;
+}
+.catering-visible:not(.is-reflowing) .catering-track {
+  animation-play-state: running;
+}
+.catering-collection:focus-visible {
+  outline: 3px solid hsl(35 43% 36%);
+  outline-offset: -3px;
+}
+.catering-visible .catering-collection:focus .catering-track {
+  animation-play-state: paused;
+}
+.catering-group {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(0.75rem, 1.5vh, 1.25rem);
+}
+.catering-card {
+  display: grid;
+  grid-template-rows: minmax(3rem, 1fr) auto;
+  flex-shrink: 0;
+  height: var(--catering-card-height);
+  min-height: 0;
+  overflow: hidden;
+  border: 1px solid hsl(39 32% 81%);
+  border-radius: 0.4rem;
+  background: hsl(48 45% 98%);
+}
+.catering-photo {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  margin: 0;
+  object-fit: cover;
+}
+.catering-photo.is-logo {
+  object-fit: contain;
+  padding: 1rem;
+}
+.catering-card-copy {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 0.6rem;
+  padding: clamp(0.65rem, 1vw, 1.2rem);
+}
+.catering-card h3 {
+  font-size: clamp(1rem, 1.25vw, 1.65rem);
+  font-weight: 700;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+}
+.catering-card-copy > p {
+  margin: 0;
+  color: hsl(35 43% 36%);
+  font-size: clamp(1rem, 1.4vw, 1.85rem);
+  font-weight: 900;
+  line-height: 1.15;
+}
+.catering-note {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding-top: 0.75rem;
+  color: hsl(35 43% 36%);
+  font-size: clamp(0.7rem, 0.85vw, 1.1rem);
+  font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08em;
 }
-.live-dot {
-  display: inline-flex;
+.display-footer {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
-  gap: 0.4rem;
-  color: hsl(151 75% 66%);
-}
-.live-dot::before {
-  width: 0.5rem;
-  height: 0.5rem;
-  border-radius: 999px;
-  background: currentColor;
-  content: "";
-}
-.feature-slide {
-  position: relative;
-  min-height: 0;
-  overflow: hidden;
-  isolation: isolate;
-}
-.feature-image {
-  position: absolute;
-  inset: 0;
-  height: 100%;
-  width: 100%;
-  object-fit: cover;
-  opacity: 0.76;
-}
-.feature-fallback,
-.image-fallback {
-  background-position: center;
-  background-repeat: no-repeat;
-  background-size: 55%;
-}
-.feature-fallback {
-  opacity: 0.2;
-}
-.feature-shade {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    to top,
-    rgb(8 24 30 / 0.98),
-    rgb(8 24 30 / 0.2) 74%
-  );
-}
-.feature-copy {
-  position: absolute;
-  inset: auto 0 0;
-  padding: 1.5rem;
-}
-.feature-kicker {
-  color: hsl(151 75% 66%);
-  font-size: 0.78rem;
-}
-.feature-title {
-  margin-top: 0.35rem;
-  max-width: 13ch;
-  font-size: 2.35rem;
-  line-height: 1.05;
-  color: white;
-  overflow-wrap: anywhere;
-}
-.feature-price {
-  margin-top: 0.6rem;
-  color: white;
-  font-size: 1.6rem;
-  font-weight: 900;
-}
-.feature-progress {
-  position: absolute;
-  inset: auto 1.5rem 0.65rem;
-  height: 3px;
-  overflow: hidden;
-  background: rgb(255 255 255 / 0.25);
-}
-.feature-progress span {
-  display: block;
-  height: 100%;
-  background: white;
-  animation: feature-timer 8s linear;
-}
-.catering-list {
-  min-height: 0;
-  overflow: hidden;
-  padding: 1.5rem;
-  background: var(--display-paper);
-  color: var(--display-ink);
-}
-.order-badge {
-  font-size: 0.85rem;
-  color: hsl(218 12% 35%);
-}
-.catering-list ul {
-  margin-top: 1rem;
-  columns: 1;
-}
-.catering-list li {
-  display: flex;
-  break-inside: avoid;
-  justify-content: space-between;
-  gap: 0.5rem;
-  border-bottom: 1px solid hsl(44 70% 85%);
-  padding: 0.55rem 0;
-  font-size: 1.2rem;
-  font-weight: 700;
-  line-height: 1.15;
-}
-.spotlight[data-density="compact"] .catering-list {
-  padding: 1.1rem;
-}
-.spotlight[data-density="compact"] .catering-list ul {
-  margin-top: 0.65rem;
-}
-.spotlight[data-density="compact"] .catering-list li {
-  padding: 0.4rem 0;
-  font-size: 1.05rem;
-}
-.spotlight[data-density="tight"] .catering-list {
-  padding: 0.85rem 1rem;
-}
-.spotlight[data-density="tight"] .catering-list ul {
-  margin-top: 0.45rem;
-}
-.spotlight[data-density="tight"] .catering-list li {
-  padding: 0.3rem 0;
-  font-size: 0.95rem;
-}
-.catering-list li span {
-  overflow-wrap: anywhere;
-}
-.catering-list strong {
-  flex-shrink: 0;
-  color: var(--display-green);
-}
-
-.display-state {
-  position: relative;
-  display: grid;
-  min-height: 0;
-  place-content: center;
-  justify-items: center;
   gap: 1rem;
-  overflow: hidden;
-  padding: 2rem;
-  text-align: center;
-}
-.display-state h2 {
-  font-size: 2rem;
-  color: var(--display-blue);
-}
-.display-state p {
-  color: hsl(218 12% 35%);
-}
-.display-watermark {
-  position: absolute;
-  inset: 10%;
-  z-index: -1;
-  background-position: center;
-  background-repeat: no-repeat;
-  background-size: contain;
-  opacity: 0.06;
-}
-.retry-button {
-  min-height: 2.75rem;
-  border-radius: 0.4rem;
-  background: var(--display-blue);
-  padding: 0 1.25rem;
+  padding: 0.6rem clamp(0.75rem, 1.5vw, 2rem);
+  background: hsl(205 60% 20%);
   color: white;
-  font-weight: 900;
-}
-.empty-copy {
-  display: grid;
-  min-height: 18rem;
-  place-content: center;
-  border: 1px dashed hsl(197 82% 38% / 0.25);
-  color: hsl(218 12% 35%);
+  font-size: clamp(0.75rem, 0.95vw, 1.2rem);
   font-weight: 700;
 }
-.feature-enter-active,
-.feature-leave-active {
-  transition:
-    opacity 0.45s ease,
-    transform 0.8s ease;
+.footer-order, .footer-qr { display: flex; align-items: center; gap: 0.65rem; min-width: 0; }
+.footer-order { max-width: clamp(10rem, 25vw, 24rem); }
+.footer-order > div { min-width: 0; }
+.order-url { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; opacity: 0.75; font-size: 0.85em; }
+.footer-qr { grid-column: 3; text-align: right; font-size: 0.85em; line-height: 1.2; }
+.footer-qr img { width: clamp(3rem, 5vw, 5.5rem); height: clamp(3rem, 5vw, 5.5rem); border-radius: 0.25rem; padding: 0.2rem; background: white; }
+.ticker { display: flex; grid-column: 2; min-width: 0; overflow: hidden; align-items: center; }
+.ticker-icon { width: 2rem; height: 1.25rem; flex-shrink: 0; }
+.ticker-viewport { flex: 1; min-width: 0; overflow: hidden; }
+.ticker-track { display: flex; width: max-content; animation: ticker-scroll var(--ticker-duration) linear infinite; }
+.ticker-group { display: flex; flex-shrink: 0; }
+.ticker-item { white-space: nowrap; }
+.ticker-item::after { content: "•"; margin: 0 1.5rem; color: hsl(48 85% 76%); }
+.display-state, .empty-copy { display: grid; min-height: 0; place-content: center; justify-items: center; gap: 1rem; text-align: center; padding: 1rem; }
+.empty-copy { height: 100%; }
+@keyframes ticker-scroll { to { transform: translateX(-50%); } }
+@keyframes promo-scroll { to { transform: translateY(-50%); } }
+@keyframes menu-scroll { to { transform: translateX(calc(-1 * var(--menu-cycle-width))); } }
+@keyframes catering-scroll {
+  from { transform: translateY(calc(var(--catering-viewport-height) - 100%)); }
+  to { transform: translateY(0); }
 }
-.feature-enter-from {
-  opacity: 0;
-  transform: scale(1.025);
+@media (max-width: 1100px) {
+  .section-heading { grid-template-columns: minmax(0, 1fr) auto; }
+  .section-heading > h2 { grid-row: 2; grid-column: 1 / -1; }
+  .footer-qr p { display: none; }
 }
-.feature-leave-to {
-  opacity: 0;
-  transform: scale(0.99);
-}
-@keyframes feature-timer {
-  from {
-    width: 0;
-  }
-  to {
-    width: 100%;
-  }
-}
-@keyframes ticker-scroll {
-  to {
-    transform: translateX(-50%);
-  }
-}
-
-@media (max-width: 900px) {
-  .display-shell {
-    display: block;
-    height: auto;
-    min-height: 100svh;
-    overflow: auto;
-  }
-  .display-brand {
-    font-size: 1.4rem;
-  }
-  .display-content {
-    height: auto;
-    grid-template-columns: 1fr;
-  }
-  .board-columns-with-promos {
-    grid-template-rows: auto auto;
-    overflow: visible;
-  }
-  .promo-module {
-    grid-template-columns: 1fr;
-  }
-  .promo-module-heading {
-    align-items: center;
-    justify-content: space-between;
-    flex-direction: row;
-  }
-  .menu-board {
-    padding: 1.25rem 1rem;
-  }
-  .section-heading {
-    grid-template-columns: 1fr auto;
-  }
-  .menu-title {
-    grid-column: 1 / -1;
-    grid-row: 2;
-    text-align: left;
-  }
-  .spotlight {
-    min-height: 42rem;
-    border-left: 0;
-    grid-template-rows: 26rem auto;
-  }
-  .display-footer {
-    grid-template-columns: minmax(0, 1fr) auto;
-    gap: 0.75rem;
-    padding: 0.75rem 1rem;
-  }
-  .footer-order {
-    display: none;
-  }
-  .footer-qr {
-    grid-column: 2;
-  }
-}
-
 @media (prefers-reduced-motion: reduce) {
-  .feature-enter-active,
-  .feature-leave-active {
-    transition: none;
-  }
-  .feature-progress span {
-    animation: none;
-    width: 100%;
-  }
-  .ticker-track {
-    animation: none;
-  }
+  .display-content, .catering-panel { transition: none; }
+  .ticker-track { animation: none; }
+  .promo-track.is-scrolling { animation: none; }
+  .menu-track.is-scrolling { animation: none; }
+  .catering-track.is-scrolling { animation: none; }
+  .promo-group[aria-hidden="true"] { display: none; }
+  .menu-columns[aria-hidden="true"] { display: none; }
+  .promo-viewport { overflow-y: auto; }
+  .menu-viewport { overflow-x: auto; }
+  .catering-collection { overflow-y: auto; }
 }
 </style>
