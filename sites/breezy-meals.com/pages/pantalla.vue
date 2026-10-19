@@ -39,6 +39,12 @@
           <div class="board-time">
             <p>{{ clock }}</p>
             <span>{{ dateLabel }}</span>
+            <span v-if="datePreview.date" class="preview-date">
+              Vista previa · {{ datePreview.date }}
+            </span>
+            <span v-else-if="datePreview.error" class="preview-error" role="alert">
+              {{ datePreview.error }}
+            </span>
           </div>
         </header>
 
@@ -221,6 +227,7 @@
 import { LoaderCircle, Megaphone, MessageCircle, WifiOff } from "lucide-vue-next";
 import { Button } from "@common/components/ui/button";
 import { todayISO } from "~/utils/comandas";
+import { parseDisplayDateQuery } from "~/utils/displayDate";
 import { useMenuData, type MenuRecordFull } from "~/composables/useMenuData";
 import { useMenuPricing } from "~/composables/useMenuPricing";
 
@@ -247,7 +254,10 @@ const qrUrl = computed(
 );
 const { fetchCollection } = usePocketBaseCore();
 const { record, pending, loadError, load } = useLatestMenuRecord<MenuRecordFull>("menu");
-const selectedDate = ref(todayISO());
+const route = useRoute();
+const currentDate = ref(todayISO());
+const datePreview = computed(() => parseDisplayDateQuery(route.query.date));
+const selectedDate = computed(() => datePreview.value.date ?? currentDate.value);
 const menuData = useMenuData({
   record,
   selectedDate,
@@ -532,7 +542,7 @@ const clock = computed(() => now.value.toLocaleTimeString("es-MX", {
   hour: "2-digit",
   minute: "2-digit",
 }));
-const dateLabel = computed(() => now.value.toLocaleDateString("es-MX", {
+const dateLabel = computed(() => new Date(`${selectedDate.value}T12:00:00-07:00`).toLocaleDateString("es-MX", {
   timeZone: "America/Hermosillo",
   weekday: "long",
   day: "numeric",
@@ -560,8 +570,7 @@ onMounted(() => {
   scheduleCateringCycle();
   clockTimer = window.setInterval(() => {
     now.value = new Date();
-    const nextDate = todayISO();
-    if (nextDate !== selectedDate.value) selectedDate.value = nextDate;
+    currentDate.value = todayISO();
   }, 1_000);
   refreshTimer = window.setInterval(
     () => void loadDisplayData({ silent: true }),
@@ -668,6 +677,14 @@ onBeforeUnmount(() => {
   font-size: clamp(0.6rem, 0.7vw, 0.9rem);
   font-weight: 700;
   text-transform: uppercase;
+}
+.board-time .preview-date {
+  margin-top: 0.25rem;
+  color: var(--display-green);
+}
+.board-time .preview-error {
+  margin-top: 0.25rem;
+  color: hsl(6 72% 44%);
 }
 .menu-viewport {
   min-height: 0;

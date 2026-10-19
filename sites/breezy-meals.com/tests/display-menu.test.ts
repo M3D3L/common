@@ -148,3 +148,13 @@ test("catering uses the site's shared fonts rather than a separate serif face", 
   assert.doesNotMatch(source, /Georgia|"Times New Roman"/);
   assert.match(source, /\.catering-heading h2\s*\{[^}]*font-weight: 700/);
 });
+
+test("date query overrides the menu and date label without being reset by the clock", () => {
+  assert.match(source, /parseDisplayDateQuery\(route.query.date\)/);
+  assert.match(source, /const selectedDate = computed\(\(\) => datePreview.value.date \?\? currentDate.value\)/);
+  assert.match(source, /new Date\(`\$\{selectedDate.value\}T12:00:00-07:00`\)/);
+  assert.match(source, /Vista previa · \{\{ datePreview.date \}\}/);
+  assert.match(source, /v-else-if="datePreview.error"[^>]*role="alert"/);
+  assert.match(source, /currentDate.value = todayISO\(\)/);
+  assert.doesNotMatch(source, /selectedDate.value =/);
+});

@@ -27,6 +27,14 @@ Do not move these features into other site folders.
 
 ## TV menu display
 
+To preview a specific day's real menu, use `/pantalla?date=YYYY-MM-DD`, for
+example `/pantalla?date=2026-10-19` for Monday. The selected menu, eligible
+promotions, and header date follow that date, and a "Vista previa" label is
+shown. The clock still shows the current time in Sonora. The override persists
+across midnight and updates when the query changes; it does not modify stored
+menu data. Remove `date` to restore today's menu. Invalid or repeated date
+values show an error and use today's menu.
+
 `/pantalla` is a fixed-viewport signage page. The main board shows daily menu
 items (including sold-out labels) in readable columns, scrolling left in a
 seamless horizontal loop at 32 CSS pixels per second when they overflow.
